@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTX — Panel Administrador</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul-os: #101729; --azul-m: #303342;
+  --crema: #f5f2ee; --crema-d: #e8e2d9;
+  --verde: #2ba56e; --verde-m: #229158;
+  --rojo: #dc5337; --texto: #101729;
+  --gris: #5a5f72; --sombra: 0 2px 16px rgba(16,23,41,.08);
+  --radio: 14px; --sidebar: 240px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+/* LOGIN */
+#loginScreen {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--azul-os); padding: 32px 20px;
+}
+.login-badge {
+  background: rgba(220,83,55,.18); color: #f87c68;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; padding: 4px 14px;
+  border-radius: 20px; margin-bottom: 20px;
+  border: 1px solid rgba(220,83,55,.3);
+}
+.login-card {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 360px;
+}
+.login-card label { color: rgba(255,255,255,.65); font-size: 11px; font-weight: 600;
+  letter-spacing: .8px; text-transform: uppercase; display: block; margin-bottom: 7px; }
+.login-card input {
+  width: 100%; padding: 13px 15px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.07);
+  color: white; font-family: 'DM Sans', sans-serif; font-size: 15px;
+  margin-bottom: 14px; outline: none; transition: border .2s;
+}
+.login-card input:focus { border-color: var(--verde); }
+.login-card input::placeholder { color: rgba(255,255,255,.28); }
+.btn-login {
+  width: 100%; padding: 14px; background: var(--verde); color: white;
+  border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s;
+}
+.btn-login:hover { opacity: .88; }
+.login-error { color: #fca5a5; font-size: 13px; margin-top: 12px; text-align: center; display: none; }
+
+/* SHELL */
+#adminShell { display: none; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar); background: var(--azul-os);
+  position: fixed; top: 0; left: 0; bottom: 0;
+  display: flex; flex-direction: column; z-index: 200;
+}
+.sidebar-brand { padding: 22px 18px 16px; border-bottom: 1px solid rgba(255,255,255,.09); }
+.brand-row { display: flex; align-items: center; gap: 10px; }
+.brand-name { font-size: 17px; font-weight: 600; color: white; letter-spacing: .5px; }
+.brand-sub  { color: rgba(255,255,255,.38); font-size: 11px; margin-top: 4px; }
+.admin-pill {
+  display: inline-block; background: rgba(220,83,55,.2); color: #f87c68;
+  font-size: 10px; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 10px;
+  border: 1px solid rgba(220,83,55,.3); margin-top: 6px;
+}
+
+.sidebar-nav { flex: 1; padding: 10px 0; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px; cursor: pointer;
+  color: rgba(255,255,255,.5); font-size: 13px;
+  border-left: 2px solid transparent; transition: all .15s;
+  text-decoration: none;
+}
+.nav-item.active { background: rgba(255,255,255,.08); color: #7dbaf8; border-left-color: #7dbaf8; }
+.nav-item:hover:not(.active) { background: rgba(255,255,255,.04); color: rgba(255,255,255,.78); }
+.nav-badge {
+  margin-left: auto; background: var(--rojo); color: white;
+  font-size: 10px; font-weight: 700; min-width: 18px; height: 18px;
+  border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  padding: 0 5px;
+}
+
+.sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07); }
+.btn-logout {
+  width: 100%; padding: 8px; background: transparent;
+  border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.5);
+  border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.btn-logout:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.78); }
+
+/* MAIN */
+.main-content { margin-left: var(--sidebar); min-height: 100vh; }
+.page-header {
+  background: var(--azul-os); padding: 20px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h1 { font-size: 18px; font-weight: 600; color: white; }
+.page-header-sub { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 2px; }
+.header-actions { display: flex; gap: 10px; }
+
+.page-body { padding: 28px; }
+
+/* CARDS / PANELS */
+.card { background: white; border-radius: var(--radio); box-shadow: var(--sombra); overflow: hidden; }
+.card-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--crema-d);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-header h2 { font-size: 14px; font-weight: 600; color: var(--texto); }
+.card-header-sub { font-size: 12px; color: var(--gris); }
+
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-box {
+  background: white; border-radius: var(--radio); box-shadow: var(--sombra);
+  padding: 18px 20px;
+}
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--gris); margin-bottom: 6px; }
+.stat-val   { font-size: 28px; font-weight: 700; color: var(--texto); line-height: 1; }
+.stat-val.pend { color: #92400e; }
+.stat-val.verde { color: var(--verde); }
+.stat-val.rojo  { color: var(--rojo); }
+
+/* TABLES */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  padding: 10px 14px; text-align: left; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--gris);
+  font-weight: 600; border-bottom: 1px solid var(--crema-d); white-space: nowrap;
+}
+td { padding: 12px 14px; border-bottom: 1px solid var(--crema-d); vertical-align: middle; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f9faf6; }
+th:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { text-align: right; }
+td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { text-align: right; }
+
+/* PILLS & BADGES */
+.pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.pill-compra { background: #dbeafe; color: #1e40af; }
+.pill-venta  { background: #fef3c7; color: #92400e; }
+.badge-pend  { background: #fef9c3; color: #854d0e; font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; }
+.badge-conf  { background: #dcfce7; color: #166534; font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; }
+.badge-rech  { background: #fee2e2; color: #991b1b; font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; }
+
+/* ACTION BUTTONS */
+.btn-sm {
+  padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; border: none; transition: opacity .2s;
+}
+.btn-sm:hover { opacity: .82; }
+.btn-aprobar { background: #dcfce7; color: #166534; }
+.btn-rechazar { background: #fee2e2; color: #991b1b; }
+.btn-editar   { background: var(--crema-d); color: var(--texto); }
+.btn-export {
+  padding: 9px 18px; background: var(--verde); color: white;
+  border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .2s;
+}
+.btn-export:hover { opacity: .88; }
+.btn-refresh {
+  padding: 9px 14px; background: transparent;
+  border: 1px solid var(--crema-d); color: var(--gris);
+  border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; cursor: pointer; transition: all .2s;
+}
+.btn-refresh:hover { border-color: var(--verde); color: var(--verde); }
+
+/* FILTERS */
+.filters-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+.filter-select {
+  padding: 8px 12px; border-radius: 8px; border: 1px solid var(--crema-d);
+  background: white; font-family: 'DM Sans', sans-serif; font-size: 13px;
+  color: var(--texto); outline: none; cursor: pointer;
+}
+.filter-select:focus { border-color: var(--verde); }
+.filter-label { font-size: 12px; color: var(--gris); }
+
+/* SECTIONS */
+.section { margin-bottom: 28px; display: none; }
+.section.active { display: block; }
+
+/* MODAL EDITAR */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(16,23,41,.6); z-index: 500;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white; border-radius: 16px; padding: 28px;
+  width: 100%; max-width: 480px; box-shadow: 0 8px 40px rgba(16,23,41,.2);
+}
+.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--texto); }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.modal-group { display: flex; flex-direction: column; gap: 5px; }
+.modal-group.full { grid-column: 1/-1; }
+.modal-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--gris); }
+.modal-input, .modal-select {
+  padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--crema-d); background: white;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--texto);
+  outline: none; transition: border .2s; width: 100%;
+}
+.modal-input:focus, .modal-select:focus { border-color: var(--verde); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.btn-modal-cancel {
+  padding: 10px 18px; background: transparent; border: 1px solid var(--crema-d);
+  color: var(--gris); border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; cursor: pointer;
+}
+.btn-modal-save {
+  padding: 10px 22px; background: var(--verde); color: white;
+  border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+/* CARTERA CLIENTE */
+.cliente-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab-btn {
+  padding: 7px 16px; border-radius: 20px; border: 1px solid var(--crema-d);
+  background: white; font-family: 'DM Sans', sans-serif; font-size: 12px;
+  color: var(--gris); cursor: pointer; transition: all .18s;
+}
+.tab-btn.active { background: var(--azul-os); color: white; border-color: var(--azul-os); }
+
+/* LOADING */
+#loadingBar {
+  position: fixed; top: 0; left: 0; height: 3px;
+  background: var(--verde); width: 0; z-index: 999;
+  transition: width .3s;
+}
+.empty-state { padding: 40px; text-align: center; color: var(--gris); font-size: 14px; }
+.empty-icon  { font-size: 32px; margin-bottom: 8px; }
+
+@media(max-width: 900px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="loadingBar"></div>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <svg width="52" height="52" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg">
+  <path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/>
+  <path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/>
+  <path fill="#fcfcfc" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/>
+  <path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/>
+  <path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/>
+</svg>
+  <div style="margin-bottom:6px;margin-top:14px;font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</div>
+  <div class="login-badge">Panel Administrador</div>
+  <div class="login-card">
+    <label>Contraseña de administrador</label>
+    <input type="password" id="adminPass" placeholder="••••••••" autocomplete="off">
+    <button class="btn-login" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="loginError">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- ── ADMIN SHELL ── -->
+<div id="adminShell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-row">
+        <svg width="32" height="32" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg">
+  <path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/>
+  <path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/>
+  <path fill="#fcfcfc" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/>
+  <path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/>
+  <path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/>
+</svg>
+        <div>
+          <div class="brand-name">CTX</div>
+        </div>
+      </div>
+      <div class="brand-sub">Gestión de riesgo</div>
+      <div class="admin-pill">Admin</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="showSection('pendientes', this)">
+        <span>⏳</span> Pendientes
+        <span class="nav-badge" id="badge-pendientes">0</span>
+      </a>
+      <a class="nav-item" onclick="showSection('todas', this)">
+        <span>≡</span> Todas las operaciones
+      </a>
+      <a class="nav-item" onclick="showSection('carteras', this)">
+        <span>◉</span> Carteras de clientes
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h1 id="page-title">Operaciones pendientes</h1>
+        <div class="page-header-sub" id="page-sub">Revisá y aprobá las operaciones cargadas por los clientes</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-refresh" onclick="loadAll()">↻ Actualizar</button>
+        <button class="btn-export" onclick="exportExcel()">↓ Exportar Excel</button>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-label">Pendientes</div>
+          <div class="stat-val pend" id="stat-pend">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Confirmadas hoy</div>
+          <div class="stat-val verde" id="stat-conf">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total operaciones</div>
+          <div class="stat-val" id="stat-total">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Clientes activos</div>
+          <div class="stat-val" id="stat-clientes">—</div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: PENDIENTES -->
+      <div class="section active" id="sec-pendientes">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2>Operaciones pendientes de aprobación</h2>
+              <div class="card-header-sub">Las operaciones aprobadas quedan disponibles para el cliente</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha carga</th>
+                  <th>Cliente</th>
+                  <th>Producto</th>
+                  <th>Tipo</th>
+                  <th>Lado</th>
+                  <th>Volumen</th>
+                  <th>Precio</th>
+                  <th>Vto.</th>
+                  <th>Obs.</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-pendientes">
+                <tr><td colspan="10" class="empty-state"><div class="empty-icon">⏳</div>Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: TODAS -->
+      <div class="section" id="sec-todas">
+        <div class="filters-row">
+          <span class="filter-label">Filtrar por:</span>
+          <select class="filter-select" id="fil-cliente" onchange="renderTodas()">
+            <option value="">Todos los clientes</option>
+          </select>
+          <select class="filter-select" id="fil-estado" onchange="renderTodas()">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmada">Confirmada</option>
+            <option value="rechazada">Rechazada</option>
+          </select>
+          <select class="filter-select" id="fil-producto" onchange="renderTodas()">
+            <option value="">Todos los productos</option>
+            <option>Soja</option><option>Maíz</option><option>Trigo</option>
+            <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Historial completo de operaciones</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha carga</th>
+                  <th>Cliente</th>
+                  <th>Producto</th>
+                  <th>Tipo</th>
+                  <th>Lado</th>
+                  <th>Volumen</th>
+                  <th>Precio</th>
+                  <th>Vto.</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-todas">
+                <tr><td colspan="10" class="empty-state"><div class="empty-icon">≡</div>Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: CARTERAS -->
+      <div class="section" id="sec-carteras">
+        <div class="card-header" style="background:white;border-radius:var(--radio);padding:16px 20px;margin-bottom:16px;box-shadow:var(--sombra)">
+          <h2>Carteras de clientes</h2>
+          <div class="card-header-sub">Operaciones agrupadas por cliente</div>
+        </div>
+        <div class="cliente-tabs" id="cliente-tabs"></div>
+        <div id="cartera-content">
+          <div class="card"><div class="empty-state"><div class="empty-icon">◉</div>Seleccioná un cliente</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Editar operación</h3>
+    <input type="hidden" id="edit-id">
+    <div class="modal-grid">
+      <div class="modal-group">
+        <label class="modal-label">Producto</label>
+        <select class="modal-select" id="edit-producto">
+          <option>Soja</option><option>Maíz</option><option>Trigo</option>
+          <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Tipo</label>
+        <select class="modal-select" id="edit-tipo">
+          <option>Plan de Siembra</option><option>Stock</option><option>Precio</option>
+          <option>Futuro</option><option>FIX</option><option>PAF</option>
+          <option>Call</option><option>Put</option><option>Forward</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Lado</label>
+        <select class="modal-select" id="edit-lado">
+          <option>Compra</option><option>Venta</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Fecha</label>
+        <input type="date" class="modal-input" id="edit-fecha">
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Volumen (tn)</label>
+        <input type="number" class="modal-input" id="edit-volumen" min="0" step="1">
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Precio (USD/tn)</label>
+        <input type="number" class="modal-input" id="edit-precio" min="0" step="0.1">
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Vencimiento</label>
+        <input type="date" class="modal-input" id="edit-vencimiento">
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">P. Ejercicio</label>
+        <input type="number" class="modal-input" id="edit-ejercicio" min="0" step="0.1">
+      </div>
+      <div class="modal-group full">
+        <label class="modal-label">Observaciones</label>
+        <input type="text" class="modal-input" id="edit-obs">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-modal-save" onclick="saveEdit()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASS = 'ctx_admin_2026';
+const SUPA_URL   =  + SUPABASE_URL + ;
+const SUPA_KEY   =  + SUPABASE_KEY + ;
+
+let sb   = null;
+let allOps = [];
+
+// ── AUTH ──
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+function doLogin() {
+  const p = document.getElementById('adminPass').value;
+  if (p === ADMIN_PASS) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminShell').style.display  = 'block';
+    initApp();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+function logout() { location.reload(); }
+
+// ── INIT ──
+function initApp() {
+  sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  loadAll();
+}
+
+function setLoading(pct) {
+  document.getElementById('loadingBar').style.width = pct + '%';
+  if (pct >= 100) setTimeout(() => document.getElementById('loadingBar').style.width = '0', 400);
+}
+
+async function loadAll() {
+  setLoading(30);
+  const { data, error } = await sb.from('operaciones').select('*').order('created_at', { ascending: false });
+  setLoading(100);
+  if (error) { console.error(error); return; }
+  allOps = data || [];
+  updateStats();
+  renderPendientes();
+  renderTodas();
+  renderClienteTabs();
+}
+
+// ── STATS ──
+function updateStats() {
+  const pend  = allOps.filter(o => o.estado === 'pendiente').length;
+  const today = new Date().toISOString().split('T')[0];
+  const conf  = allOps.filter(o => o.estado === 'confirmada' && o.updated_at && o.updated_at.startsWith(today)).length;
+  const clientes = new Set(allOps.map(o => o.cliente_codigo)).size;
+  document.getElementById('stat-pend').textContent    = pend;
+  document.getElementById('stat-conf').textContent    = conf;
+  document.getElementById('stat-total').textContent   = allOps.length;
+  document.getElementById('stat-clientes').textContent = clientes;
+  document.getElementById('badge-pendientes').textContent = pend > 0 ? pend : '0';
+  // Populate cliente filter
+  const fil = document.getElementById('fil-cliente');
+  const current = fil.value;
+  fil.innerHTML = '<option value="">Todos los clientes</option>';
+  [...new Set(allOps.map(o => o.cliente_codigo))].sort().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    if (c === current) opt.selected = true;
+    fil.appendChild(opt);
+  });
+}
+
+// ── RENDER PENDIENTES ──
+function renderPendientes() {
+  const pend = allOps.filter(o => o.estado === 'pendiente');
+  const tbody = document.getElementById('tbody-pendientes');
+  if (!pend.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-icon">✓</div>No hay operaciones pendientes</td></tr>';
+    return;
+  }
+  tbody.innerHTML = pend.map(op => rowHtml(op, true)).join('');
+}
+
+// ── RENDER TODAS ──
+function renderTodas() {
+  let ops = [...allOps];
+  const filC = document.getElementById('fil-cliente').value;
+  const filE = document.getElementById('fil-estado').value;
+  const filP = document.getElementById('fil-producto').value;
+  if (filC) ops = ops.filter(o => o.cliente_codigo === filC);
+  if (filE) ops = ops.filter(o => o.estado === filE);
+  if (filP) ops = ops.filter(o => o.producto === filP);
+  const tbody = document.getElementById('tbody-todas');
+  if (!ops.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-icon">≡</div>Sin resultados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = ops.map(op => rowHtml(op, false)).join('');
+}
+
+function rowHtml(op, isPend) {
+  const fc  = new Date(op.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short'});
+  const fv  = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR', {month:'short',year:'numeric'});
+  const lc  = op.lado === 'Compra' ? 'pill-compra' : 'pill-venta';
+  const pr  = op.precio > 0 ? '$'+Number(op.precio).toFixed(1) : '—';
+  const vol = Number(op.volumen).toLocaleString('es-AR');
+  const est = op.estado === 'pendiente' ? 'badge-pend' : op.estado === 'confirmada' ? 'badge-conf' : 'badge-rech';
+  const elabel = op.estado === 'pendiente' ? 'Pendiente' : op.estado === 'confirmada' ? 'Confirmada' : 'Rechazada';
+  const obs = op.observaciones || '—';
+  const actions = isPend
+    ? `<button class="btn-sm btn-aprobar"  onclick="cambiarEstado('${op.id}','confirmada')">✓ Aprobar</button>
+       <button class="btn-sm btn-editar"   onclick="openEdit('${op.id}')" style="margin:0 4px">✎ Editar</button>
+       <button class="btn-sm btn-rechazar" onclick="cambiarEstado('${op.id}','rechazada')">✕ Rechazar</button>`
+    : `<span class="${est}">${elabel}</span>
+       <button class="btn-sm btn-editar" onclick="openEdit('${op.id}')" style="margin-left:6px">✎</button>`;
+  return `<tr>
+    <td style="color:var(--gris);font-size:12px">${fc}</td>
+    <td style="font-weight:600;color:var(--azul-os)">${op.cliente_codigo}</td>
+    <td>${op.producto}</td>
+    <td>${op.tipo}</td>
+    <td><span class="pill ${lc}">${op.lado}</span></td>
+    <td>${vol} tn</td>
+    <td style="font-weight:600;color:var(--verde)">${pr}/tn</td>
+    <td>${fv}</td>
+    ${isPend ? `<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;color:var(--gris);font-size:12px">${obs}</td>` : ''}
+    <td><div style="display:flex;gap:4px;align-items:center">${actions}</div></td>
+  </tr>`;
+}
+
+// ── APROBAR / RECHAZAR ──
+async function cambiarEstado(id, estado) {
+  setLoading(40);
+  const { error } = await sb.from('operaciones')
+    .update({ estado, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  setLoading(100);
+  if (error) { alert('Error: ' + error.message); return; }
+  await loadAll();
+}
+
+// ── EDITAR ──
+function openEdit(id) {
+  const op = allOps.find(o => o.id === id);
+  if (!op) return;
+  document.getElementById('edit-id').value         = op.id;
+  document.getElementById('edit-producto').value   = op.producto;
+  document.getElementById('edit-tipo').value        = op.tipo;
+  document.getElementById('edit-lado').value        = op.lado;
+  document.getElementById('edit-fecha').value       = op.fecha;
+  document.getElementById('edit-volumen').value     = op.volumen;
+  document.getElementById('edit-precio').value      = op.precio || '';
+  document.getElementById('edit-vencimiento').value = op.vencimiento;
+  document.getElementById('edit-ejercicio').value   = op.precio_ejercicio || '';
+  document.getElementById('edit-obs').value         = op.observaciones || '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+}
+async function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  setLoading(40);
+  const { error } = await sb.from('operaciones').update({
+    producto:        document.getElementById('edit-producto').value,
+    tipo:            document.getElementById('edit-tipo').value,
+    lado:            document.getElementById('edit-lado').value,
+    fecha:           document.getElementById('edit-fecha').value,
+    volumen:         parseFloat(document.getElementById('edit-volumen').value),
+    precio:          parseFloat(document.getElementById('edit-precio').value) || 0,
+    vencimiento:     document.getElementById('edit-vencimiento').value,
+    precio_ejercicio:parseFloat(document.getElementById('edit-ejercicio').value) || 0,
+    observaciones:   document.getElementById('edit-obs').value,
+    updated_at:      new Date().toISOString()
+  }).eq('id', id);
+  setLoading(100);
+  if (error) { alert('Error: ' + error.message); return; }
+  document.getElementById('modalOverlay').classList.remove('open');
+  await loadAll();
+}
+
+// ── CARTERAS POR CLIENTE ──
+function renderClienteTabs() {
+  const clientes = [...new Set(allOps.map(o => o.cliente_codigo))].sort();
+  const tabs = document.getElementById('cliente-tabs');
+  tabs.innerHTML = '';
+  clientes.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = c;
+    btn.onclick = () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCarteraCliente(c);
+    };
+    tabs.appendChild(btn);
+  });
+  if (clientes.length > 0) renderCarteraCliente(clientes[0]);
+}
+
+function renderCarteraCliente(codigo) {
+  const ops = allOps.filter(o => o.cliente_codigo === codigo);
+  const content = document.getElementById('cartera-content');
+  if (!ops.length) {
+    content.innerHTML = '<div class="card"><div class="empty-state">Sin operaciones</div></div>';
+    return;
+  }
+  // Resumen por producto
+  const porProd = {};
+  ops.forEach(op => {
+    if (!porProd[op.producto]) porProd[op.producto] = { compra: 0, venta: 0 };
+    if (op.lado === 'Compra') porProd[op.producto].compra += Number(op.volumen);
+    else porProd[op.producto].venta += Number(op.volumen);
+  });
+  const summaryRows = Object.entries(porProd).map(([prod, v]) => {
+    const neto = v.compra - v.venta;
+    const pos  = neto > 0 ? 'Long' : neto < 0 ? 'Short' : 'Neutro';
+    const pCls = neto > 0 ? 'badge-conf' : neto < 0 ? 'badge-rech' : 'badge-pend';
+    return `<tr>
+      <td style="font-weight:600">${prod}</td>
+      <td>${Number(v.compra).toLocaleString('es-AR')} tn</td>
+      <td>${Number(v.venta).toLocaleString('es-AR')} tn</td>
+      <td style="font-weight:700">${Number(Math.abs(neto)).toLocaleString('es-AR')} tn</td>
+      <td><span class="${pCls}">${pos}</span></td>
+    </tr>`;
+  }).join('');
+
+  const detailRows = ops.map(op => {
+    const fc = new Date(op.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short'});
+    const fv = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR', {month:'short',year:'numeric'});
+    const lc = op.lado === 'Compra' ? 'pill-compra' : 'pill-venta';
+    const pr = op.precio > 0 ? '$'+Number(op.precio).toFixed(1) : '—';
+    const est = op.estado === 'pendiente' ? 'badge-pend' : op.estado === 'confirmada' ? 'badge-conf' : 'badge-rech';
+    const elabel = op.estado === 'pendiente' ? 'Pendiente' : op.estado === 'confirmada' ? 'Confirmada' : 'Rechazada';
+    return `<tr>
+      <td style="color:var(--gris);font-size:12px">${fc}</td>
+      <td>${op.producto}</td>
+      <td>${op.tipo}</td>
+      <td><span class="pill ${lc}">${op.lado}</span></td>
+      <td>${Number(op.volumen).toLocaleString('es-AR')} tn</td>
+      <td style="font-weight:600;color:var(--verde)">${pr}/tn</td>
+      <td>${fv}</td>
+      <td><span class="${est}">${elabel}</span></td>
+    </tr>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h2>Resumen — ${codigo}</h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Producto</th><th>Comprado</th><th>Vendido</th><th>Neto</th><th>Posición</th></tr></thead>
+        <tbody>${summaryRows}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Detalle de operaciones — ${codigo}</h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Estado</th></tr></thead>
+        <tbody>${detailRows}</tbody>
+      </table></div>
+    </div>`;
+}
+
+// ── NAVEGACIÓN ──
+function showSection(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  el.classList.add('active');
+  const titles = {
+    pendientes: ['Operaciones pendientes', 'Revisá y aprobá las operaciones cargadas por los clientes'],
+    todas:      ['Historial completo', 'Todas las operaciones con filtros'],
+    carteras:   ['Carteras por cliente', 'Resumen de posiciones por cliente']
+  };
+  document.getElementById('page-title').textContent = titles[name][0];
+  document.getElementById('page-sub').textContent   = titles[name][1];
+}
+
+// ── EXPORT EXCEL ──
+function exportExcel() {
+  const filC = document.getElementById('fil-cliente').value;
+  const filE = document.getElementById('fil-estado').value;
+  let ops = [...allOps];
+  if (filC) ops = ops.filter(o => o.cliente_codigo === filC);
+  if (filE) ops = ops.filter(o => o.estado === filE);
+
+  const rows = ops.map(op => ({
+    'Fecha carga':   new Date(op.created_at).toLocaleDateString('es-AR'),
+    'Cliente':       op.cliente_codigo,
+    'Producto':      op.producto,
+    'Tipo':          op.tipo,
+    'Lado':          op.lado,
+    'Volumen (tn)':  op.volumen,
+    'Precio':        op.precio,
+    'Vencimiento':   op.vencimiento,
+    'P. Ejercicio':  op.precio_ejercicio,
+    'Observaciones': op.observaciones,
+    'Estado':        op.estado
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Operaciones');
+  const fecha = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, 'CTX_operaciones_' + fecha + '.xlsx');
+}
+</script>
+</body>
+</html>
