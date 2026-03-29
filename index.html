@@ -203,7 +203,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 }
 
 /* Two-column grid for wider screens */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
 
 /* ══════════════════════════════════════
    PRECIOS
@@ -212,6 +212,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 .precio-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 11px 16px; border-bottom: 1px solid var(--crema-d);
+  gap: 8px; flex-wrap: wrap;
 }
 .precio-row:last-child { border-bottom: none; }
 .precio-name { font-size: 13px; font-weight: 500; color: var(--texto); }
@@ -222,8 +223,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 /* ══════════════════════════════════════
    COMPOSICIÓN
 ══════════════════════════════════════ */
-.chart-box { padding: 20px; }
-.chart-container { position: relative; height: 200px; }
+.chart-box { padding: 10%; display: flex; flex-direction: column; flex: 1; }
+.chart-container { position: relative; flex: 1; min-height: 180px; }
+.comp-card { display: flex; flex-direction: column; }
 
 .comp-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .scroll-hint { font-size: 11px; color: var(--gris); text-align: center; padding: 6px 0 2px; }
@@ -353,6 +355,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
   .ops-cards        { display: flex; }
   .footer           { padding: 16px 18px; }
   .kpi-value        { font-size: 20px; }
+  /* chart: leyenda debajo del gráfico en mobile */
+  .chart-box        { padding: 16px; }
 }
 </style>
 </head>
@@ -458,17 +462,17 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
       <div class="two-col" style="margin-bottom:28px">
 
         <!-- Precios -->
-        <div class="section" id="sec-precios" style="margin-bottom:0">
+        <div class="section" id="sec-precios" style="margin-bottom:0;display:flex;flex-direction:column">
           <div class="section-title">Precios de referencia</div>
-          <div class="card">
+          <div class="card" style="flex:1">
             <div class="precios-list" id="d-precios"></div>
           </div>
         </div>
 
         <!-- Composición (gráfico) -->
-        <div class="section" id="sec-comp" style="margin-bottom:0">
+        <div class="section" id="sec-comp" style="margin-bottom:0;display:flex;flex-direction:column">
           <div class="section-title">Composición</div>
-          <div class="card">
+          <div class="card comp-card" style="flex:1">
             <div class="chart-box">
               <div class="chart-container"><canvas id="pieChart"></canvas></div>
             </div>
@@ -640,6 +644,17 @@ function parseWorkbook(wb) {
     if (label === 'Valor pendiente de realizar')   valPendiente  = reporte[i][3] || 0;
   }
 
+  // Composición: valores $ y tn desde Reporte (filas 17-31, cols 3-11)
+  // Posicion (col 23) y Delta (col 24) desde Calculo (filas 0-4 del resumen)
+  // En Calculo: col19=Producto.1, col23=Posicion, col24=Delta
+  const calcResumen = {};
+  for (let i = 0; i < calculo.length; i++) {
+    const prod = calculo[i][19], pos = calculo[i][23], delta = calculo[i][24];
+    if (typeof prod === 'string' && prod && typeof pos === 'string' && pos && typeof delta === 'number') {
+      calcResumen[prod] = { posicion: pos, delta };
+    }
+  }
+
   const composicion = [];
   let ci = 0;
   for (let i = 17; i <= 31; i++) {
@@ -650,11 +665,12 @@ function parseWorkbook(wb) {
     const shortD = row[5]||0, netoD = row[6]||0;
     const longTn = row[7]||0, shortTn = row[8]||0;
     const pCompra= row[9]||0, pVenta = row[10]||0;
-    const pMerc  = row[11]||0, delta = row[13]||0;
-    let posicion, posClass;
-    if      (delta > 0) { posicion='Long';   posClass='pos-long'; }
-    else if (delta < 0) { posicion='Short';  posClass='pos-short'; }
-    else                { posicion='Neutro'; posClass='pos-neutro'; }
+    const pMerc  = row[11]||0;
+    // Leer posicion y delta desde Calculo
+    const cr = calcResumen[prod] || {};
+    const delta    = cr.delta    !== undefined ? cr.delta    : 0;
+    const posicion = cr.posicion || 'Neutro';
+    const posClass = posicion === 'Long' ? 'pos-long' : posicion === 'Short' ? 'pos-short' : 'pos-neutro';
     composicion.push({ producto:prod, longD, shortD, netoD, longTn, shortTn, pCompra, pVenta, pMerc, delta, posicion, posClass, color: COLORES[ci++ % COLORES.length] });
   }
 
@@ -736,8 +752,15 @@ function renderDashboard(data) {
   pieInstance = new Chart(document.getElementById('pieChart').getContext('2d'), {
     type: 'doughnut',
     data: { labels: compV.map(c => c.producto), datasets: [{ data: compV.map(c => Math.abs(c.netoD)), backgroundColor: compV.map(c => c.color), borderWidth: 0, hoverOffset: 8 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '62%',
-      plugins: { legend: { position: 'right', labels: { font: { family: 'DM Sans', size: 11 }, boxWidth: 10, padding: 10 } }, tooltip: { callbacks: { label: ctx => ` ${fmtUSD(ctx.raw)}` } } }
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: {
+          position: window.innerWidth < 768 ? 'bottom' : 'right',
+          labels: { font: { family: 'DM Sans', size: 11 }, boxWidth: 10, padding: 10 }
+        },
+        tooltip: { callbacks: { label: ctx => ` ${fmtUSD(ctx.raw)}` } }
+      }
     }
   });
 
@@ -832,11 +855,11 @@ function loadDemoData() {
         {producto:'Trigo',mes:'12',anio:'2026',valor:215},{producto:'Girasol',mes:'3',anio:'2026',valor:550},{producto:'Sorgo',mes:'4',anio:'2026',valor:200},
       ],
       composicion: [
-        {producto:'Soja',   longD:1007500,shortD:456094,netoD:551406, longTn:3100,shortTn:1230,pCompra:325,   pVenta:370.81,pMerc:338.33,delta:0.603,posicion:'Long',  posClass:'pos-long',  color:'#2d6a4f'},
-        {producto:'Trigo',  longD:580500, shortD:88206, netoD:492294, longTn:2700,shortTn:300, pCompra:215,   pVenta:294.02,pMerc:215,   delta:0.889,posicion:'Long',  posClass:'pos-long',  color:'#c9a84c'},
-        {producto:'Maíz',  longD:751200, shortD:91689, netoD:659511, longTn:4120,shortTn:393, pCompra:182.33,pVenta:233.31,pMerc:185,   delta:0.905,posicion:'Long',  posClass:'pos-long',  color:'#52b788'},
-        {producto:'Girasol',longD:272250, shortD:197820,netoD:74430,  longTn:495, shortTn:450, pCompra:550,   pVenta:439.6, pMerc:525,   delta:0.091,posicion:'Long',  posClass:'pos-long',  color:'#f0d080'},
-        {producto:'Sorgo',  longD:100000, shortD:115000,netoD:-15000, longTn:500, shortTn:500, pCompra:200,   pVenta:230,   pMerc:200,   delta:0,    posicion:'Neutro',posClass:'pos-neutro',color:'#1a3a2a'},
+        {producto:'Soja',   longD:1007500,shortD:456094,netoD:551406, longTn:3100,shortTn:1230,pCompra:325,   pVenta:370.81,pMerc:338.33,delta:0.603,posicion:'Long', posClass:'pos-long', color:'#2d6a4f'},
+        {producto:'Trigo',  longD:580500, shortD:88206, netoD:492294, longTn:2700,shortTn:300, pCompra:215,   pVenta:294.02,pMerc:215,   delta:0.889,posicion:'Long', posClass:'pos-long', color:'#c9a84c'},
+        {producto:'Maíz',  longD:751200, shortD:91689, netoD:659511, longTn:4120,shortTn:393, pCompra:182.33,pVenta:233.31,pMerc:185,   delta:0.905,posicion:'Long', posClass:'pos-long', color:'#52b788'},
+        {producto:'Girasol',longD:272250, shortD:197820,netoD:74430,  longTn:495, shortTn:450, pCompra:550,   pVenta:439.6, pMerc:525,   delta:0.091,posicion:'Long', posClass:'pos-long', color:'#f0d080'},
+        {producto:'Sorgo',  longD:100000, shortD:115000,netoD:-15000, longTn:500, shortTn:500, pCompra:200,   pVenta:230,   pMerc:200,   delta:0,    posicion:'Short',posClass:'pos-short',color:'#1a3a2a'},
       ],
       ops: [
         {nro:1, fecha:new Date('2025-05-28'),prod:'Soja',  tipo:'Plan de Siembra',lado:'Compra',volumen:2200,precio:0,    venc:new Date('2026-05-01'),pEjercicio:0,  pMercado:325,valuacion:715000, resCompra:0,     resFin:null},
