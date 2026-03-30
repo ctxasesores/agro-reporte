@@ -450,19 +450,19 @@ h1,h2,h3,.section-title,.hero-nombre,.brand-name { font-family: 'Playfair Displa
   </div>
   <div class="login-sub" style="color:rgba(255,255,255,.45);font-size:13px;margin-bottom:40px">Administración de activos y gestión de riesgo</div>
   <div class="login-card">
-    <label>Código de cliente</label>
-    <input type="text" id="loginUser" placeholder="ej: ANTSA_21" autocomplete="off">
+    <label>Email</label>
+    <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email">
     <label>Contraseña</label>
     <input type="password" id="loginPass" placeholder="••••••••">
-    <button class="btn-primary" onclick="doLogin()">Ingresar</button>
-    <div class="login-error" id="loginError">Código o contraseña incorrectos</div>
+    <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
   </div>
 </div>
 
 <!-- ── UPLOAD ── -->
 <div id="uploadScreen">
   <div class="upload-title">Cargar reporte</div>
-  <div class="upload-sub">Subí el archivo Excel del cliente para visualizar el dashboard</div>
+  <div class="upload-sub" id="upload-sub-text">Cargando tu reporte...</div>
   <div class="upload-zone" onclick="document.getElementById('fileInput').click()" id="dropZone">
     <div class="upload-icon">📊</div>
     <p><strong>Tocá para seleccionar el archivo</strong><br>o arrastrá el .xlsx aquí</p>
@@ -757,10 +757,8 @@ h1,h2,h3,.section-title,.hero-nombre,.brand-name { font-family: 'Playfair Displa
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-const CLIENTES = [
-  { codigo: 'ANTSA_21', pass: 'campo2024' },
-  { codigo: 'DEMO',     pass: 'demo'      },
-];
+// Autenticación via Supabase Auth
+// (usuarios gestionados desde el panel admin)
 const COLORES = ['#D95FA2','#66BCF2','#595959','#F2B3D6','#101729','#303342','#2ba56e'];
 const OPS_CON_FIN = ['Futuro','Call','Put'];
 
@@ -770,24 +768,41 @@ let allOps      = [];
 // ══════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════
-function doLogin() {
-  const user  = document.getElementById('loginUser').value.trim().toUpperCase();
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value.trim();
-  const match = CLIENTES.find(c => c.codigo === user && c.pass === pass);
-  if (match) {
-    document.getElementById('loginError').style.display  = 'none';
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('uploadScreen').style.display= 'flex';
-    currentClienteCodigo = user;
-    initSupabase();
-    currentClienteCodigo = user;
-    initSupabase();
-  } else {
-    document.getElementById('loginError').style.display  = 'block';
+  const btn   = document.getElementById('btnLogin');
+  const errEl = document.getElementById('loginError');
+  if (!email || !pass) {
+    errEl.textContent = 'Completá email y contraseña.';
+    errEl.style.display = 'block'; return;
   }
+  btn.disabled = true; btn.textContent = 'Ingresando...';
+  initSupabase();
+  const { data, error } = await supaClient.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Ingresar';
+  if (error) {
+    errEl.textContent = 'Email o contraseña incorrectos.';
+    errEl.style.display = 'block'; return;
+  }
+  const { data: cli, error: cliErr } = await supaClient
+    .from('clientes').select('codigo,nombre_empresa,campania,actividad')
+    .eq('id', data.user.id).single();
+  if (cliErr || !cli) {
+    errEl.textContent = 'Error al cargar tu perfil. Contactá a tu asesor.';
+    errEl.style.display = 'block';
+    await supaClient.auth.signOut(); return;
+  }
+  currentClienteCodigo = cli.codigo;
+  currentClienteData   = cli;
+  errEl.style.display  = 'none';
+  document.getElementById('loginScreen').style.display  = 'none';
+  document.getElementById('uploadScreen').style.display = 'flex';
+  const subEl = document.getElementById('upload-sub-text');
+  if (subEl) subEl.textContent = 'Bienvenido, ' + cli.nombre_empresa + '. Subí tu reporte Excel.';
 }
 document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-function logout() { location.reload(); }
+async function logout() { if(supaClient) await supaClient.auth.signOut(); location.reload(); }
 
 // ══════════════════════════════════════
 // SIDEBAR TOGGLE
@@ -1119,6 +1134,7 @@ const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 let supaClient = null;
 let currentClienteCodigo = null;
+let currentClienteData   = null;
 
 function initSupabase() {
   if (window.supabase && !supaClient) {
