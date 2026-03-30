@@ -309,6 +309,9 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
       <a class="nav-item" onclick="showSection('carteras', this)">
         <span>◉</span> Carteras de clientes
       </a>
+      <a class="nav-item" onclick="showSection('usuarios', this)">
+        <span>⊕</span> Usuarios
+      </a>
     </nav>
     <div class="sidebar-footer">
       <div style="color:rgba(200,169,110,.3);font-size:9px;letter-spacing:.3px;line-height:1.5;border-top:1px solid rgba(255,255,255,.05);padding-top:10px;margin-bottom:10px">Asesoría estratégica<br>financiera agropecuaria</div>
@@ -445,6 +448,84 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
         </div>
       </div>
 
+      <!-- SECCIÓN: USUARIOS -->
+      <div class="section" id="sec-usuarios">
+
+        <!-- Crear nuevo usuario -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div>
+              <h2>Crear nuevo cliente</h2>
+              <div class="card-header-sub">El cliente recibirá su email y contraseña para acceder al dashboard</div>
+            </div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px" id="nuevoUserForm">
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Nombre empresa / cliente</label>
+              <input type="text" class="filter-select" id="nu-nombre" placeholder="Agropecuaria XYZ S.A." style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Código interno</label>
+              <input type="text" class="filter-select" id="nu-codigo" placeholder="XYZ_22" style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Email</label>
+              <input type="email" class="filter-select" id="nu-email" placeholder="cliente@empresa.com" style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Contraseña inicial</label>
+              <input type="text" class="filter-select" id="nu-pass" placeholder="mínimo 8 caracteres" style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Campaña</label>
+              <input type="text" class="filter-select" id="nu-campania" placeholder="25/26" style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Actividad</label>
+              <select class="filter-select" id="nu-actividad" style="padding:10px 12px;font-size:14px">
+                <option>Agricultura</option>
+                <option>Ganadería</option>
+                <option>Agricultura y Ganadería</option>
+                <option>Tambo</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--crema-d)">
+              <div id="nu-toast" style="font-size:13px;font-weight:500;display:none;padding:8px 14px;border-radius:8px"></div>
+              <button class="btn-export" id="nu-btn" onclick="crearUsuario()" style="margin-left:auto">
+                + Crear cliente
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de clientes existentes -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Clientes activos</h2>
+            <button class="btn-refresh" onclick="cargarClientes()">↻ Actualizar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre / Empresa</th>
+                  <th>Código</th>
+                  <th>Email</th>
+                  <th>Campaña</th>
+                  <th>Actividad</th>
+                  <th>Alta</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-clientes">
+                <tr><td colspan="8" class="empty-state">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -532,7 +613,9 @@ function logout() { location.reload(); }
 
 // ── INIT ──
 function initApp() {
-  sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
   loadAll();
 }
 
@@ -776,8 +859,10 @@ function showSection(name, el) {
   const titles = {
     pendientes: ['Operaciones pendientes', 'Revisá y aprobá las operaciones cargadas por los clientes'],
     todas:      ['Historial completo', 'Todas las operaciones con filtros'],
-    carteras:   ['Carteras por cliente', 'Resumen de posiciones por cliente']
+    carteras:   ['Carteras por cliente', 'Resumen de posiciones por cliente'],
+    usuarios:   ['Gestión de usuarios', 'Creá y administrá los accesos de cada cliente']
   };
+  if (name === 'usuarios') cargarClientes();
   document.getElementById('page-title').textContent = titles[name][0];
   document.getElementById('page-sub').textContent   = titles[name][1];
 }
@@ -810,6 +895,116 @@ function exportExcel() {
   const fecha = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, 'CTX_operaciones_' + fecha + '.xlsx');
 }
+// ══ GESTIÓN DE USUARIOS ══
+
+async function crearUsuario() {
+  const nombre   = document.getElementById('nu-nombre').value.trim();
+  const codigo   = document.getElementById('nu-codigo').value.trim().toUpperCase();
+  const email    = document.getElementById('nu-email').value.trim();
+  const pass     = document.getElementById('nu-pass').value.trim();
+  const campania = document.getElementById('nu-campania').value.trim();
+  const actividad= document.getElementById('nu-actividad').value;
+
+  if (!nombre || !codigo || !email || !pass) {
+    mostrarToastNU('Completá todos los campos obligatorios.', 'err');
+    return;
+  }
+  if (pass.length < 8) {
+    mostrarToastNU('La contraseña debe tener al menos 8 caracteres.', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('nu-btn');
+  btn.disabled = true;
+  btn.textContent = 'Creando...';
+
+  // 1. Crear usuario en Supabase Auth
+  const { data: authData, error: authError } = await sb.auth.signUp({
+    email,
+    password: pass
+  });
+
+  if (authError) {
+    mostrarToastNU('Error Auth: ' + authError.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '+ Crear cliente';
+    return;
+  }
+
+  // 2. Insertar en tabla clientes
+  const { error: dbError } = await sb.from('clientes').insert({
+    id:             authData.user.id,
+    codigo,
+    nombre_empresa: nombre,
+    email,
+    campania,
+    actividad,
+    activo:         true
+  });
+
+  btn.disabled = false;
+  btn.textContent = '+ Crear cliente';
+
+  if (dbError) {
+    mostrarToastNU('Error DB: ' + dbError.message, 'err');
+    // Rollback: eliminar usuario auth si falló el insert
+    // Note: manual cleanup may be needed in Supabase Auth dashboard
+    return;
+  }
+
+  mostrarToastNU('✓ Cliente ' + nombre + ' creado correctamente.', 'ok');
+  // Limpiar form
+  ['nu-nombre','nu-codigo','nu-email','nu-pass','nu-campania'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  await cargarClientes();
+}
+
+async function cargarClientes() {
+  const { data, error } = await sb.from('clientes').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('tbody-clientes');
+  if (!tbody) return;
+  if (error || !data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sin clientes registrados aún.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(c => {
+    const fecha  = new Date(c.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short',year:'numeric'});
+    const estado = c.activo
+      ? '<span class="badge-conf">Activo</span>'
+      : '<span class="badge-rech">Inactivo</span>';
+    const toggle = c.activo
+      ? '<button class="btn-sm btn-rechazar" onclick="toggleCliente(\''+c.id+'\', false)">Desactivar</button>'
+      : '<button class="btn-sm btn-aprobar"  onclick="toggleCliente(\''+c.id+'\', true)">Activar</button>';
+    return '<tr>'
+      + '<td style="font-weight:600">' + c.nombre_empresa + '</td>'
+      + '<td style="font-family:monospace;font-size:12px;color:var(--gris)">' + c.codigo + '</td>'
+      + '<td style="color:var(--gris);font-size:13px">' + c.email + '</td>'
+      + '<td>' + (c.campania || '—') + '</td>'
+      + '<td>' + (c.actividad || '—') + '</td>'
+      + '<td style="color:var(--gris);font-size:12px">' + fecha + '</td>'
+      + '<td>' + estado + '</td>'
+      + '<td>' + toggle + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+async function toggleCliente(id, activo) {
+  await sb.from('clientes').update({ activo }).eq('id', id);
+  await cargarClientes();
+}
+
+function mostrarToastNU(msg, type) {
+  const el = document.getElementById('nu-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = type === 'ok' ? '#dcfce7' : '#fee2e2';
+  el.style.color      = type === 'ok' ? '#166534' : '#991b1b';
+  el.style.border     = type === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
 </script>
 </body>
 </html>
