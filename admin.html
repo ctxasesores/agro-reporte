@@ -592,10 +592,12 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
 <script>
 const ADMIN_PASS = 'ctx_admin_2026';
 const SUPA_URL   = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
-const SUPA_KEY   = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const SUPA_KEY     = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const SUPA_SERVICE = 'sb_secret_YNqDxzG68PBxvKhsN--rvg_sJaLZjK0';
 
-let sb   = null;
-let allOps = [];
+let sb      = null;
+let sbAdmin = null;
+let allOps  = [];
 
 // ── AUTH ──
 document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -613,8 +615,19 @@ function logout() { location.reload(); }
 
 // ── INIT ──
 function initApp() {
-  sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false }
+  sb      = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  sbAdmin = window.supabase.createClient(SUPA_URL, SUPA_SERVICE, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession:   false,
+      detectSessionInUrl: false
+    },
+    global: {
+      headers: {
+        'Authorization': 'Bearer ' + SUPA_SERVICE,
+        'apikey': SUPA_SERVICE
+      }
+    }
   });
   loadAll();
 }
@@ -919,9 +932,10 @@ async function crearUsuario() {
   btn.textContent = 'Creando...';
 
   // 1. Crear usuario en Supabase Auth
-  const { data: authData, error: authError } = await sb.auth.signUp({
+  const { data: authData, error: authError } = await sbAdmin.auth.admin.createUser({
     email,
-    password: pass
+    password: pass,
+    email_confirm: true
   });
 
   if (authError) {
@@ -932,7 +946,7 @@ async function crearUsuario() {
   }
 
   // 2. Insertar en tabla clientes
-  const { error: dbError } = await sb.from('clientes').insert({
+  const { error: dbError } = await sbAdmin.from('clientes').insert({
     id:             authData.user.id,
     codigo,
     nombre_empresa: nombre,
@@ -948,7 +962,7 @@ async function crearUsuario() {
   if (dbError) {
     mostrarToastNU('Error DB: ' + dbError.message, 'err');
     // Rollback: eliminar usuario auth si falló el insert
-    // Note: manual cleanup may be needed in Supabase Auth dashboard
+    await sbAdmin.auth.admin.deleteUser(authData.user.id);
     return;
   }
 
@@ -961,7 +975,7 @@ async function crearUsuario() {
 }
 
 async function cargarClientes() {
-  const { data, error } = await sb.from('clientes').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sbAdmin.from('clientes').select('*').order('created_at', { ascending: false });
   const tbody = document.getElementById('tbody-clientes');
   if (!tbody) return;
   if (error || !data || data.length === 0) {
@@ -990,7 +1004,7 @@ async function cargarClientes() {
 }
 
 async function toggleCliente(id, activo) {
-  await sb.from('clientes').update({ activo }).eq('id', id);
+  await sbAdmin.from('clientes').update({ activo }).eq('id', id);
   await cargarClientes();
 }
 
