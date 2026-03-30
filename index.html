@@ -37,7 +37,8 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-h1,h2,h3,.section-title,.hero-nombre,.brand-name { font-family: 'Playfair Display', Georgia, serif; }
+h1,h2,h3,.section-title,.hero-nombre { font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 400; color: white; margin-bottom: 2px; letter-spacing: .3px; }
+.brand-name { font-family: 'Playfair Display', Georgia, serif; }
 
 /* ══════════════════════════════════════
    AUTH SCREENS
@@ -189,7 +190,7 @@ h1,h2,h3,.section-title,.hero-nombre,.brand-name { font-family: 'Playfair Displa
   padding: 28px 28px 36px; color: white;
 }
 .hero-eyebrow { font-size: 10px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; font-weight: 500; }
-.hero-nombre  { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; color: white; margin-bottom: 2px; font-weight: 400; }
+/* hero-nombre defined above */
 .hero-meta    { font-size: 13px; color: rgba(255,255,255,.45); margin-bottom: 26px; }
 
 .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -200,7 +201,7 @@ h1,h2,h3,.section-title,.hero-nombre,.brand-name { font-family: 'Playfair Displa
 .kpi-card.full { grid-column: 1 / -1; }
 .kpi-label { font-size: 10px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px; }
 .kpi-value          { font-size: 20px; font-weight: 500; color: white; line-height: 1; }
-.kpi-card.full .kpi-value { font-size: 44px; font-weight: 600; color: var(--oro-l); line-height: 1; font-family: 'Playfair Display', Georgia, serif; }
+.kpi-card.full .kpi-value { font-size: 44px !important; font-weight: 600; color: var(--oro-l); line-height: 1; font-family: 'Playfair Display', Georgia, serif !important; }
 .kpi-sub { font-size: 11px; color: rgba(255,255,255,.38); margin-top: 4px; }
 
 /* ══════════════════════════════════════
@@ -210,7 +211,7 @@ h1,h2,h3,.section-title,.hero-nombre,.brand-name { font-family: 'Playfair Displa
 
 .section { margin-bottom: 28px; }
 .section-title {
-  font-family: 'Playfair Display', Georgia, serif; font-size: 16px; color: var(--negro);
+  font-family: 'Playfair Display', Georgia, serif !important; font-size: 16px; color: var(--negro);
   margin-bottom: 14px; display: flex; align-items: center; gap: 10px; font-weight: 400;
   letter-spacing: .2px;
 }
