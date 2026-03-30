@@ -3,34 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CTX — Panel Administrador</title>
+<title>Context | Panel Administrador</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --azul-os: #101729; --azul-m: #303342;
-  --crema: #f5f2ee; --crema-d: #e8e2d9;
-  --verde: #2ba56e; --verde-m: #229158;
-  --rojo: #dc5337; --texto: #101729;
-  --gris: #5a5f72; --sombra: 0 2px 16px rgba(16,23,41,.08);
-  --radio: 14px; --sidebar: 240px;
+  --negro:   #1c1a18; --negro-m:  #2a2825;
+  --crema:   #faf8f4; --crema-d:  #f0ebe3; --crema-dd: #e5dfd6;
+  --oro:     #c8a96e; --oro-l:    #e8d9b8; --oro-d:    #a68a4e;
+  --verde:   #2e7d52; --verde-m:  #256742; --verde-l:  #4aab76;
+  --rojo:    #c0391b; --texto:    #1c1a18;
+  --gris:    #7a7268; --gris-l:   #9b9289;
+  --blanco:  #ffffff;
+  --sombra:  0 1px 12px rgba(28,26,24,.07);
+  --radio:   10px; --sidebar: 240px;
+  --azul-os: #1c1a18; --azul-m: #2a2825;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+h1,h2,h3,.page-header h1 { font-family: 'Playfair Display', Georgia, serif; font-weight: 400; }
 
 /* LOGIN */
 #loginScreen {
   min-height: 100vh; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  background: var(--azul-os); padding: 32px 20px;
+  background: var(--negro); padding: 32px 20px;
 }
 .login-badge {
-  background: rgba(220,83,55,.18); color: #f87c68;
+  background: rgba(200,169,110,.15); color: var(--oro-l);
   font-size: 11px; font-weight: 600; letter-spacing: 1px;
   text-transform: uppercase; padding: 4px 14px;
   border-radius: 20px; margin-bottom: 20px;
-  border: 1px solid rgba(220,83,55,.3);
+  border: 1px solid rgba(200,169,110,.3);
 }
 .login-card {
   background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
@@ -47,7 +52,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 .login-card input:focus { border-color: var(--verde); }
 .login-card input::placeholder { color: rgba(255,255,255,.28); }
 .btn-login {
-  width: 100%; padding: 14px; background: var(--verde); color: white;
+  width: 100%; padding: 14px; background: var(--oro); color: var(--negro);
   border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s;
 }
@@ -59,7 +64,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 
 /* SIDEBAR */
 .sidebar {
-  width: var(--sidebar); background: var(--azul-os);
+  width: var(--sidebar); background: var(--negro);
   position: fixed; top: 0; left: 0; bottom: 0;
   display: flex; flex-direction: column; z-index: 200;
 }
@@ -68,10 +73,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 .brand-name { font-size: 17px; font-weight: 600; color: white; letter-spacing: .5px; }
 .brand-sub  { color: rgba(255,255,255,.38); font-size: 11px; margin-top: 4px; }
 .admin-pill {
-  display: inline-block; background: rgba(220,83,55,.2); color: #f87c68;
+  display: inline-block; background: rgba(200,169,110,.15); color: var(--oro-l);
   font-size: 10px; font-weight: 700; letter-spacing: .8px;
   text-transform: uppercase; padding: 2px 8px; border-radius: 10px;
-  border: 1px solid rgba(220,83,55,.3); margin-top: 6px;
+  border: 1px solid rgba(200,169,110,.25); margin-top: 6px;
 }
 
 .sidebar-nav { flex: 1; padding: 10px 0; }
@@ -82,7 +87,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
   border-left: 2px solid transparent; transition: all .15s;
   text-decoration: none;
 }
-.nav-item.active { background: rgba(255,255,255,.08); color: #7dbaf8; border-left-color: #7dbaf8; }
+.nav-item.active { background: rgba(200,169,110,.1); color: var(--oro-l); border-left-color: var(--oro); }
 .nav-item:hover:not(.active) { background: rgba(255,255,255,.04); color: rgba(255,255,255,.78); }
 .nav-badge {
   margin-left: auto; background: var(--rojo); color: white;
@@ -102,7 +107,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 /* MAIN */
 .main-content { margin-left: var(--sidebar); min-height: 100vh; }
 .page-header {
-  background: var(--azul-os); padding: 20px 28px;
+  background: var(--negro); padding: 20px 28px;
   display: flex; align-items: center; justify-content: space-between;
 }
 .page-header h1 { font-size: 18px; font-weight: 600; color: white; }
@@ -112,7 +117,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 .page-body { padding: 28px; }
 
 /* CARDS / PANELS */
-.card { background: white; border-radius: var(--radio); box-shadow: var(--sombra); overflow: hidden; }
+.card { background: var(--blanco); border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--crema-d); overflow: hidden; }
 .card-header {
   padding: 16px 20px; border-bottom: 1px solid var(--crema-d);
   display: flex; align-items: center; justify-content: space-between;
@@ -128,7 +133,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(
 }
 .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--gris); margin-bottom: 6px; }
 .stat-val   { font-size: 28px; font-weight: 700; color: var(--texto); line-height: 1; }
-.stat-val.pend { color: #92400e; }
+.stat-val.pend { color: var(--oro-d); }
 .stat-val.verde { color: var(--verde); }
 .stat-val.rojo  { color: var(--rojo); }
 
@@ -164,7 +169,7 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
 .btn-rechazar { background: #fee2e2; color: #991b1b; }
 .btn-editar   { background: var(--crema-d); color: var(--texto); }
 .btn-export {
-  padding: 9px 18px; background: var(--verde); color: white;
+  padding: 9px 18px; background: var(--oro); color: var(--negro);
   border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .2s;
 }
@@ -175,7 +180,7 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
   border-radius: 8px; font-family: 'DM Sans', sans-serif;
   font-size: 13px; cursor: pointer; transition: all .2s;
 }
-.btn-refresh:hover { border-color: var(--verde); color: var(--verde); }
+.btn-refresh:hover { border-color: var(--oro-d); color: var(--oro-d); }
 
 /* FILTERS */
 .filters-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
@@ -184,7 +189,7 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
   background: white; font-family: 'DM Sans', sans-serif; font-size: 13px;
   color: var(--texto); outline: none; cursor: pointer;
 }
-.filter-select:focus { border-color: var(--verde); }
+.filter-select:focus { border-color: var(--oro); }
 .filter-label { font-size: 12px; color: var(--gris); }
 
 /* SECTIONS */
@@ -213,7 +218,7 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
   font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--texto);
   outline: none; transition: border .2s; width: 100%;
 }
-.modal-input:focus, .modal-select:focus { border-color: var(--verde); }
+.modal-input:focus, .modal-select:focus { border-color: var(--oro); }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .btn-modal-cancel {
   padding: 10px 18px; background: transparent; border: 1px solid var(--crema-d);
@@ -221,7 +226,7 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
   font-size: 13px; cursor: pointer;
 }
 .btn-modal-save {
-  padding: 10px 22px; background: var(--verde); color: white;
+  padding: 10px 22px; background: var(--oro); color: var(--negro);
   border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
@@ -238,7 +243,7 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
 /* LOADING */
 #loadingBar {
   position: fixed; top: 0; left: 0; height: 3px;
-  background: var(--verde); width: 0; z-index: 999;
+  background: var(--oro); width: 0; z-index: 999;
   transition: width .3s;
 }
 .empty-state { padding: 40px; text-align: center; color: var(--gris); font-size: 14px; }
@@ -306,7 +311,8 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
       </a>
     </nav>
     <div class="sidebar-footer">
-      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+      <div style="color:rgba(200,169,110,.3);font-size:9px;letter-spacing:.3px;line-height:1.5;border-top:1px solid rgba(255,255,255,.05);padding-top:10px;margin-bottom:10px">Asesoría estratégica<br>financiera agropecuaria</div>
+      <button class="btn-logout" style="border-color:rgba(200,169,110,.2);color:rgba(200,169,110,.5)" onclick="logout()">Cerrar sesión</button>
     </div>
   </aside>
 
