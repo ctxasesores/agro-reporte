@@ -941,7 +941,16 @@ async function crearUsuario() {
   });
 
   if (authError) {
-    mostrarToastNU('Error Auth: ' + authError.message, 'err');
+    const msg = authError.message.toLowerCase();
+    let textoError = 'Error al crear el usuario: ' + authError.message;
+    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('email address is already')) {
+      textoError = 'Ese email ya está registrado. Usá otro email o eliminá el usuario existente desde Supabase → Authentication → Users.';
+    } else if (msg.includes('invalid email')) {
+      textoError = 'El email no tiene un formato válido.';
+    } else if (msg.includes('password') || msg.includes('weak')) {
+      textoError = 'La contraseña es demasiado débil. Usá al menos 8 caracteres con letras y números.';
+    }
+    mostrarToastNU(textoError, 'err');
     btn.disabled = false;
     btn.textContent = '+ Crear cliente';
     return;
@@ -962,8 +971,11 @@ async function crearUsuario() {
   btn.textContent = '+ Crear cliente';
 
   if (dbError) {
-    mostrarToastNU('Error DB: ' + dbError.message, 'err');
-    // Rollback: eliminar usuario auth si falló el insert
+    let textoDb = 'Error al guardar el perfil: ' + dbError.message;
+    if (dbError.message.includes('unique') || dbError.message.includes('duplicate') || dbError.code === '23505') {
+      textoDb = 'El código interno "' + codigo + '" ya existe. Usá un código diferente.';
+    }
+    mostrarToastNU(textoDb, 'err');
     await sbAdmin.auth.admin.deleteUser(authData.user.id);
     return;
   }
