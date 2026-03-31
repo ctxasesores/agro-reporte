@@ -802,62 +802,105 @@ async function guardarOperacion() {
   btn.disabled=true; btn.textContent='Guardando...';
   const {error} = await sb.from('operaciones').insert({
     cliente_codigo:currentCliente.codigo, producto, tipo, lado, fecha,
-    volumen, precio, vencimiento, precio_ejercicio:ejercicio, observaciones:obs, estado:'pendiente'
+    volumen, precio, vencimiento, precio_ejercicio:ejercicio, observaciones:obs, estado:'confirmada'
   });
   btn.disabled=false; btn.textContent='Guardar operación';
   if (error) { showToast('Error: '+error.message,'err'); return; }
-  showToast('✓ Operación guardada. El asesor la revisará pronto.','ok');
+  showToast('✓ Operación guardada.','ok');
   resetForm();
+  await refreshData();
   await cargarOpsGuardadas();
 }
 
 async function cargarOpsGuardadas() {
   if (!sb||!currentCliente) return;
-  const {data} = await sb.from('operaciones').select('*')
-    .eq('cliente_codigo',currentCliente.codigo)
-    .order('created_at',{ascending:false}).limit(50);
-  const wrap=document.getElementById('ops-guardadas-wrap');
+  const data = await cargarOpsGuardadasConCache();
+  const wrap = document.getElementById('ops-guardadas-wrap');
   if (!wrap) return;
-  if (!data||!data.length) { wrap.innerHTML='<div class="card empty-state">Todavía no hay operaciones cargadas.</div>'; return; }
-  const rows=data.map(op=>{
-    const fOp=new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-    const fVto=new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'});
-    const lc=op.lado==='Compra'?'pill-compra':'pill-venta';
-    const bc=op.estado==='pendiente'?'badge-pend':'badge-conf';
-    return `<tr>
-      <td style="color:var(--gris);font-size:12px">${fOp}</td>
-      <td style="font-weight:600">${op.producto}</td>
-      <td>${op.tipo}</td>
-      <td><span class="pill ${lc}">${op.lado}</span></td>
-      <td>${Number(op.volumen).toLocaleString('es-AR')} tn</td>
-      <td style="font-weight:600;color:var(--verde)">${op.precio>0?'$'+Number(op.precio).toFixed(1)+'/tn':'—'}</td>
-      <td>${fVto}</td>
-      <td><span class="${bc}">${op.estado==='pendiente'?'Pendiente':'Confirmada'}</span></td>
-    </tr>`;
+  if (!data||!data.length) {
+    wrap.innerHTML='<div class="card empty-state">Todavía no hay operaciones cargadas.</div>';
+    return;
+  }
+  const rows = data.map(op => {
+    const fOp  = new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    const fVto = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'});
+    const lc   = op.lado==='Compra'?'pill-compra':'pill-venta';
+    const oid  = op.id;
+    return '<tr>'
+      +'<td style="color:var(--gris);font-size:12px">'+fOp+'</td>'
+      +'<td style="font-weight:600">'+op.producto+'</td>'
+      +'<td>'+op.tipo+'</td>'
+      +'<td><span class="pill '+lc+'">'+op.lado+'</span></td>'
+      +'<td>'+Number(op.volumen).toLocaleString('es-AR')+' tn</td>'
+      +'<td style="font-weight:600;color:var(--verde)">'+(op.precio>0?'$'+Number(op.precio).toFixed(1)+'/tn':'—')+'</td>'
+      +'<td>'+fVto+'</td>'
+      +'<td style="white-space:nowrap">'
+        +'<button onclick="abrirEditarOp(''+oid+'')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:white;font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>'
+        +'<button onclick="eliminarOp(''+oid+'')" style="padding:4px 10px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">✕</button>'
+      +'</td>'
+      +'</tr>';
   }).join('');
-  wrap.innerHTML=`<div class="card ops-table-wrap"><table class="ops-table">
-    <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Estado</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>`;
+  wrap.innerHTML = '<div class="card ops-table-wrap"><table class="ops-table">'
+    +'<thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Acciones</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></div>';
 }
 
-// ── NAVEGACIÓN ──
-function navTo(section, el) {
-  activeSection = section;
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  if(el) el.classList.add('active');
-  const ids = ['sec-resumen','sec-precios','sec-composicion','sec-operaciones','sec-nueva'];
-  const map  = {'resumen':'sec-resumen','precios':'sec-precios','composicion':'sec-composicion','operaciones':'sec-operaciones','nueva':'sec-nueva'};
-  document.getElementById(map[section])?.scrollIntoView({behavior:'smooth',block:'start'});
-  closeSidebar();
+async function cargarOpsGuardadasConCache() {
+  if (!sb || !currentCliente) return [];
+  const {data} = await sb.from('operaciones').select('*')
+    .eq('cliente_codigo', currentCliente.codigo)
+    .order('created_at', {ascending:false}).limit(100);
+  opsCache = data || [];
+  return opsCache;
 }
 
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('open');
+function abrirEditarOp(id) {
+  const op = opsCache.find(o => o.id === id);
+  if (!op) return;
+  document.getElementById('eop-id').value         = op.id;
+  document.getElementById('eop-producto').value   = op.producto;
+  document.getElementById('eop-tipo').value        = op.tipo;
+  document.getElementById('eop-lado').value        = op.lado;
+  document.getElementById('eop-fecha').value       = op.fecha;
+  document.getElementById('eop-volumen').value     = op.volumen;
+  document.getElementById('eop-precio').value      = op.precio || '';
+  document.getElementById('eop-vencimiento').value = op.vencimiento;
+  document.getElementById('eop-ejercicio').value   = op.precio_ejercicio || '';
+  document.getElementById('eop-obs').value         = op.observaciones || '';
+  const modal = document.getElementById('editOpModal');
+  modal.style.display = 'flex';
 }
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('overlay').classList.remove('open');
+
+function cerrarEditarOp() {
+  document.getElementById('editOpModal').style.display = 'none';
+}
+
+async function guardarEditOp() {
+  const id = document.getElementById('eop-id').value;
+  const {error} = await sb.from('operaciones').update({
+    producto:         document.getElementById('eop-producto').value,
+    tipo:             document.getElementById('eop-tipo').value,
+    lado:             document.getElementById('eop-lado').value,
+    fecha:            document.getElementById('eop-fecha').value,
+    volumen:          parseFloat(document.getElementById('eop-volumen').value),
+    precio:           parseFloat(document.getElementById('eop-precio').value) || 0,
+    vencimiento:      document.getElementById('eop-vencimiento').value,
+    precio_ejercicio: parseFloat(document.getElementById('eop-ejercicio').value) || 0,
+    observaciones:    document.getElementById('eop-obs').value,
+    updated_at:       new Date().toISOString()
+  }).eq('id', id);
+  if (error) { alert('Error al guardar: ' + error.message); return; }
+  cerrarEditarOp();
+  await refreshData();
+  await cargarOpsGuardadas();
+}
+
+async function eliminarOp(id) {
+  if (!confirm('¿Eliminar esta operación? Esta acción no se puede deshacer.')) return;
+  const {error} = await sb.from('operaciones').delete().eq('id', id);
+  if (error) { alert('Error al eliminar: ' + error.message); return; }
+  await refreshData();
+  await cargarOpsGuardadas();
 }
 
 // ── REFRESH ──
@@ -891,5 +934,65 @@ function fmtUSD(n) {
 function fmtTn(n) { return n?Number(n).toLocaleString('es-AR'):'0'; }
 function fmtPrecio(n) { return n?'$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'; }
 </script>
+
+<!-- MODAL EDITAR OPERACIÓN (cliente) -->
+<div id="editOpModal" style="display:none;position:fixed;inset:0;background:rgba(28,26,24,.6);z-index:500;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:520px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--negro)">Editar operación</h3>
+    <input type="hidden" id="eop-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Producto</label>
+        <select class="form-select" id="eop-producto">
+          <option>Soja</option><option>Maíz</option><option>Trigo</option>
+          <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="eop-tipo">
+          <option>Plan de Siembra</option><option>Stock</option><option>Precio</option>
+          <option>Futuro</option><option>FIX</option><option>PAF</option>
+          <option>Call</option><option>Put</option><option>Forward</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lado</label>
+        <select class="form-select" id="eop-lado">
+          <option>Compra</option><option>Venta</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" class="form-input" id="eop-fecha">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Volumen (tn)</label>
+        <input type="number" class="form-input" id="eop-volumen" min="0" step="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio (USD/tn)</label>
+        <input type="number" class="form-input" id="eop-precio" min="0" step="0.1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vencimiento</label>
+        <input type="date" class="form-input" id="eop-vencimiento">
+      </div>
+      <div class="form-group">
+        <label class="form-label">P. Ejercicio</label>
+        <input type="number" class="form-input" id="eop-ejercicio" min="0" step="0.1">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Observaciones</label>
+        <input type="text" class="form-input" id="eop-obs">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button onclick="cerrarEditarOp()" style="padding:10px 18px;background:transparent;border:1px solid var(--crema-d);color:var(--gris);border-radius:8px;cursor:pointer">Cancelar</button>
+      <button onclick="guardarEditOp()" style="padding:10px 22px;background:var(--oro);color:var(--negro);border:none;border-radius:8px;font-weight:700;cursor:pointer">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

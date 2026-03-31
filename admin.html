@@ -180,7 +180,7 @@ tr:hover td { background:#f9faf6; }
     </div>
     <nav class="sidebar-nav">
       <a class="nav-item active" onclick="showSection('pendientes',this)">
-        ⏳ Pendientes <span class="nav-badge" id="badge-pend">0</span>
+        📋 Últimas operaciones
       </a>
       <a class="nav-item" onclick="showSection('todas',this)">≡ Todas las operaciones</a>
       <a class="nav-item" onclick="showSection('carteras',this)">◉ Carteras de clientes</a>
@@ -196,8 +196,8 @@ tr:hover td { background:#f9faf6; }
   <div class="main-content">
     <div class="page-header">
       <div>
-        <h1 id="page-title">Operaciones pendientes</h1>
-        <div class="page-header-sub" id="page-sub">Revisá y aprobá las operaciones cargadas por los clientes</div>
+        <h1 id="page-title">Últimas operaciones</h1>
+        <div class="page-header-sub" id="page-sub">Registro de operaciones recientes de todos los clientes</div>
       </div>
       <div class="header-actions">
         <button class="btn-refresh" onclick="loadAll()">↻ Actualizar</button>
@@ -217,10 +217,10 @@ tr:hover td { background:#f9faf6; }
       <!-- PENDIENTES -->
       <div class="section active" id="sec-pendientes">
         <div class="card">
-          <div class="card-header"><div><h2>Operaciones pendientes</h2><div class="card-header-sub">Aprobá o rechazá cada operación</div></div></div>
+          <div class="card-header"><div><h2>Últimas operaciones cargadas</h2><div class="card-header-sub">Registro de todas las operaciones recientes de todos los clientes</div></div></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Obs.</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Acciones</th></tr></thead>
               <tbody id="tbody-pendientes"><tr><td colspan="10" class="empty-state">Cargando...</td></tr></tbody>
             </table>
           </div>
@@ -460,7 +460,7 @@ function updateStats() {
   document.getElementById('stat-conf').textContent    = conf;
   document.getElementById('stat-total').textContent   = allOps.length;
   document.getElementById('stat-clientes').textContent= allClientesCount;
-  document.getElementById('badge-pend').textContent   = pend || '0';
+
   const fil = document.getElementById('fil-cliente');
   const cur = fil.value;
   fil.innerHTML = '<option value="">Todos los clientes</option>';
@@ -483,16 +483,11 @@ function rowHtml(op, isPend) {
   const est = op.estado === 'pendiente' ? 'badge-pend' : op.estado === 'confirmada' ? 'badge-conf' : 'badge-rech';
   const elabel = op.estado === 'pendiente' ? 'Pendiente' : op.estado === 'confirmada' ? 'Confirmada' : 'Rechazada';
   const id = op.id;
-  const actions = isPend
-    ? `<div style="display:flex;gap:4px">
-        <button class="btn-sm btn-aprobar"  onclick="cambiarEstado('${id}','confirmada')">✓ Aprobar</button>
-        <button class="btn-sm btn-editar"   onclick="openEdit('${id}')">✎</button>
-        <button class="btn-sm btn-rechazar" onclick="cambiarEstado('${id}','rechazada')">✕</button>
-       </div>`
-    : `<div style="display:flex;gap:4px">
-        <span class="${est}">${elabel}</span>
-        <button class="btn-sm btn-editar" onclick="openEdit('${id}')">✎</button>
-       </div>`;
+  const actions = `<div style="display:flex;gap:4px">
+    <span class="${est}">${elabel}</span>
+    <button class="btn-sm btn-editar" onclick="openEdit('${id}')">✎ Editar</button>
+    <button class="btn-sm btn-rechazar" onclick="eliminarOpAdmin('${id}')">✕</button>
+  </div>`;
   return `<tr>
     <td style="color:var(--gris-l);font-size:12px">${fc}</td>
     <td style="font-weight:600">${op.cliente_codigo}</td>
@@ -507,11 +502,11 @@ function rowHtml(op, isPend) {
 }
 
 function renderPendientes() {
-  const pend = allOps.filter(o => o.estado === 'pendiente');
-  const tbody = document.getElementById('tbody-pendientes');
-  tbody.innerHTML = pend.length
-    ? pend.map(op => rowHtml(op, true)).join('')
-    : '<tr><td colspan="10" class="empty-state">✓ No hay operaciones pendientes</td></tr>';
+  const recent = allOps.slice(0, 30);
+  const tbody  = document.getElementById('tbody-pendientes');
+  tbody.innerHTML = recent.length
+    ? recent.map(op => rowHtml(op, false)).join('')
+    : '<tr><td colspan="9" class="empty-state">Sin operaciones aún.</td></tr>';
 }
 
 function renderTodas() {
@@ -574,6 +569,13 @@ async function saveEdit() {
   setLoading(100);
   if (error) { alert('Error: ' + error.message); return; }
   document.getElementById('modalOverlay').classList.remove('open');
+  await loadAll();
+}
+
+async function eliminarOpAdmin(id) {
+  if (!confirm('¿Eliminar esta operación?')) return;
+  const {error} = await sb.from('operaciones').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
   await loadAll();
 }
 
@@ -753,7 +755,7 @@ function showSection(name, el) {
   document.getElementById('sec-' + name).classList.add('active');
   if(el) el.classList.add('active');
   const titles = {
-    pendientes:['Operaciones pendientes','Revisá y aprobá las operaciones cargadas por los clientes'],
+    pendientes:['Últimas operaciones','Registro de operaciones recientes de todos los clientes'],
     todas:['Historial completo','Todas las operaciones con filtros'],
     carteras:['Carteras por cliente','Resumen de posiciones por cliente'],
     precios:['Precios de mercado','Actualizá los precios de referencia para el cálculo del reporte'],
