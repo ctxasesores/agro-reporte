@@ -595,10 +595,9 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
 const ADMIN_PASS = 'ctx_admin_2026';
 const SUPA_URL   = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY     = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
-const SUPA_SERVICE = 'sb_secret_YNqDxzG68PBxvKhsN--rvg_sJaLZjK0';
+const FUNCTIONS_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1';
 
 let sb      = null;
-let sbAdmin = null;
 let allOps  = [];
 
 // ── AUTH ──
@@ -617,20 +616,7 @@ function logout() { location.reload(); }
 
 // ── INIT ──
 function initApp() {
-  sb      = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-  sbAdmin = window.supabase.createClient(SUPA_URL, SUPA_SERVICE, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession:   false,
-      detectSessionInUrl: false
-    },
-    global: {
-      headers: {
-        'Authorization': 'Bearer ' + SUPA_SERVICE,
-        'apikey': SUPA_SERVICE
-      }
-    }
-  });
+  sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
   loadAll();
 }
 
@@ -933,63 +919,53 @@ async function crearUsuario() {
   btn.disabled = true;
   btn.textContent = 'Creando...';
 
-  // 1. Crear usuario en Supabase Auth
-  const { data: authData, error: authError } = await sbAdmin.auth.admin.createUser({
-    email,
-    password: pass,
-    email_confirm: true
-  });
+  try {
+    const res = await fetch(FUNCTIONS_URL + '/crear-usuario', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'apikey': SUPA_KEY
+      },
+      body: JSON.stringify({ email, password: pass, codigo, nombre_empresa: nombre, campania, actividad })
+    });
 
-  if (authError) {
-    const msg = authError.message.toLowerCase();
-    let textoError = 'Error al crear el usuario: ' + authError.message;
-    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('email address is already')) {
-      textoError = 'Ese email ya está registrado. Usá otro email o eliminá el usuario existente desde Supabase → Authentication → Users.';
-    } else if (msg.includes('invalid email')) {
-      textoError = 'El email no tiene un formato válido.';
-    } else if (msg.includes('password') || msg.includes('weak')) {
-      textoError = 'La contraseña es demasiado débil. Usá al menos 8 caracteres con letras y números.';
-    }
-    mostrarToastNU(textoError, 'err');
+    const result = await res.json();
+
     btn.disabled = false;
     btn.textContent = '+ Crear cliente';
-    return;
-  }
 
-  // 2. Insertar en tabla clientes
-  const { error: dbError } = await sbAdmin.from('clientes').insert({
-    id:             authData.user.id,
-    codigo,
-    nombre_empresa: nombre,
-    email,
-    campania,
-    actividad,
-    activo:         true
-  });
-
-  btn.disabled = false;
-  btn.textContent = '+ Crear cliente';
-
-  if (dbError) {
-    let textoDb = 'Error al guardar el perfil: ' + dbError.message;
-    if (dbError.message.includes('unique') || dbError.message.includes('duplicate') || dbError.code === '23505') {
-      textoDb = 'El código interno "' + codigo + '" ya existe. Usá un código diferente.';
+    if (!res.ok || result.error) {
+      const err = result.error || 'Error desconocido';
+      let msg = 'Error: ' + err;
+      if (err === 'EMAIL_DUPLICADO' || err.toLowerCase().includes('already')) {
+        msg = 'Ese email ya está registrado. Eliminá el usuario desde Supabase → Authentication → Users e intentá de nuevo.';
+      } else if (err === 'CODIGO_DUPLICADO' || err.toLowerCase().includes('unique')) {
+        msg = 'El código interno "' + codigo + '" ya existe. Usá un código diferente.';
+      } else if (err.toLowerCase().includes('invalid email')) {
+        msg = 'El email no tiene un formato válido.';
+      } else if (err.toLowerCase().includes('password') || err.toLowerCase().includes('weak')) {
+        msg = 'La contraseña es demasiado débil. Usá al menos 8 caracteres.';
+      }
+      mostrarToastNU(msg, 'err');
+      return;
     }
-    mostrarToastNU(textoDb, 'err');
-    await sbAdmin.auth.admin.deleteUser(authData.user.id);
-    return;
-  }
 
-  mostrarToastNU('✓ Cliente ' + nombre + ' creado correctamente.', 'ok');
-  // Limpiar form
-  ['nu-nombre','nu-codigo','nu-email','nu-pass','nu-campania'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  await cargarClientes();
+    mostrarToastNU('✓ Cliente ' + nombre + ' creado. Podés enviarle: ' + email + ' / ' + pass, 'ok');
+    ['nu-nombre','nu-codigo','nu-email','nu-pass','nu-campania'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    await cargarClientes();
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '+ Crear cliente';
+    mostrarToastNU('Error de conexión: ' + e.message, 'err');
+  }
 }
 
 async function cargarClientes() {
-  const { data, error } = await sbAdmin.from('clientes').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('clientes').select('*').order('created_at', { ascending: false });
   const tbody = document.getElementById('tbody-clientes');
   if (!tbody) return;
   if (error || !data || data.length === 0) {
@@ -1018,7 +994,7 @@ async function cargarClientes() {
 }
 
 async function toggleCliente(id, activo) {
-  await sbAdmin.from('clientes').update({ activo }).eq('id', id);
+  await sb.from('clientes').update({ activo }).eq('id', id);
   await cargarClientes();
 }
 
