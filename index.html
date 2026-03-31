@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <style>
 :root {
   --negro:    #1c1a18;
@@ -37,8 +37,8 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-h1,h2,h3,.section-title,.hero-nombre { font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 400; color: white; margin-bottom: 2px; letter-spacing: .3px; }
-.brand-name { font-family: 'Playfair Display', Georgia, serif; }
+h1,h2,h3,.section-title,.hero-nombre { font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 600; color: white; margin-bottom: 2px; letter-spacing: -.2px; }
+.brand-name { font-family: 'DM Sans', sans-serif; }
 
 /* ══════════════════════════════════════
    AUTH SCREENS
@@ -190,7 +190,7 @@ h1,h2,h3,.section-title,.hero-nombre { font-family: 'Playfair Display', Georgia,
   padding: 28px 28px 36px; color: white;
 }
 .hero-eyebrow { font-size: 10px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; font-weight: 500; }
-/* hero-nombre defined above */
+
 .hero-meta    { font-size: 13px; color: rgba(255,255,255,.45); margin-bottom: 26px; }
 
 .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -200,8 +200,8 @@ h1,h2,h3,.section-title,.hero-nombre { font-family: 'Playfair Display', Georgia,
 }
 .kpi-card.full { grid-column: 1 / -1; }
 .kpi-label { font-size: 10px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px; }
-.kpi-value          { font-size: 20px; font-weight: 500; color: white; line-height: 1; }
-.kpi-card.full .kpi-value { font-size: 44px !important; font-weight: 600; color: var(--oro-l); line-height: 1; font-family: 'Playfair Display', Georgia, serif !important; }
+.kpi-value          { font-size: 20px; font-weight: 600; color: white; line-height: 1; }
+.kpi-card.full .kpi-value { font-size: 42px; font-weight: 700; color: var(--oro-l); line-height: 1; letter-spacing: -.5px; }
 .kpi-sub { font-size: 11px; color: rgba(255,255,255,.38); margin-top: 4px; }
 
 /* ══════════════════════════════════════
@@ -211,9 +211,9 @@ h1,h2,h3,.section-title,.hero-nombre { font-family: 'Playfair Display', Georgia,
 
 .section { margin-bottom: 28px; }
 .section-title {
-  font-family: 'Playfair Display', Georgia, serif !important; font-size: 16px; color: var(--negro);
-  margin-bottom: 14px; display: flex; align-items: center; gap: 10px; font-weight: 400;
-  letter-spacing: .2px;
+  font-size: 13px; color: var(--gris);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 10px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
 }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--crema-dd); margin-left: 8px; }
 
@@ -238,7 +238,7 @@ h1,h2,h3,.section-title,.hero-nombre { font-family: 'Playfair Display', Georgia,
 .precio-row:last-child { border-bottom: none; }
 .precio-name { font-size: 13px; font-weight: 500; color: var(--texto); }
 .precio-venc { font-size: 11px; color: var(--gris); }
-.precio-amt  { font-size: 15px; font-weight: 700; color: var(--negro); font-family: 'Playfair Display', Georgia, serif; }
+.precio-amt  { font-size: 15px; font-weight: 700; color: var(--negro); }
 .precio-unit { font-size: 10px; color: var(--gris); text-align: right; }
 
 /* ══════════════════════════════════════
@@ -308,7 +308,7 @@ h1,h2,h3,.section-title,.hero-nombre { font-family: 'Playfair Display', Georgia,
   display: flex; justify-content: space-between; align-items: center;
 }
 .op-precio-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--oro-d); font-weight: 600; }
-.op-precio-val   { font-size: 18px; font-weight: 700; color: var(--negro); font-family: 'Playfair Display', Georgia, serif; }
+.op-precio-val   { font-size: 18px; font-weight: 700; color: var(--negro); }
 .op-precio-merc  { font-size: 11px; color: var(--gris); }
 
 .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

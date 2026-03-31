@@ -6,7 +6,7 @@
 <title>Context | Panel Administrador</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <style>
 :root {
   --negro:   #1c1a18; --negro-m:  #2a2825;
@@ -22,9 +22,9 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif !important; font-weight: 400 !important; }
-.page-header h1 { font-family: 'Playfair Display', Georgia, serif !important; font-weight: 400 !important; font-size: 20px; letter-spacing: .2px; }
-.card-title, .section-heading { font-family: 'Playfair Display', Georgia, serif; }
+h1,h2,h3 { font-family: 'DM Sans', sans-serif !important; font-weight: 400 !important; }
+.page-header h1 { font-size: 20px; font-weight: 700; color: white; letter-spacing: -.3px; }
+.card-title, .section-heading { font-family: 'DM Sans', sans-serif; }
 
 /* LOGIN */
 #loginScreen {
@@ -112,7 +112,7 @@ h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif !important; font-weig
   background: var(--negro); padding: 20px 28px;
   display: flex; align-items: center; justify-content: space-between;
 }
-.page-header h1 { font-size: 20px !important; font-weight: 400 !important; color: white; font-family: 'Playfair Display', Georgia, serif !important; letter-spacing: .2px; }
+.page-header h1 { font-size: 20px !important; font-weight: 400 !important; color: white; font-family: 'DM Sans', sans-serif !important; letter-spacing: .2px; }
 .page-header-sub { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 2px; }
 .header-actions { display: flex; gap: 10px; }
 
@@ -124,7 +124,7 @@ h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif !important; font-weig
   padding: 16px 20px; border-bottom: 1px solid var(--crema-d);
   display: flex; align-items: center; justify-content: space-between;
 }
-.card-header h2 { font-size: 15px; font-weight: 400; color: var(--texto); font-family: 'Playfair Display', Georgia, serif; }
+.card-header h2 { font-size: 14px; font-weight: 600; color: var(--texto); letter-spacing: -.1px; }
 .card-header-sub { font-size: 12px; color: var(--gris); }
 
 /* STATS ROW */
@@ -134,7 +134,7 @@ h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif !important; font-weig
   padding: 18px 20px;
 }
 .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--gris); margin-bottom: 6px; }
-.stat-val   { font-size: 28px; font-weight: 700; color: var(--texto); line-height: 1; }
+.stat-val   { font-size: 30px; font-weight: 700; color: var(--texto); line-height: 1; letter-spacing: -.5px; }
 .stat-val.pend { color: var(--oro-d); }
 .stat-val.verde { color: var(--verde); }
 .stat-val.rojo  { color: var(--rojo); }
