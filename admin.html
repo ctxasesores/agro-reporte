@@ -1199,9 +1199,9 @@ function mostrarToastPM(msg, type) {
 
 async function guardarPrecio() {
   const producto = document.getElementById('pm-producto').value;
-  const venc     = document.getElementById('pm-venc').value.trim().toUpperCase();
+  const venc     = document.getElementById('pm-vencimiento').value.trim().toUpperCase();
   const precio   = parseFloat(document.getElementById('pm-precio').value);
-  const esCont   = document.getElementById('pm-cont').value === 'true';
+  const esCont   = document.getElementById('pm-continuo').value === 'true';
 
   if (!producto || !venc || isNaN(precio) || precio <= 0) {
     mostrarToastPM('Completá todos los campos.', 'err'); return;

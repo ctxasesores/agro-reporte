@@ -268,6 +268,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
           <div class="kpi-label">Valor total de la cartera</div>
           <div class="kpi-value accent" id="d-total">—</div>
           <div class="kpi-sub">USD valuados a precios de mercado</div>
+        <button onclick="refreshData()" style="margin-top:10px;padding:6px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif" id="btn-refresh">↻ Actualizar datos</button>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Realizado</div>
@@ -285,6 +286,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
     <!-- BODY -->
     <div class="page-body">
 
+      <div id="no-precios-warn" class="error-banner" style="display:none">⚠️ No hay precios de mercado cargados. Los KPIs mostrarán USD 0 hasta que el administrador cargue los precios en el panel admin.</div>
       <!-- Precios + Composición -->
       <div class="two-col" style="margin-bottom:28px">
         <div id="sec-precios">
@@ -638,6 +640,9 @@ function renderAll() {
   document.getElementById('d-realizado').textContent = fmtUSD(realizado);
   document.getElementById('d-pendiente').textContent = fmtUSD(pendiente);
 
+  // Warning if no prices
+  const warnEl = document.getElementById('no-precios-warn');
+  if (warnEl) warnEl.style.display = Object.keys(precios).length === 0 ? 'block' : 'none';
   // Precios
   renderPrecios();
   // Tabla composición
@@ -853,6 +858,23 @@ function toggleSidebar() {
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('open');
+}
+
+// ── REFRESH ──
+async function refreshData() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) { btn.textContent = '↻ Actualizando...'; btn.disabled = true; }
+  const [opsRes, preciosRes] = await Promise.all([
+    sb.from('operaciones').select('*')
+      .eq('cliente_codigo', currentCliente.codigo)
+      .eq('estado','confirmada')
+      .order('created_at', {ascending:false}),
+    sb.from('precios_mercado').select('*').eq('activo',true)
+  ]);
+  allOps = opsRes.data || [];
+  buildPreciosMap(preciosRes.data || []);
+  renderAll();
+  if (btn) { btn.textContent = '↻ Actualizar datos'; btn.disabled = false; }
 }
 
 // ── UTILS ──
