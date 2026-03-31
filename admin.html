@@ -22,8 +22,8 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif; font-weight: 400; }
-.page-header h1 { font-family: 'Playfair Display', Georgia, serif; font-weight: 400; }
+h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif !important; font-weight: 400 !important; }
+.page-header h1 { font-family: 'Playfair Display', Georgia, serif !important; font-weight: 400 !important; font-size: 20px; letter-spacing: .2px; }
 .card-title, .section-heading { font-family: 'Playfair Display', Georgia, serif; }
 
 /* LOGIN */
@@ -112,7 +112,7 @@ h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif; font-weight: 400; }
   background: var(--negro); padding: 20px 28px;
   display: flex; align-items: center; justify-content: space-between;
 }
-.page-header h1 { font-size: 20px; font-weight: 400; color: white; font-family: 'Playfair Display', Georgia, serif; letter-spacing: .2px; }
+.page-header h1 { font-size: 20px !important; font-weight: 400 !important; color: white; font-family: 'Playfair Display', Georgia, serif !important; letter-spacing: .2px; }
 .page-header-sub { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 2px; }
 .header-actions { display: flex; gap: 10px; }
 
@@ -597,8 +597,9 @@ const SUPA_URL   = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY     = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 const FUNCTIONS_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1';
 
-let sb      = null;
-let allOps  = [];
+let sb           = null;
+let allOps       = [];
+let allClientesCount = 0;
 
 // ── AUTH ──
 document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -627,10 +628,14 @@ function setLoading(pct) {
 
 async function loadAll() {
   setLoading(30);
-  const { data, error } = await sb.from('operaciones').select('*').order('created_at', { ascending: false });
+  const [opsResult, clientesResult] = await Promise.all([
+    sb.from('operaciones').select('*').order('created_at', { ascending: false }),
+    sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true)
+  ]);
   setLoading(100);
-  if (error) { console.error(error); return; }
-  allOps = data || [];
+  if (opsResult.error) { console.error(opsResult.error); }
+  allOps = opsResult.data || [];
+  allClientesCount = clientesResult.count || 0;
   updateStats();
   renderPendientes();
   renderTodas();
@@ -642,7 +647,7 @@ function updateStats() {
   const pend  = allOps.filter(o => o.estado === 'pendiente').length;
   const today = new Date().toISOString().split('T')[0];
   const conf  = allOps.filter(o => o.estado === 'confirmada' && o.updated_at && o.updated_at.startsWith(today)).length;
-  const clientes = new Set(allOps.map(o => o.cliente_codigo)).size;
+  const clientes = allClientesCount;
   document.getElementById('stat-pend').textContent    = pend;
   document.getElementById('stat-conf').textContent    = conf;
   document.getElementById('stat-total').textContent   = allOps.length;
