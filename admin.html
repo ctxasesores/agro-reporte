@@ -313,6 +313,12 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
       <a class="nav-item" onclick="showSection('carteras', this)">
         <span>◉</span> Carteras de clientes
       </a>
+      <a class="nav-item" onclick="showSection('precios', this)">
+        <span>◎</span> Precios de mercado
+      </a>
+      <a class="nav-item" onclick="showSection('precios', this)">
+        <span>◎</span> Precios de mercado
+      </a>
       <a class="nav-item" onclick="showSection('usuarios', this)">
         <span>⊕</span> Usuarios
       </a>
@@ -449,6 +455,183 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
         <div class="cliente-tabs" id="cliente-tabs"></div>
         <div id="cartera-content">
           <div class="card"><div class="empty-state"><div class="empty-icon">◉</div>Seleccioná un cliente</div></div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: PRECIOS DE MERCADO -->
+      <div class="section" id="sec-precios">
+
+        <!-- Cargar/actualizar precio -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div>
+              <h2>Cargar precio de mercado</h2>
+              <div class="card-header-sub">Si el precio ya existe para ese producto/vencimiento, se actualiza automáticamente</div>
+            </div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:14px;align-items:end">
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Producto</label>
+              <select class="filter-select" id="pm-producto" style="padding:10px 12px;font-size:14px" onchange="onPmProductoChange()">
+                <option value="">Seleccioná...</option>
+                <option>Soja</option>
+                <option>Maíz</option>
+                <option>Trigo</option>
+                <option>Girasol</option>
+                <option>Sorgo</option>
+                <option>Cebada</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Vencimiento</label>
+              <select class="filter-select" id="pm-vencimiento" style="padding:10px 12px;font-size:14px">
+                <option value="">Seleccioná...</option>
+                <option value="CONT">Continuo</option>
+                <option value="1_2026">Ene 2026</option>
+                <option value="2_2026">Feb 2026</option>
+                <option value="3_2026">Mar 2026</option>
+                <option value="4_2026">Abr 2026</option>
+                <option value="5_2026">May 2026</option>
+                <option value="6_2026">Jun 2026</option>
+                <option value="7_2026">Jul 2026</option>
+                <option value="8_2026">Ago 2026</option>
+                <option value="9_2026">Sep 2026</option>
+                <option value="10_2026">Oct 2026</option>
+                <option value="11_2026">Nov 2026</option>
+                <option value="12_2026">Dic 2026</option>
+                <option value="1_2027">Ene 2027</option>
+                <option value="2_2027">Feb 2027</option>
+                <option value="3_2027">Mar 2027</option>
+                <option value="4_2027">Abr 2027</option>
+                <option value="5_2027">May 2027</option>
+                <option value="6_2027">Jun 2027</option>
+                <option value="7_2027">Jul 2027</option>
+                <option value="8_2027">Ago 2027</option>
+                <option value="9_2027">Sep 2027</option>
+                <option value="10_2027">Oct 2027</option>
+                <option value="11_2027">Nov 2027</option>
+                <option value="12_2027">Dic 2027</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Precio (USD/tn)</label>
+              <input type="number" class="filter-select" id="pm-precio" placeholder="ej: 325" min="0" step="0.1" style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">¿Es continuo?</label>
+              <select class="filter-select" id="pm-continuo" style="padding:10px 12px;font-size:14px">
+                <option value="false">No</option>
+                <option value="true">Sí (precio continuo)</option>
+              </select>
+            </div>
+            <button class="btn-export" id="pm-btn" onclick="guardarPrecio()" style="white-space:nowrap;height:42px">
+              + Guardar precio
+            </button>
+          </div>
+          <div style="padding:0 20px 16px">
+            <div id="pm-toast" style="font-size:13px;font-weight:500;display:none;padding:8px 14px;border-radius:8px"></div>
+          </div>
+        </div>
+
+        <!-- Tabla de precios actuales -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Precios actuales</h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select class="filter-select" id="pm-fil-producto" onchange="renderPrecios()" style="font-size:12px;padding:6px 10px">
+                <option value="">Todos los productos</option>
+                <option>Soja</option><option>Maíz</option><option>Trigo</option>
+                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+              </select>
+              <button class="btn-refresh" onclick="cargarPrecios()">↻ Actualizar</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Vencimiento</th>
+                  <th style="text-align:right">Precio (USD/tn)</th>
+                  <th>Tipo</th>
+                  <th>Última actualización</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-precios">
+                <tr><td colspan="6" class="empty-state">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: PRECIOS -->
+      <div class="section" id="sec-precios">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div>
+              <h2>Cargar precio de mercado</h2>
+              <div class="card-header-sub">Actualizá los precios quincenalmente. Formato vencimiento: 5_2026 para mayo 2026, CONT para precio continuo.</div>
+            </div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Producto</label>
+              <select class="filter-select" id="pm-producto" style="padding:10px 12px;font-size:14px">
+                <option value="">Seleccioná...</option>
+                <option>Soja</option><option>Maíz</option><option>Trigo</option>
+                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Vencimiento</label>
+              <input type="text" class="filter-select" id="pm-venc" placeholder="ej: 5_2026 o CONT" style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Precio (USD/tn)</label>
+              <input type="number" class="filter-select" id="pm-precio" placeholder="ej: 325" min="0" step="0.1" style="padding:10px 12px;font-size:14px">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">¿Continuo?</label>
+              <select class="filter-select" id="pm-cont" style="padding:10px 12px;font-size:14px">
+                <option value="false">No</option>
+                <option value="true">Sí (precio continuo)</option>
+              </select>
+            </div>
+            <button class="btn-export" onclick="guardarPrecio()" id="pm-btn" style="height:42px">+ Cargar</button>
+          </div>
+          <div style="padding:0 20px 16px">
+            <div id="pm-toast" style="display:none;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px"></div>
+          </div>
+        </div>
+
+        <!-- Lista de precios actuales -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Precios cargados</h2>
+            <div style="display:flex;gap:8px">
+              <button class="btn-refresh" onclick="cargarPrecios()">↻ Actualizar</button>
+              <button class="btn-export" onclick="limpiarPrecios()" style="background:var(--rojo)">Limpiar todos</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Vencimiento</th>
+                  <th>Precio</th>
+                  <th>Continuo</th>
+                  <th>Actualizado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-precios">
+                <tr><td colspan="6" class="empty-state">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -868,9 +1051,11 @@ function showSection(name, el) {
     pendientes: ['Operaciones pendientes', 'Revisá y aprobá las operaciones cargadas por los clientes'],
     todas:      ['Historial completo', 'Todas las operaciones con filtros'],
     carteras:   ['Carteras por cliente', 'Resumen de posiciones por cliente'],
-    usuarios:   ['Gestión de usuarios', 'Creá y administrá los accesos de cada cliente']
+    usuarios:   ['Gestión de usuarios', 'Creá y administrá los accesos de cada cliente'],
+    precios:    ['Precios de mercado', 'Actualizá los precios de referencia quincenales para todos los clientes']
   };
   if (name === 'usuarios') cargarClientes();
+  if (name === 'precios')  cargarPrecios();
   document.getElementById('page-title').textContent = titles[name][0];
   document.getElementById('page-sub').textContent   = titles[name][1];
 }
@@ -903,6 +1088,195 @@ function exportExcel() {
   const fecha = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, 'CTX_operaciones_' + fecha + '.xlsx');
 }
+// ══ GESTIÓN DE PRECIOS DE MERCADO ══
+let allPrecios = [];
+
+function onPmProductoChange() {
+  const prod = document.getElementById('pm-producto').value;
+  const contOpt = document.getElementById('pm-vencimiento').querySelector('option[value="CONT"]');
+  // Auto-set es_continuo based on product type
+  const conMercado = ['Soja','Maíz','Trigo'].includes(prod);
+  document.getElementById('pm-continuo').value = 'false';
+}
+
+async function cargarPrecios() {
+  const { data, error } = await sb.from('precios_mercado')
+    .select('*').eq('activo', true)
+    .order('producto').order('vencimiento');
+  if (error) { console.error(error); return; }
+  allPrecios = data || [];
+  renderPrecios();
+}
+
+function renderPrecios() {
+  const fil = document.getElementById('pm-fil-producto').value;
+  const data = fil ? allPrecios.filter(p => p.producto === fil) : allPrecios;
+  const tbody = document.getElementById('tbody-precios');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>';
+    return;
+  }
+  const meses = {'1':'Ene','2':'Feb','3':'Mar','4':'Abr','5':'May','6':'Jun','7':'Jul','8':'Ago','9':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+  function fmtVto(v) {
+    if (v === 'CONT') return 'Continuo';
+    const parts = v.split('_');
+    return (meses[parts[0]] || parts[0]) + ' ' + parts[1];
+  }
+  tbody.innerHTML = data.map(p => {
+    const upd = p.updated_at ? new Date(p.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const tipo = p.es_continuo
+      ? '<span class="badge-pend">Continuo</span>'
+      : '<span class="badge-conf">Futuro</span>';
+    return '<tr>'
+      + '<td style="font-weight:600">' + p.producto + '</td>'
+      + '<td>' + fmtVto(p.vencimiento) + '</td>'
+      + '<td style="text-align:right;font-weight:700;font-size:15px">$' + Number(p.precio).toFixed(2) + '</td>'
+      + '<td>' + tipo + '</td>'
+      + '<td style="color:var(--gris);font-size:12px">' + upd + '</td>'
+      + '<td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio(\''+p.id+'\')">✕ Eliminar</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+async function guardarPrecio() {
+  const producto    = document.getElementById('pm-producto').value;
+  const vencimiento = document.getElementById('pm-vencimiento').value;
+  const precio      = parseFloat(document.getElementById('pm-precio').value);
+  const esContinuo  = document.getElementById('pm-continuo').value === 'true';
+
+  if (!producto || !vencimiento || isNaN(precio) || precio <= 0) {
+    mostrarToastPM('Completá todos los campos con valores válidos.', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('pm-btn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  // Upsert: insert or update if exists
+  const { error } = await sb.from('precios_mercado').upsert({
+    producto,
+    vencimiento,
+    precio,
+    es_continuo: esContinuo,
+    activo:      true,
+    updated_at:  new Date().toISOString()
+  }, { onConflict: 'producto,vencimiento' });
+
+  btn.disabled = false; btn.textContent = '+ Guardar precio';
+
+  if (error) {
+    mostrarToastPM('Error: ' + error.message, 'err');
+    return;
+  }
+
+  const meses = {'1':'Ene','2':'Feb','3':'Mar','4':'Abr','5':'May','6':'Jun','7':'Jul','8':'Ago','9':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+  const vtoLabel = vencimiento === 'CONT' ? 'Continuo' : (meses[vencimiento.split('_')[0]] + ' ' + vencimiento.split('_')[1]);
+  mostrarToastPM('✓ ' + producto + ' · ' + vtoLabel + ' → $' + precio.toFixed(2) + ' guardado.', 'ok');
+
+  // Reset fields
+  document.getElementById('pm-precio').value = '';
+  await cargarPrecios();
+}
+
+async function eliminarPrecio(id) {
+  if (!confirm('¿Eliminás este precio?')) return;
+  await sb.from('precios_mercado').update({ activo: false }).eq('id', id);
+  await cargarPrecios();
+}
+
+function mostrarToastPM(msg, type) {
+  const el = document.getElementById('pm-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = type === 'ok' ? '#dcfce7' : '#fee2e2';
+  el.style.color      = type === 'ok' ? '#166534' : '#991b1b';
+  el.style.border     = type === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// ══ PRECIOS DE MERCADO ══
+
+async function guardarPrecio() {
+  const producto = document.getElementById('pm-producto').value;
+  const venc     = document.getElementById('pm-venc').value.trim().toUpperCase();
+  const precio   = parseFloat(document.getElementById('pm-precio').value);
+  const esCont   = document.getElementById('pm-cont').value === 'true';
+
+  if (!producto || !venc || isNaN(precio) || precio <= 0) {
+    mostrarToastPM('Completá todos los campos.', 'err'); return;
+  }
+
+  const btn = document.getElementById('pm-btn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  // Upsert: si existe el par producto+vencimiento, actualiza; sino inserta
+  const { error } = await sb.from('precios_mercado').upsert({
+    producto,
+    vencimiento:  venc,
+    precio,
+    es_continuo:  esCont,
+    activo:       true,
+    updated_at:   new Date().toISOString()
+  }, { onConflict: 'producto,vencimiento' });
+
+  btn.disabled = false; btn.textContent = '+ Cargar';
+
+  if (error) { mostrarToastPM('Error: ' + error.message, 'err'); return; }
+
+  mostrarToastPM('✓ Precio guardado: ' + producto + ' ' + venc + ' → $' + precio, 'ok');
+  document.getElementById('pm-producto').value = '';
+  document.getElementById('pm-venc').value = '';
+  document.getElementById('pm-precio').value = '';
+  await cargarPrecios();
+}
+
+async function cargarPrecios() {
+  const { data, error } = await sb.from('precios_mercado')
+    .select('*').eq('activo', true)
+    .order('producto').order('vencimiento');
+  const tbody = document.getElementById('tbody-precios');
+  if (!tbody) return;
+  if (error || !data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => {
+    const fecha = new Date(p.updated_at || p.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short',year:'numeric'});
+    return '<tr>'
+      + '<td style="font-weight:600">' + p.producto + '</td>'
+      + '<td style="font-family:monospace;font-size:12px">' + p.vencimiento + '</td>'
+      + '<td style="font-weight:700;color:var(--negro)">$' + Number(p.precio).toFixed(2) + ' USD/tn</td>'
+      + '<td>' + (p.es_continuo ? '<span class="badge-conf">Sí</span>' : '<span style="color:var(--gris);font-size:12px">No</span>') + '</td>'
+      + '<td style="color:var(--gris);font-size:12px">' + fecha + '</td>'
+      + '<td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio('' + p.id + '')">Eliminar</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+async function eliminarPrecio(id) {
+  if (!confirm('¿Eliminár este precio?')) return;
+  await sb.from('precios_mercado').update({ activo: false }).eq('id', id);
+  await cargarPrecios();
+}
+
+async function limpiarPrecios() {
+  if (!confirm('¿Eliminar TODOS los precios? Esta acción no se puede deshacer.')) return;
+  await sb.from('precios_mercado').update({ activo: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+  await cargarPrecios();
+}
+
+function mostrarToastPM(msg, type) {
+  const el = document.getElementById('pm-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = type === 'ok' ? '#dcfce7' : '#fee2e2';
+  el.style.color      = type === 'ok' ? '#166534' : '#991b1b';
+  el.style.border     = type === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
 // ══ GESTIÓN DE USUARIOS ══
 
 async function crearUsuario() {
