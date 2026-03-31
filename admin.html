@@ -185,6 +185,7 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('todas',this)">≡ Todas las operaciones</a>
       <a class="nav-item" onclick="showSection('carteras',this)">◉ Carteras de clientes</a>
       <a class="nav-item" onclick="showSection('precios',this)">◎ Precios de mercado</a>
+      <a class="nav-item" onclick="showSection('historicos',this)">📈 Serie histórica</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
     <div class="sidebar-footer">
@@ -372,6 +373,98 @@ tr:hover td { background:#f9faf6; }
             <table>
               <thead><tr><th>Nombre</th><th>Código</th><th>Email</th><th>Campaña</th><th>Actividad</th><th>Alta</th><th>Estado</th><th>Acciones</th></tr></thead>
               <tbody id="tbody-clientes"><tr><td colspan="8" class="empty-state">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERIE HISTÓRICA -->
+      <div class="section" id="sec-historicos">
+
+        <!-- Upload CSV -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div>
+              <h2>Cargar serie histórica desde CSV</h2>
+              <div class="card-header-sub">Formato: producto, posicion, fecha (DD/MM/YYYY), precio — separado por comas. Al cargar reemplaza todos los registros del mismo producto+posicion.</div>
+            </div>
+          </div>
+          <div style="padding:20px">
+            <div style="border:2px dashed var(--crema-dd);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s" id="csv-dropzone" onclick="document.getElementById('csv-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--oro)'" ondragleave="this.style.borderColor='var(--crema-dd)'" ondrop="handleCsvDrop(event)">
+              <div style="font-size:28px;margin-bottom:8px">📄</div>
+              <div style="font-weight:600;color:var(--negro);margin-bottom:4px">Arrastrá el CSV o hacé click para seleccionar</div>
+              <div style="font-size:12px;color:var(--gris)">Columnas: producto, posicion, fecha, precio</div>
+              <input type="file" id="csv-file" accept=".csv,.txt" style="display:none" onchange="handleCsvFile(this)">
+            </div>
+            <div id="csv-preview" style="display:none;margin-top:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div style="font-size:13px;font-weight:600;color:var(--negro)" id="csv-info"></div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn-refresh" onclick="cancelCsv()">✕ Cancelar</button>
+                  <button class="btn-export" onclick="uploadCsv()" id="csv-upload-btn">↑ Subir a Supabase</button>
+                </div>
+              </div>
+              <div style="max-height:200px;overflow-y:auto;border:1px solid var(--crema-d);border-radius:8px">
+                <table style="width:100%;font-size:12px;border-collapse:collapse">
+                  <thead><tr style="background:var(--crema)"><th style="padding:7px 12px;text-align:left">Producto</th><th style="padding:7px 12px;text-align:left">Posición</th><th style="padding:7px 12px;text-align:left">Fecha</th><th style="padding:7px 12px;text-align:right">Precio</th></tr></thead>
+                  <tbody id="csv-preview-body"></tbody>
+                </table>
+              </div>
+            </div>
+            <div id="hist-toast" class="toast" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <!-- Carga manual puntual -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div><h2>Actualización manual puntual</h2><div class="card-header-sub">Agregar o actualizar un precio individual</div></div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+            <div class="field-group">
+              <label class="field-label">Producto</label>
+              <select class="field-select" id="hm-producto">
+                <option value="">Seleccioná...</option>
+                <option>Soja</option><option>Maíz</option><option>Trigo</option>
+                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Posición</label>
+              <input type="text" class="field-input" id="hm-posicion" placeholder="ej: CONT o 5_2026">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Fecha</label>
+              <input type="date" class="field-input" id="hm-fecha">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Precio (USD/tn)</label>
+              <input type="number" class="field-input" id="hm-precio" min="0" step="0.1" placeholder="ej: 325">
+            </div>
+            <button class="btn-export" onclick="guardarHistManual()" style="height:42px">+ Agregar</button>
+          </div>
+          <div style="padding:0 20px 16px"><div id="hm-toast" class="toast"></div></div>
+        </div>
+
+        <!-- Tabla resumen -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Datos históricos cargados</h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select class="field-select" id="hist-fil-prod" onchange="cargarHistoricos()" style="width:auto;padding:7px 10px;font-size:12px">
+                <option value="">Todos los productos</option>
+                <option>Soja</option><option>Maíz</option><option>Trigo</option>
+                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+              </select>
+              <button class="btn-refresh" onclick="cargarHistoricos()">↻ Actualizar</button>
+              <button class="btn-danger" onclick="limpiarHistoricos()">Limpiar todo</button>
+            </div>
+          </div>
+          <div id="hist-summary" style="padding:12px 20px;border-bottom:1px solid var(--crema-d);font-size:12px;color:var(--gris)">Cargando...</div>
+          <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+            <table>
+              <thead><tr><th>Producto</th><th>Posición</th><th>Fecha</th><th>Precio</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-historicos"><tr><td colspan="5" class="empty-state">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -634,6 +727,118 @@ function renderCarteraCliente(codigo) {
 }
 
 // PRECIOS DE MERCADO
+
+// ══ SERIE HISTÓRICA ══
+let csvData = [];
+
+function parseFecha(str) {
+  const p = str.trim().split('/');
+  if (p.length === 3) return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+  return str.trim();
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  const rows = [];
+  let start = 0;
+  const firstCols = lines[0].split(',');
+  if (isNaN(parseFloat(firstCols[firstCols.length-1]))) start = 1;
+  for (let i = start; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    if (cols.length < 4) continue;
+    const precio = parseFloat(cols[3]);
+    if (!cols[0]||!cols[1]||!cols[2]||isNaN(precio)) continue;
+    rows.push({ producto:cols[0], posicion:cols[1].toUpperCase(), fecha:parseFecha(cols[2]), precio });
+  }
+  return rows;
+}
+
+function handleCsvDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-dropzone').style.borderColor='var(--crema-dd)';
+  const file = e.dataTransfer.files[0];
+  if (file) readCsvFile(file);
+}
+function handleCsvFile(input) { if(input.files[0]) readCsvFile(input.files[0]); }
+function readCsvFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => { csvData = parseCsv(e.target.result); showCsvPreview(); };
+  reader.readAsText(file);
+}
+function showCsvPreview() {
+  if (!csvData.length) { mostrarToast('hist-toast','No se encontraron filas válidas.','err'); return; }
+  document.getElementById('csv-info').textContent = csvData.length+' filas · Productos: '+[...new Set(csvData.map(r=>r.producto))].join(', ');
+  const tbody = document.getElementById('csv-preview-body');
+  tbody.innerHTML = csvData.slice(0,50).map(r =>
+    '<tr><td style="padding:5px 12px">'+r.producto+'</td>'
+    +'<td style="padding:5px 12px;font-family:monospace">'+r.posicion+'</td>'
+    +'<td style="padding:5px 12px">'+r.fecha+'</td>'
+    +'<td style="padding:5px 12px;text-align:right">$'+r.precio+'</td></tr>'
+  ).join('')+(csvData.length>50?'<tr><td colspan="4" style="padding:8px 12px;color:var(--gris);font-size:11px">...y '+(csvData.length-50)+' más</td></tr>':'');
+  document.getElementById('csv-preview').style.display='block';
+}
+function cancelCsv() {
+  csvData=[];
+  document.getElementById('csv-preview').style.display='none';
+  document.getElementById('csv-file').value='';
+}
+async function uploadCsv() {
+  if (!csvData.length) return;
+  const btn = document.getElementById('csv-upload-btn');
+  btn.disabled=true; btn.textContent='Subiendo...';
+  const combos=[...new Set(csvData.map(r=>r.producto+'|'+r.posicion))];
+  for (const combo of combos) {
+    const [prod,pos]=combo.split('|');
+    await sb.from('precios_historicos').delete().eq('producto',prod).eq('posicion',pos);
+  }
+  const batchSize=500; let uploaded=0;
+  for (let i=0;i<csvData.length;i+=batchSize) {
+    const batch=csvData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
+    const {error}=await sb.from('precios_historicos').insert(batch);
+    if (error) { mostrarToast('hist-toast','Error: '+error.message,'err'); btn.disabled=false; btn.textContent='↑ Subir'; return; }
+    uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+csvData.length;
+  }
+  btn.disabled=false; btn.textContent='↑ Subir a Supabase';
+  mostrarToast('hist-toast','✓ '+uploaded+' registros cargados.','ok');
+  cancelCsv(); cargarHistoricos();
+}
+async function guardarHistManual() {
+  const producto=document.getElementById('hm-producto').value;
+  const posicion=document.getElementById('hm-posicion').value.trim().toUpperCase();
+  const fecha=document.getElementById('hm-fecha').value;
+  const precio=parseFloat(document.getElementById('hm-precio').value);
+  if (!producto||!posicion||!fecha||isNaN(precio)||precio<=0) { mostrarToast('hm-toast','Completá todos los campos.','err'); return; }
+  const {error}=await sb.from('precios_historicos').upsert({producto,posicion,fecha,precio},{onConflict:'producto,fecha,posicion'});
+  if (error) { mostrarToast('hm-toast','Error: '+error.message,'err'); return; }
+  mostrarToast('hm-toast','✓ '+producto+' '+posicion+' '+fecha+' → $'+precio,'ok');
+  document.getElementById('hm-precio').value=''; cargarHistoricos();
+}
+async function cargarHistoricos() {
+  const prod=document.getElementById('hist-fil-prod')?.value||'';
+  let q=sb.from('precios_historicos').select('*').order('producto').order('fecha',{ascending:false}).limit(200);
+  if (prod) q=q.eq('producto',prod);
+  const {data}=await q;
+  const tbody=document.getElementById('tbody-historicos');
+  const summary=document.getElementById('hist-summary');
+  if (!data||!data.length) {
+    if(tbody) tbody.innerHTML='<tr><td colspan="5" class="empty-state">Sin datos históricos.</td></tr>';
+    if(summary) summary.textContent='Sin datos cargados';
+    return;
+  }
+  const byProd={};
+  data.forEach(r=>{if(!byProd[r.producto])byProd[r.producto]={count:0,min:'zzz',max:''};byProd[r.producto].count++;if(r.fecha<byProd[r.producto].min)byProd[r.producto].min=r.fecha;if(r.fecha>byProd[r.producto].max)byProd[r.producto].max=r.fecha;});
+  if(summary) summary.textContent=Object.entries(byProd).map(([p,v])=>p+': '+v.count+' registros ('+v.min+' → '+v.max+')').join(' · ');
+  if(tbody) tbody.innerHTML=data.map(r=>'<tr>'+'<td style="font-weight:600">'+r.producto+'</td>'+'<td style="font-family:monospace;font-size:12px">'+r.posicion+'</td>'+'<td style="color:var(--gris);font-size:12px">'+r.fecha+'</td>'+'<td style="font-weight:700">$'+Number(r.precio).toFixed(2)+'</td>'+'<td><button class="btn-sm btn-rechazar" data-id="'+r.id+'" onclick="eliminarHistorico(this.getAttribute('data-id'))">✕</button></td>'+'</tr>').join('');
+}
+async function eliminarHistorico(id) { await sb.from('precios_historicos').delete().eq('id',id); cargarHistoricos(); }
+async function limpiarHistoricos() {
+  const prod=document.getElementById('hist-fil-prod')?.value||'';
+  if(!confirm(prod?'¿Eliminar históricos de '+prod+'?':'¿Eliminar TODOS los datos históricos?')) return;
+  if(prod) await sb.from('precios_historicos').delete().eq('producto',prod);
+  else await sb.from('precios_historicos').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  cargarHistoricos();
+}
+
 async function guardarPrecio() {
   const producto    = document.getElementById('pm-producto').value;
   const vencimiento = document.getElementById('pm-vencimiento').value;
@@ -765,6 +970,7 @@ function showSection(name, el) {
   document.getElementById('page-title').textContent = t[0];
   document.getElementById('page-sub').textContent   = t[1];
   if (name === 'precios')  cargarPrecios();
+  if (name === 'historicos') cargarHistoricos();
   if (name === 'usuarios') cargarClientes();
 }
 
