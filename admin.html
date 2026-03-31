@@ -828,7 +828,13 @@ async function cargarHistoricos() {
   const byProd={};
   data.forEach(r=>{if(!byProd[r.producto])byProd[r.producto]={count:0,min:'zzz',max:''};byProd[r.producto].count++;if(r.fecha<byProd[r.producto].min)byProd[r.producto].min=r.fecha;if(r.fecha>byProd[r.producto].max)byProd[r.producto].max=r.fecha;});
   if(summary) summary.textContent=Object.entries(byProd).map(([p,v])=>p+': '+v.count+' registros ('+v.min+' → '+v.max+')').join(' · ');
-  if(tbody) tbody.innerHTML=data.map(r=>'<tr>'+'<td style="font-weight:600">'+r.producto+'</td>'+'<td style="font-family:monospace;font-size:12px">'+r.posicion+'</td>'+'<td style="color:var(--gris);font-size:12px">'+r.fecha+'</td>'+'<td style="font-weight:700">$'+Number(r.precio).toFixed(2)+'</td>'+'<td><button class="btn-sm btn-rechazar" data-id="'+r.id+'" onclick="eliminarHistorico(this.getAttribute('data-id'))">✕</button></td>'+'</tr>').join('');
+  if(tbody) tbody.innerHTML=data.map(r=>'<tr>'
+    +'<td style="font-weight:600">'+r.producto+'</td>'
+    +'<td style="font-family:monospace;font-size:12px">'+r.posicion+'</td>'
+    +'<td style="color:var(--gris);font-size:12px">'+r.fecha+'</td>'
+    +'<td style="font-weight:700">$'+Number(r.precio).toFixed(2)+'</td>'
+    +'<td><button class="btn-sm btn-rechazar" data-id="'+r.id+'" onclick="eliminarHistorico(this.dataset.id)">✕</button></td>'
+    +'</tr>').join('');
 }
 async function eliminarHistorico(id) { await sb.from('precios_historicos').delete().eq('id',id); cargarHistoricos(); }
 async function limpiarHistoricos() {
