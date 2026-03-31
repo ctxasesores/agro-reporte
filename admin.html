@@ -11,267 +11,151 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <style>
 :root {
-  --negro:   #1c1a18; --negro-m:  #2a2825;
-  --crema:   #faf8f4; --crema-d:  #f0ebe3; --crema-dd: #e5dfd6;
-  --oro:     #c8a96e; --oro-l:    #e8d9b8; --oro-d:    #a68a4e;
-  --verde:   #2e7d52; --verde-m:  #256742; --verde-l:  #4aab76;
-  --rojo:    #c0391b; --texto:    #1c1a18;
-  --gris:    #7a7268; --gris-l:   #9b9289;
-  --blanco:  #ffffff;
-  --sombra:  0 1px 12px rgba(28,26,24,.07);
-  --radio:   10px; --sidebar: 240px;
-  --azul-os: #1c1a18; --azul-m: #2a2825;
+  --negro:#1c1a18; --negro-m:#2a2825;
+  --crema:#faf8f4; --crema-d:#f0ebe3; --crema-dd:#e5dfd6;
+  --oro:#c8a96e; --oro-l:#e8d9b8; --oro-d:#a68a4e;
+  --verde:#2e7d52; --verde-l:#4aab76;
+  --rojo:#c0391b;
+  --texto:#1c1a18; --gris:#7a7268; --gris-l:#9b9289;
+  --blanco:#ffffff;
+  --sombra:0 1px 12px rgba(28,26,24,.07);
+  --radio:10px; --sidebar:240px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif !important; }
-body { font-family: 'DM Sans', sans-serif; background: var(--crema); color: var(--texto); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-h1,h2,h3 { font-family: 'DM Sans', sans-serif !important; font-weight: 400 !important; }
-.page-header h1 { font-size: 20px; font-weight: 700; color: white; letter-spacing: -.3px; }
-.card-title, .section-heading { font-family: 'DM Sans', sans-serif; }
+* { box-sizing:border-box; margin:0; padding:0; font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif !important; }
+body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-font-smoothing:antialiased; }
 
 /* LOGIN */
-#loginScreen {
-  min-height: 100vh; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  background: var(--negro); padding: 32px 20px;
-}
-.login-badge {
-  background: rgba(200,169,110,.15); color: var(--oro-l);
-  font-size: 11px; font-weight: 600; letter-spacing: 1px;
-  text-transform: uppercase; padding: 4px 14px;
-  border-radius: 20px; margin-bottom: 20px;
-  border: 1px solid rgba(200,169,110,.3);
-}
-.login-card {
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-  border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 360px;
-}
-.login-card label { color: rgba(255,255,255,.65); font-size: 11px; font-weight: 600;
-  letter-spacing: .8px; text-transform: uppercase; display: block; margin-bottom: 7px; }
-.login-card input {
-  width: 100%; padding: 13px 15px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.07);
-  color: white; font-family: 'DM Sans', sans-serif; font-size: 15px;
-  margin-bottom: 14px; outline: none; transition: border .2s;
-}
-.login-card input:focus { border-color: var(--verde); }
-.login-card input::placeholder { color: rgba(255,255,255,.28); }
-.btn-login {
-  width: 100%; padding: 14px; background: var(--oro); color: var(--negro);
-  border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
-  font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s;
-}
-.btn-login:hover { opacity: .88; }
-.login-error { color: #fca5a5; font-size: 13px; margin-top: 12px; text-align: center; display: none; }
+#loginScreen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); padding:32px 20px; }
+.login-badge { background:rgba(200,169,110,.15); color:var(--oro-l); font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:4px 14px; border-radius:20px; margin-bottom:20px; border:1px solid rgba(200,169,110,.3); }
+.login-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:32px 28px; width:100%; max-width:360px; }
+.login-card label { color:rgba(255,255,255,.65); font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; display:block; margin-bottom:7px; }
+.login-card input { width:100%; padding:13px 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.07); color:white; font-size:15px; margin-bottom:14px; outline:none; transition:border .2s; }
+.login-card input:focus { border-color:var(--oro-l); }
+.login-card input::placeholder { color:rgba(255,255,255,.28); }
+.btn-login { width:100%; padding:14px; background:var(--oro); color:var(--negro); border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:opacity .2s; }
+.btn-login:hover { opacity:.88; }
+.login-error { color:#fca5a5; font-size:13px; margin-top:12px; text-align:center; display:none; }
 
 /* SHELL */
-#adminShell { display: none; min-height: 100vh; }
+#adminShell { display:none; min-height:100vh; }
 
 /* SIDEBAR */
-.sidebar {
-  width: var(--sidebar); background: var(--negro);
-  position: fixed; top: 0; left: 0; bottom: 0;
-  display: flex; flex-direction: column; z-index: 200;
-}
-.sidebar-brand { padding: 22px 18px 16px; border-bottom: 1px solid rgba(255,255,255,.09); }
-.brand-row { display: flex; align-items: center; gap: 10px; }
-.brand-name { font-size: 17px; font-weight: 600; color: white; letter-spacing: .5px; }
-.brand-sub  { color: rgba(255,255,255,.38); font-size: 11px; margin-top: 4px; }
-.admin-pill {
-  display: inline-block; background: rgba(200,169,110,.15); color: var(--oro-l);
-  font-size: 10px; font-weight: 700; letter-spacing: .8px;
-  text-transform: uppercase; padding: 2px 8px; border-radius: 10px;
-  border: 1px solid rgba(200,169,110,.25); margin-top: 6px;
-}
-
-.sidebar-nav { flex: 1; padding: 10px 0; }
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 18px; cursor: pointer;
-  color: rgba(255,255,255,.5); font-size: 13px;
-  border-left: 2px solid transparent; transition: all .15s;
-  text-decoration: none;
-}
-.nav-item.active { background: rgba(200,169,110,.1); color: var(--oro-l); border-left-color: var(--oro); }
-.nav-item:hover:not(.active) { background: rgba(255,255,255,.04); color: rgba(255,255,255,.78); }
-.nav-badge {
-  margin-left: auto; background: var(--rojo); color: white;
-  font-size: 10px; font-weight: 700; min-width: 18px; height: 18px;
-  border-radius: 9px; display: flex; align-items: center; justify-content: center;
-  padding: 0 5px;
-}
-
-.sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07); }
-.btn-logout {
-  width: 100%; padding: 8px; background: transparent;
-  border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.5);
-  border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif;
-}
-.btn-logout:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.78); }
+.sidebar { width:var(--sidebar); background:var(--negro); position:fixed; top:0; left:0; bottom:0; display:flex; flex-direction:column; z-index:200; }
+.sidebar-brand { padding:20px 18px 14px; border-bottom:1px solid rgba(255,255,255,.08); }
+.brand-row { display:flex; align-items:center; gap:10px; }
+.brand-name { font-size:16px; font-weight:700; color:white; }
+.brand-sub { color:rgba(255,255,255,.35); font-size:11px; margin-top:3px; }
+.admin-pill { display:inline-block; background:rgba(200,169,110,.15); color:var(--oro-l); font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; padding:2px 8px; border-radius:10px; border:1px solid rgba(200,169,110,.25); margin-top:6px; }
+.sidebar-nav { flex:1; padding:8px 0; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 18px; color:rgba(255,255,255,.45); font-size:13px; border-left:2px solid transparent; cursor:pointer; transition:all .15s; text-decoration:none; }
+.nav-item.active { background:rgba(200,169,110,.1); color:var(--oro-l); border-left-color:var(--oro); }
+.nav-item:hover:not(.active) { background:rgba(255,255,255,.04); color:rgba(255,255,255,.75); }
+.nav-badge { margin-left:auto; background:var(--rojo); color:white; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; }
+.sidebar-footer { padding:12px 18px; border-top:1px solid rgba(255,255,255,.06); }
+.sidebar-tagline { color:rgba(200,169,110,.3); font-size:9px; letter-spacing:.3px; line-height:1.5; border-top:1px solid rgba(255,255,255,.05); padding-top:10px; margin-bottom:10px; }
+.btn-logout { width:100%; padding:8px; background:transparent; border:1px solid rgba(200,169,110,.2); color:rgba(200,169,110,.5); border-radius:8px; font-size:12px; cursor:pointer; }
+.btn-logout:hover { background:rgba(200,169,110,.08); color:var(--oro-l); }
 
 /* MAIN */
-.main-content { margin-left: var(--sidebar); min-height: 100vh; }
-.page-header {
-  background: var(--negro); padding: 20px 28px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.page-header h1 { font-size: 20px !important; font-weight: 400 !important; color: white; font-family: 'DM Sans', sans-serif !important; letter-spacing: .2px; }
-.page-header-sub { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 2px; }
-.header-actions { display: flex; gap: 10px; }
+.main-content { margin-left:var(--sidebar); min-height:100vh; }
+.page-header { background:var(--negro); padding:20px 28px; display:flex; align-items:center; justify-content:space-between; }
+.page-header h1 { font-size:20px; font-weight:700; color:white; letter-spacing:-.3px; }
+.page-header-sub { font-size:12px; color:rgba(255,255,255,.4); margin-top:2px; }
+.header-actions { display:flex; gap:10px; }
+.page-body { padding:28px; }
 
-.page-body { padding: 28px; }
+/* CARDS */
+.card { background:var(--blanco); border-radius:var(--radio); box-shadow:var(--sombra); border:1px solid var(--crema-d); overflow:hidden; }
+.card-header { padding:16px 20px; border-bottom:1px solid var(--crema-d); display:flex; align-items:center; justify-content:space-between; }
+.card-header h2 { font-size:14px; font-weight:600; color:var(--texto); }
+.card-header-sub { font-size:12px; color:var(--gris); margin-top:2px; }
 
-/* CARDS / PANELS */
-.card { background: var(--blanco); border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--crema-d); overflow: hidden; }
-.card-header {
-  padding: 16px 20px; border-bottom: 1px solid var(--crema-d);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.card-header h2 { font-size: 14px; font-weight: 600; color: var(--texto); letter-spacing: -.1px; }
-.card-header-sub { font-size: 12px; color: var(--gris); }
-
-/* STATS ROW */
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-.stat-box {
-  background: white; border-radius: var(--radio); box-shadow: var(--sombra);
-  padding: 18px 20px;
-}
-.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--gris); margin-bottom: 6px; }
-.stat-val   { font-size: 30px; font-weight: 700; color: var(--texto); line-height: 1; letter-spacing: -.5px; }
-.stat-val.pend { color: var(--oro-d); }
-.stat-val.verde { color: var(--verde); }
-.stat-val.rojo  { color: var(--rojo); }
+/* STATS */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.stat-box { background:var(--blanco); border-radius:var(--radio); box-shadow:var(--sombra); border:1px solid var(--crema-d); padding:18px 20px; }
+.stat-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); margin-bottom:6px; }
+.stat-val { font-size:30px; font-weight:700; color:var(--texto); line-height:1; letter-spacing:-.5px; }
+.stat-val.pend { color:var(--oro-d); }
+.stat-val.verde { color:var(--verde); }
 
 /* TABLES */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th {
-  padding: 10px 14px; text-align: left; font-size: 11px;
-  text-transform: uppercase; letter-spacing: .5px; color: var(--gris);
-  font-weight: 600; border-bottom: 1px solid var(--crema-d); white-space: nowrap;
-}
-td { padding: 12px 14px; border-bottom: 1px solid var(--crema-d); vertical-align: middle; white-space: nowrap; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: #f9faf6; }
-th:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { text-align: right; }
-td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { text-align: right; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { padding:10px 14px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:600; border-bottom:1px solid var(--crema-d); white-space:nowrap; }
+td { padding:11px 14px; border-bottom:1px solid var(--crema-d); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#f9faf6; }
 
-/* PILLS & BADGES */
-.pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.pill-compra { background: #dbeafe; color: #1e40af; }
-.pill-venta  { background: #fef3c7; color: #92400e; }
-.badge-pend  { background: #fef9c3; color: #854d0e; font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; }
-.badge-conf  { background: #dcfce7; color: #166534; font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; }
-.badge-rech  { background: #fee2e2; color: #991b1b; font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; }
+/* PILLS BADGES */
+.pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+.pill-compra { background:#dbeafe; color:#1e40af; }
+.pill-venta  { background:#fef3c7; color:#92400e; }
+.badge-pend  { background:#fef9c3; color:#854d0e; font-size:11px; padding:3px 9px; border-radius:10px; font-weight:600; }
+.badge-conf  { background:#dcfce7; color:#166534; font-size:11px; padding:3px 9px; border-radius:10px; font-weight:600; }
+.badge-rech  { background:#fee2e2; color:#991b1b; font-size:11px; padding:3px 9px; border-radius:10px; font-weight:600; }
 
-/* ACTION BUTTONS */
-.btn-sm {
-  padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
-  cursor: pointer; font-family: 'DM Sans', sans-serif; border: none; transition: opacity .2s;
-}
-.btn-sm:hover { opacity: .82; }
-.btn-aprobar { background: #dcfce7; color: #166534; }
-.btn-rechazar { background: #fee2e2; color: #991b1b; }
-.btn-editar   { background: var(--crema-d); color: var(--texto); }
-.btn-export {
-  padding: 9px 18px; background: var(--oro); color: var(--negro);
-  border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
-  font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .2s;
-}
-.btn-export:hover { opacity: .88; }
-.btn-refresh {
-  padding: 9px 14px; background: transparent;
-  border: 1px solid var(--crema-d); color: var(--gris);
-  border-radius: 8px; font-family: 'DM Sans', sans-serif;
-  font-size: 13px; cursor: pointer; transition: all .2s;
-}
-.btn-refresh:hover { border-color: var(--oro-d); color: var(--oro-d); }
+/* BUTTONS */
+.btn-sm { padding:5px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:none; transition:opacity .2s; }
+.btn-sm:hover { opacity:.82; }
+.btn-aprobar  { background:#dcfce7; color:#166534; }
+.btn-rechazar { background:#fee2e2; color:#991b1b; }
+.btn-editar   { background:var(--crema-d); color:var(--texto); }
+.btn-export   { padding:9px 18px; background:var(--oro); color:var(--negro); border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .2s; }
+.btn-export:hover { opacity:.88; }
+.btn-refresh  { padding:9px 14px; background:transparent; border:1px solid var(--crema-d); color:var(--gris); border-radius:8px; font-size:13px; cursor:pointer; transition:all .2s; }
+.btn-refresh:hover { border-color:var(--oro-d); color:var(--oro-d); }
+.btn-danger   { padding:9px 18px; background:var(--rojo); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+
+/* FORM FIELDS */
+.field-group { display:flex; flex-direction:column; gap:5px; }
+.field-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); }
+.field-input, .field-select { padding:10px 12px; border-radius:8px; border:1px solid var(--crema-d); background:white; font-size:14px; color:var(--texto); outline:none; transition:border .2s; width:100%; }
+.field-input:focus, .field-select:focus { border-color:var(--oro); }
 
 /* FILTERS */
-.filters-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
-.filter-select {
-  padding: 8px 12px; border-radius: 8px; border: 1px solid var(--crema-d);
-  background: white; font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: var(--texto); outline: none; cursor: pointer;
-}
-.filter-select:focus { border-color: var(--oro); }
-.filter-label { font-size: 12px; color: var(--gris); }
+.filters-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
 
 /* SECTIONS */
-.section { margin-bottom: 28px; display: none; }
-.section.active { display: block; }
+.section { margin-bottom:28px; display:none; }
+.section.active { display:block; }
 
-/* MODAL EDITAR */
-.modal-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(16,23,41,.6); z-index: 500;
-  align-items: center; justify-content: center; padding: 20px;
-}
-.modal-overlay.open { display: flex; }
-.modal {
-  background: white; border-radius: 16px; padding: 28px;
-  width: 100%; max-width: 480px; box-shadow: 0 8px 40px rgba(16,23,41,.2);
-}
-.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--texto); }
-.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.modal-group { display: flex; flex-direction: column; gap: 5px; }
-.modal-group.full { grid-column: 1/-1; }
-.modal-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--gris); }
-.modal-input, .modal-select {
-  padding: 10px 12px; border-radius: 8px;
-  border: 1px solid var(--crema-d); background: white;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--texto);
-  outline: none; transition: border .2s; width: 100%;
-}
-.modal-input:focus, .modal-select:focus { border-color: var(--oro); }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-.btn-modal-cancel {
-  padding: 10px 18px; background: transparent; border: 1px solid var(--crema-d);
-  color: var(--gris); border-radius: 8px; font-family: 'DM Sans', sans-serif;
-  font-size: 13px; cursor: pointer;
-}
-.btn-modal-save {
-  padding: 10px 22px; background: var(--oro); color: var(--negro);
-  border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-}
+/* MODAL */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(16,23,41,.6); z-index:500; align-items:center; justify-content:center; padding:20px; }
+.modal-overlay.open { display:flex; }
+.modal { background:white; border-radius:16px; padding:28px; width:100%; max-width:480px; }
+.modal h3 { font-size:16px; font-weight:600; margin-bottom:20px; }
+.modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.modal-group { display:flex; flex-direction:column; gap:5px; }
+.modal-group.full { grid-column:1/-1; }
+.modal-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); }
+.modal-input, .modal-select { padding:10px 12px; border-radius:8px; border:1px solid var(--crema-d); background:white; font-size:13px; color:var(--texto); outline:none; transition:border .2s; width:100%; }
+.modal-input:focus, .modal-select:focus { border-color:var(--oro); }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+.btn-modal-cancel { padding:10px 18px; background:transparent; border:1px solid var(--crema-d); color:var(--gris); border-radius:8px; cursor:pointer; }
+.btn-modal-save   { padding:10px 22px; background:var(--oro); color:var(--negro); border:none; border-radius:8px; font-weight:600; cursor:pointer; }
 
-/* CARTERA CLIENTE */
-.cliente-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.tab-btn {
-  padding: 7px 16px; border-radius: 20px; border: 1px solid var(--crema-d);
-  background: white; font-family: 'DM Sans', sans-serif; font-size: 12px;
-  color: var(--gris); cursor: pointer; transition: all .18s;
-}
-.tab-btn.active { background: var(--azul-os); color: white; border-color: var(--azul-os); }
+/* CLIENT TABS */
+.cliente-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.tab-btn { padding:7px 16px; border-radius:20px; border:1px solid var(--crema-d); background:white; font-size:12px; color:var(--gris); cursor:pointer; transition:all .18s; }
+.tab-btn.active { background:var(--negro); color:white; border-color:var(--negro); }
 
-/* LOADING */
-#loadingBar {
-  position: fixed; top: 0; left: 0; height: 3px;
-  background: var(--oro); width: 0; z-index: 999;
-  transition: width .3s;
-}
-.empty-state { padding: 40px; text-align: center; color: var(--gris); font-size: 14px; }
-.empty-icon  { font-size: 32px; margin-bottom: 8px; }
+/* TOAST */
+.toast { font-size:13px; font-weight:500; padding:10px 14px; border-radius:8px; display:none; margin-top:12px; }
+.toast.ok  { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; display:block; }
+.toast.err { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; display:block; }
 
-@media(max-width: 900px) {
-  .stats-row { grid-template-columns: 1fr 1fr; }
-}
+/* LOADING BAR */
+#loadingBar { position:fixed; top:0; left:0; height:3px; background:var(--oro); width:0; z-index:999; transition:width .3s; }
+.empty-state { padding:32px; text-align:center; color:var(--gris); font-size:14px; }
 </style>
 </head>
 <body>
-
 <div id="loadingBar"></div>
 
-<!-- ── LOGIN ── -->
+<!-- LOGIN -->
 <div id="loginScreen">
-  <svg width="52" height="52" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg">
-  <path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/>
-  <path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/>
-  <path fill="#fcfcfc" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/>
-  <path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/>
-  <path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/>
-</svg>
-  <div style="margin-bottom:6px;margin-top:14px;font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</div>
+  <svg width="52" height="52" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+  <div style="margin:12px 0 16px;font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</div>
   <div class="login-badge">Panel Administrador</div>
   <div class="login-card">
     <label>Contraseña de administrador</label>
@@ -281,58 +165,35 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
   </div>
 </div>
 
-<!-- ── ADMIN SHELL ── -->
+<!-- ADMIN SHELL -->
 <div id="adminShell">
-
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-row">
-        <svg width="32" height="32" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg">
-  <path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/>
-  <path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/>
-  <path fill="#fcfcfc" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/>
-  <path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/>
-  <path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/>
-</svg>
+        <svg width="32" height="32" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
         <div>
           <div class="brand-name">CTX</div>
+          <div class="brand-sub">Gestión de riesgo</div>
         </div>
       </div>
-      <div class="brand-sub">Gestión de riesgo</div>
       <div class="admin-pill">Admin</div>
     </div>
     <nav class="sidebar-nav">
-      <a class="nav-item active" onclick="showSection('pendientes', this)">
-        <span>⏳</span> Pendientes
-        <span class="nav-badge" id="badge-pendientes">0</span>
+      <a class="nav-item active" onclick="showSection('pendientes',this)">
+        ⏳ Pendientes <span class="nav-badge" id="badge-pend">0</span>
       </a>
-      <a class="nav-item" onclick="showSection('todas', this)">
-        <span>≡</span> Todas las operaciones
-      </a>
-      <a class="nav-item" onclick="showSection('carteras', this)">
-        <span>◉</span> Carteras de clientes
-      </a>
-      <a class="nav-item" onclick="showSection('precios', this)">
-        <span>◎</span> Precios de mercado
-      </a>
-      <a class="nav-item" onclick="showSection('precios', this)">
-        <span>◎</span> Precios de mercado
-      </a>
-      <a class="nav-item" onclick="showSection('usuarios', this)">
-        <span>⊕</span> Usuarios
-      </a>
+      <a class="nav-item" onclick="showSection('todas',this)">≡ Todas las operaciones</a>
+      <a class="nav-item" onclick="showSection('carteras',this)">◉ Carteras de clientes</a>
+      <a class="nav-item" onclick="showSection('precios',this)">◎ Precios de mercado</a>
+      <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
     <div class="sidebar-footer">
-      <div style="color:rgba(200,169,110,.3);font-size:9px;letter-spacing:.3px;line-height:1.5;border-top:1px solid rgba(255,255,255,.05);padding-top:10px;margin-bottom:10px">Asesoría estratégica<br>financiera agropecuaria</div>
-      <button class="btn-logout" style="border-color:rgba(200,169,110,.2);color:rgba(200,169,110,.5)" onclick="logout()">Cerrar sesión</button>
+      <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
+      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
     </div>
   </aside>
 
-  <!-- Main -->
   <div class="main-content">
-
-    <!-- Header -->
     <div class="page-header">
       <div>
         <h1 id="page-title">Operaciones pendientes</h1>
@@ -345,146 +206,83 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
     </div>
 
     <div class="page-body">
-
       <!-- STATS -->
       <div class="stats-row">
-        <div class="stat-box">
-          <div class="stat-label">Pendientes</div>
-          <div class="stat-val pend" id="stat-pend">—</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Confirmadas hoy</div>
-          <div class="stat-val verde" id="stat-conf">—</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Total operaciones</div>
-          <div class="stat-val" id="stat-total">—</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Clientes activos</div>
-          <div class="stat-val" id="stat-clientes">—</div>
-        </div>
+        <div class="stat-box"><div class="stat-label">Pendientes</div><div class="stat-val pend" id="stat-pend">—</div></div>
+        <div class="stat-box"><div class="stat-label">Confirmadas hoy</div><div class="stat-val verde" id="stat-conf">—</div></div>
+        <div class="stat-box"><div class="stat-label">Total operaciones</div><div class="stat-val" id="stat-total">—</div></div>
+        <div class="stat-box"><div class="stat-label">Clientes activos</div><div class="stat-val" id="stat-clientes">—</div></div>
       </div>
 
-      <!-- SECCIÓN: PENDIENTES -->
+      <!-- PENDIENTES -->
       <div class="section active" id="sec-pendientes">
         <div class="card">
-          <div class="card-header">
-            <div>
-              <h2>Operaciones pendientes de aprobación</h2>
-              <div class="card-header-sub">Las operaciones aprobadas quedan disponibles para el cliente</div>
-            </div>
-          </div>
+          <div class="card-header"><div><h2>Operaciones pendientes</h2><div class="card-header-sub">Aprobá o rechazá cada operación</div></div></div>
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Fecha carga</th>
-                  <th>Cliente</th>
-                  <th>Producto</th>
-                  <th>Tipo</th>
-                  <th>Lado</th>
-                  <th>Volumen</th>
-                  <th>Precio</th>
-                  <th>Vto.</th>
-                  <th>Obs.</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-pendientes">
-                <tr><td colspan="10" class="empty-state"><div class="empty-icon">⏳</div>Cargando...</td></tr>
-              </tbody>
+              <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Obs.</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-pendientes"><tr><td colspan="10" class="empty-state">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- SECCIÓN: TODAS -->
+      <!-- TODAS -->
       <div class="section" id="sec-todas">
         <div class="filters-row">
-          <span class="filter-label">Filtrar por:</span>
-          <select class="filter-select" id="fil-cliente" onchange="renderTodas()">
+          <select class="field-select" id="fil-cliente" onchange="renderTodas()" style="width:auto">
             <option value="">Todos los clientes</option>
           </select>
-          <select class="filter-select" id="fil-estado" onchange="renderTodas()">
+          <select class="field-select" id="fil-estado" onchange="renderTodas()" style="width:auto">
             <option value="">Todos los estados</option>
             <option value="pendiente">Pendiente</option>
             <option value="confirmada">Confirmada</option>
             <option value="rechazada">Rechazada</option>
           </select>
-          <select class="filter-select" id="fil-producto" onchange="renderTodas()">
+          <select class="field-select" id="fil-producto" onchange="renderTodas()" style="width:auto">
             <option value="">Todos los productos</option>
             <option>Soja</option><option>Maíz</option><option>Trigo</option>
             <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
           </select>
         </div>
         <div class="card">
-          <div class="card-header">
-            <h2>Historial completo de operaciones</h2>
-          </div>
+          <div class="card-header"><h2>Historial de operaciones</h2></div>
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Fecha carga</th>
-                  <th>Cliente</th>
-                  <th>Producto</th>
-                  <th>Tipo</th>
-                  <th>Lado</th>
-                  <th>Volumen</th>
-                  <th>Precio</th>
-                  <th>Vto.</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-todas">
-                <tr><td colspan="10" class="empty-state"><div class="empty-icon">≡</div>Cargando...</td></tr>
-              </tbody>
+              <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-todas"><tr><td colspan="10" class="empty-state">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- SECCIÓN: CARTERAS -->
+      <!-- CARTERAS -->
       <div class="section" id="sec-carteras">
-        <div class="card-header" style="background:white;border-radius:var(--radio);padding:16px 20px;margin-bottom:16px;box-shadow:var(--sombra)">
-          <h2>Carteras de clientes</h2>
-          <div class="card-header-sub">Operaciones agrupadas por cliente</div>
-        </div>
         <div class="cliente-tabs" id="cliente-tabs"></div>
-        <div id="cartera-content">
-          <div class="card"><div class="empty-state"><div class="empty-icon">◉</div>Seleccioná un cliente</div></div>
-        </div>
+        <div id="cartera-content"><div class="card"><div class="empty-state">Seleccioná un cliente</div></div></div>
       </div>
 
-      <!-- SECCIÓN: PRECIOS DE MERCADO -->
+      <!-- PRECIOS DE MERCADO -->
       <div class="section" id="sec-precios">
-
-        <!-- Cargar/actualizar precio -->
         <div class="card" style="margin-bottom:20px">
           <div class="card-header">
             <div>
               <h2>Cargar precio de mercado</h2>
-              <div class="card-header-sub">Si el precio ya existe para ese producto/vencimiento, se actualiza automáticamente</div>
+              <div class="card-header-sub">El precio se actualiza automáticamente si ya existe ese par producto/vencimiento</div>
             </div>
           </div>
-          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:14px;align-items:end">
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Producto</label>
-              <select class="filter-select" id="pm-producto" style="padding:10px 12px;font-size:14px" onchange="onPmProductoChange()">
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+            <div class="field-group">
+              <label class="field-label">Producto</label>
+              <select class="field-select" id="pm-producto">
                 <option value="">Seleccioná...</option>
-                <option>Soja</option>
-                <option>Maíz</option>
-                <option>Trigo</option>
-                <option>Girasol</option>
-                <option>Sorgo</option>
-                <option>Cebada</option>
+                <option>Soja</option><option>Maíz</option><option>Trigo</option>
+                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
               </select>
             </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Vencimiento</label>
-              <select class="filter-select" id="pm-vencimiento" style="padding:10px 12px;font-size:14px">
+            <div class="field-group">
+              <label class="field-label">Vencimiento</label>
+              <select class="field-select" id="pm-vencimiento">
                 <option value="">Seleccioná...</option>
                 <option value="CONT">Continuo</option>
                 <option value="1_2026">Ene 2026</option>
@@ -513,201 +311,67 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
                 <option value="12_2027">Dic 2027</option>
               </select>
             </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Precio (USD/tn)</label>
-              <input type="number" class="filter-select" id="pm-precio" placeholder="ej: 325" min="0" step="0.1" style="padding:10px 12px;font-size:14px">
+            <div class="field-group">
+              <label class="field-label">Precio (USD/tn)</label>
+              <input type="number" class="field-input" id="pm-precio" placeholder="ej: 325" min="0" step="0.1">
             </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">¿Es continuo?</label>
-              <select class="filter-select" id="pm-continuo" style="padding:10px 12px;font-size:14px">
+            <div class="field-group">
+              <label class="field-label">¿Es continuo?</label>
+              <select class="field-select" id="pm-continuo">
                 <option value="false">No</option>
-                <option value="true">Sí (precio continuo)</option>
+                <option value="true">Sí (continuo)</option>
               </select>
             </div>
-            <button class="btn-export" id="pm-btn" onclick="guardarPrecio()" style="white-space:nowrap;height:42px">
-              + Guardar precio
-            </button>
+            <button class="btn-export" onclick="guardarPrecio()" id="pm-btn" style="height:42px;white-space:nowrap">+ Cargar</button>
           </div>
-          <div style="padding:0 20px 16px">
-            <div id="pm-toast" style="font-size:13px;font-weight:500;display:none;padding:8px 14px;border-radius:8px"></div>
-          </div>
+          <div style="padding:0 20px 16px"><div id="pm-toast" class="toast"></div></div>
         </div>
-
-        <!-- Tabla de precios actuales -->
-        <div class="card">
-          <div class="card-header">
-            <h2>Precios actuales</h2>
-            <div style="display:flex;gap:8px;align-items:center">
-              <select class="filter-select" id="pm-fil-producto" onchange="renderPrecios()" style="font-size:12px;padding:6px 10px">
-                <option value="">Todos los productos</option>
-                <option>Soja</option><option>Maíz</option><option>Trigo</option>
-                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-              </select>
-              <button class="btn-refresh" onclick="cargarPrecios()">↻ Actualizar</button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Vencimiento</th>
-                  <th style="text-align:right">Precio (USD/tn)</th>
-                  <th>Tipo</th>
-                  <th>Última actualización</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-precios">
-                <tr><td colspan="6" class="empty-state">Cargando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- SECCIÓN: PRECIOS -->
-      <div class="section" id="sec-precios">
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-header">
-            <div>
-              <h2>Cargar precio de mercado</h2>
-              <div class="card-header-sub">Actualizá los precios quincenalmente. Formato vencimiento: 5_2026 para mayo 2026, CONT para precio continuo.</div>
-            </div>
-          </div>
-          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Producto</label>
-              <select class="filter-select" id="pm-producto" style="padding:10px 12px;font-size:14px">
-                <option value="">Seleccioná...</option>
-                <option>Soja</option><option>Maíz</option><option>Trigo</option>
-                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-              </select>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Vencimiento</label>
-              <input type="text" class="filter-select" id="pm-venc" placeholder="ej: 5_2026 o CONT" style="padding:10px 12px;font-size:14px">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Precio (USD/tn)</label>
-              <input type="number" class="filter-select" id="pm-precio" placeholder="ej: 325" min="0" step="0.1" style="padding:10px 12px;font-size:14px">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">¿Continuo?</label>
-              <select class="filter-select" id="pm-cont" style="padding:10px 12px;font-size:14px">
-                <option value="false">No</option>
-                <option value="true">Sí (precio continuo)</option>
-              </select>
-            </div>
-            <button class="btn-export" onclick="guardarPrecio()" id="pm-btn" style="height:42px">+ Cargar</button>
-          </div>
-          <div style="padding:0 20px 16px">
-            <div id="pm-toast" style="display:none;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px"></div>
-          </div>
-        </div>
-
-        <!-- Lista de precios actuales -->
         <div class="card">
           <div class="card-header">
             <h2>Precios cargados</h2>
             <div style="display:flex;gap:8px">
               <button class="btn-refresh" onclick="cargarPrecios()">↻ Actualizar</button>
-              <button class="btn-export" onclick="limpiarPrecios()" style="background:var(--rojo)">Limpiar todos</button>
             </div>
           </div>
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Vencimiento</th>
-                  <th>Precio</th>
-                  <th>Continuo</th>
-                  <th>Actualizado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-precios">
-                <tr><td colspan="6" class="empty-state">Cargando...</td></tr>
-              </tbody>
+              <thead><tr><th>Producto</th><th>Vencimiento</th><th>Precio</th><th>Continuo</th><th>Actualizado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-precios"><tr><td colspan="6" class="empty-state">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- SECCIÓN: USUARIOS -->
+      <!-- USUARIOS -->
       <div class="section" id="sec-usuarios">
-
-        <!-- Crear nuevo usuario -->
         <div class="card" style="margin-bottom:20px">
           <div class="card-header">
-            <div>
-              <h2>Crear nuevo cliente</h2>
-              <div class="card-header-sub">El cliente recibirá su email y contraseña para acceder al dashboard</div>
-            </div>
+            <div><h2>Crear nuevo cliente</h2><div class="card-header-sub">El cliente recibirá su email y contraseña para acceder al dashboard</div></div>
           </div>
-          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px" id="nuevoUserForm">
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Nombre empresa / cliente</label>
-              <input type="text" class="filter-select" id="nu-nombre" placeholder="Agropecuaria XYZ S.A." style="padding:10px 12px;font-size:14px">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Código interno</label>
-              <input type="text" class="filter-select" id="nu-codigo" placeholder="XYZ_22" style="padding:10px 12px;font-size:14px">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Email</label>
-              <input type="email" class="filter-select" id="nu-email" placeholder="cliente@empresa.com" style="padding:10px 12px;font-size:14px">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Contraseña inicial</label>
-              <input type="text" class="filter-select" id="nu-pass" placeholder="mínimo 8 caracteres" style="padding:10px 12px;font-size:14px">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Campaña</label>
-              <input type="text" class="filter-select" id="nu-campania" placeholder="25/26" style="padding:10px 12px;font-size:14px">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gris)">Actividad</label>
-              <select class="filter-select" id="nu-actividad" style="padding:10px 12px;font-size:14px">
-                <option>Agricultura</option>
-                <option>Ganadería</option>
-                <option>Agricultura y Ganadería</option>
-                <option>Tambo</option>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="field-group"><label class="field-label">Nombre empresa / cliente</label><input type="text" class="field-input" id="nu-nombre" placeholder="Agropecuaria XYZ S.A."></div>
+            <div class="field-group"><label class="field-label">Código interno</label><input type="text" class="field-input" id="nu-codigo" placeholder="XYZ_22"></div>
+            <div class="field-group"><label class="field-label">Email</label><input type="email" class="field-input" id="nu-email" placeholder="cliente@empresa.com"></div>
+            <div class="field-group"><label class="field-label">Contraseña inicial</label><input type="text" class="field-input" id="nu-pass" placeholder="mínimo 8 caracteres"></div>
+            <div class="field-group"><label class="field-label">Campaña</label><input type="text" class="field-input" id="nu-campania" placeholder="25/26"></div>
+            <div class="field-group"><label class="field-label">Actividad</label>
+              <select class="field-select" id="nu-actividad">
+                <option>Agricultura</option><option>Ganadería</option>
+                <option>Agricultura y Ganadería</option><option>Tambo</option>
               </select>
             </div>
             <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--crema-d)">
-              <div id="nu-toast" style="font-size:13px;font-weight:500;display:none;padding:8px 14px;border-radius:8px"></div>
-              <button class="btn-export" id="nu-btn" onclick="crearUsuario()" style="margin-left:auto">
-                + Crear cliente
-              </button>
+              <div id="nu-toast" class="toast"></div>
+              <button class="btn-export" id="nu-btn" onclick="crearUsuario()" style="margin-left:auto">+ Crear cliente</button>
             </div>
           </div>
         </div>
-
-        <!-- Lista de clientes existentes -->
         <div class="card">
-          <div class="card-header">
-            <h2>Clientes activos</h2>
-            <button class="btn-refresh" onclick="cargarClientes()">↻ Actualizar</button>
-          </div>
+          <div class="card-header"><h2>Clientes activos</h2><button class="btn-refresh" onclick="cargarClientes()">↻ Actualizar</button></div>
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Nombre / Empresa</th>
-                  <th>Código</th>
-                  <th>Email</th>
-                  <th>Campaña</th>
-                  <th>Actividad</th>
-                  <th>Alta</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-clientes">
-                <tr><td colspan="8" class="empty-state">Cargando...</td></tr>
-              </tbody>
+              <thead><tr><th>Nombre</th><th>Código</th><th>Email</th><th>Campaña</th><th>Actividad</th><th>Alta</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-clientes"><tr><td colspan="8" class="empty-state">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -717,57 +381,21 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
   </div>
 </div>
 
-<!-- MODAL EDITAR -->
+<!-- MODAL EDITAR OPERACIÓN -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Editar operación</h3>
     <input type="hidden" id="edit-id">
     <div class="modal-grid">
-      <div class="modal-group">
-        <label class="modal-label">Producto</label>
-        <select class="modal-select" id="edit-producto">
-          <option>Soja</option><option>Maíz</option><option>Trigo</option>
-          <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-        </select>
-      </div>
-      <div class="modal-group">
-        <label class="modal-label">Tipo</label>
-        <select class="modal-select" id="edit-tipo">
-          <option>Plan de Siembra</option><option>Stock</option><option>Precio</option>
-          <option>Futuro</option><option>FIX</option><option>PAF</option>
-          <option>Call</option><option>Put</option><option>Forward</option>
-        </select>
-      </div>
-      <div class="modal-group">
-        <label class="modal-label">Lado</label>
-        <select class="modal-select" id="edit-lado">
-          <option>Compra</option><option>Venta</option>
-        </select>
-      </div>
-      <div class="modal-group">
-        <label class="modal-label">Fecha</label>
-        <input type="date" class="modal-input" id="edit-fecha">
-      </div>
-      <div class="modal-group">
-        <label class="modal-label">Volumen (tn)</label>
-        <input type="number" class="modal-input" id="edit-volumen" min="0" step="1">
-      </div>
-      <div class="modal-group">
-        <label class="modal-label">Precio (USD/tn)</label>
-        <input type="number" class="modal-input" id="edit-precio" min="0" step="0.1">
-      </div>
-      <div class="modal-group">
-        <label class="modal-label">Vencimiento</label>
-        <input type="date" class="modal-input" id="edit-vencimiento">
-      </div>
-      <div class="modal-group">
-        <label class="modal-label">P. Ejercicio</label>
-        <input type="number" class="modal-input" id="edit-ejercicio" min="0" step="0.1">
-      </div>
-      <div class="modal-group full">
-        <label class="modal-label">Observaciones</label>
-        <input type="text" class="modal-input" id="edit-obs">
-      </div>
+      <div class="modal-group"><label class="modal-label">Producto</label><select class="modal-select" id="edit-producto"><option>Soja</option><option>Maíz</option><option>Trigo</option><option>Girasol</option><option>Sorgo</option><option>Cebada</option></select></div>
+      <div class="modal-group"><label class="modal-label">Tipo</label><select class="modal-select" id="edit-tipo"><option>Plan de Siembra</option><option>Stock</option><option>Precio</option><option>Futuro</option><option>FIX</option><option>PAF</option><option>Call</option><option>Put</option><option>Forward</option></select></div>
+      <div class="modal-group"><label class="modal-label">Lado</label><select class="modal-select" id="edit-lado"><option>Compra</option><option>Venta</option></select></div>
+      <div class="modal-group"><label class="modal-label">Fecha</label><input type="date" class="modal-input" id="edit-fecha"></div>
+      <div class="modal-group"><label class="modal-label">Volumen (tn)</label><input type="number" class="modal-input" id="edit-volumen" min="0"></div>
+      <div class="modal-group"><label class="modal-label">Precio (USD/tn)</label><input type="number" class="modal-input" id="edit-precio" min="0" step="0.1"></div>
+      <div class="modal-group"><label class="modal-label">Vencimiento</label><input type="date" class="modal-input" id="edit-vencimiento"></div>
+      <div class="modal-group"><label class="modal-label">P. Ejercicio</label><input type="number" class="modal-input" id="edit-ejercicio" min="0" step="0.1"></div>
+      <div class="modal-group full"><label class="modal-label">Observaciones</label><input type="text" class="modal-input" id="edit-obs"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeModal()">Cancelar</button>
@@ -777,20 +405,18 @@ td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)) { 
 </div>
 
 <script>
-const ADMIN_PASS = 'ctx_admin_2026';
-const SUPA_URL   = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
-const SUPA_KEY     = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
-const FUNCTIONS_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1';
-
-let sb           = null;
-let allOps       = [];
+const ADMIN_PASS   = 'ctx_admin_2026';
+const SUPA_URL     =  + SUPA_URL + ;
+const SUPA_KEY     =  + SUPA_KEY + ;
+const FUNCTIONS_URL=  + FUNCTIONS_URL + ;
+let sb = null;
+let allOps = [];
 let allClientesCount = 0;
 
-// ── AUTH ──
+// AUTH
 document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 function doLogin() {
-  const p = document.getElementById('adminPass').value;
-  if (p === ADMIN_PASS) {
+  if (document.getElementById('adminPass').value === ADMIN_PASS) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminShell').style.display  = 'block';
     initApp();
@@ -800,125 +426,117 @@ function doLogin() {
 }
 function logout() { location.reload(); }
 
-// ── INIT ──
 function initApp() {
   sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
   loadAll();
 }
 
 function setLoading(pct) {
-  document.getElementById('loadingBar').style.width = pct + '%';
-  if (pct >= 100) setTimeout(() => document.getElementById('loadingBar').style.width = '0', 400);
+  const bar = document.getElementById('loadingBar');
+  bar.style.width = pct + '%';
+  if (pct >= 100) setTimeout(() => bar.style.width = '0', 400);
 }
 
 async function loadAll() {
   setLoading(30);
-  const [opsResult, clientesResult] = await Promise.all([
+  const [opsRes, cliRes] = await Promise.all([
     sb.from('operaciones').select('*').order('created_at', { ascending: false }),
     sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true)
   ]);
   setLoading(100);
-  if (opsResult.error) { console.error(opsResult.error); }
-  allOps = opsResult.data || [];
-  allClientesCount = clientesResult.count || 0;
+  allOps = opsRes.data || [];
+  allClientesCount = cliRes.count || 0;
   updateStats();
   renderPendientes();
   renderTodas();
   renderClienteTabs();
 }
 
-// ── STATS ──
 function updateStats() {
   const pend  = allOps.filter(o => o.estado === 'pendiente').length;
   const today = new Date().toISOString().split('T')[0];
   const conf  = allOps.filter(o => o.estado === 'confirmada' && o.updated_at && o.updated_at.startsWith(today)).length;
-  const clientes = allClientesCount;
   document.getElementById('stat-pend').textContent    = pend;
   document.getElementById('stat-conf').textContent    = conf;
   document.getElementById('stat-total').textContent   = allOps.length;
-  document.getElementById('stat-clientes').textContent = clientes;
-  document.getElementById('badge-pendientes').textContent = pend > 0 ? pend : '0';
-  // Populate cliente filter
+  document.getElementById('stat-clientes').textContent= allClientesCount;
+  document.getElementById('badge-pend').textContent   = pend || '0';
   const fil = document.getElementById('fil-cliente');
-  const current = fil.value;
+  const cur = fil.value;
   fil.innerHTML = '<option value="">Todos los clientes</option>';
   [...new Set(allOps.map(o => o.cliente_codigo))].sort().forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
-    if (c === current) opt.selected = true;
-    fil.appendChild(opt);
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    if (c === cur) o.selected = true;
+    fil.appendChild(o);
   });
 }
 
-// ── RENDER PENDIENTES ──
-function renderPendientes() {
-  const pend = allOps.filter(o => o.estado === 'pendiente');
-  const tbody = document.getElementById('tbody-pendientes');
-  if (!pend.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-icon">✓</div>No hay operaciones pendientes</td></tr>';
-    return;
-  }
-  tbody.innerHTML = pend.map(op => rowHtml(op, true)).join('');
-}
-
-// ── RENDER TODAS ──
-function renderTodas() {
-  let ops = [...allOps];
-  const filC = document.getElementById('fil-cliente').value;
-  const filE = document.getElementById('fil-estado').value;
-  const filP = document.getElementById('fil-producto').value;
-  if (filC) ops = ops.filter(o => o.cliente_codigo === filC);
-  if (filE) ops = ops.filter(o => o.estado === filE);
-  if (filP) ops = ops.filter(o => o.producto === filP);
-  const tbody = document.getElementById('tbody-todas');
-  if (!ops.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-icon">≡</div>Sin resultados</td></tr>';
-    return;
-  }
-  tbody.innerHTML = ops.map(op => rowHtml(op, false)).join('');
-}
-
+// RENDER ROWS
 function rowHtml(op, isPend) {
   const fc  = new Date(op.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short'});
-  const fv  = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR', {month:'short',year:'numeric'});
+  const fv  = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
   const lc  = op.lado === 'Compra' ? 'pill-compra' : 'pill-venta';
   const pr  = op.precio > 0 ? '$'+Number(op.precio).toFixed(1) : '—';
   const vol = Number(op.volumen).toLocaleString('es-AR');
+  const obs = op.observaciones || '—';
   const est = op.estado === 'pendiente' ? 'badge-pend' : op.estado === 'confirmada' ? 'badge-conf' : 'badge-rech';
   const elabel = op.estado === 'pendiente' ? 'Pendiente' : op.estado === 'confirmada' ? 'Confirmada' : 'Rechazada';
-  const obs = op.observaciones || '—';
+  const id = op.id;
   const actions = isPend
-    ? `<button class="btn-sm btn-aprobar"  onclick="cambiarEstado('${op.id}','confirmada')">✓ Aprobar</button>
-       <button class="btn-sm btn-editar"   onclick="openEdit('${op.id}')" style="margin:0 4px">✎ Editar</button>
-       <button class="btn-sm btn-rechazar" onclick="cambiarEstado('${op.id}','rechazada')">✕ Rechazar</button>`
-    : `<span class="${est}">${elabel}</span>
-       <button class="btn-sm btn-editar" onclick="openEdit('${op.id}')" style="margin-left:6px">✎</button>`;
+    ? `<div style="display:flex;gap:4px">
+        <button class="btn-sm btn-aprobar"  onclick="cambiarEstado('${id}','confirmada')">✓ Aprobar</button>
+        <button class="btn-sm btn-editar"   onclick="openEdit('${id}')">✎</button>
+        <button class="btn-sm btn-rechazar" onclick="cambiarEstado('${id}','rechazada')">✕</button>
+       </div>`
+    : `<div style="display:flex;gap:4px">
+        <span class="${est}">${elabel}</span>
+        <button class="btn-sm btn-editar" onclick="openEdit('${id}')">✎</button>
+       </div>`;
   return `<tr>
-    <td style="color:var(--gris);font-size:12px">${fc}</td>
-    <td style="font-weight:600;color:var(--azul-os)">${op.cliente_codigo}</td>
-    <td>${op.producto}</td>
-    <td>${op.tipo}</td>
+    <td style="color:var(--gris-l);font-size:12px">${fc}</td>
+    <td style="font-weight:600">${op.cliente_codigo}</td>
+    <td>${op.producto}</td><td>${op.tipo}</td>
     <td><span class="pill ${lc}">${op.lado}</span></td>
     <td>${vol} tn</td>
-    <td style="font-weight:600;color:var(--verde)">${pr}/tn</td>
+    <td style="font-weight:600">${pr}/tn</td>
     <td>${fv}</td>
-    ${isPend ? `<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;color:var(--gris);font-size:12px">${obs}</td>` : ''}
-    <td><div style="display:flex;gap:4px;align-items:center">${actions}</div></td>
+    ${isPend ? `<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--gris)">${obs}</td>` : ''}
+    <td>${actions}</td>
   </tr>`;
 }
 
-// ── APROBAR / RECHAZAR ──
+function renderPendientes() {
+  const pend = allOps.filter(o => o.estado === 'pendiente');
+  const tbody = document.getElementById('tbody-pendientes');
+  tbody.innerHTML = pend.length
+    ? pend.map(op => rowHtml(op, true)).join('')
+    : '<tr><td colspan="10" class="empty-state">✓ No hay operaciones pendientes</td></tr>';
+}
+
+function renderTodas() {
+  let ops = [...allOps];
+  const fc = document.getElementById('fil-cliente').value;
+  const fe = document.getElementById('fil-estado').value;
+  const fp = document.getElementById('fil-producto').value;
+  if (fc) ops = ops.filter(o => o.cliente_codigo === fc);
+  if (fe) ops = ops.filter(o => o.estado === fe);
+  if (fp) ops = ops.filter(o => o.producto === fp);
+  const tbody = document.getElementById('tbody-todas');
+  tbody.innerHTML = ops.length
+    ? ops.map(op => rowHtml(op, false)).join('')
+    : '<tr><td colspan="10" class="empty-state">Sin resultados</td></tr>';
+}
+
 async function cambiarEstado(id, estado) {
   setLoading(40);
   const { error } = await sb.from('operaciones')
-    .update({ estado, updated_at: new Date().toISOString() })
-    .eq('id', id);
+    .update({ estado, updated_at: new Date().toISOString() }).eq('id', id);
   setLoading(100);
   if (error) { alert('Error: ' + error.message); return; }
   await loadAll();
 }
 
-// ── EDITAR ──
 function openEdit(id) {
   const op = allOps.find(o => o.id === id);
   if (!op) return;
@@ -942,16 +560,16 @@ async function saveEdit() {
   const id = document.getElementById('edit-id').value;
   setLoading(40);
   const { error } = await sb.from('operaciones').update({
-    producto:        document.getElementById('edit-producto').value,
-    tipo:            document.getElementById('edit-tipo').value,
-    lado:            document.getElementById('edit-lado').value,
-    fecha:           document.getElementById('edit-fecha').value,
-    volumen:         parseFloat(document.getElementById('edit-volumen').value),
-    precio:          parseFloat(document.getElementById('edit-precio').value) || 0,
-    vencimiento:     document.getElementById('edit-vencimiento').value,
-    precio_ejercicio:parseFloat(document.getElementById('edit-ejercicio').value) || 0,
-    observaciones:   document.getElementById('edit-obs').value,
-    updated_at:      new Date().toISOString()
+    producto:         document.getElementById('edit-producto').value,
+    tipo:             document.getElementById('edit-tipo').value,
+    lado:             document.getElementById('edit-lado').value,
+    fecha:            document.getElementById('edit-fecha').value,
+    volumen:          parseFloat(document.getElementById('edit-volumen').value),
+    precio:           parseFloat(document.getElementById('edit-precio').value) || 0,
+    vencimiento:      document.getElementById('edit-vencimiento').value,
+    precio_ejercicio: parseFloat(document.getElementById('edit-ejercicio').value) || 0,
+    observaciones:    document.getElementById('edit-obs').value,
+    updated_at:       new Date().toISOString()
   }).eq('id', id);
   setLoading(100);
   if (error) { alert('Error: ' + error.message); return; }
@@ -959,7 +577,7 @@ async function saveEdit() {
   await loadAll();
 }
 
-// ── CARTERAS POR CLIENTE ──
+// CARTERAS
 function renderClienteTabs() {
   const clientes = [...new Set(allOps.map(o => o.cliente_codigo))].sort();
   const tabs = document.getElementById('cliente-tabs');
@@ -975,99 +593,186 @@ function renderClienteTabs() {
     };
     tabs.appendChild(btn);
   });
-  if (clientes.length > 0) renderCarteraCliente(clientes[0]);
+  if (clientes.length) renderCarteraCliente(clientes[0]);
 }
-
 function renderCarteraCliente(codigo) {
   const ops = allOps.filter(o => o.cliente_codigo === codigo);
   const content = document.getElementById('cartera-content');
-  if (!ops.length) {
-    content.innerHTML = '<div class="card"><div class="empty-state">Sin operaciones</div></div>';
-    return;
-  }
-  // Resumen por producto
+  if (!ops.length) { content.innerHTML = '<div class="card"><div class="empty-state">Sin operaciones</div></div>'; return; }
   const porProd = {};
   ops.forEach(op => {
-    if (!porProd[op.producto]) porProd[op.producto] = { compra: 0, venta: 0 };
+    if (!porProd[op.producto]) porProd[op.producto] = { compra:0, venta:0 };
     if (op.lado === 'Compra') porProd[op.producto].compra += Number(op.volumen);
     else porProd[op.producto].venta += Number(op.volumen);
   });
-  const summaryRows = Object.entries(porProd).map(([prod, v]) => {
+  const sumRows = Object.entries(porProd).map(([prod, v]) => {
     const neto = v.compra - v.venta;
     const pos  = neto > 0 ? 'Long' : neto < 0 ? 'Short' : 'Neutro';
-    const pCls = neto > 0 ? 'badge-conf' : neto < 0 ? 'badge-rech' : 'badge-pend';
-    return `<tr>
-      <td style="font-weight:600">${prod}</td>
-      <td>${Number(v.compra).toLocaleString('es-AR')} tn</td>
-      <td>${Number(v.venta).toLocaleString('es-AR')} tn</td>
-      <td style="font-weight:700">${Number(Math.abs(neto)).toLocaleString('es-AR')} tn</td>
-      <td><span class="${pCls}">${pos}</span></td>
-    </tr>`;
+    const bc   = neto > 0 ? 'badge-conf' : neto < 0 ? 'badge-rech' : 'badge-pend';
+    return `<tr><td style="font-weight:600">${prod}</td><td>${Number(v.compra).toLocaleString('es-AR')} tn</td><td>${Number(v.venta).toLocaleString('es-AR')} tn</td><td style="font-weight:700">${Math.abs(neto).toLocaleString('es-AR')} tn</td><td><span class="${bc}">${pos}</span></td></tr>`;
   }).join('');
-
-  const detailRows = ops.map(op => {
-    const fc = new Date(op.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short'});
-    const fv = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR', {month:'short',year:'numeric'});
-    const lc = op.lado === 'Compra' ? 'pill-compra' : 'pill-venta';
-    const pr = op.precio > 0 ? '$'+Number(op.precio).toFixed(1) : '—';
-    const est = op.estado === 'pendiente' ? 'badge-pend' : op.estado === 'confirmada' ? 'badge-conf' : 'badge-rech';
-    const elabel = op.estado === 'pendiente' ? 'Pendiente' : op.estado === 'confirmada' ? 'Confirmada' : 'Rechazada';
-    return `<tr>
-      <td style="color:var(--gris);font-size:12px">${fc}</td>
-      <td>${op.producto}</td>
-      <td>${op.tipo}</td>
-      <td><span class="pill ${lc}">${op.lado}</span></td>
-      <td>${Number(op.volumen).toLocaleString('es-AR')} tn</td>
-      <td style="font-weight:600;color:var(--verde)">${pr}/tn</td>
-      <td>${fv}</td>
-      <td><span class="${est}">${elabel}</span></td>
-    </tr>`;
+  const detRows = ops.map(op => {
+    const fc = new Date(op.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short'});
+    const fv = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
+    const lc = op.lado==='Compra'?'pill-compra':'pill-venta';
+    const pr = op.precio>0?'$'+Number(op.precio).toFixed(1):'—';
+    const est= op.estado==='pendiente'?'badge-pend':op.estado==='confirmada'?'badge-conf':'badge-rech';
+    const el = op.estado==='pendiente'?'Pendiente':op.estado==='confirmada'?'Confirmada':'Rechazada';
+    return `<tr><td style="font-size:12px;color:var(--gris)">${fc}</td><td>${op.producto}</td><td>${op.tipo}</td><td><span class="pill ${lc}">${op.lado}</span></td><td>${Number(op.volumen).toLocaleString('es-AR')} tn</td><td>${pr}/tn</td><td>${fv}</td><td><span class="${est}">${el}</span></td></tr>`;
   }).join('');
-
   content.innerHTML = `
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h2>Resumen — ${codigo}</h2></div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Producto</th><th>Comprado</th><th>Vendido</th><th>Neto</th><th>Posición</th></tr></thead>
-        <tbody>${summaryRows}</tbody>
-      </table></div>
+      <div class="table-wrap"><table><thead><tr><th>Producto</th><th>Comprado</th><th>Vendido</th><th>Neto</th><th>Posición</th></tr></thead><tbody>${sumRows}</tbody></table></div>
     </div>
     <div class="card">
-      <div class="card-header"><h2>Detalle de operaciones — ${codigo}</h2></div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Estado</th></tr></thead>
-        <tbody>${detailRows}</tbody>
-      </table></div>
+      <div class="card-header"><h2>Detalle — ${codigo}</h2></div>
+      <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Estado</th></tr></thead><tbody>${detRows}</tbody></table></div>
     </div>`;
 }
 
-// ── NAVEGACIÓN ──
+// PRECIOS DE MERCADO
+async function guardarPrecio() {
+  const producto    = document.getElementById('pm-producto').value;
+  const vencimiento = document.getElementById('pm-vencimiento').value;
+  const precio      = parseFloat(document.getElementById('pm-precio').value);
+  const esContinuo  = document.getElementById('pm-continuo').value === 'true';
+  if (!producto || !vencimiento || isNaN(precio) || precio <= 0) {
+    mostrarToast('pm-toast', 'Completá todos los campos con valores válidos.', 'err');
+    return;
+  }
+  const btn = document.getElementById('pm-btn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const { error } = await sb.from('precios_mercado').upsert(
+    { producto, vencimiento, precio, es_continuo: esContinuo, activo: true, updated_at: new Date().toISOString() },
+    { onConflict: 'producto,vencimiento' }
+  );
+  btn.disabled = false; btn.textContent = '+ Cargar';
+  if (error) { mostrarToast('pm-toast', 'Error: ' + error.message, 'err'); return; }
+  mostrarToast('pm-toast', '✓ ' + producto + ' ' + vencimiento + ' → $' + precio + ' USD/tn guardado.', 'ok');
+  document.getElementById('pm-producto').value = '';
+  document.getElementById('pm-vencimiento').value = '';
+  document.getElementById('pm-precio').value = '';
+  await cargarPrecios();
+}
+
+async function cargarPrecios() {
+  const { data } = await sb.from('precios_mercado').select('*').eq('activo',true).order('producto').order('vencimiento');
+  const tbody = document.getElementById('tbody-precios');
+  if (!tbody) return;
+  if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>'; return; }
+  tbody.innerHTML = data.map(p => {
+    const fecha = new Date(p.updated_at || p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    const pid = p.id;
+    return `<tr>
+      <td style="font-weight:600">${p.producto}</td>
+      <td style="font-family:monospace;font-size:12px">${p.vencimiento}</td>
+      <td style="font-weight:700">$${Number(p.precio).toFixed(2)} USD/tn</td>
+      <td>${p.es_continuo ? '<span class="badge-conf">Sí</span>' : '<span style="color:var(--gris);font-size:12px">No</span>'}</td>
+      <td style="color:var(--gris);font-size:12px">${fecha}</td>
+      <td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio('${pid}')">Eliminar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function eliminarPrecio(id) {
+  if (!confirm('¿Eliminar este precio?')) return;
+  await sb.from('precios_mercado').update({ activo: false }).eq('id', id);
+  await cargarPrecios();
+}
+
+// USUARIOS
+async function crearUsuario() {
+  const nombre    = document.getElementById('nu-nombre').value.trim();
+  const codigo    = document.getElementById('nu-codigo').value.trim().toUpperCase();
+  const email     = document.getElementById('nu-email').value.trim();
+  const pass      = document.getElementById('nu-pass').value.trim();
+  const campania  = document.getElementById('nu-campania').value.trim();
+  const actividad = document.getElementById('nu-actividad').value;
+  if (!nombre || !codigo || !email || !pass) { mostrarToast('nu-toast','Completá todos los campos obligatorios.','err'); return; }
+  if (pass.length < 8) { mostrarToast('nu-toast','La contraseña debe tener al menos 8 caracteres.','err'); return; }
+  const btn = document.getElementById('nu-btn');
+  btn.disabled = true; btn.textContent = 'Creando...';
+  try {
+    const res = await fetch(FUNCTIONS_URL + '/crear-usuario', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY },
+      body: JSON.stringify({ email, password:pass, codigo, nombre_empresa:nombre, campania, actividad })
+    });
+    const result = await res.json();
+    btn.disabled = false; btn.textContent = '+ Crear cliente';
+    if (!res.ok || result.error) {
+      const err = result.error || 'Error desconocido';
+      let msg = 'Error: ' + err;
+      if (err === 'EMAIL_DUPLICADO' || err.toLowerCase().includes('already')) msg = 'Ese email ya está registrado.';
+      else if (err === 'CODIGO_DUPLICADO' || err.toLowerCase().includes('unique')) msg = 'El código "' + codigo + '" ya existe.';
+      mostrarToast('nu-toast', msg, 'err'); return;
+    }
+    mostrarToast('nu-toast', '✓ Cliente ' + nombre + ' creado. Email: ' + email + ' / Pass: ' + pass, 'ok');
+    ['nu-nombre','nu-codigo','nu-email','nu-pass','nu-campania'].forEach(id => { document.getElementById(id).value = ''; });
+    await cargarClientes();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '+ Crear cliente';
+    mostrarToast('nu-toast', 'Error de conexión: ' + e.message, 'err');
+  }
+}
+
+async function cargarClientes() {
+  const { data } = await sb.from('clientes').select('*').order('created_at',{ascending:false});
+  const tbody = document.getElementById('tbody-clientes');
+  if (!tbody) return;
+  if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sin clientes registrados aún.</td></tr>'; return; }
+  tbody.innerHTML = data.map(c => {
+    const fecha = new Date(c.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    const cid = c.id;
+    return `<tr>
+      <td style="font-weight:600">${c.nombre_empresa}</td>
+      <td style="font-family:monospace;font-size:12px;color:var(--gris)">${c.codigo}</td>
+      <td style="color:var(--gris);font-size:12px">${c.email}</td>
+      <td>${c.campania||'—'}</td>
+      <td>${c.actividad||'—'}</td>
+      <td style="color:var(--gris);font-size:12px">${fecha}</td>
+      <td>${c.activo ? '<span class="badge-conf">Activo</span>' : '<span class="badge-rech">Inactivo</span>'}</td>
+      <td>${c.activo
+        ? `<button class="btn-sm btn-rechazar" onclick="toggleCliente('${cid}',false)">Desactivar</button>`
+        : `<button class="btn-sm btn-aprobar"  onclick="toggleCliente('${cid}',true)">Activar</button>`
+      }</td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleCliente(id, activo) {
+  await sb.from('clientes').update({ activo }).eq('id', id);
+  await cargarClientes();
+}
+
+// NAVEGACIÓN
 function showSection(name, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('sec-' + name).classList.add('active');
-  el.classList.add('active');
+  if(el) el.classList.add('active');
   const titles = {
-    pendientes: ['Operaciones pendientes', 'Revisá y aprobá las operaciones cargadas por los clientes'],
-    todas:      ['Historial completo', 'Todas las operaciones con filtros'],
-    carteras:   ['Carteras por cliente', 'Resumen de posiciones por cliente'],
-    usuarios:   ['Gestión de usuarios', 'Creá y administrá los accesos de cada cliente'],
-    precios:    ['Precios de mercado', 'Actualizá los precios de referencia quincenales para todos los clientes']
+    pendientes:['Operaciones pendientes','Revisá y aprobá las operaciones cargadas por los clientes'],
+    todas:['Historial completo','Todas las operaciones con filtros'],
+    carteras:['Carteras por cliente','Resumen de posiciones por cliente'],
+    precios:['Precios de mercado','Actualizá los precios de referencia para el cálculo del reporte'],
+    usuarios:['Gestión de usuarios','Creá y administrá los accesos de cada cliente']
   };
-  if (name === 'usuarios') cargarClientes();
+  const t = titles[name] || ['',''];
+  document.getElementById('page-title').textContent = t[0];
+  document.getElementById('page-sub').textContent   = t[1];
   if (name === 'precios')  cargarPrecios();
-  document.getElementById('page-title').textContent = titles[name][0];
-  document.getElementById('page-sub').textContent   = titles[name][1];
+  if (name === 'usuarios') cargarClientes();
 }
 
-// ── EXPORT EXCEL ──
+// EXPORT
 function exportExcel() {
-  const filC = document.getElementById('fil-cliente').value;
-  const filE = document.getElementById('fil-estado').value;
+  const fc = document.getElementById('fil-cliente').value;
+  const fe = document.getElementById('fil-estado').value;
   let ops = [...allOps];
-  if (filC) ops = ops.filter(o => o.cliente_codigo === filC);
-  if (filE) ops = ops.filter(o => o.estado === filE);
-
+  if (fc) ops = ops.filter(o => o.cliente_codigo === fc);
+  if (fe) ops = ops.filter(o => o.estado === fe);
   const rows = ops.map(op => ({
     'Fecha carga':   new Date(op.created_at).toLocaleDateString('es-AR'),
     'Cliente':       op.cliente_codigo,
@@ -1081,315 +786,20 @@ function exportExcel() {
     'Observaciones': op.observaciones,
     'Estado':        op.estado
   }));
-
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Operaciones');
-  const fecha = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, 'CTX_operaciones_' + fecha + '.xlsx');
-}
-// ══ GESTIÓN DE PRECIOS DE MERCADO ══
-let allPrecios = [];
-
-function onPmProductoChange() {
-  const prod = document.getElementById('pm-producto').value;
-  const contOpt = document.getElementById('pm-vencimiento').querySelector('option[value="CONT"]');
-  // Auto-set es_continuo based on product type
-  const conMercado = ['Soja','Maíz','Trigo'].includes(prod);
-  document.getElementById('pm-continuo').value = 'false';
+  XLSX.writeFile(wb, 'CTX_operaciones_' + new Date().toISOString().split('T')[0] + '.xlsx');
 }
 
-async function cargarPrecios() {
-  const { data, error } = await sb.from('precios_mercado')
-    .select('*').eq('activo', true)
-    .order('producto').order('vencimiento');
-  if (error) { console.error(error); return; }
-  allPrecios = data || [];
-  renderPrecios();
-}
-
-function renderPrecios() {
-  const fil = document.getElementById('pm-fil-producto').value;
-  const data = fil ? allPrecios.filter(p => p.producto === fil) : allPrecios;
-  const tbody = document.getElementById('tbody-precios');
-  if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>';
-    return;
-  }
-  const meses = {'1':'Ene','2':'Feb','3':'Mar','4':'Abr','5':'May','6':'Jun','7':'Jul','8':'Ago','9':'Sep','10':'Oct','11':'Nov','12':'Dic'};
-  function fmtVto(v) {
-    if (v === 'CONT') return 'Continuo';
-    const parts = v.split('_');
-    return (meses[parts[0]] || parts[0]) + ' ' + parts[1];
-  }
-  tbody.innerHTML = data.map(p => {
-    const upd = p.updated_at ? new Date(p.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    const tipo = p.es_continuo
-      ? '<span class="badge-pend">Continuo</span>'
-      : '<span class="badge-conf">Futuro</span>';
-    return '<tr>'
-      + '<td style="font-weight:600">' + p.producto + '</td>'
-      + '<td>' + fmtVto(p.vencimiento) + '</td>'
-      + '<td style="text-align:right;font-weight:700;font-size:15px">$' + Number(p.precio).toFixed(2) + '</td>'
-      + '<td>' + tipo + '</td>'
-      + '<td style="color:var(--gris);font-size:12px">' + upd + '</td>'
-      + '<td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio(`'+p.id+'`)">✕ Eliminar</button></td>'
-      + '</tr>';
-  }).join('');
-}
-
-async function guardarPrecio() {
-  const producto    = document.getElementById('pm-producto').value;
-  const vencimiento = document.getElementById('pm-vencimiento').value;
-  const precio      = parseFloat(document.getElementById('pm-precio').value);
-  const esContinuo  = document.getElementById('pm-continuo').value === 'true';
-
-  if (!producto || !vencimiento || isNaN(precio) || precio <= 0) {
-    mostrarToastPM('Completá todos los campos con valores válidos.', 'err');
-    return;
-  }
-
-  const btn = document.getElementById('pm-btn');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-
-  // Upsert: insert or update if exists
-  const { error } = await sb.from('precios_mercado').upsert({
-    producto,
-    vencimiento,
-    precio,
-    es_continuo: esContinuo,
-    activo:      true,
-    updated_at:  new Date().toISOString()
-  }, { onConflict: 'producto,vencimiento' });
-
-  btn.disabled = false; btn.textContent = '+ Guardar precio';
-
-  if (error) {
-    mostrarToastPM('Error: ' + error.message, 'err');
-    return;
-  }
-
-  const meses = {'1':'Ene','2':'Feb','3':'Mar','4':'Abr','5':'May','6':'Jun','7':'Jul','8':'Ago','9':'Sep','10':'Oct','11':'Nov','12':'Dic'};
-  const vtoLabel = vencimiento === 'CONT' ? 'Continuo' : (meses[vencimiento.split('_')[0]] + ' ' + vencimiento.split('_')[1]);
-  mostrarToastPM('✓ ' + producto + ' · ' + vtoLabel + ' → $' + precio.toFixed(2) + ' guardado.', 'ok');
-
-  // Reset fields
-  document.getElementById('pm-precio').value = '';
-  await cargarPrecios();
-}
-
-async function eliminarPrecio(id) {
-  if (!confirm('¿Eliminás este precio?')) return;
-  await sb.from('precios_mercado').update({ activo: false }).eq('id', id);
-  await cargarPrecios();
-}
-
-function mostrarToastPM(msg, type) {
-  const el = document.getElementById('pm-toast');
+// UTILS
+function mostrarToast(id, msg, type) {
+  const el = document.getElementById(id);
   if (!el) return;
   el.textContent = msg;
-  el.style.display = 'block';
-  el.style.background = type === 'ok' ? '#dcfce7' : '#fee2e2';
-  el.style.color      = type === 'ok' ? '#166534' : '#991b1b';
-  el.style.border     = type === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca';
-  setTimeout(() => { el.style.display = 'none'; }, 5000);
+  el.className = 'toast ' + type;
+  setTimeout(() => { el.className = 'toast'; }, 6000);
 }
-
-// ══ PRECIOS DE MERCADO ══
-
-async function guardarPrecio() {
-  const producto = document.getElementById('pm-producto').value;
-  const venc     = document.getElementById('pm-vencimiento').value.trim().toUpperCase();
-  const precio   = parseFloat(document.getElementById('pm-precio').value);
-  const esCont   = document.getElementById('pm-continuo').value === 'true';
-
-  if (!producto || !venc || isNaN(precio) || precio <= 0) {
-    mostrarToastPM('Completá todos los campos.', 'err'); return;
-  }
-
-  const btn = document.getElementById('pm-btn');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-
-  // Upsert: si existe el par producto+vencimiento, actualiza; sino inserta
-  const { error } = await sb.from('precios_mercado').upsert({
-    producto,
-    vencimiento:  venc,
-    precio,
-    es_continuo:  esCont,
-    activo:       true,
-    updated_at:   new Date().toISOString()
-  }, { onConflict: 'producto,vencimiento' });
-
-  btn.disabled = false; btn.textContent = '+ Cargar';
-
-  if (error) { mostrarToastPM('Error: ' + error.message, 'err'); return; }
-
-  mostrarToastPM('✓ Precio guardado: ' + producto + ' ' + venc + ' → $' + precio, 'ok');
-  document.getElementById('pm-producto').value = '';
-  document.getElementById('pm-venc').value = '';
-  document.getElementById('pm-precio').value = '';
-  await cargarPrecios();
-}
-
-async function cargarPrecios() {
-  const { data, error } = await sb.from('precios_mercado')
-    .select('*').eq('activo', true)
-    .order('producto').order('vencimiento');
-  const tbody = document.getElementById('tbody-precios');
-  if (!tbody) return;
-  if (error || !data || !data.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.map(p => {
-    const fecha = new Date(p.updated_at || p.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short',year:'numeric'});
-    return '<tr>'
-      + '<td style="font-weight:600">' + p.producto + '</td>'
-      + '<td style="font-family:monospace;font-size:12px">' + p.vencimiento + '</td>'
-      + '<td style="font-weight:700;color:var(--negro)">$' + Number(p.precio).toFixed(2) + ' USD/tn</td>'
-      + '<td>' + (p.es_continuo ? '<span class="badge-conf">Sí</span>' : '<span style="color:var(--gris);font-size:12px">No</span>') + '</td>'
-      + '<td style="color:var(--gris);font-size:12px">' + fecha + '</td>'
-      + '<td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio(`' + p.id + '`);">Eliminar</button></td>'
-      + '</tr>';
-  }).join('');
-}
-
-async function eliminarPrecio(id) {
-  if (!confirm('¿Eliminár este precio?')) return;
-  await sb.from('precios_mercado').update({ activo: false }).eq('id', id);
-  await cargarPrecios();
-}
-
-async function limpiarPrecios() {
-  if (!confirm('¿Eliminar TODOS los precios? Esta acción no se puede deshacer.')) return;
-  await sb.from('precios_mercado').update({ activo: false }).neq('id', '00000000-0000-0000-0000-000000000000');
-  await cargarPrecios();
-}
-
-function mostrarToastPM(msg, type) {
-  const el = document.getElementById('pm-toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.display = 'block';
-  el.style.background = type === 'ok' ? '#dcfce7' : '#fee2e2';
-  el.style.color      = type === 'ok' ? '#166534' : '#991b1b';
-  el.style.border     = type === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca';
-  setTimeout(() => { el.style.display = 'none'; }, 5000);
-}
-
-// ══ GESTIÓN DE USUARIOS ══
-
-async function crearUsuario() {
-  const nombre   = document.getElementById('nu-nombre').value.trim();
-  const codigo   = document.getElementById('nu-codigo').value.trim().toUpperCase();
-  const email    = document.getElementById('nu-email').value.trim();
-  const pass     = document.getElementById('nu-pass').value.trim();
-  const campania = document.getElementById('nu-campania').value.trim();
-  const actividad= document.getElementById('nu-actividad').value;
-
-  if (!nombre || !codigo || !email || !pass) {
-    mostrarToastNU('Completá todos los campos obligatorios.', 'err');
-    return;
-  }
-  if (pass.length < 8) {
-    mostrarToastNU('La contraseña debe tener al menos 8 caracteres.', 'err');
-    return;
-  }
-
-  const btn = document.getElementById('nu-btn');
-  btn.disabled = true;
-  btn.textContent = 'Creando...';
-
-  try {
-    const res = await fetch(FUNCTIONS_URL + '/crear-usuario', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + SUPA_KEY,
-        'apikey': SUPA_KEY
-      },
-      body: JSON.stringify({ email, password: pass, codigo, nombre_empresa: nombre, campania, actividad })
-    });
-
-    const result = await res.json();
-
-    btn.disabled = false;
-    btn.textContent = '+ Crear cliente';
-
-    if (!res.ok || result.error) {
-      const err = result.error || 'Error desconocido';
-      let msg = 'Error: ' + err;
-      if (err === 'EMAIL_DUPLICADO' || err.toLowerCase().includes('already')) {
-        msg = 'Ese email ya está registrado. Eliminá el usuario desde Supabase → Authentication → Users e intentá de nuevo.';
-      } else if (err === 'CODIGO_DUPLICADO' || err.toLowerCase().includes('unique')) {
-        msg = 'El código interno "' + codigo + '" ya existe. Usá un código diferente.';
-      } else if (err.toLowerCase().includes('invalid email')) {
-        msg = 'El email no tiene un formato válido.';
-      } else if (err.toLowerCase().includes('password') || err.toLowerCase().includes('weak')) {
-        msg = 'La contraseña es demasiado débil. Usá al menos 8 caracteres.';
-      }
-      mostrarToastNU(msg, 'err');
-      return;
-    }
-
-    mostrarToastNU('✓ Cliente ' + nombre + ' creado. Podés enviarle: ' + email + ' / ' + pass, 'ok');
-    ['nu-nombre','nu-codigo','nu-email','nu-pass','nu-campania'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-    await cargarClientes();
-
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = '+ Crear cliente';
-    mostrarToastNU('Error de conexión: ' + e.message, 'err');
-  }
-}
-
-async function cargarClientes() {
-  const { data, error } = await sb.from('clientes').select('*').order('created_at', { ascending: false });
-  const tbody = document.getElementById('tbody-clientes');
-  if (!tbody) return;
-  if (error || !data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sin clientes registrados aún.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.map(c => {
-    const fecha  = new Date(c.created_at).toLocaleDateString('es-AR', {day:'2-digit',month:'short',year:'numeric'});
-    const estado = c.activo
-      ? '<span class="badge-conf">Activo</span>'
-      : '<span class="badge-rech">Inactivo</span>';
-    const toggle = c.activo
-      ? '<button class="btn-sm btn-rechazar" onclick="toggleCliente(`'+c.id+'`, false)">Desactivar</button>'
-      : '<button class="btn-sm btn-aprobar"  onclick="toggleCliente(`'+c.id+'`, true)">Activar</button>';
-    return '<tr>'
-      + '<td style="font-weight:600">' + c.nombre_empresa + '</td>'
-      + '<td style="font-family:monospace;font-size:12px;color:var(--gris)">' + c.codigo + '</td>'
-      + '<td style="color:var(--gris);font-size:13px">' + c.email + '</td>'
-      + '<td>' + (c.campania || '—') + '</td>'
-      + '<td>' + (c.actividad || '—') + '</td>'
-      + '<td style="color:var(--gris);font-size:12px">' + fecha + '</td>'
-      + '<td>' + estado + '</td>'
-      + '<td>' + toggle + '</td>'
-      + '</tr>';
-  }).join('');
-}
-
-async function toggleCliente(id, activo) {
-  await sb.from('clientes').update({ activo }).eq('id', id);
-  await cargarClientes();
-}
-
-function mostrarToastNU(msg, type) {
-  const el = document.getElementById('nu-toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.display = 'block';
-  el.style.background = type === 'ok' ? '#dcfce7' : '#fee2e2';
-  el.style.color      = type === 'ok' ? '#166534' : '#991b1b';
-  el.style.border     = type === 'ok' ? '1px solid #bbf7d0' : '1px solid #fecaca';
-  setTimeout(() => { el.style.display = 'none'; }, 5000);
-}
-
 </script>
 </body>
 </html>
