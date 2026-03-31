@@ -935,6 +935,30 @@ function fmtUSD(n) {
 }
 function fmtTn(n) { return n?Number(n).toLocaleString('es-AR'):'0'; }
 function fmtPrecio(n) { return n?'$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'; }
+
+// ── NAVEGACIÓN ──
+function navTo(section, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const map = {
+    'resumen':     'sec-resumen',
+    'precios':     'sec-precios',
+    'composicion': 'sec-composicion',
+    'operaciones': 'sec-operaciones',
+    'nueva':       'sec-nueva'
+  };
+  const target = document.getElementById(map[section]);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  closeSidebar();
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
 </script>
 
 <!-- MODAL EDITAR OPERACIÓN (cliente) -->
