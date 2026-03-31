@@ -835,8 +835,8 @@ async function cargarOpsGuardadas() {
       +'<td style="font-weight:600;color:var(--verde)">'+(op.precio>0?'$'+Number(op.precio).toFixed(1)+'/tn':'—')+'</td>'
       +'<td>'+fVto+'</td>'
       +'<td style="white-space:nowrap">'
-        +'<button onclick="abrirEditarOp(''+oid+'')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:white;font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>'
-        +'<button onclick="eliminarOp(''+oid+'')" style="padding:4px 10px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">✕</button>'
+        +'<button data-id="'+oid+'" onclick="abrirEditarOp(this.dataset.id)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:white;font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>'
+        +'<button data-id="'+oid+'" onclick="eliminarOp(this.dataset.id)" style="padding:4px 10px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">✕</button>'
       +'</td>'
       +'</tr>';
   }).join('');
