@@ -333,7 +333,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <select id="chart-prod" class="filter-btn" style="border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;border:1px solid var(--crema-dd)" onchange="renderPosicionesChart()">
                 <option value="">Todos los productos</option>
-                <option>Soja</option><option>Maíz</option><option>Trigo</option>
+                <option>Soja</option><option>Maiz</option><option>Trigo</option>
                 <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
               </select>
               <select id="chart-pos" class="filter-btn" style="border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;border:1px solid var(--crema-dd)" onchange="renderPosicionesChart()">
@@ -417,7 +417,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
               <label class="form-label">Producto</label>
               <select class="form-select" id="f-producto">
                 <option value="">Seleccioná...</option>
-                <option>Soja</option><option>Maíz</option><option>Trigo</option>
+                <option>Soja</option><option>Maiz</option><option>Trigo</option>
                 <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
               </select>
             </div>
@@ -486,8 +486,8 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
-const COLORES_PROD = {'Soja':'#D95FA2','Maíz':'#66BCF2','Trigo':'#F2B3D6','Girasol':'#F2C94C','Sorgo':'#595959','Cebada':'#A8D5A2'};
-const PRODUCTOS = ['Soja','Maíz','Trigo','Girasol','Sorgo','Cebada'];
+const COLORES_PROD = {'Soja':'#D95FA2','Maiz':'#66BCF2','Trigo':'#F2B3D6','Girasol':'#F2C94C','Sorgo':'#595959','Cebada':'#A8D5A2'};
+const PRODUCTOS = ['Soja','Maiz','Trigo','Girasol','Sorgo','Cebada'];
 
 let sb = null;
 let currentUser = null;
@@ -574,8 +574,8 @@ function getPrecioMercado(producto, fechaVto) {
   const vencido = d < hoy;
 
   if (vencido) {
-    // Solo Soja, Maíz, Trigo usan continuo
-    if (['Soja','Maíz','Trigo'].includes(producto)) {
+    // Solo Soja, Maiz, Trigo usan continuo
+    if (['Soja','Maiz','Trigo'].includes(producto)) {
       return precios[producto + '_CONT'] || null;
     }
     // Otros: el admin debe haber cargado un precio específico
@@ -1138,7 +1138,7 @@ function renderPosicionesChart() {
   // Build line/scatter datasets for historical prices
   // If product selected: one smooth line. If no product: scatter points per product
   const PROD_COLORS = {
-    'Soja':'#d56a9d','Maíz':'#7dbaf8','Trigo':'#c8a96e',
+    'Soja':'#d56a9d','Maiz':'#7dbaf8','Trigo':'#c8a96e',
     'Girasol':'#f97066','Sorgo':'#888','Cebada':'#4aab76'
   };
 
@@ -1275,7 +1275,7 @@ function renderPosicionesChart() {
       <div class="form-group">
         <label class="form-label">Producto</label>
         <select class="form-select" id="eop-producto">
-          <option>Soja</option><option>Maíz</option><option>Trigo</option>
+          <option>Soja</option><option>Maiz</option><option>Trigo</option>
           <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
         </select>
       </div>
