@@ -344,10 +344,11 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
           </div>
           <!-- Leyenda -->
           <div style="padding:8px 16px;display:flex;gap:16px;font-size:11px;color:var(--gris);flex-wrap:wrap">
+            <span><span style="display:inline-block;width:10px;height:2px;background:#1c1a18;margin-right:4px;vertical-align:middle"></span>Precio histórico (filtrado)</span>
             <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#7dbaf8;margin-right:4px"></span>Compra (Long)</span>
             <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97066;margin-right:4px"></span>Venta (Short)</span>
             <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:2px dashed #7dbaf8;margin-right:4px"></span>Opción ejercible</span>
-            <span style="color:var(--gris-l)">Tamaño = volumen en tn</span>
+            <span style="color:var(--gris-l)">Tamaño burbuja = volumen en tn</span>
           </div>
           <!-- Canvas -->
           <div style="padding:0 12px 12px">
@@ -1021,8 +1022,21 @@ let histData = [];
 let chartPeriod = '6M';
 
 async function loadHistoricos() {
-  const {data} = await sb.from('precios_historicos').select('*').order('fecha');
-  histData = data || [];
+  // Load all historical data in batches to bypass Supabase 1000-row default limit
+  let allData = [];
+  let from = 0;
+  const batchSize = 1000;
+  while (true) {
+    const {data, error} = await sb.from('precios_historicos')
+      .select('*')
+      .order('fecha', {ascending: true})
+      .range(from, from + batchSize - 1);
+    if (error || !data || data.length === 0) break;
+    allData = allData.concat(data);
+    if (data.length < batchSize) break; // last batch
+    from += batchSize;
+  }
+  histData = allData;
   actualizarFiltroPos();
   renderPosicionesChart();
 }
@@ -1069,11 +1083,16 @@ function renderPosicionesChart() {
   // Filter historicos for the line
   let lineData = histData.filter(r => {
     if (prod && r.producto !== prod) return false;
-    // Use CONT posicion for the line, or selected posicion
-    const useCont = !pos || pos === 'CONT';
-    if (useCont && r.posicion !== 'CONT') return false;
-    if (!useCont && r.posicion !== pos) return false;
     if (fromDate && r.fecha < fromDate) return false;
+    // When product selected: use chosen posicion or CONT
+    if (prod) {
+      const useCont = !pos || pos === 'CONT';
+      if (useCont && r.posicion !== 'CONT') return false;
+      if (!useCont && r.posicion !== pos) return false;
+    } else {
+      // No product: show only CONT for all products (scatter points)
+      if (r.posicion !== 'CONT') return false;
+    }
     return true;
   });
 
@@ -1116,18 +1135,52 @@ function renderPosicionesChart() {
     else bubbleVenta.push(punto);
   });
 
-  const datasets = [
-    {
+  // Build line/scatter datasets for historical prices
+  // If product selected: one smooth line. If no product: scatter points per product
+  const PROD_COLORS = {
+    'Soja':'#d56a9d','Maíz':'#7dbaf8','Trigo':'#c8a96e',
+    'Girasol':'#f97066','Sorgo':'#888','Cebada':'#4aab76'
+  };
+
+  let histDatasets = [];
+  if (prod && lineData.length) {
+    // Single smooth line for selected product
+    histDatasets.push({
       type: 'line',
-      label: 'Futuro continuo',
-      data: linePoints,
-      borderColor: '#1c1a18',
+      label: prod + ' continuo',
+      data: lineData.map(r => ({x:r.fecha, y:r.precio})),
+      borderColor: PROD_COLORS[prod] || '#1c1a18',
       borderWidth: 1.5,
       pointRadius: 0,
       tension: 0.2,
       fill: false,
-      parsing: { xAxisKey:'x', yAxisKey:'y' }
-    },
+      parsing: {xAxisKey:'x', yAxisKey:'y'}
+    });
+  } else if (!prod) {
+    // Scatter points per product - each product its own color
+    const byProdHist = {};
+    lineData.forEach(r => {
+      if (!byProdHist[r.producto]) byProdHist[r.producto] = [];
+      byProdHist[r.producto].push({x:r.fecha, y:r.precio});
+    });
+    Object.entries(byProdHist).forEach(([p, pts]) => {
+      const col = PROD_COLORS[p] || '#888';
+      histDatasets.push({
+        type: 'scatter',
+        label: p,
+        data: pts,
+        backgroundColor: col+'99',
+        borderColor: col,
+        borderWidth: 1,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        parsing: {xAxisKey:'x', yAxisKey:'y'}
+      });
+    });
+  }
+
+  const datasets = [
+    ...histDatasets,
     {
       type: 'bubble',
       label: 'Compra (Long)',
@@ -1135,7 +1188,7 @@ function renderPosicionesChart() {
       backgroundColor: 'rgba(125,186,248,0.55)',
       borderColor: '#7dbaf8',
       borderWidth: 1.5,
-      parsing: { xAxisKey:'x', yAxisKey:'y', rAxisKey:'r' }
+      parsing: {xAxisKey:'x', yAxisKey:'y', rAxisKey:'r'}
     },
     {
       type: 'bubble',
@@ -1144,7 +1197,7 @@ function renderPosicionesChart() {
       backgroundColor: 'rgba(249,112,102,0.55)',
       borderColor: '#f97066',
       borderWidth: 1.5,
-      parsing: { xAxisKey:'x', yAxisKey:'y', rAxisKey:'r' }
+      parsing: {xAxisKey:'x', yAxisKey:'y', rAxisKey:'r'}
     },
     {
       type: 'bubble',
@@ -1154,7 +1207,7 @@ function renderPosicionesChart() {
       borderColor: '#7dbaf8',
       borderWidth: 2,
       borderDash: [4,4],
-      parsing: { xAxisKey:'x', yAxisKey:'y', rAxisKey:'r' }
+      parsing: {xAxisKey:'x', yAxisKey:'y', rAxisKey:'r'}
     }
   ];
 
