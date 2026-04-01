@@ -7,6 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Context | Reporte de Cartera</title>
+<!-- v20260401015516 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -545,7 +546,9 @@ async function loadApp() {
     sb.from('precios_mercado').select('*').eq('activo',true)
   ]);
 
-  allOps = opsRes.data || [];
+  // Normalize product names (remove accents for consistency)
+  const normalize = s => s ? s.replace('Maíz','Maiz').replace('maíz','maiz') : s;
+  allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
   renderAll();
   showLoading(false);
@@ -972,7 +975,9 @@ async function refreshData() {
       .order('created_at', {ascending:false}),
     sb.from('precios_mercado').select('*').eq('activo',true)
   ]);
-  allOps = opsRes.data || [];
+  // Normalize product names (remove accents for consistency)
+  const normalize = s => s ? s.replace('Maíz','Maiz').replace('maíz','maiz') : s;
+  allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
   renderAll();
   if (btn) { btn.textContent = '↻ Actualizar datos'; btn.disabled = false; }
