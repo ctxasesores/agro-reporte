@@ -101,14 +101,14 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 .section-title::after { content:''; flex:1; height:1px; background:var(--crema-dd); }
 
 /* ── TWO COL ── */
-.two-col { display:grid; grid-template-columns:3fr 2fr; gap:18px; align-items:start; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
 
 /* ── PRECIOS ── */
-.precio-row { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid var(--crema-d); }
+.precio-row { display:flex; justify-content:space-between; align-items:center; padding:6px 14px; border-bottom:1px solid var(--crema-d); }
 .precio-row:last-child { border-bottom:none; }
-.precio-prod { font-size:13px; font-weight:600; color:var(--texto); }
-.precio-venc { font-size:11px; color:var(--gris-l); }
-.precio-amt  { font-size:15px; font-weight:700; color:var(--negro); }
+.precio-prod { font-size:12px; font-weight:600; color:var(--texto); }
+.precio-venc { font-size:10px; color:var(--gris-l); }
+.precio-amt  { font-size:13px; font-weight:700; color:var(--negro); }
 .precio-unit { font-size:10px; color:var(--gris-l); }
 
 /* ── COMPOSICIÓN TABLE ── */
@@ -304,14 +304,14 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
         <div id="sec-precios">
           <div class="section-title">Precios de referencia</div>
           <div class="card">
-            <div id="d-precios"><div class="empty-state">Cargando precios...</div></div>
+            <div id="d-precios" style="max-height:280px;overflow-y:auto"><div class="empty-state">Cargando precios...</div></div>
           </div>
         </div>
         <div id="sec-composicion">
           <div class="section-title">Composición</div>
           <div class="card">
             <div class="chart-box" style="padding:12px">
-              <div class="chart-container" style="height:220px"><canvas id="pieChart"></canvas></div>
+              <div class="chart-container" style="height:280px"><canvas id="pieChart"></canvas></div>
             </div>
           </div>
         </div>
@@ -351,7 +351,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
           </div>
           <!-- Canvas -->
           <div style="padding:0 12px 12px">
-            <div style="position:relative;height:320px"><canvas id="posicionesChart"></canvas></div>
+            <div style="position:relative;height:400px"><canvas id="posicionesChart"></canvas></div>
           </div>
           <div id="pos-chart-empty" style="display:none;padding:40px;text-align:center;color:var(--gris);font-size:13px">
             Cargá datos históricos desde el panel admin para ver el gráfico de posiciones
@@ -1169,6 +1169,8 @@ function renderPosicionesChart() {
       scales: {
         x: {
           type: 'time',
+          min: fromDate || undefined,
+          max: new Date().toISOString().split('T')[0],
           time: { unit: chartPeriod === '1M' ? 'day' : 'month', displayFormats: { day:'d MMM', month:'MMM yy' } },
           grid: { color: 'rgba(28,26,24,.06)' },
           ticks: { font:{ size:11 }, color:'#9b9289' }

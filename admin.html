@@ -738,17 +738,32 @@ function parseFecha(str) {
 }
 
 function parseCsv(text) {
+  // Remove BOM if present
+  text = text.replace(/^\uFEFF/, '');
   const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
   const rows = [];
+  // Skip header row
   let start = 0;
-  const firstCols = lines[0].split(',');
-  if (isNaN(parseFloat(firstCols[firstCols.length-1]))) start = 1;
+  const testVal = lines[0].split(',').pop().trim();
+  if (isNaN(parseFloat(testVal.replace(',','.')))) start = 1;
   for (let i = start; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    const raw = lines[i].trim();
+    if (!raw) continue;
+    const cols = raw.split(',');
     if (cols.length < 4) continue;
-    const precio = parseFloat(cols[3]);
-    if (!cols[0]||!cols[1]||!cols[2]||isNaN(precio)) continue;
-    rows.push({ producto:cols[0], posicion:cols[1].toUpperCase(), fecha:parseFecha(cols[2]), precio });
+    const producto  = cols[0].trim().replace(/^"|"$/g,'');
+    const posicion  = cols[1].trim().toUpperCase();
+    const fechaRaw  = cols[2].trim();
+    // Price: if 5 cols it means decimal comma (e.g. 358,95 → cols[3]=358, cols[4]=95)
+    let precioStr;
+    if (cols.length >= 5 && /^\d+$/.test(cols[3].trim()) && /^\d/.test(cols[4].trim())) {
+      precioStr = cols[3].trim() + '.' + cols[4].trim().replace(/[^\d]/g,'');
+    } else {
+      precioStr = cols[3].trim().replace(',','.');
+    }
+    const precio = parseFloat(precioStr);
+    if (!producto || !posicion || !fechaRaw || isNaN(precio)) continue;
+    rows.push({ producto, posicion, fecha: parseFecha(fechaRaw), precio });
   }
   return rows;
 }
