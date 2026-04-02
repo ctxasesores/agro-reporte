@@ -1147,42 +1147,26 @@ function renderPosicionesChart() {
     'Girasol':'#f97066','Sorgo':'#888','Cebada':'#4aab76'
   };
 
-  let histDatasets = [];
-  if (prod && lineData.length) {
-    // Single smooth line for selected product
-    histDatasets.push({
-      type: 'line',
-      label: prod + ' continuo',
-      data: lineData.map(r => ({x:r.fecha, y:r.precio})),
-      borderColor: PROD_COLORS[prod] || '#1c1a18',
-      borderWidth: 1.5,
-      pointRadius: 0,
-      tension: 0.2,
-      fill: false,
+  // Always scatter — group by producto
+  const byProdHist = {};
+  lineData.forEach(r => {
+    if (!byProdHist[r.producto]) byProdHist[r.producto] = [];
+    byProdHist[r.producto].push({x:r.fecha, y:r.precio});
+  });
+  const histDatasets = Object.entries(byProdHist).map(([p, pts]) => {
+    const col = PROD_COLORS[p] || '#888';
+    return {
+      type: 'scatter',
+      label: p,
+      data: pts,
+      backgroundColor: col + 'aa',
+      borderColor: col,
+      borderWidth: 0,
+      pointRadius: 2.5,
+      pointHoverRadius: 5,
       parsing: {xAxisKey:'x', yAxisKey:'y'}
-    });
-  } else if (!prod) {
-    // Scatter points per product - each product its own color
-    const byProdHist = {};
-    lineData.forEach(r => {
-      if (!byProdHist[r.producto]) byProdHist[r.producto] = [];
-      byProdHist[r.producto].push({x:r.fecha, y:r.precio});
-    });
-    Object.entries(byProdHist).forEach(([p, pts]) => {
-      const col = PROD_COLORS[p] || '#888';
-      histDatasets.push({
-        type: 'scatter',
-        label: p,
-        data: pts,
-        backgroundColor: col+'99',
-        borderColor: col,
-        borderWidth: 1,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        parsing: {xAxisKey:'x', yAxisKey:'y'}
-      });
-    });
-  }
+    };
+  });
 
   const datasets = [
     ...histDatasets,
