@@ -976,12 +976,11 @@ async function cargarOpsGuardadas() {
     wrap.innerHTML='<div class="card empty-state">Todavía no hay operaciones cargadas.</div>';
     return;
   }
-  const rows = data.map(op => {
+  const rows = data.map((op, idx) => {
     const fOp  = new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     const fVto = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'});
     const lc   = op.lado==='Compra'?'pill-compra':'pill-venta';
-    const oid  = op.id;
-    const idx = data.indexOf(op);
+    return '<tr>'
       +'<td style="color:var(--gris);font-size:12px">'+fOp+'</td>'
       +'<td style="font-weight:600">'+op.producto+'</td>'
       +'<td>'+op.tipo+'</td>'
@@ -990,10 +989,10 @@ async function cargarOpsGuardadas() {
       +'<td style="font-weight:600;color:var(--verde)">'+(op.precio>0?'$'+Number(op.precio).toFixed(1)+'/tn':'—')+'</td>'
       +'<td>'+fVto+'</td>'
       +'<td style="white-space:nowrap">'
-      +'<td style="white-space:nowrap">'
         +'<button onclick="abrirEditarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:white;font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>'
         +'<button onclick="eliminarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">✕</button>'
       +'</td>'
+      +'</tr>';
   }).join('');
   wrap.innerHTML = '<div class="card ops-table-wrap"><table class="ops-table">'
     +'<thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Acciones</th></tr></thead>'
