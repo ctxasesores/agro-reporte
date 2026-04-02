@@ -964,6 +964,7 @@ async function guardarOperacion() {
   resetForm();
   await refreshData();
   await cargarOpsGuardadas();
+  renderFlujo();
 }
 
 async function cargarOpsGuardadas() {
@@ -1047,6 +1048,7 @@ async function guardarEditOp() {
   cerrarEditarOp();
   await refreshData();
   await cargarOpsGuardadas();
+  renderFlujo();
 }
 
 async function eliminarOp(idx) {
@@ -1057,6 +1059,7 @@ async function eliminarOp(idx) {
   if (error) { alert('Error al eliminar: ' + error.message); return; }
   await refreshData();
   await cargarOpsGuardadas();
+  renderFlujo();
 }
 
 // ── REFRESH ──
@@ -1078,6 +1081,7 @@ async function refreshData() {
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
   renderAll();
+  renderFlujo();
   if (btn) { btn.textContent = '↻ Actualizar datos'; btn.disabled = false; }
 }
 
