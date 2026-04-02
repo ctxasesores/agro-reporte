@@ -1450,11 +1450,11 @@ function renderFlujo() {
     .filter(m => m >= hoy)
     .sort().pop() || hoy;
 
-  // Build month range
+  // Build month range (string comparison avoids timezone issues)
   const meses = [];
-  let cur = new Date(hoy + '-01');
-  const fin = new Date(maxMes + '-01');
-  while (cur <= fin) {
+  let cur = new Date(hoy + '-02');
+  const fin = new Date(maxMes + '-02');
+  while (cur.toISOString().substring(0,7) <= maxMes) {
     meses.push(cur.toISOString().substring(0,7));
     cur.setMonth(cur.getMonth() + 1);
   }
