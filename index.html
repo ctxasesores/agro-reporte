@@ -609,7 +609,10 @@ async function loadApp() {
   ]);
 
   // Normalize product names (remove accents for consistency)
-  const normalize = s => s ? s.replace('Maíz','Maiz').replace('maíz','maiz') : s;
+  const normalize = s => {
+    if (!s) return s;
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
   renderAll();
@@ -622,16 +625,21 @@ async function loadApp() {
 }
 
 // ── PRECIOS MAP ──
+function normalizeStr(s) {
+  return s ? s.normalize('NFD').replace(/[\u0300-\u036f]/g,'') : s;
+}
+
 function buildPreciosMap(rows) {
   precios = {};
   rows.forEach(r => {
-    const key = r.producto + '_' + r.vencimiento;
+    const key = normalizeStr(r.producto) + '_' + r.vencimiento;
     precios[key] = r.precio;
   });
 }
 
 // Obtener precio de mercado para un producto y fecha de vencimiento
 function getPrecioMercado(producto, fechaVto) {
+  producto = normalizeStr(producto);
   if (!fechaVto) return null;
   const d = new Date(fechaVto + 'T00:00:00');
   const hoy = new Date();
@@ -639,15 +647,39 @@ function getPrecioMercado(producto, fechaVto) {
   const anio = d.getFullYear();
   const vencido = d < hoy;
 
+  const exactKey = producto + '_' + mes + '_' + anio;
+  const contKey  = producto + '_CONT';
+
   if (vencido) {
-    // Solo Soja, Maiz, Trigo usan continuo
     if (['Soja','Maiz','Trigo'].includes(producto)) {
-      return precios[producto + '_CONT'] || null;
+      return precios[contKey] || precios[exactKey] || getPrecioMasCercano(producto) || null;
     }
-    // Otros: el admin debe haber cargado un precio específico
-    return precios[producto + '_' + mes + '_' + anio] || null;
+    return precios[exactKey] || getPrecioMasCercano(producto) || null;
   }
-  return precios[producto + '_' + mes + '_' + anio] || null;
+  return precios[exactKey] || precios[contKey] || getPrecioMasCercano(producto) || null;
+}
+
+function getPrecioMasCercano(producto) {
+  // Find closest price in precios_mercado for this product
+  // Returns price from key with closest month/year to today
+  const hoy = new Date();
+  const prefijo = normalizeStr(producto) + '_';
+  let bestDiff = Infinity;
+  let bestPrecio = null;
+  Object.entries(precios).forEach(([key, precio]) => {
+    if (!key.startsWith(prefijo)) return;
+    const part = key.replace(prefijo, '');
+    if (part === 'CONT') { bestPrecio = bestPrecio || precio; return; }
+    const cols = part.split('_');
+    if (cols.length !== 2) return;
+    const mes = parseInt(cols[0]);
+    const anio = parseInt(cols[1]);
+    if (isNaN(mes) || isNaN(anio)) return;
+    const fecha = new Date(anio, mes - 1, 1);
+    const diff = Math.abs(fecha - hoy);
+    if (diff < bestDiff) { bestDiff = diff; bestPrecio = precio; }
+  });
+  return bestPrecio;
 }
 
 // ── MOTOR DE CÁLCULO ──
@@ -1039,7 +1071,10 @@ async function refreshData() {
     sb.from('precios_mercado').select('*').eq('activo',true)
   ]);
   // Normalize product names (remove accents for consistency)
-  const normalize = s => s ? s.replace('Maíz','Maiz').replace('maíz','maiz') : s;
+  const normalize = s => {
+    if (!s) return s;
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
   renderAll();
@@ -1151,7 +1186,7 @@ function renderPosicionesChart() {
 
   // Filter historicos for the line
   let lineData = histData.filter(r => {
-    if (prod && r.producto !== prod) return false;
+    if (prod && normalizeStr(r.producto) !== normalizeStr(prod)) return false;
     if (fromDate && r.fecha < fromDate) return false;
     // When product selected: use chosen posicion or CONT
     if (prod) {
