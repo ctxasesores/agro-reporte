@@ -147,6 +147,23 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 .resultado-pos { color:var(--verde); font-weight:600; }
 .resultado-neg { color:var(--rojo); font-weight:600; }
 
+
+/* ── FLUJO DE FONDOS ── */
+.flujo-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:12px 16px 0; }
+.flujo-filter-select { padding:6px 12px; border-radius:20px; border:1px solid var(--crema-dd); background:white; font-size:12px; color:var(--gris); cursor:pointer; font-family:'DM Sans',sans-serif; outline:none; }
+.flujo-filter-select:focus { border-color:var(--oro); }
+.flujo-table { width:100%; border-collapse:collapse; font-size:13px; }
+.flujo-table th { padding:9px 14px; text-align:right; font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:700; border-bottom:1px solid var(--crema-d); white-space:nowrap; }
+.flujo-table th:first-child { text-align:left; }
+.flujo-table td { padding:10px 14px; border-bottom:1px solid var(--crema-d); text-align:right; font-size:13px; }
+.flujo-table td:first-child { text-align:left; font-weight:600; color:var(--negro); }
+.flujo-table tr:last-child td { border-bottom:none; font-weight:700; background:var(--crema); }
+.flujo-table tr:hover td { background:#faf8f4; }
+.flujo-ingreso { color:var(--verde); font-weight:600; }
+.flujo-egreso  { color:var(--rojo);  font-weight:600; }
+.flujo-neto-pos { color:var(--verde); font-weight:700; }
+.flujo-neto-neg { color:var(--rojo);  font-weight:700; }
+
 /* ── FORM NUEVA OP ── */
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:20px; }
 .form-group { display:flex; flex-direction:column; gap:5px; }
@@ -247,6 +264,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
       <a class="nav-item" onclick="navTo('precios',this)">◎ Precios</a>
       <a class="nav-item" onclick="navTo('composicion',this)">◉ Composición</a>
       <a class="nav-item" onclick="navTo('operaciones',this)">≡ Operaciones</a>
+      <a class="nav-item" onclick="navTo('flujo',this)">⟳ Flujo de fondos</a>
       <a class="nav-item" onclick="navTo('nueva',this)">＋ Nueva operación</a>
     </nav>
     <div class="sidebar-footer">
@@ -409,6 +427,50 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
         </div>
       </div>
 
+
+      <!-- Flujo de Fondos -->
+      <div class="section" id="sec-flujo">
+        <div class="section-title">Flujo de fondos</div>
+
+        <!-- Filtros -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="flujo-filters">
+            <select class="flujo-filter-select" id="flujo-prod" onchange="renderFlujo()">
+              <option value="">Todos los productos</option>
+              <option>Soja</option><option>Maiz</option><option>Trigo</option>
+              <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+            </select>
+            <select class="flujo-filter-select" id="flujo-tipo" onchange="renderFlujo()">
+              <option value="">Todos los tipos</option>
+              <option>Precio</option><option>FIX</option><option>Forward</option>
+              <option>Futuro</option><option>Call</option><option>Put</option>
+            </select>
+          </div>
+          <!-- Chart -->
+          <div style="padding:16px">
+            <div style="position:relative;height:280px"><canvas id="flujoChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card">
+          <div style="overflow-x:auto">
+            <table class="flujo-table">
+              <thead>
+                <tr>
+                  <th>Mes</th>
+                  <th>Ingresos</th>
+                  <th>Egresos</th>
+                  <th>Neto</th>
+                  <th>Detalle</th>
+                </tr>
+              </thead>
+              <tbody id="flujo-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Nueva operación -->
       <div class="section" id="sec-nueva">
         <div class="section-title">Nueva operación</div>
@@ -556,6 +618,7 @@ async function loadApp() {
   initFormDefaults();
   cargarOpsGuardadas();
   loadHistoricos();
+  renderFlujo();
 }
 
 // ── PRECIOS MAP ──
@@ -1006,6 +1069,7 @@ function navTo(section, el) {
     'precios':     'sec-precios',
     'composicion': 'sec-composicion',
     'operaciones': 'sec-operaciones',
+    'flujo':       'sec-flujo',
     'nueva':       'sec-nueva'
   };
   const target = document.getElementById(map[section]);
@@ -1251,6 +1315,243 @@ function renderPosicionesChart() {
       }
     }
   });
+}
+
+
+// ══ FLUJO DE FONDOS ══
+let flujoChart = null;
+
+function calcularFlujoPorOp(op) {
+  // Returns {mes: 'YYYY-MM', ingreso: N, egreso: N, detalle: string}
+  // Only for: Precio, FIX, Forward, Futuro, Call, Put
+  const tipo = op.tipo;
+  const lado = op.lado;
+  const vol  = Number(op.volumen);
+  const pOp  = Number(op.precio) || 0;
+  const pEj  = Number(op.precio_ejercicio) || 0;
+  const pM   = getPrecioMercado(op.producto, op.vencimiento) || 0;
+
+  if (!op.vencimiento) return null;
+  const vto  = op.vencimiento.substring(0, 7); // YYYY-MM
+  const hoy  = new Date().toISOString().substring(0, 7);
+  if (vto < hoy) return null; // solo meses futuros
+
+  let ingreso = 0, egreso = 0, detalle = '';
+
+  if (['Precio','FIX','Forward'].includes(tipo)) {
+    const monto = pOp * vol;
+    if (lado === 'Venta')  { ingreso = monto; detalle = 'Venta a $'+pOp.toFixed(0)+'/tn'; }
+    else                   { egreso  = monto; detalle = 'Compra a $'+pOp.toFixed(0)+'/tn'; }
+  }
+  else if (tipo === 'Futuro') {
+    let resultado;
+    if (lado === 'Venta')  resultado = (pOp - pM) * vol;
+    else                   resultado = (pM  - pOp) * vol;
+    if (resultado >= 0) { ingreso = resultado; }
+    else                { egreso  = Math.abs(resultado); }
+    detalle = 'Futuro '+lado+' $'+pOp.toFixed(0)+' | mdo $'+pM.toFixed(0);
+  }
+  else if (tipo === 'Put') {
+    const prima = pOp * vol;
+    const ejercible = pM > 0 && pM <= pEj;
+    if (lado === 'Compra') {
+      egreso = prima; // prima siempre es egreso si compra
+      if (ejercible) {
+        const res = (pEj - pM) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'PUT Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    } else { // Venta
+      ingreso = prima;
+      if (ejercible) {
+        const res = (pM - pEj) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'PUT Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    }
+  }
+  else if (tipo === 'Call') {
+    const prima = pOp * vol;
+    const ejercible = pM > 0 && pM >= pEj;
+    if (lado === 'Compra') {
+      egreso = prima;
+      if (ejercible) {
+        const res = (pM - pEj) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'CALL Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    } else { // Venta
+      ingreso = prima;
+      if (ejercible) {
+        const res = (pEj - pM) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'CALL Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    }
+  }
+  else return null; // Plan de Siembra, Stock, PAF no generan flujo
+
+  return { mes: vto, ingreso, egreso, detalle, op };
+}
+
+function renderFlujo() {
+  const filtProd = document.getElementById('flujo-prod')?.value || '';
+  const filtTipo = document.getElementById('flujo-tipo')?.value || '';
+
+  // Filter ops
+  let ops = allOps.filter(op => {
+    if (filtProd && op.producto !== filtProd) return false;
+    if (filtTipo && op.tipo !== filtTipo) return false;
+    return true;
+  });
+
+  // Calculate flows per op
+  const flujos = ops.map(calcularFlujoPorOp).filter(Boolean);
+
+  // Group by month
+  const hoy = new Date().toISOString().substring(0,7);
+  const maxMes = allOps
+    .map(o => o.vencimiento ? o.vencimiento.substring(0,7) : '')
+    .filter(m => m >= hoy)
+    .sort().pop() || hoy;
+
+  // Build month range
+  const meses = [];
+  let cur = new Date(hoy + '-01');
+  const fin = new Date(maxMes + '-01');
+  while (cur <= fin) {
+    meses.push(cur.toISOString().substring(0,7));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+
+  // Aggregate
+  const porMes = {};
+  meses.forEach(m => { porMes[m] = {ingreso:0, egreso:0, items:[]}; });
+  flujos.forEach(f => {
+    if (!porMes[f.mes]) porMes[f.mes] = {ingreso:0, egreso:0, items:[]};
+    porMes[f.mes].ingreso += f.ingreso;
+    porMes[f.mes].egreso  += f.egreso;
+    porMes[f.mes].items.push(f);
+  });
+
+  // ── Chart ──
+  const labels = meses.map(m => {
+    const d = new Date(m+'-15');
+    return d.toLocaleDateString('es-AR',{month:'short',year:'2-digit'});
+  });
+  const ingresos = meses.map(m => porMes[m]?.ingreso || 0);
+  const egresos  = meses.map(m => -(porMes[m]?.egreso  || 0));
+  const netos    = meses.map(m => (porMes[m]?.ingreso||0) - (porMes[m]?.egreso||0));
+
+  const ctx = document.getElementById('flujoChart')?.getContext('2d');
+  if (!ctx) return;
+  if (flujoChart) flujoChart.destroy();
+
+  flujoChart = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar', label: 'Ingresos',
+          data: ingresos,
+          backgroundColor: 'rgba(46,125,82,0.7)',
+          borderColor: '#2e7d52', borderWidth: 1, borderRadius: 3,
+          order: 2
+        },
+        {
+          type: 'bar', label: 'Egresos',
+          data: egresos,
+          backgroundColor: 'rgba(192,57,27,0.7)',
+          borderColor: '#c0391b', borderWidth: 1, borderRadius: 3,
+          order: 2
+        },
+        {
+          type: 'line', label: 'Neto',
+          data: netos,
+          borderColor: '#c8a96e',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#c8a96e',
+          tension: 0.3,
+          fill: false,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: true,
+          grid: { color:'rgba(28,26,24,.05)' },
+          ticks: { font:{size:10}, color:'#9b9289' }
+        },
+        y: {
+          stacked: true,
+          grid: { color:'rgba(28,26,24,.05)' },
+          ticks: {
+            font: {size:11}, color:'#9b9289',
+            callback: v => {
+              const abs = Math.abs(v);
+              const sign = v < 0 ? '-' : '';
+              if (abs >= 1000000) return sign+'$'+(abs/1000000).toFixed(1)+'M';
+              if (abs >= 1000)    return sign+'$'+(abs/1000).toFixed(0)+'k';
+              return sign+'$'+abs;
+            }
+          }
+        }
+      },
+      plugins: {
+        legend: { position:'top', labels:{ font:{size:11}, boxWidth:12, padding:12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = Math.abs(ctx.raw);
+              const label = ctx.dataset.label;
+              if (v >= 1000000) return ' '+label+': $'+(v/1000000).toFixed(2)+'M';
+              if (v >= 1000)    return ' '+label+': $'+(v/1000).toFixed(1)+'k';
+              return ' '+label+': $'+v.toLocaleString('es-AR');
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ── Table ──
+  const tbody = document.getElementById('flujo-tbody');
+  if (!tbody) return;
+
+  let totalIng = 0, totalEgr = 0;
+  const rows = meses.map(m => {
+    const ing = porMes[m]?.ingreso || 0;
+    const egr = porMes[m]?.egreso  || 0;
+    const net = ing - egr;
+    if (!ing && !egr) return '';
+    totalIng += ing; totalEgr += egr;
+    const d = new Date(m+'-15');
+    const mes = d.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+    const items = (porMes[m]?.items||[]).map(f =>
+      f.op.producto+' '+f.op.tipo+' ('+f.detalle+')'
+    ).join(' · ');
+    return '<tr>'
+      +'<td>'+mes.charAt(0).toUpperCase()+mes.slice(1)+'</td>'
+      +'<td class="flujo-ingreso">'+(ing?fmtUSD(ing):'—')+'</td>'
+      +'<td class="flujo-egreso">' +(egr?fmtUSD(egr):'—')+'</td>'
+      +'<td class="'+(net>=0?'flujo-neto-pos':'flujo-neto-neg')+'">'+fmtUSD(net)+'</td>'
+      +'<td style="font-size:11px;color:var(--gris-l);max-width:280px;white-space:normal">'+items+'</td>'
+      +'</tr>';
+  }).join('');
+
+  const totalNet = totalIng - totalEgr;
+  tbody.innerHTML = rows
+    + '<tr>'
+    + '<td>TOTAL</td>'
+    + '<td class="flujo-ingreso">'+fmtUSD(totalIng)+'</td>'
+    + '<td class="flujo-egreso">'+fmtUSD(totalEgr)+'</td>'
+    + '<td class="'+(totalNet>=0?'flujo-neto-pos':'flujo-neto-neg')+'">'+fmtUSD(totalNet)+'</td>'
+    + '<td></td>'
+    + '</tr>';
 }
 
 </script>
