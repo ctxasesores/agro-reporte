@@ -543,6 +543,10 @@ async function loadAll() {
   renderPendientes();
   renderTodas();
   renderClienteTabs();
+  // Refresh usuarios list if visible
+  if (document.getElementById('sec-usuarios')?.classList.contains('active')) {
+    cargarClientes();
+  }
 }
 
 function updateStats() {
@@ -919,6 +923,13 @@ async function crearUsuario() {
   const actividad = document.getElementById('nu-actividad').value;
   if (!nombre || !codigo || !email || !pass) { mostrarToast('nu-toast','Completá todos los campos obligatorios.','err'); return; }
   if (pass.length < 8) { mostrarToast('nu-toast','La contraseña debe tener al menos 8 caracteres.','err'); return; }
+  // Check if codigo already exists
+  const {data: existing} = await sb.from('clientes').select('id').eq('codigo', codigo).limit(1);
+  if (existing && existing.length > 0) {
+    mostrarToast('nu-toast', 'El código "' + codigo + '" ya existe. Usá un código diferente.', 'err');
+    return;
+  }
+
   const btn = document.getElementById('nu-btn');
   btn.disabled = true; btn.textContent = 'Creando...';
   try {
