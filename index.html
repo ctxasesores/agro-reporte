@@ -668,7 +668,7 @@ function getPrecioMercado(producto, fechaVto) {
 
 function getPrecioMasCercano(producto) {
   // Find closest price in precios_mercado for this product
-  // Returns price from key with closest month/year to today
+  // Returns price from key with closest month-year to today
   const hoy = new Date();
   const prefijo = normalizeStr(producto) + '_';
   let bestDiff = Infinity;
@@ -730,7 +730,7 @@ function getResultadoFinanciero(op, L, pMercado) {
   const tipo = op.tipo;
   const esFinanciero = tipo === 'Futuro' || tipo === 'Call' || tipo === 'Put';
   if (!esFinanciero || L === 0 || pMercado === null) return 0;
-  // Options: use strike price (precio_ejercicio), not prima
+  // Options: use strike price not prima
   const pRef = (tipo === 'Call' || tipo === 'Put')
     ? (op.precio_ejercicio || 0)
     : (op.precio || 0);
@@ -990,6 +990,8 @@ async function cargarOpsGuardadas() {
     const fOp  = new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     const fVto = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'});
     const lc   = op.lado==='Compra'?'pill-compra':'pill-venta';
+    const btnEditar = '<button onclick="abrirEditarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:white;font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>';
+    const btnElim   = '<button onclick="eliminarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">✕</button>';
     return '<tr>'
       +'<td style="color:var(--gris);font-size:12px">'+fOp+'</td>'
       +'<td style="font-weight:600">'+op.producto+'</td>'
@@ -998,10 +1000,7 @@ async function cargarOpsGuardadas() {
       +'<td>'+Number(op.volumen).toLocaleString('es-AR')+' tn</td>'
       +'<td style="font-weight:600;color:var(--verde)">'+(op.precio>0?'$'+Number(op.precio).toFixed(1)+'/tn':'—')+'</td>'
       +'<td>'+fVto+'</td>'
-      +'<td style="white-space:nowrap">'
-        +'<button onclick="abrirEditarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:white;font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>'
-        +'<button onclick="eliminarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">✕</button>'
-      +'</td>'
+      +'<td style="white-space:nowrap">'+btnEditar+btnElim+'</td>'
       +'</tr>';
   }).join('');
   wrap.innerHTML = '<div class="card ops-table-wrap"><table class="ops-table">'
@@ -1231,7 +1230,7 @@ function renderPosicionesChart() {
   // Build line dataset
   const linePoints = lineData.map(r => ({x: r.fecha, y: r.precio}));
 
-  // Build bubble datasets - separate compra/venta/opciones
+  // Build bubble datasets: compra, venta, opciones
   const maxVol = Math.max(...ops.map(o => o.volumen), 1);
   const toRadius = vol => Math.max(6, Math.min(30, (vol / maxVol) * 30));
 
@@ -1256,7 +1255,7 @@ function renderPosicionesChart() {
     else bubbleVenta.push(punto);
   });
 
-  // Build line/scatter datasets for historical prices
+  // Build line and scatter datasets for historical prices
   // If product selected: one smooth line. If no product: scatter points per product
   const PROD_COLORS = {
     'Soja':'#d56a9d','Maiz':'#7dbaf8','Trigo':'#c8a96e',
