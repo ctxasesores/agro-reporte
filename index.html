@@ -1098,6 +1098,8 @@ async function refreshData() {
   buildPreciosMap(preciosRes.data || []);
   renderAll();
   renderFlujo();
+  renderPosicionesChart();
+  await cargarOpsGuardadas();
   if (btn) { btn.textContent = '↻ Actualizar datos'; btn.disabled = false; }
 }
 

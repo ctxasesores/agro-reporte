@@ -543,9 +543,13 @@ async function loadAll() {
   renderPendientes();
   renderTodas();
   renderClienteTabs();
-  // Refresh usuarios list if visible
-  if (document.getElementById('sec-usuarios')?.classList.contains('active')) {
-    cargarClientes();
+  // Refresh section-specific data based on which is active
+  const activeSection = document.querySelector('.section.active');
+  if (activeSection) {
+    const id = activeSection.id;
+    if (id === 'sec-usuarios')   cargarClientes();
+    if (id === 'sec-precios')    cargarPrecios();
+    if (id === 'sec-historicos') cargarHistoricos();
   }
 }
 
