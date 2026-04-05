@@ -1242,14 +1242,13 @@ function renderPosicionesChart() {
     const pM = getPrecioMercado(op.producto, op.vencimiento);
     const L  = calcularL(op, pM);
     if (L === 0) return; // PAF o no ejercible
-    // For options: show strike price on Y axis, not prima
+    // For options: show strike price on Y axis
     const esOpcion = op.tipo === 'Call' || op.tipo === 'Put';
     const yPrecio = esOpcion
       ? (op.precio_ejercicio || op.precio)
       : (getPrecioEfectivo(op, pM) || op.precio);
     if (!yPrecio || !op.fecha) return;
     const punto = { x: op.fecha, y: yPrecio, r: toRadius(op.volumen), op };
-    const esOpcion = op.tipo === 'Call' || op.tipo === 'Put';
     if (esOpcion) bubbleOpcEj.push(punto);
     else if (op.lado === 'Compra') bubbleCompra.push(punto);
     else bubbleVenta.push(punto);
