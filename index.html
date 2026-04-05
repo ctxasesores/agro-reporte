@@ -719,8 +719,16 @@ function calcularL(op, pMercado) {
 // Determina el precio efectivo para la valuación
 function getPrecioEfectivo(op, pMercado) {
   const tipo = op.tipo;
-  // Plan de Siembra y Stock: siempre precio de mercado
+  // Plan de Siembra y Stock: precio de mercado
   if (['Plan de Siembra','Stock'].includes(tipo)) return pMercado;
+  // Opciones ejercibles: precio de ejercicio (strike)
+  if (tipo === 'Put' || tipo === 'Call') {
+    const pEj = op.precio_ejercicio || 0;
+    const ejercible = tipo === 'Put'
+      ? (pMercado !== null && pMercado <= pEj)
+      : (pMercado !== null && pMercado >= pEj);
+    if (ejercible && pEj > 0) return pEj;
+  }
   // Resto: precio operado
   return op.precio || 0;
 }
