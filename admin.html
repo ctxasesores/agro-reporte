@@ -887,10 +887,11 @@ async function actualizarDesdeMatba() {
     if (!res.ok || !data.ok) {
       mostrarToast('pm-toast', 'Error: ' + (data.error || 'No se pudo conectar con A3 Mercados'), 'err');
     } else {
-      const msg = data.fallidos > 0
-        ? data.guardados + ' precios actualizados, ' + data.fallidos + ' sin datos (mercado cerrado)'
-        : data.guardados + ' precios actualizados correctamente';
-      mostrarToast('pm-toast', '✓ ' + msg, 'ok');
+      const act = data.actualizados ?? (data.detalle ? data.detalle.filter(d => d.ok).length : 0);
+      const msg = act > 0
+        ? '✓ ' + act + ' precios continuos actualizados desde MATBA-ROFEX'
+        : '⚠ Conexión OK pero sin precios (mercado cerrado o feriado)';
+      mostrarToast('pm-toast', msg, act > 0 ? 'ok' : 'err');
       await cargarPrecios();
     }
   } catch(e) {
