@@ -330,8 +330,11 @@ tr:hover td { background:#f9faf6; }
         <div class="card">
           <div class="card-header">
             <h2>Precios cargados</h2>
-            <div style="display:flex;gap:8px">
-              <button class="btn-refresh" onclick="cargarPrecios()">↻ Actualizar</button>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn-refresh" onclick="cargarPrecios()">↻ Actualizar tabla</button>
+              <button class="btn-export" id="btn-matba" onclick="actualizarDesdeMatba()" style="background:var(--verde);display:flex;align-items:center;gap:6px">
+                <span>⟳</span> Actualizar desde MATBA-ROFEX
+              </button>
             </div>
           </div>
           <div class="table-wrap">
@@ -866,6 +869,36 @@ async function limpiarHistoricos() {
   if(prod) await sb.from('precios_historicos').delete().eq('producto',prod);
   else await sb.from('precios_historicos').delete().neq('id','00000000-0000-0000-0000-000000000000');
   cargarHistoricos();
+}
+
+
+// ══ INTEGRACIÓN MATBA-ROFEX ══
+async function actualizarDesdeMatba() {
+  const btn = document.getElementById('btn-matba');
+  if (!btn) return;
+  btn.textContent = 'Conectando con A3...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(FUNCTIONS_URL + '/actualizar-precios', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      mostrarToast('pm-toast', 'Error: ' + (data.error || 'No se pudo conectar con A3 Mercados'), 'err');
+    } else {
+      const msg = data.fallidos > 0
+        ? data.guardados + ' precios actualizados, ' + data.fallidos + ' sin datos (mercado cerrado)'
+        : data.guardados + ' precios actualizados correctamente';
+      mostrarToast('pm-toast', '✓ ' + msg, 'ok');
+      await cargarPrecios();
+    }
+  } catch(e) {
+    mostrarToast('pm-toast', 'Error de conexion: ' + e.message, 'err');
+  } finally {
+    btn.textContent = 'Actualizar desde MATBA-ROFEX';
+    btn.disabled = false;
+  }
 }
 
 async function guardarPrecio() {
