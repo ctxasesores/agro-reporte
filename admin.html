@@ -901,6 +901,57 @@ async function actualizarDesdeMatba() {
   }
 }
 
+
+// ══ ACTUALIZACIÓN PRECIOS A3 MATBA-ROFEX ══
+async function actualizarDesdeA3() {
+  const btn = document.getElementById('btn-a3');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span>⟳</span> Conectando...'; }
+  try {
+    const res = await fetch(
+      'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1/actualizar-precios',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj',
+          'apikey': 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj'
+        }
+      }
+    );
+    const data = await res.json();
+    if (data.ok) {
+      const actualizados = data.actualizados ?? (data.detalle ? data.detalle.filter(d => d.ok).length : 0);
+      const fallidos = data.detalle ? data.detalle.filter(d => !d.ok) : [];
+      let msg = actualizados > 0
+        ? '✓ ' + actualizados + ' precios continuos actualizados desde MATBA-ROFEX'
+        : '⚠ Conexión OK pero sin precios (mercado cerrado o feriado)';
+      if (fallidos.length && actualizados > 0) msg += ' · ' + fallidos.map(d => d.instrumento).join(', ') + ' sin datos';
+      mostrarToast('pm-toast', msg, actualizados > 0 ? 'ok' : 'err');
+      await cargarPrecios();
+      await cargarUltimaActualizacion();
+    } else {
+      mostrarToast('pm-toast', 'Error: ' + (data.error || 'Sin respuesta'), 'err');
+    }
+  } catch(e) {
+    mostrarToast('pm-toast', 'Error de conexión: ' + e.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span>⟳</span> Actualizar desde MATBA-ROFEX'; }
+  }
+}
+
+async function cargarUltimaActualizacion() {
+  try {
+    const {data} = await sb.from('config').select('value').eq('key','a3_ultima_actualizacion').single();
+    const el = document.getElementById('a3-ultima');
+    if (el && data?.value) {
+      const d = new Date(data.value);
+      el.textContent = 'Última actualización: '
+        + d.toLocaleDateString('es-AR',{day:'2-digit',month:'short'})
+        + ' ' + d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    }
+  } catch(e) {}
+}
+
 async function guardarPrecio() {
   const producto    = document.getElementById('pm-producto').value;
   const vencimiento = document.getElementById('pm-vencimiento').value;
@@ -1038,7 +1089,7 @@ function showSection(name, el) {
   const t = titles[name] || ['',''];
   document.getElementById('page-title').textContent = t[0];
   document.getElementById('page-sub').textContent   = t[1];
-  if (name === 'precios')  cargarPrecios();
+  if (name === 'precios')  { cargarPrecios(); cargarUltimaActualizacion(); }
   if (name === 'historicos') cargarHistoricos();
   if (name === 'usuarios') cargarClientes();
 }
