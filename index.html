@@ -424,9 +424,9 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
           <table class="ops-table">
             <thead>
               <tr>
-                <th>#</th><th>Producto</th><th>Tipo</th><th>Lado</th>
+                <th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th>
                 <th>Volumen</th><th>Precio op.</th><th>P. mercado</th>
-                <th>Vencimiento</th><th>Resultado</th><th>Estado</th>
+                <th>Vencimiento</th><th>Resultado</th><th>Estado</th><th>Comentarios</th>
               </tr>
             </thead>
             <tbody id="d-ops-body"></tbody>
@@ -891,8 +891,31 @@ function renderPie(labels, vals, colors) {
     type:'doughnut',
     data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderWidth:2, borderColor:'#fff' }] },
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:'right', labels:{ font:{size:11}, boxWidth:12, padding:10 } },
-        tooltip:{ callbacks:{ label: ctx => ' ' + ctx.label + ': ' + fmtUSD(ctx.parsed) } } } }
+      plugins:{
+        legend:{ position:'right', labels:{ font:{size:11}, boxWidth:12, padding:10,
+          generateLabels: chart => {
+            const total = chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
+            return chart.data.labels.map((label, i) => {
+              const val = chart.data.datasets[0].data[i];
+              const pct = total > 0 ? (val * 100 / total).toFixed(1) : 0;
+              return {
+                text: label + ' ' + pct + '%',
+                fillStyle: chart.data.datasets[0].backgroundColor[i],
+                hidden: false,
+                index: i
+              };
+            });
+          }
+        }},
+        tooltip:{ callbacks:{ label: ctx => {
+          const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+          const pct   = total > 0 ? (ctx.parsed * 100 / total).toFixed(1) : 0;
+          return ' ' + ctx.label + ': ' + fmtUSD(ctx.parsed) + ' (' + pct + '%)';
+        }}},
+        datalabels: false
+      },
+      layout:{ padding:{ right:10 } }
+    }
   });
 }
 
@@ -913,10 +936,11 @@ function renderOps() {
     const pEf = getPrecioEfectivo(op, pM);
     const res = getResultadoFinanciero(op, L, pM);
     const fVto = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
+    const fOp  = op.fecha ? new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
     const ladoClass = op.lado==='Compra'?'pill-compra':'pill-venta';
     const ignorada  = L===0;
     return `<tr style="${ignorada?'opacity:.45':''}">
-      <td style="color:var(--gris-l)">${i+1}</td>
+      <td style="color:var(--gris-l);font-size:12px">${fOp}</td>
       <td style="font-weight:600">${op.producto}</td>
       <td>${op.tipo}</td>
       <td><span class="pill ${ladoClass}">${op.lado}</span></td>
@@ -926,6 +950,7 @@ function renderOps() {
       <td>${fVto}</td>
       <td class="${res>0?'resultado-pos':res<0?'resultado-neg':''}">${res?fmtUSD(res):'—'}</td>
       <td><span class="${op.estado==='confirmada'?'badge-conf':'badge-pend'}">${op.estado==='confirmada'?'Confirmada':'Pendiente'}</span></td>
+      <td style="font-size:11px;color:var(--gris);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${op.observaciones||''}">${op.observaciones||'—'}</td>
     </tr>`;
   }).join('');
 }
