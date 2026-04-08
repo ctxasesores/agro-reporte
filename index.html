@@ -91,9 +91,9 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 .hero-eyebrow { font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px; font-weight:500; }
 .hero-nombre  { font-size:22px; font-weight:600; color:white; margin-bottom:2px; letter-spacing:-.2px; }
 .hero-meta    { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:20px; }
-.kpis { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:start; }
+.kpis { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:stretch; }
 .kpi-card { background:rgba(255,255,255,.07); border-radius:8px; padding:14px 16px; border:1px solid rgba(255,255,255,.06); }
-.kpi-card.full { grid-column:1; } .kpi-chart-col { grid-column:2; grid-row:1; background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; }
+.kpi-card.full { grid-column:1; } .kpi-chart-col { grid-column:2; grid-row:1 / span 3; background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; display:flex; flex-direction:column; }
 .kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:.8px; color:rgba(255,255,255,.4); margin-bottom:6px; font-weight:600; }
 .kpi-value { font-size:20px; font-weight:600; color:white; line-height:1; }
 .kpi-value.accent { font-size:42px; font-weight:700; color:var(--oro-l); letter-spacing:-.5px; }
@@ -275,7 +275,6 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
       <a class="nav-item" onclick="navTo('precios',this)">◎ Precios</a>
       <a class="nav-item" onclick="navTo('composicion',this)">◉ Composición</a>
       <a class="nav-item" onclick="navTo('operaciones',this)">≡ Operaciones</a>
-      <a class="nav-item" onclick="navTo('evolucion',this)">📈 Evolución cartera</a>
       <a class="nav-item" onclick="navTo('flujo',this)">⟳ Flujo de fondos</a>
       <a class="nav-item" onclick="navTo('nueva',this)">＋ Nueva operación</a>
     </nav>
@@ -342,7 +341,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
               </span>
             </div>
           </div>
-          <div style="position:relative;height:140px"><canvas id="evolucionChartHero"></canvas></div>
+          <div style="position:relative;flex:1;min-height:140px"><canvas id="evolucionChartHero"></canvas></div>
         </div>
       </div>
     </div>
@@ -462,29 +461,6 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 
 
 
-      <!-- Evolución de la cartera -->
-      <div class="section" id="sec-evolucion">
-        <div class="section-title">Evolución de la cartera</div>
-        <div class="card">
-          <div class="evol-filters">
-            <select id="evol-prod" class="flujo-filter-select" onchange="renderEvolucion()">
-              <option value="">Todos los productos</option>
-              <option>Soja</option><option>Maiz</option><option>Trigo</option>
-              <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-            </select>
-            <div style="margin-left:auto;display:flex;gap:12px;font-size:11px;color:var(--gris);align-items:center">
-              <span><span style="display:inline-block;width:12px;height:12px;background:#2e7d52;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Realizado</span>
-              <span><span style="display:inline-block;width:12px;height:12px;background:#c8a96e;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Pendiente</span>
-            </div>
-          </div>
-          <div style="padding:16px">
-            <div style="position:relative;height:340px"><canvas id="evolucionChart"></canvas></div>
-          </div>
-          <div id="evol-empty" style="display:none;padding:40px;text-align:center;color:var(--gris);font-size:13px">
-            Cargá datos históricos desde el panel admin para ver la evolución
-          </div>
-        </div>
-      </div>
 
       <!-- Flujo de Fondos -->
       <div class="section" id="sec-flujo">
@@ -1204,7 +1180,6 @@ function navTo(section, el) {
     'precios':     'sec-precios',
     'composicion': 'sec-composicion',
     'operaciones': 'sec-operaciones',
-    'evolucion':   'sec-evolucion',
     'flujo':       'sec-flujo',
     'nueva':       'sec-nueva'
   };
