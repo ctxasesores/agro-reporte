@@ -23,14 +23,14 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <style>
 :root {
-  --negro:    #1c1a18; --negro-m:  #2a2825;
-  --crema:    #faf8f4; --crema-d:  #f0ebe3; --crema-dd: #e5dfd6;
-  --oro:      #c8a96e; --oro-l:    #e8d9b8; --oro-d:    #a68a4e;
-  --verde:    #2e7d52; --verde-l:  #4aab76;
-  --rojo:     #c0391b;
-  --texto:    #1c1a18; --gris:     #7a7268; --gris-l:   #9b9289;
+  --negro:    #132d46; --negro-m:  #3d5a6c;
+  --crema:    #f7f5f1; --crema-d:  #ede9e2; --crema-dd: #cec8bc;
+  --oro:      #d4a017; --oro-l:    #f0ca60; --oro-d:    #a87c0e;
+  --verde:    #1e9970; --verde-l:  #2ab88a;
+  --rojo:     #d9512c;
+  --texto:    #132d46; --gris:     #5a6a6e; --gris-l:   #8fa0a8;
   --blanco:   #ffffff;
-  --sombra:   0 1px 12px rgba(28,26,24,.07);
+  --sombra:   0 1px 12px rgba(19,45,70,.08);
   --radio:    10px; --sidebar: 240px;
 }
 * { box-sizing:border-box; margin:0; padding:0; font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif !important; }
@@ -338,8 +338,8 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
                 <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
               </select>
               <span style="font-size:10px;color:rgba(255,255,255,.35)">
-                <span style="display:inline-block;width:8px;height:8px;background:#2e7d52;border-radius:1px;margin-right:3px"></span>Realizado
-                <span style="display:inline-block;width:8px;height:8px;background:#c8a96e;border-radius:1px;margin:0 3px 0 8px"></span>Pendiente
+                <span style="display:inline-block;width:8px;height:8px;background:#1e9970;border-radius:1px;margin-right:3px"></span>Realizado
+                <span style="display:inline-block;width:8px;height:8px;background:#d4a017;border-radius:1px;margin:0 3px 0 8px"></span>Pendiente
               </span>
             </div>
           </div>
@@ -1783,8 +1783,8 @@ function renderEvolucion() {
     return new Chart(ctx, {
       type:'bar',
       data:{ labels, datasets:[
-        { label:'Realizado',  data:realizadoSeries,  backgroundColor:'rgba(46,125,82,0.75)',  borderColor:'#2e7d52', borderWidth:1, borderRadius:2, stack:'c' },
-        { label:'Pendiente',  data:pendienteSeries,  backgroundColor:'rgba(200,169,110,0.75)', borderColor:'#c8a96e', borderWidth:1, borderRadius:2, stack:'c' }
+        { label:'Realizado',  data:realizadoSeries,  backgroundColor:'rgba(30,153,112,0.75)',  borderColor:'#1e9970', borderWidth:1, borderRadius:2, stack:'c' },
+        { label:'Pendiente',  data:pendienteSeries,  backgroundColor:'rgba(212,160,23,0.75)',  borderColor:'#d4a017', borderWidth:1, borderRadius:2, stack:'c' }
       ]},
       options:{
         responsive:true, maintainAspectRatio:false,
