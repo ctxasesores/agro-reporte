@@ -18,6 +18,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -400,10 +401,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         </div>
         <div id="sec-composicion">
           <div class="section-title">Composición</div>
-          <div class="card">
-            <div class="chart-box" style="padding:12px">
-              <div class="chart-container" style="height:280px"><canvas id="pieChart"></canvas></div>
+          <div class="card" style="height:304px;display:flex;flex-direction:column;overflow:hidden">
+            <div style="padding:8px 14px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+              <span id="sunburst-breadcrumb" style="font-size:11px;color:var(--gris)">Cartera total</span>
+              <button id="sunburst-back" onclick="sunburstBack()" style="display:none;padding:3px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:transparent;color:var(--gris);font-size:11px;cursor:pointer">↩ Volver</button>
             </div>
+            <div id="sunburst-container" style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0"></div>
           </div>
         </div>
       </div>
@@ -1078,8 +1081,8 @@ function renderComposicion() {
     </tr>`;
   }).join('');
 
-  // Pie chart
-  renderPie(labels, vals, colors);
+  // Sunburst
+  renderSunburst();
 }
 
 function calcDelta(longTn, shortTn) {
@@ -1092,38 +1095,217 @@ function calcDelta(longTn, shortTn) {
 }
 
 function renderPie(labels, vals, colors) {
-  const ctx = document.getElementById('pieChart').getContext('2d');
-  if (pieChart) pieChart.destroy();
-  pieChart = new Chart(ctx, {
-    type:'doughnut',
-    data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderWidth:2, borderColor:'#1a3349' }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{ position:'right', labels:{ font:{size:11}, color:'#dce8f5', boxWidth:12, padding:10,
-          generateLabels: chart => {
-            const total = chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
-            return chart.data.labels.map((label, i) => {
-              const val = chart.data.datasets[0].data[i];
-              const pct = total > 0 ? (val * 100 / total).toFixed(1) : 0;
-              return {
-                text: label + ' ' + pct + '%',
-                fillStyle: chart.data.datasets[0].backgroundColor[i],
-                hidden: false,
-                index: i
-              };
-            });
-          }
-        }},
-        tooltip:{ callbacks:{ label: ctx => {
-          const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
-          const pct   = total > 0 ? (ctx.parsed * 100 / total).toFixed(1) : 0;
-          return ' ' + ctx.label + ': ' + fmtUSD(ctx.parsed) + ' (' + pct + '%)';
-        }}},
-        datalabels: false
-      },
-      layout:{ padding:{ right:10 } }
-    }
+  // Legacy stub — sunburst handles composición rendering
+}
+
+// ── SUNBURST ──
+let _sunburstRoot = null;
+let _sunburstCurrent = null;
+
+function buildSunburstData() {
+  // Build 3-level hierarchy: Producto → Realizado/Pendiente → Tipo
+  const root = { name: 'Cartera', children: [] };
+
+  PRODUCTOS.forEach(prod => {
+    const ops = allOps.filter(o => o.producto === prod);
+    if (!ops.length) return;
+
+    const prodNode = { name: prod, children: [] };
+    const grupos   = { Realizado: {}, Pendiente: {} };
+
+    ops.forEach(op => {
+      const pM  = getPrecioMercado(op.producto, op.vencimiento);
+      const L   = calcularL(op, pM);
+      if (L === 0) return;
+      const pEf = getPrecioEfectivo(op, pM);
+      if (!pEf) return;
+      const val  = Math.abs(pEf * op.volumen);
+      const slot = L < 0 ? 'Realizado' : 'Pendiente';
+      const tipo = op.tipo || 'Sin tipo';
+      grupos[slot][tipo] = (grupos[slot][tipo] || 0) + val;
+    });
+
+    ['Realizado', 'Pendiente'].forEach(slot => {
+      const tipos = grupos[slot];
+      const tipoKeys = Object.keys(tipos);
+      if (!tipoKeys.length) return;
+      const slotNode = {
+        name: slot,
+        children: tipoKeys.map(t => ({ name: t, value: tipos[t] }))
+      };
+      prodNode.children.push(slotNode);
+    });
+
+    if (prodNode.children.length) root.children.push(prodNode);
   });
+
+  return root;
+}
+
+function renderSunburst() {
+  const container = document.getElementById('sunburst-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const data = buildSunburstData();
+  if (!data.children.length) {
+    container.innerHTML = '<div class="empty-state">Sin operaciones</div>';
+    return;
+  }
+
+  const W = container.clientWidth  || 280;
+  const H = container.clientHeight || 250;
+  const size = Math.min(W, H);
+  const radius = size / 2;
+
+  // Color scales per product
+  const PROD_BASE = {
+    'Soja':    ['#1e4466','#2a5f84','#3d7aa8','#5b9ec9','#8bbedd'],
+    'Maiz':    ['#1e4d2e','#256338','#2e7d4f','#3aaa6a','#5bc48a'],
+    'Trigo':   ['#5a3a0a','#7a5010','#a87c0e','#d4a017','#f0ca60'],
+    'Girasol': ['#5c1a1a','#7a2525','#a83030','#d94040','#f07070'],
+    'Sorgo':   ['#2a1a5e','#3d2880','#5535aa','#7b5bd4','#a98df0'],
+    'Cebada':  ['#1a4a4a','#206060','#267a7a','#2ca0a0','#4cc4c4'],
+  };
+
+  // Build d3 hierarchy
+  const hierarchy = d3.hierarchy(data)
+    .sum(d => d.value || 0)
+    .sort((a,b) => b.value - a.value);
+
+  const partition = d3.partition().size([2 * Math.PI, radius]);
+  partition(hierarchy);
+
+  // Assign colors: level 1 = product base, level 2 = slot tint, level 3 = tipo tint
+  function getColor(d) {
+    if (d.depth === 0) return 'transparent';
+    const prodNode = d.depth === 1 ? d : d.depth === 2 ? d.parent : d.parent?.parent;
+    const prodName = prodNode?.data?.name;
+    const palette  = PROD_BASE[prodName] || ['#3d5a6c','#4e7090','#6090b4','#80aad0','#a0c4e8'];
+    if (d.depth === 1) return palette[2];
+    if (d.depth === 2) return d.data.name === 'Realizado' ? palette[0] : palette[4];
+    // depth 3: vary by index within parent
+    const idx = d.parent ? d.parent.children.indexOf(d) : 0;
+    return palette[idx % palette.length];
+  }
+
+  const arc = d3.arc()
+    .startAngle(d => d.x0)
+    .endAngle(d => d.x1)
+    .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.01))
+    .padRadius(radius / 2)
+    .innerRadius(d => d.depth === 0 ? 0 : d.y0 + 2)
+    .outerRadius(d => Math.max(d.y0 + 2, d.y1 - 2));
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', size)
+    .attr('height', size)
+    .style('display','block');
+
+  const g = svg.append('g')
+    .attr('transform', `translate(${size/2},${size/2})`);
+
+  // Center label
+  const centerLabel = g.append('text')
+    .attr('text-anchor','middle')
+    .attr('dy','-0.2em')
+    .style('font-size','11px')
+    .style('font-family','DM Sans, sans-serif')
+    .style('fill','#dce8f5')
+    .style('pointer-events','none');
+
+  const centerSub = g.append('text')
+    .attr('text-anchor','middle')
+    .attr('dy','1.1em')
+    .style('font-size','10px')
+    .style('font-family','DM Sans, sans-serif')
+    .style('fill','#7fa8c4')
+    .style('pointer-events','none');
+
+  function updateCenter(d) {
+    const total = d.value || 0;
+    centerLabel.text(d.data.name === 'Cartera' ? 'Total' : d.data.name);
+    centerSub.text(fmtUSD(total));
+  }
+  updateCenter(hierarchy);
+
+  // Draw arcs
+  _sunburstRoot    = hierarchy;
+  _sunburstCurrent = hierarchy;
+
+  const path = g.selectAll('path')
+    .data(hierarchy.descendants().filter(d => d.depth > 0 && (d.x1 - d.x0) > 0.005))
+    .join('path')
+    .attr('d', arc)
+    .attr('fill', d => getColor(d))
+    .attr('fill-opacity', 0.9)
+    .attr('stroke', '#0d2035')
+    .attr('stroke-width', 1)
+    .style('cursor', d => d.children ? 'pointer' : 'default')
+    .on('mouseover', function(event, d) {
+      d3.select(this).attr('fill-opacity', 1);
+      updateCenter(d);
+    })
+    .on('mouseout', function(event, d) {
+      d3.select(this).attr('fill-opacity', 0.9);
+      updateCenter(_sunburstCurrent);
+    })
+    .on('click', function(event, d) {
+      if (!d.children) return;
+      zoomSunburst(d);
+    });
+
+  // Tooltips simple via title
+  path.append('title').text(d => {
+    const pct = d.parent?.value ? ((d.value / _sunburstRoot.value) * 100).toFixed(1) : 0;
+    return `${d.ancestors().map(a=>a.data.name).reverse().slice(1).join(' › ')}
+${fmtUSD(d.value)} (${pct}%)`;
+  });
+
+  function zoomSunburst(node) {
+    _sunburstCurrent = node;
+    const bc = document.getElementById('sunburst-breadcrumb');
+    const backBtn = document.getElementById('sunburst-back');
+    if (bc) bc.textContent = node.ancestors().map(a=>a.data.name).reverse().slice(1).join(' › ') || 'Cartera total';
+    if (backBtn) backBtn.style.display = node.depth > 0 ? 'inline-block' : 'none';
+    updateCenter(node);
+
+    // Angle transition: remap visible nodes to full circle
+    const t = svg.transition().duration(450).ease(d3.easeCubicInOut);
+    const xScale = d3.scaleLinear().domain([node.x0, node.x1]).range([0, 2 * Math.PI]);
+    const yScale = d3.scaleLinear().domain([node.y0, radius]).range([node.depth ? 20 : 0, radius]);
+
+    path.transition(t)
+      .tween('data', d => {
+        const i = d3.interpolate(d.current || {x0:d.x0,x1:d.x1,y0:d.y0,y1:d.y1}, d);
+        return t => { d.current = i(t); };
+      })
+      .attrTween('d', d => () => {
+        const curr = d.current || d;
+        return arc({
+          x0: xScale(Math.max(0, Math.min(node.x1, curr.x0))),
+          x1: xScale(Math.max(0, Math.min(node.x1, curr.x1))),
+          y0: Math.max(0, yScale(curr.y0)),
+          y1: Math.max(0, yScale(curr.y1))
+        });
+      })
+      .attr('fill-opacity', d => {
+        const visible = d.x0 >= node.x0 && d.x1 <= node.x1;
+        return visible ? 0.9 : 0.15;
+      })
+      .attr('pointer-events', d => {
+        const visible = d.x0 >= node.x0 && d.x1 <= node.x1;
+        return visible ? 'auto' : 'none';
+      });
+  }
+
+  // Store zoom fn globally for back button
+  window._sunburstZoom = zoomSunburst;
+}
+
+function sunburstBack() {
+  if (!_sunburstCurrent || !_sunburstCurrent.parent) return;
+  window._sunburstZoom(_sunburstCurrent.parent);
 }
 
 function renderOps() {
