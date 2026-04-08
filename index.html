@@ -732,12 +732,11 @@ async function logout() {
 // ── LOAD APP ──
 async function loadApp() {
   initSupabase();
-  // Load cliente profile
   const {data:cli} = await sb.from('clientes').select('*').eq('id', currentUser.id).single();
   if (!cli) { alert('No se encontró tu perfil. Contactá a tu asesor.'); location.reload(); return; }
   currentCliente = cli;
+  tagsDisponibles = Array.isArray(cli.tags_disponibles) ? cli.tags_disponibles : [];
 
-  // Load operaciones y precios en paralelo
   const [opsRes, preciosRes] = await Promise.all([
     sb.from('operaciones').select('*')
       .eq('cliente_codigo', cli.codigo)
@@ -746,15 +745,9 @@ async function loadApp() {
     sb.from('precios_mercado').select('*').eq('activo',true)
   ]);
 
-  // Normalize product names (remove accents for consistency)
-  const normalize = s => {
-    if (!s) return s;
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  };
+  const normalize = s => s ? s.normalize('NFD').replace(/[̀-ͯ]/g,'') : s;
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  // Load tags from DB (single source of truth)
-  await loadTags();
   renderAll();
   showLoading(false);
   document.getElementById('appShell').style.display='block';
@@ -765,7 +758,6 @@ async function loadApp() {
   loadHistoricos();
   renderFlujo();
   renderEvolucion();
-  // Show popup only if no tags defined
   if (!tagsDisponibles.length) {
     setTimeout(() => abrirGestionTags(true), 500);
   }
@@ -1715,15 +1707,13 @@ async function refreshData() {
     sb.from('precios_mercado').select('*').eq('activo',true),
     sb.from('clientes').select('*').eq('id', currentUser.id).single()
   ]);
-  if (cliRes.data) currentCliente = cliRes.data;
-  // Normalize product names (remove accents for consistency)
-  const normalize = s => {
-    if (!s) return s;
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  };
+  const normalize = s => s ? s.normalize('NFD').replace(/[̀-ͯ]/g,'') : s;
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  await loadTags();
+  if (cliRes.data) {
+    currentCliente = cliRes.data;
+    tagsDisponibles = Array.isArray(cliRes.data.tags_disponibles) ? cliRes.data.tags_disponibles : [];
+  }
   renderTagFilterBar();
   renderTagsFormSelector();
   renderAll();
@@ -1731,6 +1721,7 @@ async function refreshData() {
   renderPosicionesChart();
   renderEvolucion();
   await cargarOpsGuardadas();
+  renderTagsFormSelector();
   if (btn) { btn.textContent = '↻ Actualizar datos'; btn.disabled = false; }
 }
 
