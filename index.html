@@ -1717,15 +1717,24 @@ async function refreshData() {
     sb.from('precios_mercado').select('*').eq('activo',true),
     sb.from('clientes').select('*').eq('id', currentUser.id).single()
   ]);
-  if (cliRes.data) currentCliente = cliRes.data;
-  // Normalize product names (remove accents for consistency)
+  if (cliRes.data) {
+    currentCliente = cliRes.data;
+    // Solo actualizar tagsDisponibles desde DB si no tenemos tags en memoria
+    // (evita que un null de Supabase pise tags recién guardados)
+    const dbTags = Array.isArray(cliRes.data.tags_disponibles)
+      ? cliRes.data.tags_disponibles.filter(t => typeof t === 'string' && t.trim().length > 0)
+      : [];
+    if (dbTags.length > 0) {
+      tagsDisponibles = dbTags;
+    }
+    // Si dbTags está vacío pero tagsDisponibles ya tiene datos, los conservamos
+  }
   const normalize = s => {
     if (!s) return s;
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return s.normalize('NFD').replace(/[̀-ͯ]/g,'');
   };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles.filter(t => typeof t === 'string' && t.trim().length > 0) : [];
   renderTagFilterBar();
   renderTagsFormSelector();
   renderAll();
