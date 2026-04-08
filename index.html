@@ -91,9 +91,359 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 .hero-eyebrow { font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px; font-weight:500; }
 .hero-nombre  { font-size:22px; font-weight:600; color:white; margin-bottom:2px; letter-spacing:-.2px; }
 .hero-meta    { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:20px; }
-.kpis { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:start; }
+.kpis { display:grid; grid-template-columns:240px 1fr; gap:16px; align-items:start; }
 .kpi-card { background:rgba(255,255,255,.07); border-radius:8px; padding:14px 16px; border:1px solid rgba(255,255,255,.06); }
-.kpi-card.full { grid-column:1; } .kpi-chart-col { grid-column:2; grid-row:1; background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; display:flex; flex-direction:column; }
+.kpi-card.full { grid-column:1; } .kpi-chart-col { background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; display:flex; flex-direction:column; }
+.kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:.8px; color:rgba(255,255,255,.4); margin-bottom:6px; font-weight:600; }
+.kpi-value { font-size:20px; font-weight:600; color:white; line-height:1; }
+.kpi-value.accent { font-size:42px; font-weight:700; color:var(--oro-l); letter-spacing:-.5px; }
+.kpi-sub   { font-size:11px; color:rgba(255,255,255,.3); margin-top:4px; }
+
+/* ── PAGE BODY ── */
+.page-body { padding:24px 28px; flex:1; background:var(--crema); }
+
+/* ── CARDS ── */
+.card { background:var(--blanco); border-radius:var(--radio); box-shadow:var(--sombra); border:1px solid var(--crema-d); overflow:hidden; }
+.section { margin-bottom:28px; }
+.section-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.section-title::after { content:''; flex:1; height:1px; background:var(--crema-dd); }
+
+/* ── TWO COL ── */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+
+/* ── PRECIOS ── */
+.precio-row { display:flex; justify-content:space-between; align-items:center; padding:6px 14px; border-bottom:1px solid var(--crema-d); }
+.precio-row:last-child { border-bottom:none; }
+.precio-prod { font-size:12px; font-weight:600; color:var(--texto); }
+.precio-venc { font-size:10px; color:var(--gris-l); }
+.precio-amt  { font-size:13px; font-weight:700; color:var(--negro); }
+.precio-unit { font-size:10px; color:var(--gris-l); }
+
+/* ── COMPOSICIÓN TABLE ── */
+.comp-table-scroll { overflow-x:auto; }
+.comp-table { width:100%; border-collapse:collapse; font-size:13px; white-space:nowrap; }
+.comp-table thead tr:first-child th { background:var(--negro); color:rgba(255,255,255,.8); padding:10px 12px; font-size:10px; text-transform:uppercase; letter-spacing:.5px; font-weight:600; text-align:right; }
+.comp-table thead tr:first-child th:first-child { text-align:left; }
+.comp-table thead tr:nth-child(2) th { background:#f5f0e8; color:var(--oro-d); padding:7px 12px; font-size:10px; font-weight:700; text-align:right; }
+.comp-table tbody td { padding:11px 12px; border-bottom:1px solid var(--crema-d); text-align:right; }
+.comp-table tbody td:first-child { text-align:left; }
+.comp-table tbody tr:last-child td { border-bottom:none; }
+.comp-table tbody tr:hover td { background:#faf8f4; }
+.prod-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; vertical-align:middle; }
+.pos-long  { background:#dcfce7; color:#166534; font-size:11px; padding:2px 9px; border-radius:10px; font-weight:700; }
+.pos-short { background:#fee2e2; color:#991b1b; font-size:11px; padding:2px 9px; border-radius:10px; font-weight:700; }
+.pos-neutro { background:var(--crema-d); color:var(--gris); font-size:11px; padding:2px 9px; border-radius:10px; font-weight:700; }
+.neto-pos { color:var(--verde); font-weight:700; }
+.neto-neg { color:var(--rojo); font-weight:700; }
+
+/* ── OPS TABLE ── */
+.ops-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.filter-btn { padding:6px 14px; border-radius:20px; border:1px solid var(--crema-dd); background:white; font-size:12px; color:var(--gris); cursor:pointer; transition:all .18s; }
+.filter-btn.active { background:var(--negro); color:var(--oro-l); border-color:var(--negro); }
+.ops-table-wrap { overflow-x:auto; }
+.ops-table { width:100%; border-collapse:collapse; font-size:12px; white-space:nowrap; }
+.ops-table th { padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:700; border-bottom:1px solid var(--crema-d); }
+.ops-table td { padding:10px 12px; border-bottom:1px solid var(--crema-d); }
+.ops-table tr:last-child td { border-bottom:none; }
+.ops-table tr:hover td { background:#faf8f4; }
+.pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+.pill-compra { background:#dbeafe; color:#1e40af; }
+.pill-venta  { background:#fef3c7; color:#92400e; }
+.badge-pend  { background:#fef9c3; color:#854d0e; font-size:11px; padding:3px 9px; border-radius:10px; font-weight:600; }
+.badge-conf  { background:#dcfce7; color:#166534; font-size:11px; padding:3px 9px; border-radius:10px; font-weight:600; }
+.resultado-pos { color:var(--verde); font-weight:600; }
+.resultado-neg { color:var(--rojo); font-weight:600; }
+
+
+
+/* ── EVOLUCIÓN CARTERA ── */
+.evol-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:14px 16px 0; }
+
+/* ── FLUJO DE FONDOS ── */
+.flujo-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:12px 16px 0; }
+.flujo-filter-select { padding:6px 12px; border-radius:20px; border:1px solid var(--crema-dd); background:white; font-size:12px; color:var(--gris); cursor:pointer; font-family:'DM Sans',sans-serif; outline:none; }
+.flujo-filter-select:focus { border-color:var(--oro); }
+.flujo-table { width:100%; border-collapse:collapse; font-size:13px; }
+.flujo-table th { padding:9px 14px; text-align:right; font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:700; border-bottom:1px solid var(--crema-d); white-space:nowrap; }
+.flujo-table th:first-child { text-align:left; }
+.flujo-table td { padding:10px 14px; border-bottom:1px solid var(--crema-d); text-align:right; font-size:13px; }
+.flujo-table td:first-child { text-align:left; font-weight:600; color:var(--negro); }
+.flujo-table tr:last-child td { border-bottom:none; font-weight:700; background:var(--crema); }
+.flujo-table tr:hover td { background:#faf8f4; }
+.flujo-ingreso { color:var(--verde); font-weight:600; }
+.flujo-egreso  { color:var(--rojo);  font-weight:600; }
+.flujo-neto-pos { color:var(--verde); font-weight:700; }
+.flujo-neto-neg { color:var(--rojo);  font-weight:700; }
+
+/* ── FORM NUEVA OP ── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:20px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group.full { grid-column:1/-1; }
+.form-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); }
+.form-input,.form-select { padding:10px 13px; border-radius:8px; border:1px solid var(--crema-d); background:white; font-size:14px; color:var(--texto); outline:none; transition:border .2s,box-shadow .2s; width:100%; }
+.form-input:focus,.form-select:focus { border-color:var(--verde); box-shadow:0 0 0 3px rgba(46,125,82,.1); }
+.form-input:disabled { background:var(--crema); color:var(--gris); }
+.form-divider { grid-column:1/-1; height:1px; background:var(--crema-d); }
+.form-actions { grid-column:1/-1; display:flex; gap:10px; justify-content:flex-end; padding-top:4px; }
+.btn-submit { padding:11px 26px; background:var(--oro); color:var(--negro); border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity .2s; }
+.btn-submit:hover { opacity:.88; }
+.btn-submit:disabled { opacity:.5; cursor:not-allowed; }
+.btn-cancel { padding:11px 18px; background:transparent; border:1px solid var(--crema-d); color:var(--gris); border-radius:8px; font-size:14px; cursor:pointer; }
+.btn-cancel:hover { border-color:var(--gris); }
+.form-toast { grid-column:1/-1; padding:11px 14px; border-radius:8px; font-size:13px; font-weight:500; display:none; }
+.form-toast.ok  { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+.form-toast.err { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+
+/* ── ERROR STATE ── */
+.empty-state { padding:40px; text-align:center; color:var(--gris); font-size:14px; }
+.error-banner { background:#fff3cd; border:1px solid #ffd666; border-radius:8px; padding:12px 16px; font-size:13px; color:#7c5c00; margin-bottom:16px; }
+
+/* ── CHART ── */
+.chart-box { padding:16px; }
+.chart-container { position:relative; height:260px; }
+
+.chart-period-btn {
+  padding:5px 12px; border-radius:20px; border:1px solid var(--crema-dd);
+  background:white; font-size:12px; color:var(--gris); cursor:pointer;
+  transition:all .15s; font-family:'DM Sans',sans-serif;
+}
+.chart-period-btn.active { background:var(--negro); color:var(--oro-l); border-color:var(--negro); }
+
+
+/* ── SCROLL HINT ── */
+.scroll-hint { font-size:11px; color:var(--gris-l); padding:8px 16px 0; display:none; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px) {
+  .sidebar { transform:translateX(-100%); transition:transform .25s; }
+  .sidebar.open { transform:translateX(0); }
+  .sidebar-overlay.open { display:block; }
+  .main-content { margin-left:0; }
+  .topbar-mobile { display:flex; }
+  .two-col { grid-template-columns:1fr; }
+  .page-body { padding:16px; }
+  .kpi-value.accent { font-size:32px; }
+  .scroll-hint { display:block; }
+  .form-grid { grid-template-columns:1fr; padding:14px; }
+  .form-group.full { grid-column:auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div style="margin-bottom:28px;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <svg width="56" height="56" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+    <span style="font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</span>
+  </div>
+  <div class="login-card">
+    <label>Email</label>
+    <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email">
+    <label>Contraseña</label>
+    <input type="password" id="loginPass" placeholder="••••••••">
+    <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingScreen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando tu reporte...</div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-row">
+        <svg width="34" height="34" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+        <div>
+          <div class="brand-name">CTX</div>
+          <div class="brand-sub">Gestión de riesgo</div>
+        </div>
+      </div>
+    </div>
+    <div class="cli-block">
+      <div class="cli-label">Cliente</div>
+      <div class="cli-name" id="s-nombre">—</div>
+      <div class="cli-meta" id="s-meta">—</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="navTo('resumen',this)">◈ Resumen</a>
+      <a class="nav-item" onclick="navTo('precios',this)">◎ Precios</a>
+      <a class="nav-item" onclick="navTo('composicion',this)">◉ Composición</a>
+      <a class="nav-item" onclick="navTo('operaciones',this)">≡ Operaciones</a>
+      <a class="nav-item" onclick="navTo('flujo',this)">⟳ Flujo de fondos</a>
+      <a class="nav-item" onclick="navTo('nueva',this)">＋ Nueva operación</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
+      <div class="sidebar-date" id="s-fecha">—</div>
+      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <div class="main-content">
+    <!-- Mobile topbar -->
+    <div class="topbar-mobile">
+      <button class="hamburger" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="26" height="26" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+        <span style="font-size:14px;font-weight:700;color:white">CTX</span>
+      </div>
+      <div style="width:32px"></div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero" id="sec-resumen">
+      <div class="hero-eyebrow">Reporte de cartera</div>
+      <div class="hero-nombre" id="d-nombre">—</div>
+      <div class="hero-meta" id="d-meta">—</div>
+      <div class="kpis">
+        <!-- Left: KPIs compactos -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="kpi-card full">
+            <div class="kpi-label">Valor total de la cartera</div>
+            <div class="kpi-value accent" id="d-total" style="font-size:28px">—</div>
+            <div class="kpi-sub">USD valuados a precios de mercado</div>
+            <button onclick="refreshData()" style="margin-top:8px;padding:5px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif" id="btn-refresh">↻ Actualizar datos</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="kpi-card">
+              <div class="kpi-label">Realizado</div>
+              <div class="kpi-value" id="d-realizado" style="font-size:16px">—</div>
+              <div class="kpi-sub">Resultado capturado</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Pendiente</div>
+              <div class="kpi-value" id="d-pendiente" style="font-size:16px">—</div>
+              <div class="kpi-sub">A realizar</div>
+            </div>
+          </div>
+        </div>
+        <!-- Right: Evolución chart inline -->
+        <div class="kpi-chart-col">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.4)">Evolución de la cartera</span>
+            <div style="display:flex;gap:10px;align-items:center">
+              <select id="evol-prod-hero" onchange="renderEvolucion()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);border-radius:6px;padding:3px 8px;font-size:11px;font-family:'DM Sans',sans-serif">
+                <option value="">Todos</option>
+                <option>Soja</option><option>Maiz</option><option>Trigo</option>
+                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+              </select>
+              <span style="font-size:10px;color:rgba(255,255,255,.35)">
+                <span style="display:inline-block;width:8px;height:8px;background:#2e7d52;border-radius:1px;margin-right:3px"></span>Realizado
+                <span style="display:inline-block;width:8px;height:8px;background:#c8a96e;border-radius:1px;margin:0 3px 0 8px"></span>Pendiente
+              </span>
+            </div>
+          </div>
+          <div style="position:relative;height:160px"><canvas id="evolucionChartHero"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    
+s">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CTX Cartera">
+<meta name="theme-color" content="#1c1a18">
+<link rel="manifest" href="/agro-reporte/manifest.json">
+<link rel="apple-touch-icon" href="/agro-reporte/icon-192.svg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context | Reporte de Cartera</title>
+<!-- v20260401015516 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --negro:    #1c1a18; --negro-m:  #2a2825;
+  --crema:    #faf8f4; --crema-d:  #f0ebe3; --crema-dd: #e5dfd6;
+  --oro:      #c8a96e; --oro-l:    #e8d9b8; --oro-d:    #a68a4e;
+  --verde:    #2e7d52; --verde-l:  #4aab76;
+  --rojo:     #c0391b;
+  --texto:    #1c1a18; --gris:     #7a7268; --gris-l:   #9b9289;
+  --blanco:   #ffffff;
+  --sombra:   0 1px 12px rgba(28,26,24,.07);
+  --radio:    10px; --sidebar: 240px;
+}
+* { box-sizing:border-box; margin:0; padding:0; font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif !important; }
+body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+/* ── LOGIN ── */
+#loginScreen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); padding:32px 20px; }
+.login-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:32px 28px; width:100%; max-width:360px; }
+.login-card label { color:rgba(255,255,255,.65); font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; display:block; margin-bottom:7px; }
+.login-card input { width:100%; padding:13px 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.07); color:white; font-size:15px; margin-bottom:14px; outline:none; transition:border .2s; }
+.login-card input:focus { border-color:var(--oro-l); }
+.login-card input::placeholder { color:rgba(255,255,255,.28); }
+.btn-primary { width:100%; padding:14px; background:var(--oro); color:var(--negro); border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; margin-top:4px; transition:opacity .2s; }
+.btn-primary:hover { opacity:.88; }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+.login-error { color:#fca5a5; font-size:13px; margin-top:12px; text-align:center; display:none; }
+
+/* ── LOADING ── */
+#loadingScreen { min-height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); gap:16px; }
+.loading-spinner { width:36px; height:36px; border:3px solid rgba(200,169,110,.2); border-top-color:var(--oro); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { color:rgba(255,255,255,.5); font-size:13px; }
+
+/* ── SHELL ── */
+#appShell { display:none; min-height:100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar { width:var(--sidebar); background:var(--negro); position:fixed; top:0; left:0; bottom:0; display:flex; flex-direction:column; z-index:200; }
+.sidebar-brand { padding:20px 18px 14px; border-bottom:1px solid rgba(255,255,255,.08); }
+.brand-row { display:flex; align-items:center; gap:10px; }
+.brand-name { font-size:16px; font-weight:700; color:white; letter-spacing:-.2px; }
+.brand-sub  { color:rgba(255,255,255,.35); font-size:11px; margin-top:3px; }
+.cli-block  { padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.06); }
+.cli-label  { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.3); margin-bottom:4px; }
+.cli-name   { font-size:13px; font-weight:600; color:white; line-height:1.3; }
+.cli-meta   { font-size:11px; color:rgba(255,255,255,.35); margin-top:3px; }
+.sidebar-nav { flex:1; padding:8px 0; overflow-y:auto; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 18px; color:rgba(255,255,255,.45); font-size:13px; border-left:2px solid transparent; cursor:pointer; transition:all .15s; text-decoration:none; }
+.nav-item.active { background:rgba(200,169,110,.1); color:var(--oro-l); border-left-color:var(--oro); }
+.nav-item:hover:not(.active) { background:rgba(255,255,255,.04); color:rgba(255,255,255,.75); }
+.sidebar-footer { padding:12px 18px; border-top:1px solid rgba(255,255,255,.06); }
+.sidebar-tagline { color:rgba(200,169,110,.3); font-size:9px; letter-spacing:.3px; line-height:1.5; margin-bottom:10px; }
+.sidebar-date { color:rgba(255,255,255,.25); font-size:11px; margin-bottom:8px; }
+.btn-logout { width:100%; padding:8px; background:transparent; border:1px solid rgba(200,169,110,.25); color:rgba(200,169,110,.6); border-radius:8px; font-size:12px; cursor:pointer; transition:all .2s; }
+.btn-logout:hover { background:rgba(200,169,110,.08); color:var(--oro-l); }
+
+/* ── TOPBAR MOBILE ── */
+.topbar-mobile { display:none; background:var(--negro); padding:12px 16px; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.hamburger { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; }
+.hamburger span { display:block; width:22px; height:2px; background:rgba(255,255,255,.7); border-radius:2px; }
+.sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:150; }
+
+/* ── MAIN ── */
+.main-content { margin-left:var(--sidebar); min-height:100vh; display:flex; flex-direction:column; }
+
+/* ── HERO ── */
+.hero { background:linear-gradient(160deg,var(--negro) 0%,var(--negro-m) 100%); padding:28px 28px 24px; }
+.hero-eyebrow { font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px; font-weight:500; }
+.hero-nombre  { font-size:22px; font-weight:600; color:white; margin-bottom:2px; letter-spacing:-.2px; }
+.hero-meta    { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:20px; }
+.kpis { display:grid; grid-template-columns:240px 1fr; gap:16px; align-items:start; }
+.kpi-card { background:rgba(255,255,255,.07); border-radius:8px; padding:14px 16px; border:1px solid rgba(255,255,255,.06); }
+.kpi-card.full { grid-column:1; } .kpi-chart-col { background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; display:flex; flex-direction:column; }
 .kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:.8px; color:rgba(255,255,255,.4); margin-bottom:6px; font-weight:600; }
 .kpi-value { font-size:20px; font-weight:600; color:white; line-height:1; }
 .kpi-value.accent { font-size:42px; font-weight:700; color:var(--oro-l); letter-spacing:-.5px; }
@@ -375,11 +725,12 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
         <div class="card">
           <!-- Filtros -->
           <div style="padding:14px 16px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div style="display:flex;gap:6px">
-              <button class="chart-period-btn active" onclick="setChartPeriod('6M',this)">6M</button>
-              <button class="chart-period-btn" onclick="setChartPeriod('1Y',this)">1A</button>
-              <button class="chart-period-btn" onclick="setChartPeriod('1M',this)">1M</button>
-              <button class="chart-period-btn" onclick="setChartPeriod('ALL',this)">Todo</button>
+            <div style="display:flex;align-items:center;gap:10px;min-width:200px">
+              <span style="font-size:11px;color:var(--gris);white-space:nowrap" id="chart-period-label">6 meses</span>
+              <input type="range" id="chart-period-slider" min="1" max="5" value="3"
+                style="flex:1;accent-color:var(--oro);cursor:pointer"
+                oninput="onSliderChange(this.value)">
+              <span style="font-size:11px;color:var(--gris);white-space:nowrap">Todo</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <select id="chart-prod" class="filter-btn" style="border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;border:1px solid var(--crema-dd)" onchange="renderPosicionesChart()">
@@ -1237,10 +1588,14 @@ function actualizarFiltroPos() {
   if (posiciones.includes(current)) sel.value = current;
 }
 
-function setChartPeriod(p, el) {
-  chartPeriod = p;
-  document.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+const SLIDER_PERIODS = ['1M', '3M', '6M', '1Y', 'ALL'];
+const SLIDER_LABELS  = ['1 mes', '3 meses', '6 meses', '1 año', 'Todo'];
+
+function onSliderChange(val) {
+  const idx = parseInt(val) - 1;
+  chartPeriod = SLIDER_PERIODS[idx];
+  const label = document.getElementById('chart-period-label');
+  if (label) label.textContent = SLIDER_LABELS[idx];
   renderPosicionesChart();
 }
 
@@ -1248,6 +1603,7 @@ function getDateRange() {
   const now = new Date();
   const from = new Date(now);
   if      (chartPeriod === '1M')  from.setMonth(from.getMonth()-1);
+  else if (chartPeriod === '3M')  from.setMonth(from.getMonth()-3);
   else if (chartPeriod === '6M')  from.setMonth(from.getMonth()-6);
   else if (chartPeriod === '1Y')  from.setFullYear(from.getFullYear()-1);
   else return null; // ALL
