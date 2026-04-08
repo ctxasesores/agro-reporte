@@ -1094,25 +1094,24 @@ function calcDelta(longTn, shortTn) {
   return 0;
 }
 
-function renderPie(labels, vals, colors) {
-  // Legacy stub — sunburst handles composición rendering
-}
+function renderPie() { /* stub */ }
 
-// ── SUNBURST ──
-let _sunburstRoot = null;
-let _sunburstCurrent = null;
+// ══ SUNBURST ══
+const PROD_PALETTES = {
+  'Soja':    ['#1e4466','#2a5f84','#3d7aa8','#5b9ec9','#8bbedd'],
+  'Maiz':    ['#1a4a28','#236637','#2e8248','#3aaa60','#5ccc82'],
+  'Trigo':   ['#5a3a0a','#7a5010','#a87c0e','#d4a017','#f0ca60'],
+  'Girasol': ['#5c1a1a','#7a2222','#a83030','#d94040','#f08080'],
+  'Sorgo':   ['#2a1a5e','#3d2880','#5535aa','#7b5bd4','#a98df0'],
+  'Cebada':  ['#1a4a4a','#206060','#267a7a','#2ca0a0','#4cc4c4'],
+};
 
 function buildSunburstData() {
-  // Build 3-level hierarchy: Producto → Realizado/Pendiente → Tipo
-  const root = { name: 'Cartera', children: [] };
-
+  const root = { name:'Cartera', children:[] };
   PRODUCTOS.forEach(prod => {
     const ops = allOps.filter(o => o.producto === prod);
     if (!ops.length) return;
-
-    const prodNode = { name: prod, children: [] };
-    const grupos   = { Realizado: {}, Pendiente: {} };
-
+    const grupos = { Realizado:{}, Pendiente:{} };
     ops.forEach(op => {
       const pM  = getPrecioMercado(op.producto, op.vencimiento);
       const L   = calcularL(op, pM);
@@ -1121,31 +1120,32 @@ function buildSunburstData() {
       if (!pEf) return;
       const val  = Math.abs(pEf * op.volumen);
       const slot = L < 0 ? 'Realizado' : 'Pendiente';
-      const tipo = op.tipo || 'Sin tipo';
-      grupos[slot][tipo] = (grupos[slot][tipo] || 0) + val;
+      grupos[slot][op.tipo || 'Otro'] = (grupos[slot][op.tipo || 'Otro'] || 0) + val;
     });
-
-    ['Realizado', 'Pendiente'].forEach(slot => {
+    const prodNode = { name:prod, children:[] };
+    ['Realizado','Pendiente'].forEach(slot => {
       const tipos = grupos[slot];
-      const tipoKeys = Object.keys(tipos);
-      if (!tipoKeys.length) return;
-      const slotNode = {
-        name: slot,
-        children: tipoKeys.map(t => ({ name: t, value: tipos[t] }))
-      };
-      prodNode.children.push(slotNode);
+      if (!Object.keys(tipos).length) return;
+      prodNode.children.push({ name:slot, children: Object.entries(tipos).map(([t,v]) => ({name:t, value:v})) });
     });
-
     if (prodNode.children.length) root.children.push(prodNode);
   });
-
   return root;
+}
+
+function getNodeColor(d) {
+  if (d.depth === 0) return 'transparent';
+  const prodNode = d.depth === 1 ? d : d.depth === 2 ? d.parent : d.parent.parent;
+  const pal = PROD_PALETTES[prodNode.data.name] || ['#3d5a6c','#4e7090','#6090b4','#80aad0','#a0c4e8'];
+  if (d.depth === 1) return pal[2];
+  if (d.depth === 2) return d.data.name === 'Realizado' ? pal[1] : pal[3];
+  const idx = d.parent.children ? d.parent.children.indexOf(d) : 0;
+  return pal[idx % pal.length];
 }
 
 function renderSunburst() {
   const container = document.getElementById('sunburst-container');
   if (!container) return;
-  container.innerHTML = '';
 
   const data = buildSunburstData();
   if (!data.children.length) {
@@ -1153,159 +1153,174 @@ function renderSunburst() {
     return;
   }
 
-  const W = container.clientWidth  || 280;
-  const H = container.clientHeight || 250;
-  const size = Math.min(W, H);
-  const radius = size / 2;
+  // Size
+  const W = container.clientWidth || 260;
+  const H = container.clientHeight || 240;
+  // Reserve right side for legend
+  const legendW = 100;
+  const chartW  = W - legendW;
+  const size    = Math.min(chartW, H) - 8;
+  const R       = size / 2;
 
-  // Color scales per product
-  const PROD_BASE = {
-    'Soja':    ['#1e4466','#2a5f84','#3d7aa8','#5b9ec9','#8bbedd'],
-    'Maiz':    ['#1e4d2e','#256338','#2e7d4f','#3aaa6a','#5bc48a'],
-    'Trigo':   ['#5a3a0a','#7a5010','#a87c0e','#d4a017','#f0ca60'],
-    'Girasol': ['#5c1a1a','#7a2525','#a83030','#d94040','#f07070'],
-    'Sorgo':   ['#2a1a5e','#3d2880','#5535aa','#7b5bd4','#a98df0'],
-    'Cebada':  ['#1a4a4a','#206060','#267a7a','#2ca0a0','#4cc4c4'],
-  };
-
-  // Build d3 hierarchy
-  const hierarchy = d3.hierarchy(data)
+  // Build hierarchy once
+  const root = d3.hierarchy(data)
     .sum(d => d.value || 0)
     .sort((a,b) => b.value - a.value);
+  d3.partition().size([2 * Math.PI, 1])(root);
 
-  const partition = d3.partition().size([2 * Math.PI, radius]);
-  partition(hierarchy);
+  // Store original x0/x1 for each node (for absolute zoom mapping)
+  root.each(d => { d._x0 = d.x0; d._x1 = d.x1; });
 
-  // Assign colors: level 1 = product base, level 2 = slot tint, level 3 = tipo tint
-  function getColor(d) {
-    if (d.depth === 0) return 'transparent';
-    const prodNode = d.depth === 1 ? d : d.depth === 2 ? d.parent : d.parent?.parent;
-    const prodName = prodNode?.data?.name;
-    const palette  = PROD_BASE[prodName] || ['#3d5a6c','#4e7090','#6090b4','#80aad0','#a0c4e8'];
-    if (d.depth === 1) return palette[2];
-    if (d.depth === 2) return d.data.name === 'Realizado' ? palette[0] : palette[4];
-    // depth 3: vary by index within parent
-    const idx = d.parent ? d.parent.children.indexOf(d) : 0;
-    return palette[idx % palette.length];
-  }
+  let focusNode = root;
 
+  // ── Build SVG ──
+  container.innerHTML = '';
+  const svg = d3.select(container).append('svg')
+    .attr('width', W).attr('height', H)
+    .style('display','block').style('overflow','visible');
+
+  const g = svg.append('g')
+    .attr('transform', `translate(${size/2 + 4},${H/2})`);
+
+  // Arc generator — uses normalised y (0..1) scaled to R
   const arc = d3.arc()
     .startAngle(d => d.x0)
     .endAngle(d => d.x1)
-    .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.01))
-    .padRadius(radius / 2)
-    .innerRadius(d => d.depth === 0 ? 0 : d.y0 + 2)
-    .outerRadius(d => Math.max(d.y0 + 2, d.y1 - 2));
+    .padAngle(0.012)
+    .padRadius(R * 0.5)
+    .innerRadius(d => d.y0 * R + (d.depth > 0 ? 3 : 0))
+    .outerRadius(d => Math.max(d.y0 * R + 3, d.y1 * R - 2));
 
-  const svg = d3.select(container).append('svg')
-    .attr('width', size)
-    .attr('height', size)
-    .style('display','block');
-
-  const g = svg.append('g')
-    .attr('transform', `translate(${size/2},${size/2})`);
-
-  // Center label
-  const centerLabel = g.append('text')
-    .attr('text-anchor','middle')
-    .attr('dy','-0.2em')
-    .style('font-size','11px')
-    .style('font-family','DM Sans, sans-serif')
-    .style('fill','#dce8f5')
+  // Center text
+  const cx = g.append('text').attr('text-anchor','middle').attr('dy','-0.3em')
+    .style('font-size','12px').style('font-weight','700')
+    .style('font-family','DM Sans,sans-serif').style('fill','#dce8f5')
     .style('pointer-events','none');
-
-  const centerSub = g.append('text')
-    .attr('text-anchor','middle')
-    .attr('dy','1.1em')
+  const cy = g.append('text').attr('text-anchor','middle').attr('dy','1em')
     .style('font-size','10px')
-    .style('font-family','DM Sans, sans-serif')
-    .style('fill','#7fa8c4')
+    .style('font-family','DM Sans,sans-serif').style('fill','#7fa8c4')
     .style('pointer-events','none');
 
-  function updateCenter(d) {
-    const total = d.value || 0;
-    centerLabel.text(d.data.name === 'Cartera' ? 'Total' : d.data.name);
-    centerSub.text(fmtUSD(total));
+  function setCenter(node) {
+    cx.text(node.data.name === 'Cartera' ? 'Total' : node.data.name);
+    cy.text(fmtUSD(node.value));
   }
-  updateCenter(hierarchy);
+  setCenter(root);
 
-  // Draw arcs
-  _sunburstRoot    = hierarchy;
-  _sunburstCurrent = hierarchy;
+  // ── Draw paths ──
+  const allNodes = root.descendants().filter(d => d.depth > 0);
 
-  const path = g.selectAll('path')
-    .data(hierarchy.descendants().filter(d => d.depth > 0 && (d.x1 - d.x0) > 0.005))
+  const paths = g.selectAll('path')
+    .data(allNodes, d => d.data.name + d.depth)
     .join('path')
-    .attr('d', arc)
-    .attr('fill', d => getColor(d))
-    .attr('fill-opacity', 0.9)
-    .attr('stroke', '#0d2035')
-    .attr('stroke-width', 1)
+    .attr('d', d => arc(d))
+    .attr('fill', d => getNodeColor(d))
+    .attr('fill-opacity', 0.88)
+    .attr('stroke', '#0d2035').attr('stroke-width', 1)
     .style('cursor', d => d.children ? 'pointer' : 'default')
     .on('mouseover', function(event, d) {
       d3.select(this).attr('fill-opacity', 1);
-      updateCenter(d);
+      setCenter(d);
     })
     .on('mouseout', function(event, d) {
-      d3.select(this).attr('fill-opacity', 0.9);
-      updateCenter(_sunburstCurrent);
+      d3.select(this).attr('fill-opacity', 0.88);
+      setCenter(focusNode);
     })
     .on('click', function(event, d) {
-      if (!d.children) return;
-      zoomSunburst(d);
+      if (d.children) zoomTo(d);
     });
 
-  // Tooltips simple via title
-  path.append('title').text(d => {
-    const pct = d.parent?.value ? ((d.value / _sunburstRoot.value) * 100).toFixed(1) : 0;
-    return `${d.ancestors().map(a=>a.data.name).reverse().slice(1).join(' › ')}
-${fmtUSD(d.value)} (${pct}%)`;
+  paths.append('title').text(d => {
+    const path = d.ancestors().map(a => a.data.name).reverse().slice(1).join(' › ');
+    const pct  = root.value ? ((d.value / root.value) * 100).toFixed(1) : '0';
+    return `${path}
+${fmtUSD(d.value)} · ${pct}% del total`;
   });
 
-  function zoomSunburst(node) {
-    _sunburstCurrent = node;
-    const bc = document.getElementById('sunburst-breadcrumb');
-    const backBtn = document.getElementById('sunburst-back');
-    if (bc) bc.textContent = node.ancestors().map(a=>a.data.name).reverse().slice(1).join(' › ') || 'Cartera total';
-    if (backBtn) backBtn.style.display = node.depth > 0 ? 'inline-block' : 'none';
-    updateCenter(node);
+  // ── Legend ──
+  const legendG = svg.append('g')
+    .attr('transform', `translate(${size + 14}, ${H/2 - 80})`);
 
-    // Angle transition: remap visible nodes to full circle
-    const t = svg.transition().duration(450).ease(d3.easeCubicInOut);
-    const xScale = d3.scaleLinear().domain([node.x0, node.x1]).range([0, 2 * Math.PI]);
-    const yScale = d3.scaleLinear().domain([node.y0, radius]).range([node.depth ? 20 : 0, radius]);
+  function buildLegend(node) {
+    legendG.selectAll('*').remove();
+    // Show children of current focus
+    const items = node.depth < 2
+      ? (node.children || [])
+      : [];
 
-    path.transition(t)
-      .tween('data', d => {
-        const i = d3.interpolate(d.current || {x0:d.x0,x1:d.x1,y0:d.y0,y1:d.y1}, d);
-        return t => { d.current = i(t); };
-      })
-      .attrTween('d', d => () => {
-        const curr = d.current || d;
-        return arc({
-          x0: xScale(Math.max(0, Math.min(node.x1, curr.x0))),
-          x1: xScale(Math.max(0, Math.min(node.x1, curr.x1))),
-          y0: Math.max(0, yScale(curr.y0)),
-          y1: Math.max(0, yScale(curr.y1))
-        });
-      })
-      .attr('fill-opacity', d => {
-        const visible = d.x0 >= node.x0 && d.x1 <= node.x1;
-        return visible ? 0.9 : 0.15;
-      })
-      .attr('pointer-events', d => {
-        const visible = d.x0 >= node.x0 && d.x1 <= node.x1;
-        return visible ? 'auto' : 'none';
+    let yOff = 0;
+    // Title
+    legendG.append('text')
+      .attr('x', 0).attr('y', yOff)
+      .style('font-size','9px').style('font-weight','700')
+      .style('text-transform','uppercase').style('letter-spacing','.5px')
+      .style('fill','#7fa8c4').style('font-family','DM Sans,sans-serif')
+      .text(node.data.name === 'Cartera' ? 'Productos' : node.data.name);
+    yOff += 14;
+
+    items.forEach((child, i) => {
+      const pct = node.value ? ((child.value / node.value) * 100).toFixed(1) : '0';
+      const col = getNodeColor(child);
+      legendG.append('rect')
+        .attr('x', 0).attr('y', yOff - 8).attr('width', 9).attr('height', 9)
+        .attr('rx', 2).attr('fill', col).attr('fill-opacity', 0.9);
+      legendG.append('text')
+        .attr('x', 13).attr('y', yOff)
+        .style('font-size','10px').style('fill','#dce8f5')
+        .style('font-family','DM Sans,sans-serif')
+        .text(`${child.data.name}`);
+      legendG.append('text')
+        .attr('x', 13).attr('y', yOff + 11)
+        .style('font-size','9px').style('fill','#7fa8c4')
+        .style('font-family','DM Sans,sans-serif')
+        .text(`${pct}% · ${fmtUSD(child.value)}`);
+      yOff += 26;
+    });
+  }
+  buildLegend(root);
+
+  // ── Zoom ──
+  function zoomTo(node) {
+    focusNode = node;
+
+    // Update breadcrumb & back button
+    const bc  = document.getElementById('sunburst-breadcrumb');
+    const btn = document.getElementById('sunburst-back');
+    if (bc)  bc.textContent = node.ancestors().map(a=>a.data.name).reverse().slice(1).join(' › ') || 'Cartera total';
+    if (btn) btn.style.display = node.depth > 0 ? 'inline-block' : 'none';
+    setCenter(node);
+    buildLegend(node);
+
+    // Remap angles: node spans full circle, children fill proportionally
+    const span = node._x1 - node._x0;
+    const xScale = d => ((d._x0 - node._x0) / span) * 2 * Math.PI;
+    const xScaleEnd = d => ((d._x1 - node._x0) / span) * 2 * Math.PI;
+
+    // Visible = descendants of focusNode + ancestors path
+    const focusDesc = new Set(node.descendants().map(n => n));
+
+    paths.transition().duration(500).ease(d3.easeCubicInOut)
+      .attr('fill-opacity', d => focusDesc.has(d) ? 0.88 : 0.12)
+      .attr('pointer-events', d => focusDesc.has(d) ? 'auto' : 'none')
+      .attrTween('d', d => {
+        const startX0 = d.x0, startX1 = d.x1;
+        const endX0   = xScale(d), endX1 = xScaleEnd(d);
+        const ix0 = d3.interpolate(startX0, endX0);
+        const ix1 = d3.interpolate(startX1, endX1);
+        return t => arc({ ...d, x0: ix0(t), x1: ix1(t) });
       });
   }
 
-  // Store zoom fn globally for back button
-  window._sunburstZoom = zoomSunburst;
+  // ── Back button wired globally ──
+  window._sbZoomTo   = zoomTo;
+  window._sbFocusRef = () => focusNode;
+  window._sbRootRef  = () => root;
 }
 
 function sunburstBack() {
-  if (!_sunburstCurrent || !_sunburstCurrent.parent) return;
-  window._sunburstZoom(_sunburstCurrent.parent);
+  const focus = window._sbFocusRef && window._sbFocusRef();
+  if (!focus || !focus.parent) return;
+  window._sbZoomTo(focus.parent);
 }
 
 function renderOps() {
