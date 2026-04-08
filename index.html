@@ -1575,7 +1575,8 @@ async function cargarOpsGuardadasConCache() {
   const {data} = await sb.from('operaciones').select('*')
     .eq('cliente_codigo', currentCliente.codigo)
     .order('created_at', {ascending:false}).limit(100);
-  opsCache = data || [];
+  // Ensure tags field is always an array
+  opsCache = (data || []).map(op => ({...op, tags: Array.isArray(op.tags) ? op.tags : (op.tags ? [op.tags] : ['DFL'])}));
   return opsCache;
 }
 
@@ -1592,7 +1593,9 @@ function abrirEditarOp(idx) {
   document.getElementById('eop-vencimiento').value = op.vencimiento;
   document.getElementById('eop-ejercicio').value   = op.precio_ejercicio || '';
   document.getElementById('eop-obs').value         = op.observaciones || '';
-  abrirEditarOpTags(op);
+  // Merge tags from allOps (more reliable than opsCache)
+  const opFull = allOps.find(o => o.id === op.id) || op;
+  abrirEditarOpTags({...op, tags: opFull.tags || op.tags || ['DFL']});
   const modal = document.getElementById('editOpModal');
   modal.style.display = 'flex';
 }
@@ -1835,11 +1838,10 @@ function toggleCollapse() {
   if (ico) ico.style.display = isCollapsed ? 'inline' : 'none';
   // Resize charts after CSS transition (250ms)
   setTimeout(() => {
-    if (window._evolucionChartHero) window._evolucionChartHero.resize();
-    if (window.evolucionChart)      window.evolucionChart.resize();
-    if (window.posicionesChart)     window.posicionesChart.resize();
-    if (window.flujoChart)          window.flujoChart.resize();
-    if (window.pieChart)            window.pieChart.resize();
+    try { if (_evolucionChartHero) _evolucionChartHero.resize(); } catch(e) {}
+    try { if (evolucionChart)      evolucionChart.resize();      } catch(e) {}
+    try { if (posicionesChart)     posicionesChart.resize();     } catch(e) {}
+    try { if (flujoChart)          flujoChart.resize();          } catch(e) {}
   }, 280);
 }
 
