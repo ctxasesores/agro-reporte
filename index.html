@@ -1096,233 +1096,287 @@ function calcDelta(longTn, shortTn) {
 
 function renderPie() { /* stub */ }
 
-// ══ SUNBURST ══
-const PROD_PALETTES = {
-  'Soja':    ['#1e4466','#2a5f84','#3d7aa8','#5b9ec9','#8bbedd'],
-  'Maiz':    ['#1a4a28','#236637','#2e8248','#3aaa60','#5ccc82'],
-  'Trigo':   ['#5a3a0a','#7a5010','#a87c0e','#d4a017','#f0ca60'],
-  'Girasol': ['#5c1a1a','#7a2222','#a83030','#d94040','#f08080'],
-  'Sorgo':   ['#2a1a5e','#3d2880','#5535aa','#7b5bd4','#a98df0'],
-  'Cebada':  ['#1a4a4a','#206060','#267a7a','#2ca0a0','#4cc4c4'],
+// ══ COMPOSICIÓN — DRILL-DOWN DONUT ══
+const SB_PALETTES = {
+  'Soja':      ['#2a5f84','#3d7aa8','#5b9ec9','#8bbedd','#b8d8ef'],
+  'Maiz':      ['#236637','#2e8248','#3aaa60','#5ccc82','#90e8aa'],
+  'Trigo':     ['#7a5010','#a87c0e','#d4a017','#f0ca60','#f8e4a0'],
+  'Girasol':   ['#7a2222','#a83030','#d94040','#f08080','#f8b0b0'],
+  'Sorgo':     ['#3d2880','#5535aa','#7b5bd4','#a98df0','#ccb8f8'],
+  'Cebada':    ['#206060','#267a7a','#2ca0a0','#4cc4c4','#88dede'],
+  'Realizado': ['#1e4466','#2a5f84','#3d7aa8','#5b9ec9','#8bbedd'],
+  'Pendiente': ['#a87c0e','#d4a017','#f0ca60','#f8e4a0','#fcefc0'],
 };
 
-function buildSunburstData() {
-  const root = { name:'Cartera', children:[] };
+const SB_LEVEL_COLORS = {
+  0: { 'Soja':'#3d7aa8','Maiz':'#3aaa60','Trigo':'#d4a017','Girasol':'#d94040','Sorgo':'#7b5bd4','Cebada':'#2ca0a0' },
+  1: { 'Realizado':'#2a5f84','Pendiente':'#d4a017' },
+};
+
+let _sb = null; // { level, parentChain, data, svg, arc, path, labelG }
+
+function buildLevel0() {
+  const items = [];
   PRODUCTOS.forEach(prod => {
-    const ops = allOps.filter(o => o.producto === prod);
-    if (!ops.length) return;
-    const grupos = { Realizado:{}, Pendiente:{} };
-    ops.forEach(op => {
+    let val = 0;
+    allOps.forEach(op => {
+      if (op.producto !== prod) return;
       const pM  = getPrecioMercado(op.producto, op.vencimiento);
       const L   = calcularL(op, pM);
       if (L === 0) return;
       const pEf = getPrecioEfectivo(op, pM);
       if (!pEf) return;
-      const val  = Math.abs(pEf * op.volumen);
-      const slot = L < 0 ? 'Realizado' : 'Pendiente';
-      grupos[slot][op.tipo || 'Otro'] = (grupos[slot][op.tipo || 'Otro'] || 0) + val;
+      val += Math.abs(pEf * op.volumen);
     });
-    const prodNode = { name:prod, children:[] };
-    ['Realizado','Pendiente'].forEach(slot => {
-      const tipos = grupos[slot];
-      if (!Object.keys(tipos).length) return;
-      prodNode.children.push({ name:slot, children: Object.entries(tipos).map(([t,v]) => ({name:t, value:v})) });
-    });
-    if (prodNode.children.length) root.children.push(prodNode);
+    if (val > 0) items.push({ name: prod, value: val, hasChildren: true });
   });
-  return root;
+  return items;
 }
 
-function getNodeColor(d) {
-  if (d.depth === 0) return 'transparent';
-  const prodNode = d.depth === 1 ? d : d.depth === 2 ? d.parent : d.parent.parent;
-  const pal = PROD_PALETTES[prodNode.data.name] || ['#3d5a6c','#4e7090','#6090b4','#80aad0','#a0c4e8'];
-  if (d.depth === 1) return pal[2];
-  if (d.depth === 2) return d.data.name === 'Realizado' ? pal[1] : pal[3];
-  const idx = d.parent.children ? d.parent.children.indexOf(d) : 0;
-  return pal[idx % pal.length];
+function buildLevel1(prod) {
+  const grupos = { Realizado: 0, Pendiente: 0 };
+  allOps.forEach(op => {
+    if (op.producto !== prod) return;
+    const pM  = getPrecioMercado(op.producto, op.vencimiento);
+    const L   = calcularL(op, pM);
+    if (L === 0) return;
+    const pEf = getPrecioEfectivo(op, pM);
+    if (!pEf) return;
+    const val  = Math.abs(pEf * op.volumen);
+    if (L < 0) grupos.Realizado += val;
+    else       grupos.Pendiente  += val;
+  });
+  return Object.entries(grupos)
+    .filter(([,v]) => v > 0)
+    .map(([name, value]) => ({ name, value, hasChildren: true, _prod: prod }));
+}
+
+function buildLevel2(prod, slot) {
+  const tipos = {};
+  allOps.forEach(op => {
+    if (op.producto !== prod) return;
+    const pM  = getPrecioMercado(op.producto, op.vencimiento);
+    const L   = calcularL(op, pM);
+    if (L === 0) return;
+    const pEf = getPrecioEfectivo(op, pM);
+    if (!pEf) return;
+    const val  = Math.abs(pEf * op.volumen);
+    const opSlot = L < 0 ? 'Realizado' : 'Pendiente';
+    if (opSlot !== slot) return;
+    tipos[op.tipo || 'Otro'] = (tipos[op.tipo || 'Otro'] || 0) + val;
+  });
+  return Object.entries(tipos)
+    .filter(([,v]) => v > 0)
+    .map(([name, value]) => ({ name, value, hasChildren: false }));
+}
+
+function getItemColor(item, level, index) {
+  if (level === 0) return SB_LEVEL_COLORS[0][item.name] || '#5b9ec9';
+  if (level === 1) return SB_LEVEL_COLORS[1][item.name] || '#5b9ec9';
+  // level 2: use palette of parent slot
+  const chain = _sb ? _sb.parentChain : [];
+  const prod  = chain[0] || 'Soja';
+  const pal   = SB_PALETTES[prod] || SB_PALETTES['Soja'];
+  return pal[index % pal.length];
 }
 
 function renderSunburst() {
   const container = document.getElementById('sunburst-container');
   if (!container) return;
+  container.innerHTML = '';
 
-  const data = buildSunburstData();
-  if (!data.children.length) {
+  const items = buildLevel0();
+  if (!items.length) {
     container.innerHTML = '<div class="empty-state">Sin operaciones</div>';
     return;
   }
 
-  // Size
-  const W = container.clientWidth || 260;
+  _sb = { level: 0, parentChain: [] };
+  _drawDonut(items, 0, [], false);
+}
+
+function _drawDonut(items, level, parentChain, animate) {
+  const container = document.getElementById('sunburst-container');
+  if (!container) return;
+
+  _sb = { level, parentChain, items };
+
+  // Update breadcrumb & back btn
+  const bc  = document.getElementById('sunburst-breadcrumb');
+  const btn = document.getElementById('sunburst-back');
+  const crumbParts = ['Cartera', ...parentChain];
+  if (bc)  bc.textContent = crumbParts.join(' › ');
+  if (btn) btn.style.display = level > 0 ? 'inline-block' : 'none';
+
+  const W = container.clientWidth  || 280;
   const H = container.clientHeight || 240;
-  // Reserve right side for legend
-  const legendW = 100;
-  const chartW  = W - legendW;
-  const size    = Math.min(chartW, H) - 8;
-  const R       = size / 2;
 
-  // Build hierarchy once
-  const root = d3.hierarchy(data)
-    .sum(d => d.value || 0)
-    .sort((a,b) => b.value - a.value);
-  d3.partition().size([2 * Math.PI, 1])(root);
+  // Layout: donut left, legend right
+  const legendW = 110;
+  const chartSz = Math.min(W - legendW, H) - 8;
+  const R       = chartSz / 2;
+  const Ri      = R * 0.48; // inner radius
 
-  // Store original x0/x1 for each node (for absolute zoom mapping)
-  root.each(d => { d._x0 = d.x0; d._x1 = d.x1; });
+  const total = items.reduce((s, d) => s + d.value, 0);
 
-  let focusNode = root;
+  // Pie layout
+  const pie = d3.pie().value(d => d.value).sort(null).padAngle(0.025);
+  const arcs = pie(items);
 
-  // ── Build SVG ──
-  container.innerHTML = '';
-  const svg = d3.select(container).append('svg')
-    .attr('width', W).attr('height', H)
-    .style('display','block').style('overflow','visible');
+  const arcGen = d3.arc().innerRadius(Ri).outerRadius(R).cornerRadius(3);
+  const arcHov = d3.arc().innerRadius(Ri).outerRadius(R + 6).cornerRadius(3);
 
-  const g = svg.append('g')
-    .attr('transform', `translate(${size/2 + 4},${H/2})`);
-
-  // Arc generator — uses normalised y (0..1) scaled to R
-  const arc = d3.arc()
-    .startAngle(d => d.x0)
-    .endAngle(d => d.x1)
-    .padAngle(0.012)
-    .padRadius(R * 0.5)
-    .innerRadius(d => d.y0 * R + (d.depth > 0 ? 3 : 0))
-    .outerRadius(d => Math.max(d.y0 * R + 3, d.y1 * R - 2));
-
-  // Center text
-  const cx = g.append('text').attr('text-anchor','middle').attr('dy','-0.3em')
-    .style('font-size','12px').style('font-weight','700')
-    .style('font-family','DM Sans,sans-serif').style('fill','#dce8f5')
-    .style('pointer-events','none');
-  const cy = g.append('text').attr('text-anchor','middle').attr('dy','1em')
-    .style('font-size','10px')
-    .style('font-family','DM Sans,sans-serif').style('fill','#7fa8c4')
-    .style('pointer-events','none');
-
-  function setCenter(node) {
-    cx.text(node.data.name === 'Cartera' ? 'Total' : node.data.name);
-    cy.text(fmtUSD(node.value));
+  if (animate) {
+    // Fade out old, rebuild, fade in
+    const old = container.querySelector('svg');
+    if (old) {
+      d3.select(old).transition().duration(200).style('opacity', 0)
+        .on('end', () => { old.remove(); _buildSVG(); });
+    } else {
+      _buildSVG();
+    }
+  } else {
+    container.innerHTML = '';
+    _buildSVG();
   }
-  setCenter(root);
 
-  // ── Draw paths ──
-  const allNodes = root.descendants().filter(d => d.depth > 0);
+  function _buildSVG() {
+    const svg = d3.select(container).append('svg')
+      .attr('width', W).attr('height', H)
+      .style('opacity', animate ? 0 : 1)
+      .style('display','block');
 
-  const paths = g.selectAll('path')
-    .data(allNodes, d => d.data.name + d.depth)
-    .join('path')
-    .attr('d', d => arc(d))
-    .attr('fill', d => getNodeColor(d))
-    .attr('fill-opacity', 0.88)
-    .attr('stroke', '#0d2035').attr('stroke-width', 1)
-    .style('cursor', d => d.children ? 'pointer' : 'default')
-    .on('mouseover', function(event, d) {
-      d3.select(this).attr('fill-opacity', 1);
-      setCenter(d);
-    })
-    .on('mouseout', function(event, d) {
-      d3.select(this).attr('fill-opacity', 0.88);
-      setCenter(focusNode);
-    })
-    .on('click', function(event, d) {
-      if (d.children) zoomTo(d);
-    });
+    if (animate) svg.transition().duration(250).style('opacity', 1);
 
-  paths.append('title').text(d => {
-    const path = d.ancestors().map(a => a.data.name).reverse().slice(1).join(' › ');
-    const pct  = root.value ? ((d.value / root.value) * 100).toFixed(1) : '0';
-    return `${path}
-${fmtUSD(d.value)} · ${pct}% del total`;
-  });
+    const g = svg.append('g')
+      .attr('transform', `translate(${chartSz/2 + 4},${H/2})`);
 
-  // ── Legend ──
-  const legendG = svg.append('g')
-    .attr('transform', `translate(${size + 14}, ${H/2 - 80})`);
+    // Center text
+    const cx = g.append('text').attr('text-anchor','middle').attr('dy','-0.4em')
+      .style('font-size','13px').style('font-weight','700')
+      .style('font-family','DM Sans,sans-serif').style('fill','#dce8f5')
+      .style('pointer-events','none');
+    const cy = g.append('text').attr('text-anchor','middle').attr('dy','1em')
+      .style('font-size','10px')
+      .style('font-family','DM Sans,sans-serif').style('fill','#7fa8c4')
+      .style('pointer-events','none');
+    const cz = g.append('text').attr('text-anchor','middle').attr('dy','2.2em')
+      .style('font-size','9px')
+      .style('font-family','DM Sans,sans-serif').style('fill','#4e718a')
+      .style('pointer-events','none');
 
-  function buildLegend(node) {
-    legendG.selectAll('*').remove();
-    // Show children of current focus
-    const items = node.depth < 2
-      ? (node.children || [])
-      : [];
+    function setCenter(item) {
+      if (item) {
+        const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
+        cx.text(item.name);
+        cy.text(fmtUSD(item.value));
+        cz.text(pct + '% del nivel');
+      } else {
+        cx.text(parentChain.length ? parentChain[parentChain.length-1] : 'Total');
+        cy.text(fmtUSD(total));
+        cz.text('');
+      }
+    }
+    setCenter(null);
 
-    let yOff = 0;
-    // Title
+    // Draw slices
+    const slices = g.selectAll('path')
+      .data(arcs)
+      .join('path')
+      .attr('d', arcGen)
+      .attr('fill', (d,i) => getItemColor(d.data, level, i))
+      .attr('fill-opacity', 0.88)
+      .attr('stroke', '#0d2035').attr('stroke-width', 1.5)
+      .style('cursor', d => d.data.hasChildren ? 'pointer' : 'default')
+      .on('mouseover', function(event, d) {
+        d3.select(this)
+          .transition().duration(120)
+          .attr('d', arcHov)
+          .attr('fill-opacity', 1);
+        setCenter(d.data);
+      })
+      .on('mouseout', function(event, d) {
+        d3.select(this)
+          .transition().duration(120)
+          .attr('d', arcGen)
+          .attr('fill-opacity', 0.88);
+        setCenter(null);
+      })
+      .on('click', function(event, d) {
+        if (!d.data.hasChildren) return;
+        _drillDown(d.data, level, parentChain);
+      });
+
+    // Animate slices in from zero
+    if (animate) {
+      slices.each(function(d) {
+        const i = d3.interpolate({ startAngle: d.startAngle, endAngle: d.startAngle }, d);
+        d3.select(this).attrTween('d', () => t => arcGen(i(t)));
+      });
+    }
+
+    // ── Legend ──
+    const legendX = chartSz + 12;
+    const legendG = svg.append('g').attr('transform', `translate(${legendX}, ${H/2 - (items.length * 22)/2})`);
+
+    // Level label
+    const levelLabels = ['Productos','Resultado','Tipo de op.'];
     legendG.append('text')
-      .attr('x', 0).attr('y', yOff)
-      .style('font-size','9px').style('font-weight','700')
-      .style('text-transform','uppercase').style('letter-spacing','.5px')
-      .style('fill','#7fa8c4').style('font-family','DM Sans,sans-serif')
-      .text(node.data.name === 'Cartera' ? 'Productos' : node.data.name);
-    yOff += 14;
+      .attr('x', 0).attr('y', -8)
+      .style('font-size','9px').style('font-weight','700').style('text-transform','uppercase')
+      .style('letter-spacing','.6px').style('fill','#4e718a')
+      .style('font-family','DM Sans,sans-serif')
+      .text(levelLabels[level] || '');
 
-    items.forEach((child, i) => {
-      const pct = node.value ? ((child.value / node.value) * 100).toFixed(1) : '0';
-      const col = getNodeColor(child);
+    items.forEach((item, i) => {
+      const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
+      const col = getItemColor(item, level, i);
+      const y   = i * 24;
+
       legendG.append('rect')
-        .attr('x', 0).attr('y', yOff - 8).attr('width', 9).attr('height', 9)
+        .attr('x', 0).attr('y', y).attr('width', 10).attr('height', 10)
         .attr('rx', 2).attr('fill', col).attr('fill-opacity', 0.9);
+
       legendG.append('text')
-        .attr('x', 13).attr('y', yOff)
-        .style('font-size','10px').style('fill','#dce8f5')
+        .attr('x', 14).attr('y', y + 9)
+        .style('font-size','11px').style('fill','#dce8f5')
         .style('font-family','DM Sans,sans-serif')
-        .text(`${child.data.name}`);
+        .text(item.name);
+
       legendG.append('text')
-        .attr('x', 13).attr('y', yOff + 11)
+        .attr('x', 14).attr('y', y + 19)
         .style('font-size','9px').style('fill','#7fa8c4')
         .style('font-family','DM Sans,sans-serif')
-        .text(`${pct}% · ${fmtUSD(child.value)}`);
-      yOff += 26;
+        .text(`${pct}%  ${fmtUSD(item.value)}`);
     });
   }
-  buildLegend(root);
+}
 
-  // ── Zoom ──
-  function zoomTo(node) {
-    focusNode = node;
+function _drillDown(item, currentLevel, currentChain) {
+  const newLevel = currentLevel + 1;
+  const newChain = [...currentChain, item.name];
+  let newItems;
 
-    // Update breadcrumb & back button
-    const bc  = document.getElementById('sunburst-breadcrumb');
-    const btn = document.getElementById('sunburst-back');
-    if (bc)  bc.textContent = node.ancestors().map(a=>a.data.name).reverse().slice(1).join(' › ') || 'Cartera total';
-    if (btn) btn.style.display = node.depth > 0 ? 'inline-block' : 'none';
-    setCenter(node);
-    buildLegend(node);
-
-    // Remap angles: node spans full circle, children fill proportionally
-    const span = node._x1 - node._x0;
-    const xScale = d => ((d._x0 - node._x0) / span) * 2 * Math.PI;
-    const xScaleEnd = d => ((d._x1 - node._x0) / span) * 2 * Math.PI;
-
-    // Visible = descendants of focusNode + ancestors path
-    const focusDesc = new Set(node.descendants().map(n => n));
-
-    paths.transition().duration(500).ease(d3.easeCubicInOut)
-      .attr('fill-opacity', d => focusDesc.has(d) ? 0.88 : 0.12)
-      .attr('pointer-events', d => focusDesc.has(d) ? 'auto' : 'none')
-      .attrTween('d', d => {
-        const startX0 = d.x0, startX1 = d.x1;
-        const endX0   = xScale(d), endX1 = xScaleEnd(d);
-        const ix0 = d3.interpolate(startX0, endX0);
-        const ix1 = d3.interpolate(startX1, endX1);
-        return t => arc({ ...d, x0: ix0(t), x1: ix1(t) });
-      });
+  if (newLevel === 1) {
+    newItems = buildLevel1(item.name);
+  } else if (newLevel === 2) {
+    const prod = currentChain[0];
+    newItems = buildLevel2(prod, item.name);
   }
 
-  // ── Back button wired globally ──
-  window._sbZoomTo   = zoomTo;
-  window._sbFocusRef = () => focusNode;
-  window._sbRootRef  = () => root;
+  if (!newItems || !newItems.length) return;
+  _drawDonut(newItems, newLevel, newChain, true);
 }
 
 function sunburstBack() {
-  const focus = window._sbFocusRef && window._sbFocusRef();
-  if (!focus || !focus.parent) return;
-  window._sbZoomTo(focus.parent);
+  if (!_sb || _sb.level === 0) return;
+  const newLevel = _sb.level - 1;
+  const newChain = _sb.parentChain.slice(0, newLevel);
+  let items;
+  if (newLevel === 0) items = buildLevel0();
+  else if (newLevel === 1) items = buildLevel1(newChain[0]);
+  _drawDonut(items, newLevel, newChain, true);
 }
-
 function renderOps() {
   const ops = filterProd === 'todos' ? allOps : allOps.filter(o => o.producto === filterProd);
   // Filters
