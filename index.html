@@ -754,7 +754,7 @@ async function loadApp() {
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
   // Load tags
-  tagsDisponibles = currentCliente.tags_disponibles || [];
+  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles : [];
   renderAll();
   showLoading(false);
   document.getElementById('appShell').style.display='block';
@@ -1593,9 +1593,10 @@ function abrirEditarOp(idx) {
   document.getElementById('eop-vencimiento').value = op.vencimiento;
   document.getElementById('eop-ejercicio').value   = op.precio_ejercicio || '';
   document.getElementById('eop-obs').value         = op.observaciones || '';
-  // Merge tags from allOps (more reliable than opsCache)
-  const opFull = allOps.find(o => o.id === op.id) || op;
-  abrirEditarOpTags({...op, tags: opFull.tags || op.tags || ['DFL']});
+  // Get tags: try allOps first (has normalized data), fallback to opsCache
+  const opFull = allOps.find(o => String(o.id) === String(op.id));
+  const opTags = (opFull ? opFull.tags : op.tags) || ['DFL'];
+  abrirEditarOpTags({...op, tags: Array.isArray(opTags) ? opTags : ['DFL']});
   const modal = document.getElementById('editOpModal');
   modal.style.display = 'flex';
 }
@@ -1642,13 +1643,15 @@ async function eliminarOp(idx) {
 async function refreshData() {
   const btn = document.getElementById('btn-refresh');
   if (btn) { btn.textContent = '↻ Actualizando...'; btn.disabled = true; }
-  const [opsRes, preciosRes] = await Promise.all([
+  const [opsRes, preciosRes, cliRes] = await Promise.all([
     sb.from('operaciones').select('*')
       .eq('cliente_codigo', currentCliente.codigo)
       .eq('estado','confirmada')
       .order('created_at', {ascending:false}),
-    sb.from('precios_mercado').select('*').eq('activo',true)
+    sb.from('precios_mercado').select('*').eq('activo',true),
+    sb.from('clientes').select('*').eq('id', currentUser.id).single()
   ]);
+  if (cliRes.data) currentCliente = cliRes.data;
   // Normalize product names (remove accents for consistency)
   const normalize = s => {
     if (!s) return s;
@@ -1656,7 +1659,7 @@ async function refreshData() {
   };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  tagsDisponibles = currentCliente.tags_disponibles || [];
+  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles : [];
   renderTagFilterBar();
   renderTagsFormSelector();
   renderAll();
@@ -1815,10 +1818,15 @@ function cerrarModalTags() {
 
 // ── EDIT OP: include tags ──
 function abrirEditarOpTags(op) {
-  // Render tag selector in edit modal
   const el = document.getElementById('eop-tags-selector');
   if (!el) return;
-  const opTags = op.tags || [];
+  const opTags = Array.isArray(op.tags) ? op.tags : ['DFL'];
+  // Always wipe and re-render to avoid stale state from previous modal open
+  el.innerHTML = '';
+  if (!tagsDisponibles.length) {
+    el.innerHTML = '<span style="font-size:11px;color:var(--gris-l)">Sin tags configurados</span>';
+    return;
+  }
   el.innerHTML = tagsDisponibles.map(t =>
     `<span class="tag-selector-item${opTags.includes(t)?' selected':''}" data-tag="${t}" onclick="toggleTagFormItem(this)">${t}</span>`
   ).join('');
