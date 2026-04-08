@@ -1743,8 +1743,8 @@ function abrirGestionTags(obligatorio = false) {
       <div id="tags-actuales" class="tag-current"></div>
       <div id="tag-modal-error" style="font-size:11px;color:var(--rojo);margin-top:8px;display:none"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
-        ${obligatorio ? '' : '<button onclick="cerrarModalTags()" style="padding:10px 18px;background:transparent;border:1px solid var(--crema-dd);color:var(--gris);border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif">Cancelar</button>'}
-        <button onclick="guardarTags(${obligatorio})" style="padding:10px 22px;background:var(--oro);color:var(--negro-b);border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
+        ${obligatorio ? '' : '<button onclick="cerrarModalTags()" style="padding:10px 18px;background:transparent;border:1px solid var(--crema-dd);color:var(--gris);border-radius:8px;cursor:pointer;font-family:sans-serif">Cancelar</button>'}
+        <button onclick="guardarTags(${obligatorio})" style="padding:10px 22px;background:var(--oro);color:var(--negro-b);border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:sans-serif">Guardar</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
