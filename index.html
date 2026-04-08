@@ -343,7 +343,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
               </span>
             </div>
           </div>
-          <div style="position:relative;height:160px"><canvas id="evolucionChartHero"></canvas></div>
+          <div style="position:relative;height:200px"><canvas id="evolucionChartHero"></canvas></div>
         </div>
       </div>
     </div>
@@ -354,16 +354,16 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 
       <div id="no-precios-warn" class="error-banner" style="display:none">⚠️ No hay precios de mercado cargados. Los KPIs mostrarán USD 0 hasta que el administrador cargue los precios en el panel admin.</div>
       <!-- Precios + Composición -->
-      <div class="two-col" style="margin-bottom:28px">
-        <div id="sec-precios">
+      <div class="two-col" style="margin-bottom:28px;align-items:stretch">
+        <div id="sec-precios" style="display:flex;flex-direction:column">
           <div class="section-title">Precios de referencia</div>
-          <div class="card">
-            <div id="d-precios" style="max-height:280px;overflow-y:auto"><div class="empty-state">Cargando precios...</div></div>
+          <div class="card" style="flex:1">
+            <div id="d-precios"><div class="empty-state">Cargando precios...</div></div>
           </div>
         </div>
-        <div id="sec-composicion">
+        <div id="sec-composicion" style="display:flex;flex-direction:column">
           <div class="section-title">Composición</div>
-          <div class="card">
+          <div class="card" style="flex:1">
             <div class="chart-box" style="padding:12px">
               <div class="chart-container" style="height:280px"><canvas id="pieChart"></canvas></div>
             </div>
