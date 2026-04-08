@@ -765,9 +765,19 @@ async function loadApp() {
   loadHistoricos();
   renderFlujo();
   renderEvolucion();
-  // Show tag setup popup if no tags defined
+  // Show tag setup popup only if truly no tags (reload from DB to be sure)
   if (!tagsDisponibles.length) {
-    setTimeout(() => abrirGestionTags(true), 500);
+    // Double-check from DB before showing popup
+    const { data: cliCheck } = await sb.from('clientes').select('tags_disponibles').eq('id', currentUser.id).single();
+    const freshTags = cliCheck?.tags_disponibles;
+    if (Array.isArray(freshTags) && freshTags.length) {
+      tagsDisponibles = freshTags;
+      currentCliente.tags_disponibles = freshTags;
+      renderTagFilterBar();
+      renderTagsFormSelector();
+    } else {
+      setTimeout(() => abrirGestionTags(true), 500);
+    }
   }
 }
 
@@ -1537,6 +1547,8 @@ async function guardarOperacion() {
   await refreshData();
   await cargarOpsGuardadas();
   renderFlujo();
+  // Re-render tag selector so it's ready for next op
+  renderTagsFormSelector();
 }
 
 async function cargarOpsGuardadas() {
@@ -1626,6 +1638,7 @@ async function guardarEditOp() {
   await refreshData();
   await cargarOpsGuardadas();
   renderFlujo();
+  renderTagsFormSelector();
 }
 
 async function eliminarOp(idx) {
@@ -1690,6 +1703,10 @@ function fmtPrecio(n) { return n?'$'+Number(n).toLocaleString('es-AR',{minimumFr
 function renderTagFilterBar() {
   const el = document.getElementById('hero-tag-filters');
   if (!el) return;
+  // Always sync from currentCliente as source of truth
+  if (currentCliente?.tags_disponibles?.length && !tagsDisponibles.length) {
+    tagsDisponibles = [...currentCliente.tags_disponibles];
+  }
   if (!tagsDisponibles.length) {
     el.innerHTML = '<span style="font-size:11px;color:rgba(255,255,255,.25);font-style:italic">sin tags — configurá uno para filtrar</span>';
     return;
@@ -1714,9 +1731,15 @@ function toggleTagFilter(tag) {
 function renderTagsFormSelector() {
   const el = document.getElementById('f-tags-selector');
   if (!el) return;
-  el.innerHTML = tagsDisponibles.map(t =>
-    `<span class="tag-selector-item" data-tag="${t}" onclick="toggleTagFormItem(this)">${t}</span>`
-  ).join('');
+  // Sync from currentCliente if tagsDisponibles is empty
+  if (currentCliente?.tags_disponibles?.length && !tagsDisponibles.length) {
+    tagsDisponibles = [...currentCliente.tags_disponibles];
+  }
+  el.innerHTML = tagsDisponibles.length
+    ? tagsDisponibles.map(t =>
+        `<span class="tag-selector-item" data-tag="${t}" onclick="toggleTagFormItem(this)">${t}</span>`
+      ).join('')
+    : '<span style="font-size:11px;color:var(--gris-l)">Sin tags — creá uno con ⚙ gestionar</span>';
 }
 
 function toggleTagFormItem(el) {
@@ -1803,7 +1826,9 @@ async function guardarTags(obligatorio = false) {
     .update({ tags_disponibles: temp })
     .eq('id', currentUser.id);
   if (error) { errEl.textContent = 'Error al guardar: ' + error.message; errEl.style.display='block'; return; }
-  tagsDisponibles = temp;
+  // Update in memory immediately
+  tagsDisponibles = [...temp];
+  if (currentCliente) currentCliente.tags_disponibles = [...temp];
   window._tempTags = null;
   cerrarModalTags();
   renderTagFilterBar();
