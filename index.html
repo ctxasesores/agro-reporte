@@ -755,7 +755,10 @@ async function loadApp() {
   buildPreciosMap(preciosRes.data || []);
   // Load tags — normalizar null a [] siempre
   const rawTags = cli.tags_disponibles;
-  tagsDisponibles = Array.isArray(rawTags) ? rawTags : [];
+  // Filtrar tags vacíos o inválidos
+  tagsDisponibles = Array.isArray(rawTags) 
+    ? rawTags.filter(t => typeof t === 'string' && t.trim().length > 0)
+    : [];
   console.log('[CTX Tags] al cargar:', rawTags, '->', tagsDisponibles);
   renderAll();
   showLoading(false);
@@ -1722,7 +1725,7 @@ async function refreshData() {
   };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles : [];
+  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles.filter(t => typeof t === 'string' && t.trim().length > 0) : [];
   renderTagFilterBar();
   renderTagsFormSelector();
   renderAll();
@@ -1876,9 +1879,10 @@ async function guardarTags(obligatorio = false) {
     .update({ tags_disponibles: temp })
     .eq('id', currentUser.id);
   if (error) { errEl.textContent = 'Error al guardar: ' + error.message; errEl.style.display='block'; return; }
-  // Update in memory immediately
-  tagsDisponibles = [...temp];
-  if (currentCliente) currentCliente.tags_disponibles = [...temp];
+  // Update in memory immediately — filter invalid tags
+  const cleanTags = temp.filter(t => typeof t === 'string' && t.trim().length > 0);
+  tagsDisponibles = [...cleanTags];
+  if (currentCliente) currentCliente.tags_disponibles = [...cleanTags];
   window._tempTags = null;
   cerrarModalTags();
   renderTagFilterBar();
