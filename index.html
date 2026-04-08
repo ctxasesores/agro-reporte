@@ -1769,10 +1769,10 @@ if ('serviceWorker' in navigator) {
 let evolucionChart = null;
 
 function renderEvolucion() {
-  const filtProd = document.getElementById('evol-prod')?.value || '';
+  const filtProd = document.getElementById('evol-prod')?.value
+    || document.getElementById('evol-prod-hero')?.value || '';
   const emptyEl  = document.getElementById('evol-empty');
 
-  // Need histData loaded
   if (!histData.length || !allOps.length) {
     if (emptyEl) emptyEl.style.display = 'block';
     if (evolucionChart) { evolucionChart.destroy(); evolucionChart = null; }
@@ -1780,238 +1780,118 @@ function renderEvolucion() {
   }
   if (emptyEl) emptyEl.style.display = 'none';
 
-  // Filter ops
-  const ops = filtProd ? allOps.filter(o => o.producto === filtProd) : allOps;
+  const ops = filtProd ? allOps.filter(o => normalizeStr(o.producto) === normalizeStr(filtProd)) : allOps;
   if (!ops.length) return;
 
-  // Get date range: first op fecha to today
-  const today = new Date().toISOString().split('T')[0];
+  const today      = new Date().toISOString().split('T')[0];
   const firstOpDate = ops.map(o => o.fecha).filter(Boolean).sort()[0];
   if (!firstOpDate) return;
 
-  // Build monthly points (last day of each month)
-  const puntos = [];
+  // Monthly points
+  const puntosUniq = [];
   let cur = new Date(firstOpDate + 'T12:00:00');
-  const fin = new Date(today + 'T12:00:00');
-  // Start from first month
   cur.setDate(1);
+  const fin = new Date(today + 'T12:00:00');
   while (cur <= fin) {
-    // Last day of this month
     const lastDay = new Date(cur.getFullYear(), cur.getMonth()+1, 0);
-    const pt = lastDay > fin ? today : lastDay.toISOString().split('T')[0];
-    puntos.push(pt);
+    puntosUniq.push(lastDay > fin ? today : lastDay.toISOString().split('T')[0]);
     cur.setMonth(cur.getMonth() + 1);
   }
-  // Deduplicate
-  const puntosUniq = [...new Set(puntos)];
 
-  // Build price lookup per product per date from histData
-  // For each product, build sorted date->price map
+  // Build hist price map: prod|posicion -> [{fecha, precio}] sorted
   const precioHistMap = {};
   histData.forEach(r => {
-    const prod = normalizeStr(r.producto);
-    const pos  = r.posicion;
-    const key  = prod + '|' + pos;
+    const key = normalizeStr(r.producto) + '|' + r.posicion;
     if (!precioHistMap[key]) precioHistMap[key] = [];
     precioHistMap[key].push({ fecha: r.fecha, precio: r.precio });
   });
-  // Sort each
   Object.values(precioHistMap).forEach(arr => arr.sort((a,b) => a.fecha.localeCompare(b.fecha)));
 
-  function getPrecioHistorico(producto, vencimiento, fecha) {
+  function getPrecioHist(producto, vencimiento, fecha) {
     const prod = normalizeStr(producto);
-    // Determine which posicion key to look for
-    // For expired or use CONT
     const d    = new Date(vencimiento + 'T12:00:00');
-    const hoy2 = new Date(fecha + 'T12:00:00');
+    const fd   = new Date(fecha + 'T12:00:00');
     const mes  = d.getMonth() + 1;
     const anio = d.getFullYear();
-    const posKey = d < hoy2 ? 'CONT' : mes + '_' + anio;
-
-    // Try exact posicion first, then CONT
+    const posKey = d < fd ? 'CONT' : mes + '_' + anio;
     for (const tryPos of [posKey, 'CONT']) {
-      const key = prod + '|' + tryPos;
-      const arr = precioHistMap[key];
-      if (!arr || !arr.length) continue;
-      // Find closest date <= fecha
+      const arr = precioHistMap[prod + '|' + tryPos];
+      if (!arr) continue;
       let best = null;
-      for (const p of arr) {
-        if (p.fecha <= fecha) best = p.precio;
-        else break;
-      }
+      for (const p of arr) { if (p.fecha <= fecha) best = p.precio; else break; }
       if (best !== null) return best;
     }
-    // Fallback: any price for this product
     for (const [k, arr] of Object.entries(precioHistMap)) {
       if (!k.startsWith(prod + '|')) continue;
       let best = null;
-      for (const p of arr) {
-        if (p.fecha <= fecha) best = p.precio;
-        else break;
-      }
+      for (const p of arr) { if (p.fecha <= fecha) best = p.precio; else break; }
       if (best !== null) return best;
     }
     return null;
   }
 
-  // For each weekly point, calculate cartera value
-  const realizadoSeries = [];
-  const pendienteSeries = [];
-  const labels = [];
+  const labels = [], realizadoSeries = [], pendienteSeries = [];
 
   for (const fecha of puntosUniq) {
-    // Only include ops that were loaded on or before this date
     const opsActivas = ops.filter(o => o.fecha && o.fecha <= fecha);
     if (!opsActivas.length) continue;
-
     let realizado = 0, pendiente = 0;
-
     opsActivas.forEach(op => {
-      const pM = getPrecioHistorico(op.producto, op.vencimiento, fecha);
+      const pM = getPrecioHist(op.producto, op.vencimiento, fecha);
       if (pM === null) return;
-
-      const pEf = (() => {
-        const tipo = op.tipo;
-        if (['Plan de Siembra','Stock'].includes(tipo)) return pM;
-        if (tipo === 'Put' || tipo === 'Call') {
-          const pEj = op.precio_ejercicio || 0;
-          const ejercible = tipo === 'Put' ? pM <= pEj : pM >= pEj;
-          if (ejercible && pEj > 0) return pEj;
-        }
-        return op.precio || 0;
-      })();
-
+      const tipo = op.tipo;
+      let pEf = op.precio || 0;
+      if (['Plan de Siembra','Stock'].includes(tipo)) pEf = pM;
+      else if (tipo === 'Put' || tipo === 'Call') {
+        const pEj = op.precio_ejercicio || 0;
+        const ej  = tipo === 'Put' ? pM <= pEj : pM >= pEj;
+        if (ej && pEj > 0) pEf = pEj;
+      }
       const L = calcularL(op, pM);
       if (L === 0) return;
-
       const val = pEf * Number(op.volumen);
-      if (L > 0) pendiente += val;   // LONG = pendiente
-      else       realizado += val;   // SHORT = realizado
+      if (L > 0) pendiente += val;
+      else       realizado += val;
     });
-
     if (realizado === 0 && pendiente === 0) continue;
-
-    const d = new Date(fecha + 'T12:00:00');
-    labels.push(d.toLocaleDateString('es-AR', {day:'2-digit', month:'short', year:'2-digit'}));
-    realizadoSeries.push(realizado);
-    pendienteSeries.push(pendiente);
+    const d2 = new Date(fecha + 'T12:00:00');
+    labels.push(d2.toLocaleDateString('es-AR',{month:'short',year:'2-digit'}));
+    realizadoSeries.push(Math.round(realizado));
+    pendienteSeries.push(Math.round(pendiente));
   }
 
-  if (!labels.length) {
-    if (emptyEl) emptyEl.style.display = 'block';
-    return;
-  }
+  if (!labels.length) { if (emptyEl) emptyEl.style.display='block'; return; }
 
-  // Also sync filter from hero selector
-  const heroSel = document.getElementById('evol-prod-hero');
-  const sectSel = document.getElementById('evol-prod');
-  if (heroSel && sectSel) {
-    const caller = document.activeElement;
-    if (caller && caller.id === 'evol-prod-hero' && sectSel.value !== heroSel.value) sectSel.value = heroSel.value;
-    if (caller && caller.id === 'evol-prod' && heroSel.value !== sectSel.value) heroSel.value = sectSel.value;
-  }
-
-  function buildChartConfig(labels, realizadoSeries, pendienteSeries, compact) {
-    return {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          { label:'Realizado',  data:realizadoSeries,  backgroundColor:'rgba(46,125,82,0.75)',  borderColor:'#2e7d52', borderWidth:1, borderRadius:2, stack:'cartera' },
-          { label:'Pendiente',  data:pendienteSeries,  backgroundColor:'rgba(200,169,110,0.75)', borderColor:'#c8a96e', borderWidth:1, borderRadius:2, stack:'cartera' }
-        ]
-      },
-      options: {
+  function buildChart(canvasId, compact, existingChart) {
+    const ctx = document.getElementById(canvasId)?.getContext('2d');
+    if (!ctx) return null;
+    if (existingChart) existingChart.destroy();
+    return new Chart(ctx, {
+      type:'bar',
+      data:{ labels, datasets:[
+        { label:'Realizado',  data:realizadoSeries,  backgroundColor:'rgba(46,125,82,0.75)',  borderColor:'#2e7d52', borderWidth:1, borderRadius:2, stack:'c' },
+        { label:'Pendiente',  data:pendienteSeries,  backgroundColor:'rgba(200,169,110,0.75)', borderColor:'#c8a96e', borderWidth:1, borderRadius:2, stack:'c' }
+      ]},
+      options:{
         responsive:true, maintainAspectRatio:false,
-        scales: {
-          x: { stacked:true, grid:{display:false}, ticks:{font:{size: compact?8:10}, color:'#9b9289', maxRotation:45, maxTicksLimit: compact?6:20 } },
-          y: { stacked:true, grid:{color: compact?'rgba(255,255,255,.05)':'rgba(28,26,24,.05)'}, ticks:{font:{size: compact?9:11}, color: compact?'rgba(255,255,255,.4)':'#9b9289', maxTicksLimit:5, callback: v => { if(v>=1000000) return '$'+(v/1000000).toFixed(1)+'M'; if(v>=1000) return '$'+(v/1000).toFixed(0)+'k'; return '$'+v; } } }
+        scales:{
+          x:{ stacked:true, grid:{display:false}, ticks:{font:{size:compact?8:10},color:compact?'rgba(255,255,255,.4)':'#9b9289',maxRotation:45,maxTicksLimit:compact?6:20} },
+          y:{ stacked:true, grid:{color:compact?'rgba(255,255,255,.06)':'rgba(28,26,24,.05)'}, ticks:{font:{size:compact?9:11},color:compact?'rgba(255,255,255,.4)':'#9b9289',maxTicksLimit:5,callback:v=>{ if(v>=1000000) return '$'+(v/1000000).toFixed(1)+'M'; if(v>=1000) return '$'+(v/1000).toFixed(0)+'k'; return '$'+v; }} }
         },
-        plugins: {
+        plugins:{
           legend:{display:false},
-          tooltip:{ callbacks:{ title: ctx=>'Mes: '+ctx[0].label, label: ctx=>' '+ctx.dataset.label+': '+fmtUSD(ctx.raw), footer: items=>{ const t=items.reduce((s,i)=>s+i.raw,0); return 'Total: '+fmtUSD(t); } } }
+          tooltip:{callbacks:{
+            title:ctx=>'Mes: '+ctx[0].label,
+            label:ctx=>' '+ctx.dataset.label+': '+fmtUSD(ctx.raw),
+            footer:items=>{ const t=items.reduce((s,i)=>s+i.raw,0); return 'Total: '+fmtUSD(t); }
+          }}
         }
       }
-    };
+    });
   }
 
-  // Render hero chart
-  const ctxH = document.getElementById('evolucionChartHero')?.getContext('2d');
-  if (ctxH) {
-    if (window._evolucionChartHero) window._evolucionChartHero.destroy();
-    window._evolucionChartHero = new Chart(ctxH, buildChartConfig(labels, realizadoSeries, pendienteSeries, true));
-  }
-
-  const ctx = document.getElementById('evolucionChart')?.getContext('2d');
-  if (!ctx) return;
-  if (evolucionChart) evolucionChart.destroy();
-
-  evolucionChart = new Chart(ctx, buildChartConfig(labels, realizadoSeries, pendienteSeries, false));
-  // dummy to satisfy original code path:
-  const _dummy = {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Realizado',
-          data: realizadoSeries,
-          backgroundColor: 'rgba(46,125,82,0.75)',
-          borderColor: '#2e7d52',
-          borderWidth: 1,
-          borderRadius: 2,
-          stack: 'cartera'
-        },
-        {
-          label: 'Pendiente',
-          data: pendienteSeries,
-          backgroundColor: 'rgba(200,169,110,0.75)',
-          borderColor: '#c8a96e',
-          borderWidth: 1,
-          borderRadius: 2,
-          stack: 'cartera'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          stacked: true,
-          grid: { display: false },
-          ticks: { font:{size:10}, color:'#9b9289', maxRotation: 45 }
-        },
-        y: {
-          stacked: true,
-          grid: { color:'rgba(28,26,24,.05)' },
-          ticks: {
-            font:{size:11}, color:'#9b9289',
-            callback: v => {
-              if (v >= 1000000) return '$'+(v/1000000).toFixed(1)+'M';
-              if (v >= 1000)    return '$'+(v/1000).toFixed(0)+'k';
-              return '$'+v;
-            }
-          }
-        }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: ctx => 'Semana del ' + ctx[0].label,
-            label: ctx => ' ' + ctx.dataset.label + ': ' + fmtUSD(ctx.raw),
-            footer: items => {
-              const total = items.reduce((s,i) => s + i.raw, 0);
-              return 'Total: ' + fmtUSD(total);
-            }
-          }
-        }
-      }
-    }
-  });
+  window._evolucionChartHero = buildChart('evolucionChartHero', true,  window._evolucionChartHero);
+  evolucionChart              = buildChart('evolucionChart',     false, evolucionChart);
 }
 
-</script>
-</body>
-</html>
+>
