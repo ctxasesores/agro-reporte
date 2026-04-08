@@ -753,8 +753,8 @@ async function loadApp() {
   };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  // Load tags
-  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles : [];
+  // Load tags from DB (single source of truth)
+  await loadTags();
   renderAll();
   showLoading(false);
   document.getElementById('appShell').style.display='block';
@@ -765,19 +765,9 @@ async function loadApp() {
   loadHistoricos();
   renderFlujo();
   renderEvolucion();
-  // Show tag setup popup only if truly no tags (reload from DB to be sure)
+  // Show popup only if no tags defined
   if (!tagsDisponibles.length) {
-    // Double-check from DB before showing popup
-    const { data: cliCheck } = await sb.from('clientes').select('tags_disponibles').eq('id', currentUser.id).single();
-    const freshTags = cliCheck?.tags_disponibles;
-    if (Array.isArray(freshTags) && freshTags.length) {
-      tagsDisponibles = freshTags;
-      currentCliente.tags_disponibles = freshTags;
-      renderTagFilterBar();
-      renderTagsFormSelector();
-    } else {
-      setTimeout(() => abrirGestionTags(true), 500);
-    }
+    setTimeout(() => abrirGestionTags(true), 500);
   }
 }
 
@@ -1572,6 +1562,8 @@ async function guardarOperacion() {
   await cargarOpsGuardadas();
   renderFlujo();
   // Re-render tag selector so it's ready for next op
+  await loadTags();
+  renderTagFilterBar();
   renderTagsFormSelector();
 }
 
@@ -1731,7 +1723,7 @@ async function refreshData() {
   };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles : [];
+  await loadTags();
   renderTagFilterBar();
   renderTagsFormSelector();
   renderAll();
@@ -1757,15 +1749,25 @@ function fmtTn(n) { return n?Number(n).toLocaleString('es-AR'):'0'; }
 function fmtPrecio(n) { return n?'$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'; }
 
 
+
+// ══ TAGS: fuente única de verdad ══
+async function loadTags() {
+  if (!sb || !currentUser) return;
+  const { data } = await sb.from('clientes')
+    .select('tags_disponibles')
+    .eq('id', currentUser.id)
+    .single();
+  const tags = Array.isArray(data?.tags_disponibles) ? data.tags_disponibles : [];
+  tagsDisponibles = tags;
+  if (currentCliente) currentCliente.tags_disponibles = tags;
+  return tags;
+}
+
 // ══ SISTEMA DE TAGS ══
 
 function renderTagFilterBar() {
   const el = document.getElementById('hero-tag-filters');
   if (!el) return;
-  // Always sync from currentCliente as source of truth
-  if (currentCliente?.tags_disponibles?.length && !tagsDisponibles.length) {
-    tagsDisponibles = [...currentCliente.tags_disponibles];
-  }
   if (!tagsDisponibles.length) {
     el.innerHTML = '<span style="font-size:11px;color:rgba(255,255,255,.25);font-style:italic">sin tags — configurá uno para filtrar</span>';
     return;
@@ -1790,10 +1792,6 @@ function toggleTagFilter(tag) {
 function renderTagsFormSelector() {
   const el = document.getElementById('f-tags-selector');
   if (!el) return;
-  // Sync from currentCliente if tagsDisponibles is empty
-  if (currentCliente?.tags_disponibles?.length && !tagsDisponibles.length) {
-    tagsDisponibles = [...currentCliente.tags_disponibles];
-  }
   el.innerHTML = tagsDisponibles.length
     ? tagsDisponibles.map(t =>
         `<span class="tag-selector-item" data-tag="${t}" onclick="toggleTagFormItem(this)">${t}</span>`
@@ -1886,10 +1884,9 @@ async function guardarTags(obligatorio = false) {
     .eq('id', currentUser.id);
   if (error) { errEl.textContent = 'Error al guardar: ' + error.message; errEl.style.display='block'; return; }
   // Update in memory immediately
-  tagsDisponibles = [...temp];
-  if (currentCliente) currentCliente.tags_disponibles = [...temp];
   window._tempTags = null;
   cerrarModalTags();
+  await loadTags();
   renderTagFilterBar();
   renderTagsFormSelector();
 }
