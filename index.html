@@ -91,9 +91,9 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 .hero-eyebrow { font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px; font-weight:500; }
 .hero-nombre  { font-size:22px; font-weight:600; color:white; margin-bottom:2px; letter-spacing:-.2px; }
 .hero-meta    { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:20px; }
-.kpis { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.kpis { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:start; }
 .kpi-card { background:rgba(255,255,255,.07); border-radius:8px; padding:14px 16px; border:1px solid rgba(255,255,255,.06); }
-.kpi-card.full { grid-column:1/-1; }
+.kpi-card.full { grid-column:1; } .kpi-chart-col { grid-column:2; grid-row:1; background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; }
 .kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:.8px; color:rgba(255,255,255,.4); margin-bottom:6px; font-weight:600; }
 .kpi-value { font-size:20px; font-weight:600; color:white; line-height:1; }
 .kpi-value.accent { font-size:42px; font-weight:700; color:var(--oro-l); letter-spacing:-.5px; }
@@ -307,21 +307,42 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
       <div class="hero-nombre" id="d-nombre">—</div>
       <div class="hero-meta" id="d-meta">—</div>
       <div class="kpis">
-        <div class="kpi-card full">
-          <div class="kpi-label">Valor total de la cartera</div>
-          <div class="kpi-value accent" id="d-total">—</div>
-          <div class="kpi-sub">USD valuados a precios de mercado</div>
-        <button onclick="refreshData()" style="margin-top:10px;padding:6px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif" id="btn-refresh">↻ Actualizar datos</button>
+        <!-- Left: KPIs compactos -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="kpi-card full">
+            <div class="kpi-label">Valor total de la cartera</div>
+            <div class="kpi-value accent" id="d-total" style="font-size:28px">—</div>
+            <div class="kpi-sub">USD valuados a precios de mercado</div>
+            <button onclick="refreshData()" style="margin-top:8px;padding:5px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:6px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif" id="btn-refresh">↻ Actualizar datos</button>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Realizado</div>
+            <div class="kpi-value" id="d-realizado" style="font-size:18px">—</div>
+            <div class="kpi-sub">Resultado capturado</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Pendiente</div>
+            <div class="kpi-value" id="d-pendiente" style="font-size:18px">—</div>
+            <div class="kpi-sub">A realizar</div>
+          </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Realizado</div>
-          <div class="kpi-value" id="d-realizado">—</div>
-          <div class="kpi-sub">Resultado capturado</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Pendiente</div>
-          <div class="kpi-value" id="d-pendiente">—</div>
-          <div class="kpi-sub">A realizar</div>
+        <!-- Right: Evolución chart inline -->
+        <div class="kpi-chart-col">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.4)">Evolución de la cartera</span>
+            <div style="display:flex;gap:10px;align-items:center">
+              <select id="evol-prod-hero" onchange="renderEvolucion()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);border-radius:6px;padding:3px 8px;font-size:11px;font-family:'DM Sans',sans-serif">
+                <option value="">Todos</option>
+                <option>Soja</option><option>Maiz</option><option>Trigo</option>
+                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+              </select>
+              <span style="font-size:10px;color:rgba(255,255,255,.35)">
+                <span style="display:inline-block;width:8px;height:8px;background:#2e7d52;border-radius:1px;margin-right:3px"></span>Realizado
+                <span style="display:inline-block;width:8px;height:8px;background:#c8a96e;border-radius:1px;margin:0 3px 0 8px"></span>Pendiente
+              </span>
+            </div>
+          </div>
+          <div style="position:relative;height:140px"><canvas id="evolucionChartHero"></canvas></div>
         </div>
       </div>
     </div>
@@ -1768,23 +1789,21 @@ function renderEvolucion() {
   const firstOpDate = ops.map(o => o.fecha).filter(Boolean).sort()[0];
   if (!firstOpDate) return;
 
-  // Build weekly points (every Monday, or first available day)
+  // Build monthly points (last day of each month)
   const puntos = [];
   let cur = new Date(firstOpDate + 'T12:00:00');
   const fin = new Date(today + 'T12:00:00');
-
-  // Snap to nearest Monday
-  const dow = cur.getDay();
-  if (dow !== 1) {
-    cur.setDate(cur.getDate() + (dow === 0 ? 1 : 8 - dow));
-  }
-
+  // Start from first month
+  cur.setDate(1);
   while (cur <= fin) {
-    puntos.push(cur.toISOString().split('T')[0]);
-    cur.setDate(cur.getDate() + 7);
+    // Last day of this month
+    const lastDay = new Date(cur.getFullYear(), cur.getMonth()+1, 0);
+    const pt = lastDay > fin ? today : lastDay.toISOString().split('T')[0];
+    puntos.push(pt);
+    cur.setMonth(cur.getMonth() + 1);
   }
-  // Always include today
-  if (puntos[puntos.length - 1] !== today) puntos.push(today);
+  // Deduplicate
+  const puntosUniq = [...new Set(puntos)];
 
   // Build price lookup per product per date from histData
   // For each product, build sorted date->price map
@@ -1840,7 +1859,7 @@ function renderEvolucion() {
   const pendienteSeries = [];
   const labels = [];
 
-  for (const fecha of puntos) {
+  for (const fecha of puntosUniq) {
     // Only include ops that were loaded on or before this date
     const opsActivas = ops.filter(o => o.fecha && o.fecha <= fecha);
     if (!opsActivas.length) continue;
@@ -1883,11 +1902,53 @@ function renderEvolucion() {
     return;
   }
 
+  // Also sync filter from hero selector
+  const heroSel = document.getElementById('evol-prod-hero');
+  const sectSel = document.getElementById('evol-prod');
+  if (heroSel && sectSel) {
+    const caller = document.activeElement;
+    if (caller && caller.id === 'evol-prod-hero' && sectSel.value !== heroSel.value) sectSel.value = heroSel.value;
+    if (caller && caller.id === 'evol-prod' && heroSel.value !== sectSel.value) heroSel.value = sectSel.value;
+  }
+
+  function buildChartConfig(labels, realizadoSeries, pendienteSeries, compact) {
+    return {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label:'Realizado',  data:realizadoSeries,  backgroundColor:'rgba(46,125,82,0.75)',  borderColor:'#2e7d52', borderWidth:1, borderRadius:2, stack:'cartera' },
+          { label:'Pendiente',  data:pendienteSeries,  backgroundColor:'rgba(200,169,110,0.75)', borderColor:'#c8a96e', borderWidth:1, borderRadius:2, stack:'cartera' }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        scales: {
+          x: { stacked:true, grid:{display:false}, ticks:{font:{size: compact?8:10}, color:'#9b9289', maxRotation:45, maxTicksLimit: compact?6:20 } },
+          y: { stacked:true, grid:{color: compact?'rgba(255,255,255,.05)':'rgba(28,26,24,.05)'}, ticks:{font:{size: compact?9:11}, color: compact?'rgba(255,255,255,.4)':'#9b9289', maxTicksLimit:5, callback: v => { if(v>=1000000) return '$'+(v/1000000).toFixed(1)+'M'; if(v>=1000) return '$'+(v/1000).toFixed(0)+'k'; return '$'+v; } } }
+        },
+        plugins: {
+          legend:{display:false},
+          tooltip:{ callbacks:{ title: ctx=>'Mes: '+ctx[0].label, label: ctx=>' '+ctx.dataset.label+': '+fmtUSD(ctx.raw), footer: items=>{ const t=items.reduce((s,i)=>s+i.raw,0); return 'Total: '+fmtUSD(t); } } }
+        }
+      }
+    };
+  }
+
+  // Render hero chart
+  const ctxH = document.getElementById('evolucionChartHero')?.getContext('2d');
+  if (ctxH) {
+    if (window._evolucionChartHero) window._evolucionChartHero.destroy();
+    window._evolucionChartHero = new Chart(ctxH, buildChartConfig(labels, realizadoSeries, pendienteSeries, true));
+  }
+
   const ctx = document.getElementById('evolucionChart')?.getContext('2d');
   if (!ctx) return;
   if (evolucionChart) evolucionChart.destroy();
 
-  evolucionChart = new Chart(ctx, {
+  evolucionChart = new Chart(ctx, buildChartConfig(labels, realizadoSeries, pendienteSeries, false));
+  // dummy to satisfy original code path:
+  const _dummy = {
     type: 'bar',
     data: {
       labels,
