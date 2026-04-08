@@ -732,11 +732,12 @@ async function logout() {
 // ── LOAD APP ──
 async function loadApp() {
   initSupabase();
+  // Load cliente profile
   const {data:cli} = await sb.from('clientes').select('*').eq('id', currentUser.id).single();
   if (!cli) { alert('No se encontró tu perfil. Contactá a tu asesor.'); location.reload(); return; }
   currentCliente = cli;
-  tagsDisponibles = Array.isArray(cli.tags_disponibles) ? cli.tags_disponibles : [];
 
+  // Load operaciones y precios en paralelo
   const [opsRes, preciosRes] = await Promise.all([
     sb.from('operaciones').select('*')
       .eq('cliente_codigo', cli.codigo)
@@ -745,9 +746,17 @@ async function loadApp() {
     sb.from('precios_mercado').select('*').eq('activo',true)
   ]);
 
-  const normalize = s => s ? s.normalize('NFD').replace(/[̀-ͯ]/g,'') : s;
+  // Normalize product names (remove accents for consistency)
+  const normalize = s => {
+    if (!s) return s;
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
+  // Load tags — normalizar null a [] siempre
+  const rawTags = cli.tags_disponibles;
+  tagsDisponibles = Array.isArray(rawTags) ? rawTags : [];
+  console.log('[CTX Tags] al cargar:', rawTags, '->', tagsDisponibles);
   renderAll();
   showLoading(false);
   document.getElementById('appShell').style.display='block';
@@ -1554,8 +1563,6 @@ async function guardarOperacion() {
   await cargarOpsGuardadas();
   renderFlujo();
   // Re-render tag selector so it's ready for next op
-  await loadTags();
-  renderTagFilterBar();
   renderTagsFormSelector();
 }
 
@@ -1707,13 +1714,15 @@ async function refreshData() {
     sb.from('precios_mercado').select('*').eq('activo',true),
     sb.from('clientes').select('*').eq('id', currentUser.id).single()
   ]);
-  const normalize = s => s ? s.normalize('NFD').replace(/[̀-ͯ]/g,'') : s;
+  if (cliRes.data) currentCliente = cliRes.data;
+  // Normalize product names (remove accents for consistency)
+  const normalize = s => {
+    if (!s) return s;
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   buildPreciosMap(preciosRes.data || []);
-  if (cliRes.data) {
-    currentCliente = cliRes.data;
-    tagsDisponibles = Array.isArray(cliRes.data.tags_disponibles) ? cliRes.data.tags_disponibles : [];
-  }
+  tagsDisponibles = Array.isArray(currentCliente.tags_disponibles) ? currentCliente.tags_disponibles : [];
   renderTagFilterBar();
   renderTagsFormSelector();
   renderAll();
@@ -1721,7 +1730,6 @@ async function refreshData() {
   renderPosicionesChart();
   renderEvolucion();
   await cargarOpsGuardadas();
-  renderTagsFormSelector();
   if (btn) { btn.textContent = '↻ Actualizar datos'; btn.disabled = false; }
 }
 
@@ -1740,25 +1748,15 @@ function fmtTn(n) { return n?Number(n).toLocaleString('es-AR'):'0'; }
 function fmtPrecio(n) { return n?'$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'; }
 
 
-
-// ══ TAGS: fuente única de verdad ══
-async function loadTags() {
-  if (!sb || !currentUser) return;
-  const { data } = await sb.from('clientes')
-    .select('tags_disponibles')
-    .eq('id', currentUser.id)
-    .single();
-  const tags = Array.isArray(data?.tags_disponibles) ? data.tags_disponibles : [];
-  tagsDisponibles = tags;
-  if (currentCliente) currentCliente.tags_disponibles = tags;
-  return tags;
-}
-
 // ══ SISTEMA DE TAGS ══
 
 function renderTagFilterBar() {
   const el = document.getElementById('hero-tag-filters');
   if (!el) return;
+  // Always sync from currentCliente as source of truth
+  if (currentCliente?.tags_disponibles?.length && !tagsDisponibles.length) {
+    tagsDisponibles = [...currentCliente.tags_disponibles];
+  }
   if (!tagsDisponibles.length) {
     el.innerHTML = '<span style="font-size:11px;color:rgba(255,255,255,.25);font-style:italic">sin tags — configurá uno para filtrar</span>';
     return;
@@ -1783,6 +1781,10 @@ function toggleTagFilter(tag) {
 function renderTagsFormSelector() {
   const el = document.getElementById('f-tags-selector');
   if (!el) return;
+  // Sync from currentCliente if tagsDisponibles is empty
+  if (currentCliente?.tags_disponibles?.length && !tagsDisponibles.length) {
+    tagsDisponibles = [...currentCliente.tags_disponibles];
+  }
   el.innerHTML = tagsDisponibles.length
     ? tagsDisponibles.map(t =>
         `<span class="tag-selector-item" data-tag="${t}" onclick="toggleTagFormItem(this)">${t}</span>`
@@ -1875,9 +1877,10 @@ async function guardarTags(obligatorio = false) {
     .eq('id', currentUser.id);
   if (error) { errEl.textContent = 'Error al guardar: ' + error.message; errEl.style.display='block'; return; }
   // Update in memory immediately
+  tagsDisponibles = [...temp];
+  if (currentCliente) currentCliente.tags_disponibles = [...temp];
   window._tempTags = null;
   cerrarModalTags();
-  await loadTags();
   renderTagFilterBar();
   renderTagsFormSelector();
 }
