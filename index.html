@@ -158,6 +158,25 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 
 
 
+
+/* ── TASAS IMPLÍCITAS ── */
+.tasas-tab { padding:4px 10px; border-radius:6px; border:1px solid var(--crema-dd); background:transparent; font-size:11px; color:var(--gris); cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif; }
+.tasas-tab.active { background:var(--negro-b); color:var(--oro-l); border-color:var(--oro); }
+.tasas-table { width:100%; border-collapse:collapse; font-size:11px; }
+.tasas-table th { padding:5px 8px; text-align:right; font-size:9px; text-transform:uppercase; letter-spacing:.4px; color:var(--gris); font-weight:700; border-bottom:1px solid var(--crema-dd); white-space:nowrap; }
+.tasas-table th:first-child { text-align:left; }
+.tasas-table td { padding:5px 8px; border-bottom:1px solid var(--crema-dd); text-align:right; white-space:nowrap; }
+.tasas-table td:first-child { text-align:left; font-weight:600; color:var(--texto); }
+.tasas-table tr:last-child td { border-bottom:none; }
+.heatmap-section { margin-top:10px; }
+.heatmap-title { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); margin-bottom:6px; font-weight:700; }
+.heatmap-table { border-collapse:separate; border-spacing:2px; font-size:9px; width:100%; }
+.heatmap-table th { padding:3px 5px; text-align:center; color:var(--gris); font-weight:600; white-space:nowrap; font-size:9px; }
+.heatmap-table th:first-child { text-align:left; }
+.heatmap-table td { padding:4px 5px; text-align:center; border-radius:4px; font-weight:700; font-size:10px; min-width:36px; white-space:nowrap; }
+.hm-diag { background:var(--crema-d); color:var(--gris-l); }
+.hm-empty { background:transparent; }
+
 /* ── EVOLUCIÓN CARTERA ── */
 .evol-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:14px 16px 0; }
 
@@ -358,9 +377,25 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <!-- Precios + Composición -->
       <div class="two-col" style="margin-bottom:28px">
         <div id="sec-precios">
-          <div class="section-title">Precios de referencia</div>
-          <div class="card">
-            <div id="d-precios" style="max-height:304px;overflow-y:auto"><div class="empty-state">Cargando precios...</div></div>
+          <div class="section-title" style="margin-bottom:10px">Tasas implícitas</div>
+          <div class="card" style="max-height:304px;overflow:hidden;display:flex;flex-direction:column">
+            <!-- Header: tabs + toggle -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px 0;flex-shrink:0">
+              <div id="tasas-tabs" style="display:flex;gap:4px"></div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:10px;color:var(--gris)">Directa</span>
+                <label style="position:relative;display:inline-block;width:36px;height:20px;cursor:pointer">
+                  <input type="checkbox" id="tasas-toggle" onchange="renderTasas()" style="opacity:0;width:0;height:0">
+                  <span id="tasas-toggle-track" style="position:absolute;inset:0;background:var(--crema-dd);border-radius:20px;transition:.2s"></span>
+                  <span id="tasas-toggle-thumb" style="position:absolute;left:2px;top:2px;width:16px;height:16px;background:white;border-radius:50%;transition:.2s"></span>
+                </label>
+                <span style="font-size:10px;color:var(--gris)">TNA</span>
+              </div>
+            </div>
+            <!-- Content -->
+            <div id="d-tasas" style="flex:1;overflow-y:auto;padding:10px 14px 12px">
+              <div class="empty-state">Cargando precios...</div>
+            </div>
           </div>
         </div>
         <div id="sec-composicion">
@@ -857,20 +892,158 @@ function renderAll() {
   renderOps();
 }
 
-function renderPrecios() {
-  const el = document.getElementById('d-precios');
+function renderPrecios() { renderTasas(); }
+
+let _tasasProd = null;
+
+function renderTasas() {
+  const el       = document.getElementById('d-tasas');
+  const tabsEl   = document.getElementById('tasas-tabs');
+  const useTNA   = document.getElementById('tasas-toggle')?.checked;
+  const track    = document.getElementById('tasas-toggle-track');
+  const thumb    = document.getElementById('tasas-toggle-thumb');
+  if (track) track.style.background = useTNA ? 'var(--oro)' : 'var(--crema-dd)';
+  if (thumb) thumb.style.left = useTNA ? '18px' : '2px';
+
   const rows = Object.entries(precios);
   if (!rows.length) { el.innerHTML='<div class="empty-state">Sin precios cargados</div>'; return; }
-  el.innerHTML = rows.map(([key, precio]) => {
+
+  // Group by producto, exclude CONT from heatmap, keep for base
+  const byProd = {};
+  rows.forEach(([key, precio]) => {
     const parts = key.split('_');
     const prod  = parts[0];
-    const venc  = parts.slice(1).join('/');
-    const label = venc === 'CONT' ? 'Continuo' : venc;
-    return `<div class="precio-row">
-      <div><div class="precio-prod">${prod}</div><div class="precio-venc">${label}</div></div>
-      <div style="text-align:right"><span class="precio-amt">$${precio}</span><div class="precio-unit">USD/tn</div></div>
-    </div>`;
-  }).join('');
+    const venc  = parts.slice(1).join('_');
+    if (!byProd[prod]) byProd[prod] = {};
+    byProd[prod][venc] = precio;
+  });
+
+  const prods = Object.keys(byProd).sort();
+  if (!_tasasProd || !prods.includes(_tasasProd)) _tasasProd = prods[0];
+
+  // Render tabs
+  tabsEl.innerHTML = prods.map(p =>
+    `<button class="tasas-tab ${p===_tasasProd?'active':''}" onclick="_tasasProd='${p}';renderTasas()">${p}</button>`
+  ).join('');
+
+  const vencMap = byProd[_tasasProd];
+  if (!vencMap) { el.innerHTML='<div class="empty-state">Sin datos</div>'; return; }
+
+  // Parse and sort vencimientos (exclude CONT, use as base "Disp")
+  const basePrice = vencMap['CONT'] || null;
+  const vencList = Object.entries(vencMap)
+    .filter(([v]) => v !== 'CONT')
+    .map(([v, p]) => {
+      const parts = v.split('_');
+      const mes = parseInt(parts[0]), anio = parseInt(parts[1]);
+      return { key:v, mes, anio, precio:p, fecha: new Date(anio, mes-1, 1) };
+    })
+    .sort((a,b) => a.fecha - b.fecha);
+
+  if (!vencList.length) { el.innerHTML='<div class="empty-state">Sin vencimientos</div>'; return; }
+
+  const today = new Date();
+
+  function tasaDirecta(pBase, pFut) {
+    if (!pBase || !pFut || pBase === 0) return null;
+    return (pFut - pBase) / pBase;
+  }
+  function mesesEntre(d1, d2) {
+    return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+  }
+  function toTNA(tDir, meses) {
+    if (meses <= 0) return null;
+    return tDir * (12 / meses);
+  }
+  function fmtTasa(t) {
+    if (t === null || isNaN(t)) return '—';
+    return (t * 100).toFixed(1) + '%';
+  }
+  function heatColor(t) {
+    if (t === null || isNaN(t)) return 'var(--crema-d)';
+    const pct = t * 100;
+    if (pct < 0)   return 'rgba(217,81,44,0.75)';
+    if (pct < 3)   return 'rgba(212,160,23,0.5)';
+    if (pct < 8)   return 'rgba(212,160,23,0.75)';
+    if (pct < 15)  return 'rgba(30,153,112,0.55)';
+    return 'rgba(30,153,112,0.85)';
+  }
+  function heatTextColor(t) {
+    if (t === null || isNaN(t)) return 'var(--gris)';
+    return '#fff';
+  }
+
+  // ── Tabla de tasas vs Disp ──
+  let tableHTML = '';
+  if (basePrice) {
+    tableHTML = `<table class="tasas-table">
+      <thead><tr>
+        <th>Posición</th>
+        <th>USD/tn</th>
+        <th>${useTNA ? 'TNA' : 'T. Directa'}</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Disponible</td><td style="color:var(--oro-l);font-weight:700">$${basePrice}</td><td>—</td></tr>`;
+    vencList.forEach(v => {
+      const tDir  = tasaDirecta(basePrice, v.precio);
+      const meses = mesesEntre(today, v.fecha);
+      const tShow = useTNA ? toTNA(tDir, meses) : tDir;
+      const label = v.mes + '/' + String(v.anio).slice(2);
+      const color = tShow !== null && tShow < 0 ? 'var(--rojo)' : tShow !== null && tShow > 0.05 ? 'var(--verde-l)' : 'var(--texto)';
+      tableHTML += `<tr>
+        <td>${label}</td>
+        <td style="color:var(--oro-l);font-weight:700">$${v.precio}</td>
+        <td style="color:${color};font-weight:700">${fmtTasa(tShow)}</td>
+      </tr>`;
+    });
+    tableHTML += '</tbody></table>';
+  } else {
+    tableHTML = `<table class="tasas-table">
+      <thead><tr><th>Posición</th><th>USD/tn</th></tr></thead>
+      <tbody>${vencList.map(v => `<tr><td>${v.mes}/${String(v.anio).slice(2)}</td><td style="color:var(--oro-l);font-weight:700">$${v.precio}</td></tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ── Heatmap: matrix entre todos los vencimientos ──
+  // Include CONT as first column/row if available
+  const heatVenc = [];
+  if (basePrice) heatVenc.push({ key:'CONT', label:'Disp', precio:basePrice, fecha:today });
+  heatVenc.push(...vencList.map(v => ({...v, label: v.mes+'/'+String(v.anio).slice(2)})));
+
+  let heatHTML = '';
+  if (heatVenc.length >= 2) {
+    heatHTML = `<div class="heatmap-section">
+      <div class="heatmap-title">Tasa implícita entre vencimientos (${useTNA ? 'TNA' : 'Directa'})</div>
+      <div style="overflow-x:auto">
+      <table class="heatmap-table">
+        <thead><tr>
+          <th></th>
+          ${heatVenc.map(v => `<th>${v.label}</th>`).join('')}
+        </tr></thead>
+        <tbody>`;
+    heatVenc.forEach((vRow, ri) => {
+      heatHTML += `<tr><th style="text-align:left;padding:3px 5px;color:var(--gris);font-size:9px">${vRow.label}</th>`;
+      heatVenc.forEach((vCol, ci) => {
+        if (ci === ri) {
+          heatHTML += `<td class="hm-diag">—</td>`;
+        } else if (ci < ri) {
+          // lower triangle: rate from col→row (forward)
+          const tDir  = tasaDirecta(vCol.precio, vRow.precio);
+          const meses = mesesEntre(vCol.fecha, vRow.fecha);
+          const t     = useTNA ? toTNA(tDir, meses) : tDir;
+          const bg    = heatColor(t);
+          const fg    = heatTextColor(t);
+          heatHTML += `<td style="background:${bg};color:${fg}">${fmtTasa(t)}</td>`;
+        } else {
+          heatHTML += `<td class="hm-empty"></td>`;
+        }
+      });
+      heatHTML += '</tr>';
+    });
+    heatHTML += '</tbody></table></div></div>';
+  }
+
+  el.innerHTML = tableHTML + heatHTML;
 }
 
 function renderComposicion() {
