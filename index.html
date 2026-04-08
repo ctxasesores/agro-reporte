@@ -1509,6 +1509,13 @@ function resetForm() {
 function initFormDefaults() {
   const el = document.getElementById('f-fecha');
   if (el) el.value = new Date().toISOString().split('T')[0];
+  
+  // Poblar selectores de producto dinámicamente
+  const productosUnicos = [...new Set(allOps.map(o => o.producto))].sort();
+  const selectProducto = document.getElementById('f-producto');
+  if (selectProducto) {
+    selectProducto.innerHTML = productosUnicos.map(p => `<option value="${p}">${p}</option>`).join('');
+  }
 }
 
 function showToast(msg,type) {
@@ -1528,16 +1535,33 @@ async function guardarOperacion() {
   const vencimiento = document.getElementById('f-vencimiento').value;
   const ejercicio   = parseFloat(document.getElementById('f-ejercicio').value)||0;
   const obs         = document.getElementById('f-obs').value.trim();
+  
   // Tags seleccionados
   const selectedTags = Array.from(document.querySelectorAll('#f-tags-selector .tag-selector-item.selected')).map(el => el.dataset.tag);
-  if (!producto||!tipo||!lado||!fecha||!volumen||!vencimiento) { showToast('Completá todos los campos obligatorios.','err'); return; }
+  
+  // Validaciones básicas
+  if (!producto||!tipo||!lado||!fecha) { showToast('Completá los campos: Producto, Tipo, Lado y Fecha.','err'); return; }
   if (isNaN(volumen)||volumen<=0) { showToast('El volumen debe ser mayor a 0.','err'); return; }
   if (!selectedTags.length) { showToast('Seleccioná al menos un tag.','err'); return; }
+  
+  // Vencimiento obligatorio para derivados
+  const requireVencimiento = ['Call','Put','Forward','Futuro'].includes(tipo);
+  if (requireVencimiento && !vencimiento) { 
+    showToast('Vencimiento es obligatorio para ' + tipo,'err'); 
+    return; 
+  }
+  
+  // Precio de ejercicio obligatorio para opciones
+  if (['Call','Put'].includes(tipo) && !ejercicio) {
+    showToast('Precio de ejercicio es obligatorio para opciones','err');
+    return;
+  }
+  
   const btn=document.getElementById('btn-guardar');
   btn.disabled=true; btn.textContent='Guardando...';
   const {error} = await sb.from('operaciones').insert({
     cliente_codigo:currentCliente.codigo, producto, tipo, lado, fecha,
-    volumen, precio, vencimiento, precio_ejercicio:ejercicio, observaciones:obs, estado:'confirmada',
+    volumen, precio, vencimiento: vencimiento || null, precio_ejercicio:ejercicio, observaciones:obs, estado:'confirmada',
     tags: selectedTags
   });
   btn.disabled=false; btn.textContent='Guardar operación';
@@ -1595,6 +1619,12 @@ async function cargarOpsGuardadasConCache() {
 function abrirEditarOp(idx) {
   const op = opsCache[parseInt(idx)];
   if (!op) return;
+  
+  // Poblar productos dinámicamente
+  const productosUnicos = [...new Set(allOps.map(o => o.producto))].sort();
+  const selectProducto = document.getElementById('eop-producto');
+  selectProducto.innerHTML = productosUnicos.map(p => `<option value="${p}">${p}</option>`).join('');
+  
   document.getElementById('eop-id').value         = op.id;
   document.getElementById('eop-producto').value   = op.producto;
   document.getElementById('eop-tipo').value        = op.tipo;
@@ -1619,16 +1649,45 @@ function cerrarEditarOp() {
 
 async function guardarEditOp() {
   const id = document.getElementById('eop-id').value;
+  const producto = document.getElementById('eop-producto').value;
+  const tipo = document.getElementById('eop-tipo').value;
+  const lado = document.getElementById('eop-lado').value;
+  const fecha = document.getElementById('eop-fecha').value;
+  const volumen = parseFloat(document.getElementById('eop-volumen').value);
+  const vencimiento = document.getElementById('eop-vencimiento').value;
+  const precio = parseFloat(document.getElementById('eop-precio').value) || 0;
+  const ejercicio = parseFloat(document.getElementById('eop-ejercicio').value) || 0;
+  
+  // Validaciones
+  if (!producto) { alert('Selecciona un producto'); return; }
+  if (!tipo) { alert('Selecciona un tipo de operación'); return; }
+  if (!lado) { alert('Selecciona un lado (Compra/Venta)'); return; }
+  if (!fecha) { alert('Selecciona una fecha de operación'); return; }
+  if (!volumen || volumen <= 0) { alert('Ingresa un volumen válido (mayor a 0)'); return; }
+  
+  // Vencimiento obligatorio para derivados
+  const requireVencimiento = ['Call','Put','Forward','Futuro'].includes(tipo);
+  if (requireVencimiento && !vencimiento) { 
+    alert('Vencimiento es obligatorio para ' + tipo); 
+    return; 
+  }
+  
+  // Precio de ejercicio obligatorio para opciones
+  if (['Call','Put'].includes(tipo) && !ejercicio) {
+    alert('Precio de ejercicio es obligatorio para opciones');
+    return;
+  }
+  
   const editTags = Array.from(document.querySelectorAll('#eop-tags-selector .tag-selector-item.selected')).map(el => el.dataset.tag);
   const {error} = await sb.from('operaciones').update({
-    producto:         document.getElementById('eop-producto').value,
-    tipo:             document.getElementById('eop-tipo').value,
-    lado:             document.getElementById('eop-lado').value,
-    fecha:            document.getElementById('eop-fecha').value,
-    volumen:          parseFloat(document.getElementById('eop-volumen').value),
-    precio:           parseFloat(document.getElementById('eop-precio').value) || 0,
-    vencimiento:      document.getElementById('eop-vencimiento').value,
-    precio_ejercicio: parseFloat(document.getElementById('eop-ejercicio').value) || 0,
+    producto:         producto,
+    tipo:             tipo,
+    lado:             lado,
+    fecha:            fecha,
+    volumen:          volumen,
+    precio:           precio,
+    vencimiento:      vencimiento || null,
+    precio_ejercicio: ejercicio,
     observaciones:    document.getElementById('eop-obs').value,
     tags:             editTags.length ? editTags : ['DFL'],
     updated_at:       new Date().toISOString()
@@ -2522,10 +2581,7 @@ function renderEvolucion() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <div class="form-group">
         <label class="form-label">Producto</label>
-        <select class="form-select" id="eop-producto">
-          <option>Soja</option><option>Maiz</option><option>Trigo</option>
-          <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-        </select>
+        <select class="form-select" id="eop-producto"></select>
       </div>
       <div class="form-group">
         <label class="form-label">Tipo</label>
@@ -2586,4 +2642,4 @@ if ('serviceWorker' in navigator) {
       .catch(e => console.log('SW error:', e));
   });
 }
->
+</script>
