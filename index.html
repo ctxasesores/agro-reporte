@@ -61,24 +61,40 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 #appShell { display:none; min-height:100vh; }
 
 /* ── SIDEBAR ── */
-.sidebar { width:var(--sidebar); background:var(--negro); position:fixed; top:0; left:0; bottom:0; display:flex; flex-direction:column; z-index:200; }
-.sidebar-brand { padding:20px 18px 14px; border-bottom:1px solid rgba(255,255,255,.08); }
-.brand-row { display:flex; align-items:center; gap:10px; }
-.brand-name { font-size:16px; font-weight:700; color:white; letter-spacing:-.2px; }
-.brand-sub  { color:rgba(255,255,255,.35); font-size:11px; margin-top:3px; }
-.cli-block  { padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.06); }
-.cli-label  { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.3); margin-bottom:4px; }
-.cli-name   { font-size:13px; font-weight:600; color:white; line-height:1.3; }
-.cli-meta   { font-size:11px; color:rgba(255,255,255,.35); margin-top:3px; }
-.sidebar-nav { flex:1; padding:8px 0; overflow-y:auto; }
-.nav-item { display:flex; align-items:center; gap:10px; padding:9px 18px; color:rgba(255,255,255,.45); font-size:13px; border-left:2px solid transparent; cursor:pointer; transition:all .15s; text-decoration:none; }
+.sidebar { width:var(--sidebar); background:var(--negro); position:fixed; top:0; left:0; bottom:0; display:flex; flex-direction:column; z-index:200; transition:width .25s ease; overflow:hidden; }
+.sidebar.collapsed { width:52px; }
+.sidebar-brand { padding:16px 12px 12px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; min-height:66px; }
+.brand-row { display:flex; align-items:center; gap:10px; overflow:hidden; }
+.brand-name { font-size:16px; font-weight:700; color:white; letter-spacing:-.2px; white-space:nowrap; transition:opacity .2s; }
+.brand-sub  { color:rgba(255,255,255,.35); font-size:11px; margin-top:3px; white-space:nowrap; transition:opacity .2s; }
+.sidebar.collapsed .brand-name,
+.sidebar.collapsed .brand-sub { opacity:0; pointer-events:none; }
+.btn-collapse { background:none; border:none; cursor:pointer; color:rgba(255,255,255,.35); font-size:16px; padding:4px; border-radius:6px; transition:all .15s; flex-shrink:0; line-height:1; }
+.btn-collapse:hover { background:rgba(255,255,255,.08); color:rgba(255,255,255,.7); }
+.cli-block  { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06); overflow:hidden; transition:padding .25s; }
+.sidebar.collapsed .cli-block { padding:12px 0; display:flex; justify-content:center; }
+.cli-label  { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.3); margin-bottom:4px; white-space:nowrap; transition:opacity .2s; }
+.cli-name   { font-size:13px; font-weight:600; color:white; line-height:1.3; white-space:nowrap; transition:opacity .2s; }
+.cli-meta   { font-size:11px; color:rgba(255,255,255,.35); margin-top:3px; white-space:nowrap; transition:opacity .2s; }
+.sidebar.collapsed .cli-label,
+.sidebar.collapsed .cli-name,
+.sidebar.collapsed .cli-meta { opacity:0; pointer-events:none; }
+.sidebar-nav { flex:1; padding:8px 0; overflow-y:auto; overflow-x:hidden; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 14px; color:rgba(255,255,255,.45); font-size:13px; border-left:2px solid transparent; cursor:pointer; transition:all .15s; text-decoration:none; white-space:nowrap; }
+.nav-item .nav-label { transition:opacity .2s; }
+.sidebar.collapsed .nav-label { opacity:0; pointer-events:none; }
+.sidebar.collapsed .nav-item { justify-content:center; padding:10px 0; }
 .nav-item.active { background:rgba(200,169,110,.1); color:var(--oro-l); border-left-color:var(--oro); }
 .nav-item:hover:not(.active) { background:rgba(255,255,255,.04); color:rgba(255,255,255,.75); }
-.sidebar-footer { padding:12px 18px; border-top:1px solid rgba(255,255,255,.06); }
-.sidebar-tagline { color:rgba(200,169,110,.3); font-size:9px; letter-spacing:.3px; line-height:1.5; margin-bottom:10px; }
-.sidebar-date { color:rgba(255,255,255,.25); font-size:11px; margin-bottom:8px; }
-.btn-logout { width:100%; padding:8px; background:transparent; border:1px solid rgba(200,169,110,.25); color:rgba(200,169,110,.6); border-radius:8px; font-size:12px; cursor:pointer; transition:all .2s; }
+.sidebar-footer { padding:10px 14px; border-top:1px solid rgba(255,255,255,.06); overflow:hidden; }
+.sidebar.collapsed .sidebar-footer { padding:10px 0; display:flex; justify-content:center; }
+.sidebar-tagline { color:rgba(200,169,110,.3); font-size:9px; letter-spacing:.3px; line-height:1.5; margin-bottom:8px; white-space:nowrap; transition:opacity .2s; }
+.sidebar-date { color:rgba(255,255,255,.25); font-size:11px; margin-bottom:8px; white-space:nowrap; transition:opacity .2s; }
+.sidebar.collapsed .sidebar-tagline,
+.sidebar.collapsed .sidebar-date { opacity:0; height:0; margin:0; pointer-events:none; }
+.btn-logout { width:100%; padding:8px; background:transparent; border:1px solid rgba(200,169,110,.25); color:rgba(200,169,110,.6); border-radius:8px; font-size:12px; cursor:pointer; transition:all .2s; white-space:nowrap; overflow:hidden; }
 .btn-logout:hover { background:rgba(200,169,110,.08); color:var(--oro-l); }
+.sidebar.collapsed .btn-logout { width:32px; padding:6px 0; font-size:14px; border-radius:50%; }
 
 /* ── TOPBAR MOBILE ── */
 .topbar-mobile { display:none; background:var(--negro); padding:12px 16px; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
@@ -87,7 +103,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:150; }
 
 /* ── MAIN ── */
-.main-content { margin-left:var(--sidebar); min-height:100vh; display:flex; flex-direction:column; }
+.main-content { margin-left:var(--sidebar); min-height:100vh; display:flex; flex-direction:column; transition:margin-left .25s ease; }
+.sidebar.collapsed ~ .main-content { margin-left:52px; }
 
 /* ── HERO ── */
 .hero { background:linear-gradient(160deg,var(--negro) 0%,var(--negro-m) 100%); padding:28px 28px 24px; }
@@ -280,12 +297,13 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="brand-row">
-        <svg width="34" height="34" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+        <svg width="51" height="51" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
         <div>
           <div class="brand-name">CTX</div>
           <div class="brand-sub">Gestión de riesgo</div>
         </div>
       </div>
+      <button class="btn-collapse" onclick="toggleCollapse()" id="btn-collapse" title="Colapsar menú">‹</button>
     </div>
     <div class="cli-block">
       <div class="cli-label">Cliente</div>
@@ -293,17 +311,19 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="cli-meta" id="s-meta">—</div>
     </div>
     <nav class="sidebar-nav">
-      <a class="nav-item active" onclick="navTo('resumen',this)">◈ Resumen</a>
-      <a class="nav-item" onclick="navTo('precios',this)">◎ Precios</a>
-      <a class="nav-item" onclick="navTo('composicion',this)">◉ Composición</a>
-      <a class="nav-item" onclick="navTo('operaciones',this)">≡ Operaciones</a>
-      <a class="nav-item" onclick="navTo('flujo',this)">⟳ Flujo de fondos</a>
-      <a class="nav-item" onclick="navTo('nueva',this)">＋ Nueva operación</a>
+      <a class="nav-item active" onclick="navTo('resumen',this)" title="Resumen">◈ <span class="nav-label">Resumen</span></a>
+      <a class="nav-item" onclick="navTo('precios',this)" title="Precios">◎ <span class="nav-label">Precios</span></a>
+      <a class="nav-item" onclick="navTo('composicion',this)" title="Composición">◉ <span class="nav-label">Composición</span></a>
+      <a class="nav-item" onclick="navTo('operaciones',this)" title="Operaciones">≡ <span class="nav-label">Operaciones</span></a>
+      <a class="nav-item" onclick="navTo('flujo',this)" title="Flujo de fondos">⟳ <span class="nav-label">Flujo de fondos</span></a>
+      <a class="nav-item" onclick="navTo('nueva',this)" title="Nueva operación">＋ <span class="nav-label">Nueva operación</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
       <div class="sidebar-date" id="s-fecha">—</div>
-      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+      <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
+        <span class="nav-label">Cerrar sesión</span><span style="display:none" class="logout-icon">⏻</span>
+      </button>
     </div>
   </aside>
 
@@ -1585,6 +1605,20 @@ function fmtUSD(n) {
 }
 function fmtTn(n) { return n?Number(n).toLocaleString('es-AR'):'0'; }
 function fmtPrecio(n) { return n?'$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'; }
+
+// ── SIDEBAR COLLAPSE ──
+function toggleCollapse() {
+  const sidebar = document.getElementById('sidebar');
+  const btn     = document.getElementById('btn-collapse');
+  const isCollapsed = sidebar.classList.toggle('collapsed');
+  btn.textContent   = isCollapsed ? '›' : '‹';
+  btn.title         = isCollapsed ? 'Expandir menú' : 'Colapsar menú';
+  // Toggle logout icon vs text
+  const lbl = sidebar.querySelector('.btn-logout .nav-label');
+  const ico = sidebar.querySelector('.btn-logout .logout-icon');
+  if (lbl) lbl.style.display = isCollapsed ? 'none' : '';
+  if (ico) ico.style.display = isCollapsed ? 'inline' : 'none';
+}
 
 // ── NAVEGACIÓN ──
 function navTo(section, el) {
