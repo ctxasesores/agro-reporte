@@ -812,13 +812,16 @@ async function uploadCsv() {
   if (!csvData.length) return;
   const btn = document.getElementById('csv-upload-btn');
   btn.disabled=true; btn.textContent='Subiendo...';
-  // UPSERT handles conflicts — no need to delete first
+  // Deduplicar por producto+posicion+fecha (quedarse con el último valor)
+  const dedupMap = new Map();
+  csvData.forEach(r => dedupMap.set(r.producto+'|'+r.posicion+'|'+r.fecha, r));
+  const dedupData = Array.from(dedupMap.values());
   const batchSize=500; let uploaded=0;
-  for (let i=0;i<csvData.length;i+=batchSize) {
-    const batch=csvData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
+  for (let i=0;i<dedupData.length;i+=batchSize) {
+    const batch=dedupData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
     const {error}=await sb.from('precios_historicos').upsert(batch,{onConflict:'producto,posicion,fecha'});
     if (error) { mostrarToast('hist-toast','Error: '+error.message,'err'); btn.disabled=false; btn.textContent='↑ Subir'; return; }
-    uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+csvData.length;
+    uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+dedupData.length;
   }
   btn.disabled=false; btn.textContent='↑ Subir a Supabase';
   mostrarToast('hist-toast','✓ '+uploaded+' registros cargados.','ok');
