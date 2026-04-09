@@ -65,8 +65,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .sidebar.collapsed { width:83px; }
 
 /* brand */
-.sidebar-brand { padding:14px 12px 12px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.brand-row { display:flex; align-items:center; gap:10px; overflow:hidden; min-width:0; }
+.sidebar-brand { padding:14px 12px 12px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:8px; position:relative; }
+.brand-row { display:flex; align-items:center; gap:10px; overflow:hidden; min-width:0; flex-shrink:0; }
+.sidebar.collapsed .sidebar-brand { justify-content:center; padding:14px 8px 12px; }
+.sidebar.collapsed .btn-collapse { position:absolute; top:10px; right:4px; font-size:18px; padding:3px 4px; }
 .brand-text { overflow:hidden; transition:opacity .2s,max-width .25s; max-width:160px; }
 .sidebar.collapsed .brand-text { opacity:0; max-width:0; pointer-events:none; }
 .brand-name { font-size:16px; font-weight:700; color:white; letter-spacing:-.2px; white-space:nowrap; }
