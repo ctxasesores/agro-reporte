@@ -812,15 +812,11 @@ async function uploadCsv() {
   if (!csvData.length) return;
   const btn = document.getElementById('csv-upload-btn');
   btn.disabled=true; btn.textContent='Subiendo...';
-  const combos=[...new Set(csvData.map(r=>r.producto+'|'+r.posicion))];
-  for (const combo of combos) {
-    const [prod,pos]=combo.split('|');
-    await sb.from('precios_historicos').delete().eq('producto',prod).eq('posicion',pos);
-  }
+  // UPSERT handles conflicts — no need to delete first
   const batchSize=500; let uploaded=0;
   for (let i=0;i<csvData.length;i+=batchSize) {
     const batch=csvData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
-    const {error}=await sb.from('precios_historicos').insert(batch);
+    const {error}=await sb.from('precios_historicos').upsert(batch,{onConflict:'producto,posicion,fecha'});
     if (error) { mostrarToast('hist-toast','Error: '+error.message,'err'); btn.disabled=false; btn.textContent='↑ Subir'; return; }
     uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+csvData.length;
   }
