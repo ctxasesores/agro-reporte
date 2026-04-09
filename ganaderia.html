@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context | Reporte Ganadero</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --negro:    #132d46; --negro-m:  #1e3f5c;
+  --negro-s:  #1a3349;
+  --negro-b:  #0d2035;
+  --crema:    #0d2035; --crema-d:  #1a3349; --crema-dd: #254560;
+  --oro:      #d4a017; --oro-l:    #f0ca60; --oro-d:    #a87c0e;
+  --verde:    #1e9970; --verde-l:  #2ab88a;
+  --rojo:     #d9512c;
+  --texto:    #dce8f5; --gris:     #7fa8c4; --gris-l:   #4e718a;
+  --blanco:   #1a3349;
+  --sombra:   0 2px 20px rgba(0,0,0,.45);
+  --radio:    10px; --sidebar: 240px;
+
+  /* Ganadería accent */
+  --gan-verde:  #2e9e6e;
+  --gan-tierra: #c47c2e;
+  --gan-cielo:  #4a9fd4;
+}
+* { box-sizing:border-box; margin:0; padding:0; font-family:'DM Sans',-apple-system,sans-serif !important; }
+body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+/* ── LOGIN ── */
+#loginScreen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); padding:32px 20px; }
+.login-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:32px 28px; width:100%; max-width:360px; }
+.login-card label { color:rgba(255,255,255,.65); font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; display:block; margin-bottom:7px; }
+.login-card input { width:100%; padding:13px 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.07); color:white; font-size:15px; margin-bottom:14px; outline:none; transition:border .2s; }
+.login-card input:focus { border-color:var(--oro-l); }
+.login-card input::placeholder { color:rgba(255,255,255,.28); }
+.btn-primary { width:100%; padding:14px; background:var(--gan-verde); color:white; border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:opacity .2s; }
+.btn-primary:hover { opacity:.88; }
+.login-error { color:#fca5a5; font-size:13px; margin-top:12px; text-align:center; display:none; }
+
+/* ── LOADING ── */
+#loadingScreen { min-height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); gap:16px; }
+.loading-spinner { width:36px; height:36px; border:3px solid rgba(46,158,110,.2); border-top-color:var(--gan-verde); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { color:rgba(255,255,255,.5); font-size:13px; }
+
+/* ── SHELL ── */
+#appShell { display:none; min-height:100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar { width:var(--sidebar); background:var(--negro); position:fixed; top:0; left:0; bottom:0; display:flex; flex-direction:column; z-index:200; transition:width .25s ease; overflow:hidden; }
+.sidebar.collapsed { width:83px; }
+.sidebar-brand { padding:14px 12px 12px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:8px; position:relative; }
+.brand-row { display:flex; align-items:center; gap:10px; overflow:hidden; min-width:0; }
+.brand-text { overflow:hidden; transition:opacity .2s,max-width .25s; max-width:160px; }
+.sidebar.collapsed .brand-text { opacity:0; max-width:0; pointer-events:none; }
+.brand-name { font-size:16px; font-weight:700; color:white; letter-spacing:-.2px; white-space:nowrap; }
+.brand-sub  { color:rgba(255,255,255,.35); font-size:11px; margin-top:2px; white-space:nowrap; }
+.btn-collapse { background:none; border:none; cursor:pointer; color:rgba(255,255,255,.55); font-size:22px; line-height:1; padding:5px; border-radius:6px; transition:all .15s; flex-shrink:0; }
+.btn-collapse:hover { background:rgba(255,255,255,.1); color:white; }
+.sidebar.collapsed .sidebar-brand { justify-content:center; }
+.sidebar.collapsed .btn-collapse { position:absolute; top:10px; right:4px; font-size:18px; }
+.sidebar.collapsed .cli-block { display:none; }
+.cli-block  { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06); }
+.cli-label  { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.3); margin-bottom:4px; }
+.cli-name   { font-size:13px; font-weight:600; color:white; line-height:1.3; }
+.cli-meta   { font-size:11px; color:rgba(255,255,255,.35); margin-top:3px; }
+.sidebar-nav { flex:1; padding:8px 0; overflow-y:auto; overflow-x:hidden; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 14px; color:rgba(255,255,255,.45); font-size:13px; border-left:2px solid transparent; cursor:pointer; transition:all .15s; text-decoration:none; white-space:nowrap; overflow:hidden; }
+.nav-icon  { font-size:16px; flex-shrink:0; width:20px; text-align:center; }
+.nav-label { transition:opacity .2s,max-width .25s; max-width:200px; overflow:hidden; }
+.sidebar.collapsed .nav-item { padding:10px 0; justify-content:center; }
+.sidebar.collapsed .nav-label { opacity:0; max-width:0; pointer-events:none; }
+.nav-item.active { background:rgba(46,158,110,.15); color:#4de0a8; border-left-color:var(--gan-verde); }
+.sidebar.collapsed .nav-item.active { border-left-color:transparent; border-right:2px solid var(--gan-verde); }
+.nav-item:hover:not(.active) { background:rgba(255,255,255,.05); color:rgba(255,255,255,.8); }
+.sidebar-footer { padding:10px 14px; border-top:1px solid rgba(255,255,255,.06); }
+.sidebar.collapsed .sidebar-footer { padding:10px 0; display:flex; justify-content:center; }
+.sidebar-tagline { color:rgba(46,158,110,.3); font-size:9px; letter-spacing:.3px; line-height:1.5; margin-bottom:8px; white-space:nowrap; transition:opacity .2s; }
+.sidebar-date { color:rgba(255,255,255,.25); font-size:11px; margin-bottom:8px; white-space:nowrap; transition:opacity .2s; }
+.sidebar.collapsed .sidebar-tagline, .sidebar.collapsed .sidebar-date { opacity:0; height:0; margin:0; overflow:hidden; }
+.btn-logout { width:100%; padding:8px; background:transparent; border:1px solid rgba(46,158,110,.25); color:rgba(46,158,110,.6); border-radius:8px; font-size:12px; cursor:pointer; transition:all .2s; }
+.btn-logout:hover { background:rgba(46,158,110,.08); color:#4de0a8; }
+.sidebar.collapsed .btn-logout { width:44px; height:34px; padding:0; font-size:16px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+
+/* ── MAIN ── */
+.main-content { margin-left:var(--sidebar); min-height:100vh; display:flex; flex-direction:column; transition:margin-left .25s ease; }
+.sidebar.collapsed ~ .main-content { margin-left:83px; }
+
+/* ── HERO ── */
+.hero { background:linear-gradient(160deg,var(--negro) 0%,#0f2e1a 100%); padding:28px 28px 24px; }
+.hero-eyebrow { font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px; font-weight:500; }
+.hero-nombre  { font-size:22px; font-weight:600; color:white; margin-bottom:2px; letter-spacing:-.2px; }
+.hero-meta    { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:16px; }
+.tc-bar { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.tc-label { font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.8px; }
+.tc-value { font-size:13px; font-weight:700; color:var(--gan-verde); }
+.tc-date  { font-size:10px; color:rgba(255,255,255,.25); }
+
+.kpis-gan { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.kpi-gan { background:rgba(255,255,255,.06); border-radius:10px; padding:14px 16px; border:1px solid rgba(255,255,255,.07); }
+.kpi-gan-label { font-size:9px; text-transform:uppercase; letter-spacing:.8px; color:rgba(255,255,255,.4); margin-bottom:8px; font-weight:600; }
+.kpi-gan-value { font-size:22px; font-weight:700; color:white; line-height:1; letter-spacing:-.3px; }
+.kpi-gan-value.accent { color:var(--gan-verde); font-size:28px; }
+.kpi-gan-sub { font-size:10px; color:rgba(255,255,255,.3); margin-top:5px; }
+.kpi-gan-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; margin-top:5px; }
+.badge-gan-pos { background:rgba(46,158,110,.2); color:#4de0a8; }
+.badge-gan-neg { background:rgba(217,81,44,.2); color:#f0856a; }
+.badge-gan-neu { background:rgba(127,168,196,.15); color:var(--gris); }
+
+/* ── PAGE BODY ── */
+.page-body { padding:24px 28px; flex:1; background:var(--negro-b); }
+.card { background:var(--negro-s); border-radius:var(--radio); box-shadow:var(--sombra); border:1px solid var(--crema-dd); overflow:hidden; }
+.section { margin-bottom:28px; }
+.section-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.section-title::after { content:''; flex:1; height:1px; background:var(--crema-dd); }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+.empty-state { padding:40px; text-align:center; color:var(--gris); font-size:14px; }
+.error-banner { background:rgba(212,160,23,.15); border:1px solid rgba(212,160,23,.3); border-radius:8px; padding:12px 16px; font-size:13px; color:var(--oro-l); margin-bottom:16px; }
+
+/* ── TABS ── */
+.module-tabs { display:flex; gap:0; margin-bottom:0; border-bottom:1px solid var(--crema-dd); }
+.module-tab { padding:10px 20px; font-size:13px; font-weight:600; color:var(--gris); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; background:none; border-top:none; border-left:none; border-right:none; }
+.module-tab.active { color:#4de0a8; border-bottom-color:var(--gan-verde); }
+.module-tab:hover:not(.active) { color:var(--texto); }
+
+/* ── HACIENDA TABLE ── */
+.gan-table { width:100%; border-collapse:collapse; font-size:13px; white-space:nowrap; }
+.gan-table th { padding:9px 14px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:700; border-bottom:1px solid var(--crema-dd); }
+.gan-table td { padding:10px 14px; border-bottom:1px solid var(--crema-dd); color:var(--texto); }
+.gan-table tr:last-child td { border-bottom:none; }
+.gan-table tr:hover td { background:var(--crema-d); }
+.cat-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; }
+.cat-ternero    { background:rgba(74,159,212,.2); color:#7dbaf8; }
+.cat-novillo    { background:rgba(46,158,110,.2); color:#4de0a8; }
+.cat-vaquillona { background:rgba(212,160,23,.2); color:var(--oro-l); }
+.cat-vaca       { background:rgba(217,81,44,.2); color:#f0856a; }
+.cat-toro       { background:rgba(127,168,196,.2); color:var(--gris); }
+
+/* ── OPS FILTERS ── */
+.ops-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.filter-btn { padding:6px 14px; border-radius:20px; border:1px solid var(--crema-dd); background:var(--crema-d); font-size:12px; color:var(--gris); cursor:pointer; transition:all .18s; }
+.filter-btn.active { background:var(--negro); color:#4de0a8; border-color:var(--gan-verde); }
+
+/* ── FORM ── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:20px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group.full { grid-column:1/-1; }
+.form-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); }
+.form-input,.form-select { padding:10px 13px; border-radius:8px; border:1px solid var(--crema-dd); background:var(--crema-d); font-size:14px; color:var(--texto); outline:none; transition:border .2s,box-shadow .2s; width:100%; }
+.form-input:focus,.form-select:focus { border-color:var(--gan-verde); box-shadow:0 0 0 3px rgba(46,158,110,.15); }
+.form-input:disabled { background:var(--negro-b); color:var(--gris-l); }
+.form-divider { grid-column:1/-1; height:1px; background:var(--crema-dd); }
+.form-actions { grid-column:1/-1; display:flex; gap:10px; justify-content:flex-end; }
+.btn-submit { padding:11px 26px; background:var(--gan-verde); color:white; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity .2s; }
+.btn-submit:hover { opacity:.88; }
+.btn-cancel { padding:11px 18px; background:transparent; border:1px solid var(--crema-dd); color:var(--gris); border-radius:8px; font-size:14px; cursor:pointer; }
+.form-toast { grid-column:1/-1; padding:11px 14px; border-radius:8px; font-size:13px; font-weight:500; display:none; }
+.form-toast.ok  { background:rgba(46,158,110,.2); color:#4de0a8; border:1px solid rgba(46,158,110,.3); display:block; }
+.form-toast.err { background:rgba(217,81,44,.2); color:#f87171; border:1px solid rgba(217,81,44,.3); display:block; }
+
+/* ── FLUJO ── */
+.flujo-table { width:100%; border-collapse:collapse; font-size:13px; }
+.flujo-table th { padding:9px 14px; text-align:right; font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:700; border-bottom:1px solid var(--crema-dd); }
+.flujo-table th:first-child { text-align:left; }
+.flujo-table td { padding:10px 14px; border-bottom:1px solid var(--crema-dd); text-align:right; font-size:13px; color:var(--texto); }
+.flujo-table td:first-child { text-align:left; font-weight:600; }
+.flujo-table tr:last-child td { border-bottom:none; font-weight:700; background:var(--negro-b); }
+.flujo-ingreso { color:var(--verde-l); font-weight:600; }
+.flujo-egreso  { color:var(--rojo); font-weight:600; }
+.flujo-neto-pos { color:var(--verde-l); font-weight:700; }
+.flujo-neto-neg { color:var(--rojo); font-weight:700; }
+
+/* ── RATIO CARD ── */
+.ratio-card { display:flex; gap:20px; padding:20px; align-items:center; flex-wrap:wrap; }
+.ratio-box { flex:1; min-width:140px; background:var(--negro-b); border-radius:10px; padding:16px 18px; border:1px solid var(--crema-dd); }
+.ratio-label { font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); margin-bottom:6px; font-weight:700; }
+.ratio-value { font-size:26px; font-weight:700; color:var(--texto); line-height:1; }
+.ratio-unit  { font-size:11px; color:var(--gris); margin-top:4px; }
+.ratio-arrow { font-size:28px; color:var(--gris-l); }
+
+/* ── TAGS ── */
+.tag-pill { display:inline-flex; align-items:center; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:.5px; border:1px solid rgba(46,158,110,.35); color:rgba(46,158,110,.8); background:transparent; cursor:pointer; transition:all .15s; }
+.tag-pill.active { background:var(--gan-verde); color:white; border-color:var(--gan-verde); }
+.tag-pill.tag-op { cursor:default; background:rgba(46,158,110,.12); border-color:rgba(46,158,110,.25); }
+.tag-selector-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.tag-selector-item { display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; border:1px solid rgba(46,158,110,.3); color:rgba(46,158,110,.7); background:transparent; cursor:pointer; transition:all .15s; user-select:none; }
+.tag-selector-item:hover { border-color:var(--gan-verde); color:#4de0a8; }
+.tag-selector-item.selected { background:var(--gan-verde); color:white; border-color:var(--gan-verde); }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:600; display:flex; align-items:center; justify-content:center; padding:20px; }
+.modal-box { background:var(--negro-s); border:1px solid var(--crema-dd); border-radius:16px; padding:28px; width:100%; max-width:440px; box-shadow:0 8px 40px rgba(0,0,0,.4); }
+.modal-title { font-size:16px; font-weight:700; color:var(--texto); margin-bottom:6px; }
+.modal-sub { font-size:12px; color:var(--gris); margin-bottom:20px; line-height:1.5; }
+.tag-input-row { display:flex; gap:8px; margin-bottom:12px; }
+.tag-input { flex:1; padding:9px 13px; border-radius:8px; border:1px solid var(--crema-dd); background:var(--negro-b); color:var(--texto); font-size:14px; font-weight:700; letter-spacing:1px; text-transform:uppercase; outline:none; }
+.tag-input:focus { border-color:var(--gan-verde); }
+.tag-current { display:flex; flex-wrap:wrap; gap:6px; min-height:36px; padding:6px; background:var(--negro-b); border-radius:8px; border:1px solid var(--crema-dd); }
+.tag-remove { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; background:rgba(46,158,110,.15); color:#4de0a8; border:1px solid rgba(46,158,110,.3); cursor:pointer; }
+.tag-remove:hover { background:rgba(217,81,44,.2); color:#f0856a; }
+
+/* ── CHART ── */
+.chart-box { padding:16px; }
+.chart-wrap { position:relative; }
+
+@media(max-width:900px) {
+  .sidebar { transform:translateX(-100%); transition:transform .25s; }
+  .sidebar.open { transform:translateX(0); }
+  .main-content { margin-left:0; }
+  .two-col { grid-template-columns:1fr; }
+  .kpis-gan { grid-template-columns:1fr 1fr; }
+  .page-body { padding:16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div style="margin-bottom:28px;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <svg width="56" height="56" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+    <span style="font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</span>
+    <span style="font-size:11px;color:rgba(46,158,110,.7);letter-spacing:1.5px;text-transform:uppercase;font-weight:600">Ganadería</span>
+  </div>
+  <div class="login-card">
+    <label>Email</label>
+    <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email">
+    <label>Contraseña</label>
+    <input type="password" id="loginPass" placeholder="••••••••">
+    <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingScreen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando tu reporte...</div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-row">
+        <svg width="51" height="51" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+        <div class="brand-text">
+          <div class="brand-name">CTX</div>
+          <div class="brand-sub">Gestión de riesgo</div>
+        </div>
+      </div>
+      <button class="btn-collapse" onclick="toggleCollapse()" id="btn-collapse" title="Colapsar menú">‹</button>
+    </div>
+    <div class="cli-block">
+      <div class="cli-label">Cliente</div>
+      <div class="cli-name" id="s-nombre">—</div>
+      <div class="cli-meta" id="s-meta">—</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="navTo('resumen',this)" title="Resumen"><span class="nav-icon">◈</span><span class="nav-label">Resumen</span></a>
+      <a class="nav-item" onclick="navTo('hacienda',this)" title="Hacienda"><span class="nav-icon">🐄</span><span class="nav-label">Hacienda</span></a>
+      <a class="nav-item" onclick="navTo('insumos',this)" title="Insumos"><span class="nav-icon">🌽</span><span class="nav-label">Insumos</span></a>
+      <a class="nav-item" onclick="navTo('margen',this)" title="Margen"><span class="nav-icon">◎</span><span class="nav-label">Margen y Ratio</span></a>
+      <a class="nav-item" onclick="navTo('flujo',this)" title="Flujo de fondos"><span class="nav-icon">⟳</span><span class="nav-label">Flujo de fondos</span></a>
+      <a class="nav-item" onclick="navTo('nueva',this)" title="Nueva operación"><span class="nav-icon">＋</span><span class="nav-label">Nueva operación</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
+      <div class="sidebar-date" id="s-fecha">—</div>
+      <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
+        <span class="nav-label">Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <div class="main-content">
+    <!-- HERO -->
+    <div class="hero" id="sec-resumen">
+      <div class="hero-eyebrow">Reporte ganadero</div>
+      <div class="hero-nombre" id="d-nombre">—</div>
+      <div class="hero-meta" id="d-meta">—</div>
+
+      <!-- TC bar + tags -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        <div class="tc-bar" style="margin:0">
+          <span class="tc-label">TC</span>
+          <span class="tc-value" id="d-tc">—</span>
+          <span class="tc-date" id="d-tc-date"></span>
+        </div>
+        <div style="width:1px;height:16px;background:rgba(255,255,255,.1)"></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.3);font-weight:700">Tags</span>
+          <div id="hero-tag-filters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          <button onclick="abrirGestionTags()" style="padding:3px 8px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.35);font-size:10px;cursor:pointer">⚙ gestionar</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpis-gan">
+        <div class="kpi-gan">
+          <div class="kpi-gan-label">Hacienda cubierta</div>
+          <div class="kpi-gan-value accent" id="d-hac-usd">—</div>
+          <div class="kpi-gan-sub" id="d-hac-kg">— kg cubiertos</div>
+        </div>
+        <div class="kpi-gan">
+          <div class="kpi-gan-label">Insumos cubiertos</div>
+          <div class="kpi-gan-value" id="d-ins-usd">—</div>
+          <div class="kpi-gan-sub" id="d-ins-tn">— tn cubiertas</div>
+        </div>
+        <div class="kpi-gan">
+          <div class="kpi-gan-label">Precio prom. hacienda</div>
+          <div class="kpi-gan-value" id="d-precio-hac">—</div>
+          <div class="kpi-gan-sub">USD/kg vivo ponderado</div>
+        </div>
+        <div class="kpi-gan">
+          <div class="kpi-gan-label">Margen estimado</div>
+          <div class="kpi-gan-value" id="d-margen">—</div>
+          <div class="kpi-gan-sub" id="d-margen-sub">USD/kg vivo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="page-body">
+
+      <!-- ── HACIENDA ── -->
+      <div class="section" id="sec-hacienda">
+        <div class="section-title">Ventas de hacienda cubiertas</div>
+        <div style="margin-bottom:12px">
+          <div class="ops-filters" id="hac-filters"></div>
+        </div>
+        <div class="card">
+          <div style="overflow-x:auto">
+            <table class="gan-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Categoría</th><th>Tipo</th><th>Kg vivo</th>
+                  <th>Precio USD/kg</th><th>Precio $AR/kg</th><th>Vencimiento</th>
+                  <th>Valor total</th><th>Tags</th><th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="d-hac-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── INSUMOS ── -->
+      <div class="section" id="sec-insumos">
+        <div class="section-title">Cobertura de insumos</div>
+        <div style="margin-bottom:12px">
+          <div class="ops-filters" id="ins-filters"></div>
+        </div>
+        <div class="card">
+          <div style="overflow-x:auto">
+            <table class="gan-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Insumo</th><th>Tipo op.</th><th>Lado</th>
+                  <th>Volumen (tn)</th><th>Precio USD/tn</th><th>Vencimiento</th>
+                  <th>Valor total</th><th>Tags</th><th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="d-ins-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MARGEN Y RATIO ── -->
+      <div class="section" id="sec-margen">
+        <div class="section-title">Margen y relación insumo/producto</div>
+        <div class="two-col">
+          <!-- Ratio card -->
+          <div class="card">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--crema-dd);font-size:11px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.6px">Relación insumo / producto</div>
+            <div class="ratio-card">
+              <div class="ratio-box">
+                <div class="ratio-label">Ratio cubierto</div>
+                <div class="ratio-value" id="d-ratio-cubierto">—</div>
+                <div class="ratio-unit">kg maíz / kg carne</div>
+              </div>
+              <div class="ratio-arrow">→</div>
+              <div class="ratio-box">
+                <div class="ratio-label">Ratio mercado hoy</div>
+                <div class="ratio-value" id="d-ratio-mercado">—</div>
+                <div class="ratio-unit">kg maíz / kg carne</div>
+              </div>
+              <div class="ratio-box" style="border-color:rgba(46,158,110,.3)">
+                <div class="ratio-label">Diferencia</div>
+                <div class="ratio-value" id="d-ratio-diff" style="font-size:22px">—</div>
+                <div class="ratio-unit" id="d-ratio-desc">vs mercado</div>
+              </div>
+            </div>
+            <div style="padding:0 20px 16px;font-size:11px;color:var(--gris-l)">
+              ↑ Ratio más bajo = mejor margen para el ganadero (insumo más barato relativo a la hacienda)
+            </div>
+          </div>
+
+          <!-- Margen por categoría -->
+          <div class="card">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--crema-dd);font-size:11px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.6px">Margen estimado por categoría</div>
+            <div style="padding:16px">
+              <div style="position:relative;height:220px"><canvas id="margenChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Precio hacienda histórico -->
+        <div class="card" style="margin-top:18px">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--crema-dd);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.6px">Evolución precio hacienda cubierto</span>
+            <select id="evol-cat" onchange="renderEvolHacienda()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);border-radius:6px;padding:3px 8px;font-size:11px">
+              <option value="">Todas las categorías</option>
+              <option>Ternero</option><option>Novillo</option><option>Vaquillona</option><option>Vaca</option>
+            </select>
+          </div>
+          <div class="chart-box">
+            <div class="chart-wrap" style="height:200px"><canvas id="evolHacChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FLUJO ── -->
+      <div class="section" id="sec-flujo">
+        <div class="section-title">Flujo de fondos proyectado</div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="padding:12px 16px 0;display:flex;gap:10px;flex-wrap:wrap">
+            <select id="flujo-tipo-gan" onchange="renderFlujoGan()" style="background:var(--crema-d);border:1px solid var(--crema-dd);color:var(--gris);border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer;outline:none">
+              <option value="">Hacienda + Insumos</option>
+              <option value="hacienda">Solo Hacienda</option>
+              <option value="insumos">Solo Insumos</option>
+            </select>
+          </div>
+          <div style="padding:16px">
+            <div style="position:relative;height:260px"><canvas id="flujoGanChart"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="overflow-x:auto">
+            <table class="flujo-table">
+              <thead>
+                <tr><th>Mes</th><th>Ingresos (hacienda)</th><th>Egresos (insumos)</th><th>Neto</th><th>Detalle</th></tr>
+              </thead>
+              <tbody id="flujo-gan-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NUEVA OPERACIÓN ── -->
+      <div class="section" id="sec-nueva">
+        <div class="section-title">Nueva operación</div>
+        <div class="card">
+          <!-- Tabs módulo -->
+          <div class="module-tabs">
+            <button class="module-tab active" id="tab-hac-btn" onclick="switchOpTab('hacienda')">🐄 Venta de Hacienda</button>
+            <button class="module-tab" id="tab-ins-btn" onclick="switchOpTab('insumos')">🌽 Cobertura de Insumos</button>
+          </div>
+
+          <!-- Form hacienda -->
+          <div id="form-hacienda">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Categoría</label>
+                <select class="form-select" id="fh-categoria">
+                  <option value="">Seleccioná...</option>
+                  <option>Ternero</option><option>Novillo</option><option>Vaquillona</option>
+                  <option>Vaca</option><option>Toro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de operación</label>
+                <select class="form-select" id="fh-tipo">
+                  <option value="">Seleccioná...</option>
+                  <option>Forward frigorífico</option>
+                  <option>Futuro Rosgan</option>
+                  <option>Precio fijo</option>
+                  <option>Put (opción de venta)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha operación</label>
+                <input type="date" class="form-input" id="fh-fecha">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Vencimiento / entrega</label>
+                <input type="date" class="form-input" id="fh-vencimiento">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Kg vivos</label>
+                <input type="number" class="form-input" id="fh-kg" placeholder="ej: 10000" min="0" step="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Precio (USD/kg vivo)</label>
+                <input type="number" class="form-input" id="fh-precio" placeholder="ej: 1.85" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de cambio usado</label>
+                <input type="number" class="form-input" id="fh-tc" placeholder="ej: 1200" min="0" step="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tags *</label>
+                <div id="fh-tags-selector" class="tag-selector-grid"></div>
+              </div>
+              <div class="form-group full">
+                <label class="form-label">Observaciones (opcional)</label>
+                <input type="text" class="form-input" id="fh-obs" placeholder="Notas adicionales...">
+              </div>
+              <div class="form-divider"></div>
+              <div class="form-toast" id="fh-toast"></div>
+              <div class="form-actions">
+                <button class="btn-cancel" onclick="resetFormHac()">Limpiar</button>
+                <button class="btn-submit" id="btn-guardar-hac" onclick="guardarHacienda()">Guardar operación</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form insumos (reutiliza lógica agro) -->
+          <div id="form-insumos" style="display:none">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Insumo</label>
+                <select class="form-select" id="fi-producto">
+                  <option value="">Seleccioná...</option>
+                  <option>Maiz</option><option>Soja</option><option>Sorgo</option>
+                  <option>Girasol</option><option>Pellet soja</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de operación</label>
+                <select class="form-select" id="fi-tipo" onchange="onInsTipoChange()">
+                  <option value="">Seleccioná...</option>
+                  <option>Precio</option><option>Futuro</option><option>FIX</option>
+                  <option>Forward</option><option>Call</option><option>Put</option>
+                  <option>Plan de Siembra</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lado</label>
+                <select class="form-select" id="fi-lado">
+                  <option value="">Seleccioná...</option>
+                  <option>Compra</option><option>Venta</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha operación</label>
+                <input type="date" class="form-input" id="fi-fecha">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Volumen (tn)</label>
+                <input type="number" class="form-input" id="fi-volumen" placeholder="ej: 200" min="0" step="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Precio (USD/tn)</label>
+                <input type="number" class="form-input" id="fi-precio" placeholder="ej: 180" min="0" step="0.1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Vencimiento</label>
+                <input type="date" class="form-input" id="fi-vencimiento">
+              </div>
+              <div class="form-group" id="fi-grp-ejercicio" style="display:none">
+                <label class="form-label">Precio ejercicio (USD/tn)</label>
+                <input type="number" class="form-input" id="fi-ejercicio" placeholder="ej: 185" min="0" step="0.1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tags *</label>
+                <div id="fi-tags-selector" class="tag-selector-grid"></div>
+              </div>
+              <div class="form-group full">
+                <label class="form-label">Observaciones (opcional)</label>
+                <input type="text" class="form-input" id="fi-obs" placeholder="Notas adicionales...">
+              </div>
+              <div class="form-divider"></div>
+              <div class="form-toast" id="fi-toast"></div>
+              <div class="form-actions">
+                <button class="btn-cancel" onclick="resetFormIns()">Limpiar</button>
+                <button class="btn-submit" id="btn-guardar-ins" onclick="guardarInsumo()">Guardar operación</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ops cargadas -->
+        <div style="margin-top:20px">
+          <div class="section-title" style="font-size:10px">Mis operaciones cargadas</div>
+          <div id="ops-guardadas-wrap">
+            <div class="card empty-state">Cargando...</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-content -->
+</div><!-- /appShell -->
+
+<!-- MODAL EDITAR -->
+<div id="editOpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--negro-s);border-radius:16px;padding:28px;width:100%;max-width:520px;box-shadow:0 8px 40px rgba(0,0,0,.4);border:1px solid var(--crema-dd)">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--texto)" id="edit-modal-title">Editar operación</h3>
+    <input type="hidden" id="eop-id">
+    <input type="hidden" id="eop-modulo">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="edit-modal-fields"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button onclick="cerrarEditarOp()" style="padding:10px 18px;background:transparent;border:1px solid var(--crema-dd);color:var(--gris);border-radius:8px;cursor:pointer">Cancelar</button>
+      <button onclick="guardarEditOp()" style="padding:10px 22px;background:var(--gan-verde);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
+const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+
+// Tablas: hacienda → operaciones_ganaderia, insumos → operaciones (reutiliza tabla agro)
+// categoria, unidad, moneda columns added to operaciones
+
+const CATEGORIAS = ['Ternero','Novillo','Vaquillona','Vaca','Toro'];
+const INSUMOS    = ['Maiz','Soja','Sorgo','Girasol','Pellet soja'];
+
+let sb = null;
+let currentUser = null;
+let currentCliente = null;
+let allHacOps = [];   // ventas de hacienda
+let allInsOps = [];   // cobertura insumos
+let precios = {};     // precios mercado insumos
+let precioHacienda = {}; // precios mercado hacienda por categoria
+let tipoCambio = 1200;   // TC configurable
+let tcFecha = '';
+let tagsDisponibles = [];
+let activeTagFilter = [];
+let opsCache = [];
+let flujoGanChart = null;
+let margenChart = null;
+let evolHacChart = null;
+
+// ── INIT ──
+function initSupabase() {
+  if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const btn   = document.getElementById('btnLogin');
+  const errEl = document.getElementById('loginError');
+  if (!email || !pass) { errEl.textContent='Completá email y contraseña.'; errEl.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='Ingresando...';
+  initSupabase();
+  const {data,error} = await sb.auth.signInWithPassword({email, password:pass});
+  btn.disabled=false; btn.textContent='Ingresar';
+  if (error) { errEl.textContent='Email o contraseña incorrectos.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  currentUser = data.user;
+  showLoading(true);
+  document.getElementById('loginScreen').style.display='none';
+  await loadApp();
+}
+
+async function logout() { if(sb) await sb.auth.signOut(); location.reload(); }
+
+async function loadApp() {
+  initSupabase();
+  const {data:cli} = await sb.from('clientes').select('*').eq('id', currentUser.id).single();
+  if (!cli) { alert('No se encontró tu perfil.'); location.reload(); return; }
+  currentCliente = cli;
+  tagsDisponibles = Array.isArray(cli.tags_disponibles)
+    ? cli.tags_disponibles.filter(t => typeof t === 'string' && t.trim().length > 0)
+    : [];
+
+  // Load todo en paralelo
+  const [hacRes, insRes, preciosRes, tcRes] = await Promise.all([
+    sb.from('operaciones').select('*')
+      .eq('cliente_codigo', cli.codigo)
+      .eq('estado','confirmada')
+      .not('categoria','is',null)   // hacienda tiene categoria
+      .order('created_at',{ascending:false}),
+    sb.from('operaciones').select('*')
+      .eq('cliente_codigo', cli.codigo)
+      .eq('estado','confirmada')
+      .is('categoria',null)         // insumos no tienen categoria
+      .order('created_at',{ascending:false}),
+    sb.from('precios_mercado').select('*').eq('activo',true),
+    sb.from('tipo_de_cambio').select('*').order('fecha',{ascending:false}).limit(1)
+  ]);
+
+  allHacOps = hacRes.data || [];
+  allInsOps = insRes.data || [];
+  buildPreciosMap(preciosRes.data || []);
+  if (tcRes.data && tcRes.data.length) {
+    tipoCambio = tcRes.data[0].valor;
+    tcFecha    = tcRes.data[0].fecha;
+  }
+
+  renderAll();
+  showLoading(false);
+  document.getElementById('appShell').style.display='block';
+  renderTagFilterBar();
+  renderTagsFormSelectors();
+  initFormDefaults();
+  cargarOpsGuardadas();
+  if (!tagsDisponibles.length) setTimeout(() => abrirGestionTags(true), 500);
+}
+
+function normalizeStr(s) {
+  return s ? s.normalize('NFD').replace(/[\u0300-\u036f]/g,'') : s;
+}
+function buildPreciosMap(rows) {
+  precios = {};
+  rows.forEach(r => {
+    const key = normalizeStr(r.producto) + '_' + r.vencimiento;
+    precios[key] = r.precio;
+  });
+}
+function getPrecioInsumo(producto, fechaVto) {
+  const p = normalizeStr(producto);
+  if (!fechaVto) return null;
+  const d = new Date(fechaVto+'T00:00:00');
+  const hoy = new Date();
+  const mes = d.getMonth()+1, anio = d.getFullYear();
+  const vencido = d < hoy;
+  const exactKey = p+'_'+mes+'_'+anio;
+  const contKey  = p+'_CONT';
+  if (vencido) return precios[contKey] || precios[exactKey] || null;
+  return precios[exactKey] || precios[contKey] || null;
+}
+function getPrecioHaciendaMercado(categoria) {
+  // Busca precio de hacienda en precios_mercado con clave categoria_CONT
+  const key = normalizeStr(categoria) + '_CONT';
+  return precios[key] || null;
+}
+
+// ── TAG FILTER ──
+function getFilteredHac() {
+  if (!activeTagFilter.length) return allHacOps;
+  return allHacOps.filter(op => {
+    const t = op.tags || [];
+    return activeTagFilter.every(tag => t.includes(tag));
+  });
+}
+function getFilteredIns() {
+  if (!activeTagFilter.length) return allInsOps;
+  return allInsOps.filter(op => {
+    const t = op.tags || [];
+    return activeTagFilter.every(tag => t.includes(tag));
+  });
+}
+function toggleTagFilter(tag) {
+  const idx = activeTagFilter.indexOf(tag);
+  if (idx >= 0) activeTagFilter.splice(idx, 1); else activeTagFilter.push(tag);
+  renderTagFilterBar();
+  renderAll();
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  const now = new Date();
+  document.getElementById('s-nombre').textContent = currentCliente.nombre_empresa;
+  document.getElementById('s-meta').textContent   = 'Campaña '+(currentCliente.campania||'—')+' · '+(currentCliente.actividad||'');
+  document.getElementById('d-nombre').textContent = currentCliente.nombre_empresa;
+  document.getElementById('d-meta').textContent   = 'Campaña '+(currentCliente.campania||'—')+' · '+(currentCliente.actividad||'');
+  document.getElementById('s-fecha').textContent  = 'Actualizado: '+now.toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+
+  // TC display
+  document.getElementById('d-tc').textContent = '$'+Number(tipoCambio).toLocaleString('es-AR');
+  document.getElementById('d-tc-date').textContent = tcFecha ? '('+tcFecha+')' : '';
+
+  renderKPIs();
+  renderHaciendaTable();
+  renderInsumosTable();
+  renderMargen();
+  renderFlujoGan();
+  renderEvolHacienda();
+}
+
+function renderKPIs() {
+  const hac = getFilteredHac();
+  const ins = getFilteredIns();
+
+  // Total hacienda cubierta
+  let totalHacUSD = 0, totalKg = 0, sumPrecioKg = 0, countPrecio = 0;
+  hac.forEach(op => {
+    const kg    = Number(op.volumen) || 0;
+    const precio= Number(op.precio)  || 0;
+    totalKg += kg;
+    totalHacUSD += kg * precio;
+    if (precio > 0) { sumPrecioKg += precio * kg; countPrecio += kg; }
+  });
+  const precioProm = countPrecio > 0 ? sumPrecioKg / countPrecio : 0;
+
+  // Total insumos
+  let totalInsUSD = 0, totalInsTn = 0;
+  ins.forEach(op => {
+    const tn    = Number(op.volumen) || 0;
+    const precio= Number(op.precio)  || 0;
+    totalInsTn += tn;
+    totalInsUSD += tn * precio;
+  });
+
+  // Margen estimado: precio hacienda promedio - costo insumos por kg carne
+  // Asumimos conversión estándar: ~7 kg maíz por kg de carne (invernada)
+  const conversion = 7;
+  const precioMaizMercado = precios['Maiz_CONT'] || precios['Maiz_4_2026'] || 0;
+  const costoInsumosPorKg = precioMaizMercado > 0 ? (precioMaizMercado / 1000) * conversion : 0; // USD/kg
+  const margen = precioProm > 0 && costoInsumosPorKg > 0 ? precioProm - costoInsumosPorKg : null;
+
+  document.getElementById('d-hac-usd').textContent = fmtUSD(totalHacUSD);
+  document.getElementById('d-hac-kg').textContent  = Number(totalKg).toLocaleString('es-AR')+' kg cubiertos';
+  document.getElementById('d-ins-usd').textContent = fmtUSD(totalInsUSD);
+  document.getElementById('d-ins-tn').textContent  = Number(totalInsTn).toLocaleString('es-AR')+' tn cubiertas';
+  document.getElementById('d-precio-hac').textContent = precioProm > 0 ? 'USD '+precioProm.toFixed(3) : '—';
+
+  const margenEl = document.getElementById('d-margen');
+  const margenSub = document.getElementById('d-margen-sub');
+  if (margen !== null) {
+    margenEl.textContent = 'USD '+(margen).toFixed(3);
+    margenEl.style.color = margen > 0 ? 'var(--gan-verde)' : 'var(--rojo)';
+    margenSub.textContent = 'por kg vivo (estimado)';
+  } else {
+    margenEl.textContent = '—';
+    margenSub.textContent = 'sin precios de mercado';
+  }
+}
+
+function renderHaciendaTable() {
+  const ops = getFilteredHac();
+  const tbody = document.getElementById('d-hac-body');
+  // Filters
+  const cats = ['todos',...new Set(allHacOps.map(o=>o.categoria).filter(Boolean))];
+  document.getElementById('hac-filters').innerHTML = cats.map(c =>
+    `<button class="filter-btn ${c==='todos'?'active':''}" onclick="setHacFilter('${c}',this)">${c==='todos'?'Todos':c}</button>`
+  ).join('');
+
+  if (!ops.length) { tbody.innerHTML='<tr><td colspan="10" class="empty-state">Sin operaciones de hacienda</td></tr>'; return; }
+  tbody.innerHTML = ops.map(op => {
+    const fOp  = op.fecha ? new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+    const fVto = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
+    const cat  = op.categoria || '—';
+    const catClass = 'cat-'+cat.toLowerCase().replace(/\s/g,'-');
+    const kg   = Number(op.volumen)||0;
+    const pUSD = Number(op.precio)||0;
+    const tc   = Number(op.precio_ejercicio)||tipoCambio; // usamos precio_ejercicio para guardar TC
+    const pARS = pUSD * tc;
+    const total= pUSD * kg;
+    const tagHtml = (op.tags||[]).map(t=>`<span class="tag-pill tag-op">${t}</span>`).join(' ')||'—';
+    return `<tr>
+      <td style="color:var(--gris-l);font-size:12px">${fOp}</td>
+      <td><span class="cat-pill ${catClass}">${cat}</span></td>
+      <td>${op.tipo||'—'}</td>
+      <td style="font-weight:600">${Number(kg).toLocaleString('es-AR')} kg</td>
+      <td style="color:var(--oro-l);font-weight:700">${pUSD>0?'USD '+pUSD.toFixed(3):'—'}</td>
+      <td style="color:var(--gris)">$${pARS>0?pARS.toFixed(0):'—'}/kg</td>
+      <td>${fVto}</td>
+      <td style="font-weight:600">${fmtUSD(total)}</td>
+      <td>${tagHtml}</td>
+      <td><span class="badge-conf" style="background:rgba(30,153,112,.15);color:var(--verde-l);font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600">Confirmada</span></td>
+    </tr>`;
+  }).join('');
+}
+let hacFilterCat = 'todos';
+function setHacFilter(cat, el) {
+  hacFilterCat = cat;
+  document.querySelectorAll('#hac-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const ops = hacFilterCat === 'todos' ? getFilteredHac() : getFilteredHac().filter(o=>o.categoria===hacFilterCat);
+  // re-render just the tbody
+  const tbody = document.getElementById('d-hac-body');
+  if (!ops.length) { tbody.innerHTML='<tr><td colspan="10" class="empty-state">Sin operaciones</td></tr>'; return; }
+  renderHaciendaTable();
+}
+
+function renderInsumosTable() {
+  const ops = getFilteredIns();
+  const tbody = document.getElementById('d-ins-body');
+  const prods = ['todos',...new Set(allInsOps.map(o=>o.producto).filter(Boolean))];
+  document.getElementById('ins-filters').innerHTML = prods.map(p =>
+    `<button class="filter-btn ${p==='todos'?'active':''}" onclick="setInsFilter('${p}',this)">${p==='todos'?'Todos':p}</button>`
+  ).join('');
+
+  if (!ops.length) { tbody.innerHTML='<tr><td colspan="10" class="empty-state">Sin operaciones de insumos</td></tr>'; return; }
+  tbody.innerHTML = ops.map(op => {
+    const fOp  = op.fecha ? new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+    const fVto = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
+    const tn   = Number(op.volumen)||0;
+    const pUSD = Number(op.precio)||0;
+    const total= pUSD * tn;
+    const lc   = op.lado==='Compra'?'pill-compra':'pill-venta';
+    const tagHtml = (op.tags||[]).map(t=>`<span class="tag-pill tag-op">${t}</span>`).join(' ')||'—';
+    return `<tr>
+      <td style="color:var(--gris-l);font-size:12px">${fOp}</td>
+      <td style="font-weight:600">${op.producto||'—'}</td>
+      <td>${op.tipo||'—'}</td>
+      <td><span class="pill ${lc}" style="font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:${op.lado==='Compra'?'rgba(42,184,138,.15)':'rgba(212,160,23,.15)'};color:${op.lado==='Compra'?'#2ab88a':'var(--oro-l)'}">${op.lado||'—'}</span></td>
+      <td>${Number(tn).toLocaleString('es-AR')} tn</td>
+      <td style="color:var(--oro-l);font-weight:700">${pUSD>0?'$'+pUSD+' USD/tn':'—'}</td>
+      <td>${fVto}</td>
+      <td style="font-weight:600">${fmtUSD(total)}</td>
+      <td>${tagHtml}</td>
+      <td><span style="background:rgba(30,153,112,.15);color:var(--verde-l);font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600">Confirmada</span></td>
+    </tr>`;
+  }).join('');
+}
+function setInsFilter(prod, el) {
+  document.querySelectorAll('#ins-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderInsumosTable();
+}
+
+function renderMargen() {
+  // Ratio insumo/producto: precio maíz / precio hacienda
+  const pMaizMercado = precios['Maiz_CONT'] || precios['Maiz_4_2026'] || 0;
+  const hac = getFilteredHac();
+  let sumPrecioKg = 0, countKg = 0;
+  hac.forEach(op => {
+    const kg = Number(op.volumen)||0;
+    const p  = Number(op.precio)||0;
+    if (p > 0) { sumPrecioKg += p*kg; countKg += kg; }
+  });
+  const pHacCubierto = countKg > 0 ? sumPrecioKg/countKg : 0;
+
+  // Precio hacienda mercado (del precios_mercado si existe)
+  const pHacMercado = precios['Novillo_CONT'] || precios['Novillo_4_2026'] || 0;
+
+  // Ratio: kg maíz por kg carne = precio hacienda (USD/kg) / precio maíz (USD/kg)
+  // Precio maíz en USD/tn → /1000 para USD/kg
+  const ratioCubierto = pHacCubierto > 0 && pMaizMercado > 0 ? (pMaizMercado/1000) / pHacCubierto : null;
+  const ratioMercado  = pHacMercado  > 0 && pMaizMercado > 0 ? (pMaizMercado/1000) / pHacMercado  : null;
+
+  document.getElementById('d-ratio-cubierto').textContent = ratioCubierto ? ratioCubierto.toFixed(2) : '—';
+  document.getElementById('d-ratio-mercado').textContent  = ratioMercado  ? ratioMercado.toFixed(2)  : '—';
+
+  if (ratioCubierto && ratioMercado) {
+    const diff = ratioMercado - ratioCubierto;
+    const el = document.getElementById('d-ratio-diff');
+    el.textContent = (diff > 0 ? '+' : '') + diff.toFixed(2);
+    el.style.color = diff > 0 ? 'var(--gan-verde)' : 'var(--rojo)';
+    document.getElementById('d-ratio-desc').textContent = diff > 0 ? '✓ Mejor que mercado' : '↓ Peor que mercado';
+  }
+
+  // Margen por categoría chart
+  const cats = [...new Set(hac.map(o=>o.categoria).filter(Boolean))];
+  const margenPorCat = cats.map(cat => {
+    const opsC = hac.filter(o=>o.categoria===cat);
+    let sumP=0, sumKg=0;
+    opsC.forEach(op=>{ const kg=Number(op.volumen)||0; const p=Number(op.precio)||0; if(p>0){sumP+=p*kg;sumKg+=kg;} });
+    const prom = sumKg>0 ? sumP/sumKg : 0;
+    const costoEst = pMaizMercado>0 ? (pMaizMercado/1000)*7 : 0;
+    return { cat, margen: prom>0&&costoEst>0 ? prom-costoEst : 0 };
+  });
+
+  const ctx = document.getElementById('margenChart')?.getContext('2d');
+  if (!ctx) return;
+  if (margenChart) margenChart.destroy();
+  margenChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: margenPorCat.map(m=>m.cat),
+      datasets:[{
+        label:'Margen estimado (USD/kg)',
+        data: margenPorCat.map(m=>m.margen),
+        backgroundColor: margenPorCat.map(m=>m.margen>0?'rgba(46,158,110,0.7)':'rgba(217,81,44,0.7)'),
+        borderColor:     margenPorCat.map(m=>m.margen>0?'#2e9e6e':'#d9512c'),
+        borderWidth:1, borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#7fa8c4',font:{size:11}} },
+        y:{ grid:{color:'rgba(255,255,255,.07)'}, ticks:{color:'#7fa8c4',font:{size:11},callback:v=>'$'+v.toFixed(3)} }
+      },
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>' USD '+c.raw.toFixed(4)+'/kg'}} }
+    }
+  });
+}
+
+function renderEvolHacienda() {
+  const filtCat = document.getElementById('evol-cat')?.value || '';
+  const ops = filtCat ? getFilteredHac().filter(o=>o.categoria===filtCat) : getFilteredHac();
+  if (!ops.length) return;
+
+  // Agrupar por mes
+  const byMes = {};
+  ops.forEach(op => {
+    const mes = op.fecha ? op.fecha.substring(0,7) : null;
+    if (!mes) return;
+    if (!byMes[mes]) byMes[mes] = { sumP:0, sumKg:0 };
+    const kg=Number(op.volumen)||0, p=Number(op.precio)||0;
+    byMes[mes].sumP  += p*kg;
+    byMes[mes].sumKg += kg;
+  });
+  const meses = Object.keys(byMes).sort();
+  const labels = meses.map(m => { const d=new Date(m+'-15'); return d.toLocaleDateString('es-AR',{month:'short',year:'2-digit'}); });
+  const data   = meses.map(m => byMes[m].sumKg>0 ? byMes[m].sumP/byMes[m].sumKg : 0);
+
+  const ctx = document.getElementById('evolHacChart')?.getContext('2d');
+  if (!ctx) return;
+  if (evolHacChart) evolHacChart.destroy();
+  evolHacChart = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{
+      label:'Precio prom. cubierto (USD/kg)',
+      data, borderColor:'#4de0a8', backgroundColor:'rgba(46,158,110,.15)',
+      borderWidth:2, pointRadius:4, fill:true, tension:.3
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#7fa8c4',font:{size:10}} },
+        y:{ grid:{color:'rgba(255,255,255,.07)'}, ticks:{color:'#7fa8c4',font:{size:11},callback:v=>'$'+v.toFixed(3)} }
+      },
+      plugins:{ legend:{display:false} }
+    }
+  });
+}
+
+function renderFlujoGan() {
+  const filtTipo = document.getElementById('flujo-tipo-gan')?.value || '';
+  const hoy = new Date().toISOString().substring(0,7);
+
+  const flujos = [];
+
+  // Hacienda → ingresos (ventas futuras)
+  if (!filtTipo || filtTipo === 'hacienda') {
+    getFilteredHac().forEach(op => {
+      if (!op.vencimiento) return;
+      const vto = op.vencimiento.substring(0,7);
+      if (vto < hoy) return;
+      const kg=Number(op.volumen)||0, p=Number(op.precio)||0;
+      flujos.push({ mes:vto, ingreso:kg*p, egreso:0, label:op.categoria+' '+op.tipo+' ('+kg.toLocaleString('es-AR')+' kg)' });
+    });
+  }
+
+  // Insumos → egresos (compras de granos)
+  if (!filtTipo || filtTipo === 'insumos') {
+    getFilteredIns().forEach(op => {
+      if (!op.vencimiento) return;
+      const vto = op.vencimiento.substring(0,7);
+      if (vto < hoy) return;
+      if (!['Precio','FIX','Forward','Futuro'].includes(op.tipo)) return;
+      const tn=Number(op.volumen)||0, p=Number(op.precio)||0;
+      if (op.lado === 'Compra') flujos.push({ mes:vto, ingreso:0, egreso:tn*p, label:op.producto+' '+op.tipo });
+    });
+  }
+
+  // Agrupar por mes
+  const maxMes = flujos.map(f=>f.mes).sort().pop() || hoy;
+  const meses = [];
+  let cur = new Date(hoy+'-02');
+  while (cur.toISOString().substring(0,7) <= maxMes) {
+    meses.push(cur.toISOString().substring(0,7));
+    cur.setMonth(cur.getMonth()+1);
+  }
+  const porMes = {};
+  meses.forEach(m => { porMes[m]={ingreso:0,egreso:0,items:[]}; });
+  flujos.forEach(f => {
+    if (!porMes[f.mes]) porMes[f.mes]={ingreso:0,egreso:0,items:[]};
+    porMes[f.mes].ingreso += f.ingreso;
+    porMes[f.mes].egreso  += f.egreso;
+    porMes[f.mes].items.push(f.label);
+  });
+
+  const labels   = meses.map(m=>{const d=new Date(m+'-15');return d.toLocaleDateString('es-AR',{month:'short',year:'2-digit'});});
+  const ingresos = meses.map(m=>porMes[m]?.ingreso||0);
+  const egresos  = meses.map(m=>-(porMes[m]?.egreso||0));
+  const netos    = meses.map(m=>(porMes[m]?.ingreso||0)-(porMes[m]?.egreso||0));
+
+  const ctx = document.getElementById('flujoGanChart')?.getContext('2d');
+  if (!ctx) return;
+  if (flujoGanChart) flujoGanChart.destroy();
+  flujoGanChart = new Chart(ctx, {
+    data:{labels, datasets:[
+      {type:'bar', label:'Ingresos hacienda', data:ingresos, backgroundColor:'rgba(46,158,110,.65)', borderColor:'#2e9e6e', borderWidth:1, borderRadius:3, order:2},
+      {type:'bar', label:'Egresos insumos',   data:egresos,  backgroundColor:'rgba(217,81,44,.6)',  borderColor:'#d9512c', borderWidth:1, borderRadius:3, order:2},
+      {type:'line',label:'Neto',              data:netos,    borderColor:'#d4a017', borderWidth:2, pointRadius:4, pointBackgroundColor:'#d4a017', tension:.3, fill:false, order:1}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{stacked:true, grid:{color:'rgba(255,255,255,.07)'}, ticks:{color:'#7fa8c4',font:{size:10}}},
+        y:{stacked:true, grid:{color:'rgba(255,255,255,.07)'}, ticks:{color:'#7fa8c4',font:{size:11},callback:v=>{ const a=Math.abs(v),s=v<0?'-':''; if(a>=1000000)return s+'$'+(a/1000000).toFixed(1)+'M'; if(a>=1000)return s+'$'+(a/1000).toFixed(0)+'k'; return s+'$'+a; }}}
+      },
+      plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12,padding:12,color:'#dce8f5'}}}
+    }
+  });
+
+  // Tabla
+  const tbody = document.getElementById('flujo-gan-tbody');
+  if (!tbody) return;
+  let totIng=0,totEgr=0;
+  const rows = meses.map(m=>{
+    const ing=porMes[m]?.ingreso||0, egr=porMes[m]?.egreso||0, net=ing-egr;
+    if(!ing&&!egr) return '';
+    totIng+=ing; totEgr+=egr;
+    const d=new Date(m+'-15');
+    const mes=d.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+    return `<tr>
+      <td>${mes.charAt(0).toUpperCase()+mes.slice(1)}</td>
+      <td class="flujo-ingreso">${ing?fmtUSD(ing):'—'}</td>
+      <td class="flujo-egreso">${egr?fmtUSD(egr):'—'}</td>
+      <td class="${net>=0?'flujo-neto-pos':'flujo-neto-neg'}">${fmtUSD(net)}</td>
+      <td style="font-size:11px;color:var(--gris-l);white-space:normal">${(porMes[m]?.items||[]).join(' · ')}</td>
+    </tr>`;
+  }).join('');
+  const totNet=totIng-totEgr;
+  tbody.innerHTML = rows+`<tr><td>TOTAL</td><td class="flujo-ingreso">${fmtUSD(totIng)}</td><td class="flujo-egreso">${fmtUSD(totEgr)}</td><td class="${totNet>=0?'flujo-neto-pos':'flujo-neto-neg'}">${fmtUSD(totNet)}</td><td></td></tr>`;
+}
+
+// ── FORMULARIO ──
+function switchOpTab(tab) {
+  document.getElementById('form-hacienda').style.display = tab==='hacienda'?'block':'none';
+  document.getElementById('form-insumos').style.display  = tab==='insumos'?'block':'none';
+  document.getElementById('tab-hac-btn').classList.toggle('active', tab==='hacienda');
+  document.getElementById('tab-ins-btn').classList.toggle('active', tab==='insumos');
+}
+function onInsTipoChange() {
+  const tipo = document.getElementById('fi-tipo').value;
+  document.getElementById('fi-grp-ejercicio').style.display = ['Call','Put'].includes(tipo)?'flex':'none';
+}
+function initFormDefaults() {
+  const hoy = new Date().toISOString().split('T')[0];
+  ['fh-fecha','fi-fecha'].forEach(id => { const el=document.getElementById(id); if(el) el.value=hoy; });
+  // pre-fill TC actual
+  const tcEl = document.getElementById('fh-tc');
+  if (tcEl && tipoCambio) tcEl.value = tipoCambio;
+}
+function showToastHac(msg,type) { const el=document.getElementById('fh-toast'); el.textContent=msg; el.className='form-toast'+(type?' '+type:''); el.style.display=msg?'block':'none'; }
+function showToastIns(msg,type) { const el=document.getElementById('fi-toast'); el.textContent=msg; el.className='form-toast'+(type?' '+type:''); el.style.display=msg?'block':'none'; }
+function resetFormHac() { ['fh-categoria','fh-tipo','fh-kg','fh-precio','fh-tc','fh-vencimiento','fh-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.querySelectorAll('#fh-tags-selector .tag-selector-item').forEach(el=>el.classList.remove('selected')); initFormDefaults(); showToastHac('',''); }
+function resetFormIns() { ['fi-producto','fi-tipo','fi-lado','fi-volumen','fi-precio','fi-vencimiento','fi-ejercicio','fi-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.querySelectorAll('#fi-tags-selector .tag-selector-item').forEach(el=>el.classList.remove('selected')); document.getElementById('fi-grp-ejercicio').style.display='none'; initFormDefaults(); showToastIns('',''); }
+
+async function guardarHacienda() {
+  const categoria  = document.getElementById('fh-categoria').value;
+  const tipo       = document.getElementById('fh-tipo').value;
+  const fecha      = document.getElementById('fh-fecha').value;
+  const vencimiento= document.getElementById('fh-vencimiento').value;
+  const kg         = parseFloat(document.getElementById('fh-kg').value);
+  const precio     = parseFloat(document.getElementById('fh-precio').value)||0;
+  const tc         = parseFloat(document.getElementById('fh-tc').value)||tipoCambio;
+  const obs        = document.getElementById('fh-obs').value.trim();
+  const tags       = Array.from(document.querySelectorAll('#fh-tags-selector .tag-selector-item.selected')).map(e=>e.dataset.tag);
+
+  if (!categoria||!tipo||!fecha||!vencimiento||isNaN(kg)||kg<=0) { showToastHac('Completá todos los campos obligatorios.','err'); return; }
+  if (!tags.length) { showToastHac('Seleccioná al menos un tag.','err'); return; }
+
+  const btn=document.getElementById('btn-guardar-hac');
+  btn.disabled=true; btn.textContent='Guardando...';
+  const {error} = await sb.from('operaciones').insert({
+    cliente_codigo: currentCliente.codigo,
+    producto: categoria,  // usamos producto para la categoría
+    categoria,
+    tipo, lado:'Venta', fecha, vencimiento,
+    volumen: kg,
+    precio,
+    precio_ejercicio: tc,  // guardamos TC en precio_ejercicio
+    observaciones: obs,
+    estado:'confirmada',
+    tags,
+    unidad:'kg_vivo',
+    moneda:'USD'
+  });
+  btn.disabled=false; btn.textContent='Guardar operación';
+  if (error) { showToastHac('Error: '+error.message,'err'); return; }
+  showToastHac('✓ Operación de hacienda guardada.','ok');
+  resetFormHac();
+  await refreshData();
+}
+
+async function guardarInsumo() {
+  const producto    = document.getElementById('fi-producto').value;
+  const tipo        = document.getElementById('fi-tipo').value;
+  const lado        = document.getElementById('fi-lado').value;
+  const fecha       = document.getElementById('fi-fecha').value;
+  const volumen     = parseFloat(document.getElementById('fi-volumen').value);
+  const precio      = parseFloat(document.getElementById('fi-precio').value)||0;
+  const vencimiento = document.getElementById('fi-vencimiento').value;
+  const ejercicio   = parseFloat(document.getElementById('fi-ejercicio').value)||0;
+  const obs         = document.getElementById('fi-obs').value.trim();
+  const tags        = Array.from(document.querySelectorAll('#fi-tags-selector .tag-selector-item.selected')).map(e=>e.dataset.tag);
+
+  if (!producto||!tipo||!lado||!fecha||isNaN(volumen)||volumen<=0) { showToastIns('Completá todos los campos obligatorios.','err'); return; }
+  if (!tags.length) { showToastIns('Seleccioná al menos un tag.','err'); return; }
+
+  const btn=document.getElementById('btn-guardar-ins');
+  btn.disabled=true; btn.textContent='Guardando...';
+  const {error} = await sb.from('operaciones').insert({
+    cliente_codigo: currentCliente.codigo,
+    producto, tipo, lado, fecha, vencimiento: vencimiento||null,
+    volumen, precio, precio_ejercicio: ejercicio,
+    observaciones: obs, estado:'confirmada', tags,
+    unidad:'tn', moneda:'USD'
+  });
+  btn.disabled=false; btn.textContent='Guardar operación';
+  if (error) { showToastIns('Error: '+error.message,'err'); return; }
+  showToastIns('✓ Operación de insumo guardada.','ok');
+  resetFormIns();
+  await refreshData();
+}
+
+async function refreshData() {
+  const [hacRes, insRes, tcRes] = await Promise.all([
+    sb.from('operaciones').select('*')
+      .eq('cliente_codigo', currentCliente.codigo)
+      .eq('estado','confirmada')
+      .not('categoria','is',null)
+      .order('created_at',{ascending:false}),
+    sb.from('operaciones').select('*')
+      .eq('cliente_codigo', currentCliente.codigo)
+      .eq('estado','confirmada')
+      .is('categoria',null)
+      .order('created_at',{ascending:false}),
+    sb.from('tipo_de_cambio').select('*').order('fecha',{ascending:false}).limit(1)
+  ]);
+  allHacOps = hacRes.data || [];
+  allInsOps = insRes.data || [];
+  if (tcRes.data && tcRes.data.length) { tipoCambio=tcRes.data[0].valor; tcFecha=tcRes.data[0].fecha; }
+  renderAll();
+  renderTagsFormSelectors();
+  await cargarOpsGuardadas();
+}
+
+async function cargarOpsGuardadas() {
+  if (!sb||!currentCliente) return;
+  const {data} = await sb.from('operaciones').select('*')
+    .eq('cliente_codigo', currentCliente.codigo)
+    .order('created_at',{ascending:false}).limit(100);
+  opsCache = data || [];
+  const wrap = document.getElementById('ops-guardadas-wrap');
+  if (!wrap) return;
+  if (!opsCache.length) { wrap.innerHTML='<div class="card empty-state">Sin operaciones cargadas.</div>'; return; }
+  const rows = opsCache.map((op,idx) => {
+    const fOp  = new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    const fVto = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
+    const esHac = !!op.categoria;
+    const tipoLabel = esHac ? `🐄 ${op.categoria}` : `🌽 ${op.producto}`;
+    const btnEdit = `<button onclick="abrirEditarOp(${idx})" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:var(--crema-d);color:var(--texto);font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>`;
+    const btnDel  = `<button onclick="eliminarOp(${idx})" style="padding:4px 10px;border-radius:6px;border:none;background:rgba(217,81,44,.2);color:#f0856a;font-size:11px;cursor:pointer">✕</button>`;
+    return `<tr>
+      <td style="color:var(--gris);font-size:12px">${fOp}</td>
+      <td style="font-weight:600">${tipoLabel}</td>
+      <td>${op.tipo}</td>
+      <td style="font-weight:600;color:var(--gan-verde)">${op.precio>0?'$'+Number(op.precio).toFixed(2):'—'}</td>
+      <td>${Number(op.volumen).toLocaleString('es-AR')} ${esHac?'kg':'tn'}</td>
+      <td>${fVto}</td>
+      <td style="white-space:nowrap">${btnEdit}${btnDel}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<div class="card" style="overflow-x:auto"><table class="gan-table">
+    <thead><tr><th>Fecha</th><th>Categoría/Insumo</th><th>Tipo</th><th>Precio</th><th>Volumen</th><th>Vto.</th><th>Acciones</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+
+function abrirEditarOp(idx) {
+  const op = opsCache[idx];
+  if (!op) return;
+  // Simple edit modal
+  document.getElementById('eop-id').value = op.id;
+  document.getElementById('eop-modulo').value = op.categoria ? 'hacienda' : 'insumo';
+  const fields = document.getElementById('edit-modal-fields');
+  const isHac = !!op.categoria;
+  document.getElementById('edit-modal-title').textContent = isHac ? 'Editar venta de hacienda' : 'Editar cobertura de insumo';
+  fields.innerHTML = `
+    <div class="form-group"><label class="form-label">${isHac?'Categoría':'Insumo'}</label>
+      <input class="form-input" id="eop-prod" value="${op.categoria||op.producto||''}"></div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <input class="form-input" id="eop-tipo" value="${op.tipo||''}"></div>
+    <div class="form-group"><label class="form-label">Fecha</label>
+      <input type="date" class="form-input" id="eop-fecha" value="${op.fecha||''}"></div>
+    <div class="form-group"><label class="form-label">Vencimiento</label>
+      <input type="date" class="form-input" id="eop-venc" value="${op.vencimiento||''}"></div>
+    <div class="form-group"><label class="form-label">${isHac?'Kg vivos':'Volumen (tn)'}</label>
+      <input type="number" class="form-input" id="eop-vol" value="${op.volumen||0}"></div>
+    <div class="form-group"><label class="form-label">Precio</label>
+      <input type="number" class="form-input" id="eop-precio" value="${op.precio||0}" step="0.001"></div>
+    <div class="form-group full"><label class="form-label">Observaciones</label>
+      <input class="form-input" id="eop-obs" value="${op.observaciones||''}"></div>`;
+  document.getElementById('editOpModal').style.display='flex';
+}
+function cerrarEditarOp() { document.getElementById('editOpModal').style.display='none'; }
+async function guardarEditOp() {
+  const id = document.getElementById('eop-id').value;
+  const {error} = await sb.from('operaciones').update({
+    tipo:           document.getElementById('eop-tipo').value,
+    fecha:          document.getElementById('eop-fecha').value,
+    vencimiento:    document.getElementById('eop-venc').value||null,
+    volumen:        parseFloat(document.getElementById('eop-vol').value)||0,
+    precio:         parseFloat(document.getElementById('eop-precio').value)||0,
+    observaciones:  document.getElementById('eop-obs').value,
+    updated_at:     new Date().toISOString()
+  }).eq('id',id);
+  if (error) { alert('Error: '+error.message); return; }
+  cerrarEditarOp();
+  await refreshData();
+}
+async function eliminarOp(idx) {
+  const op = opsCache[idx];
+  if (!op||!confirm('¿Eliminar esta operación?')) return;
+  const {error} = await sb.from('operaciones').delete().eq('id',op.id);
+  if (error) { alert('Error: '+error.message); return; }
+  await refreshData();
+}
+
+// ── TAGS ──
+function renderTagFilterBar() {
+  const el = document.getElementById('hero-tag-filters');
+  if (!el) return;
+  if (!tagsDisponibles.length) {
+    el.innerHTML='<span style="font-size:11px;color:rgba(255,255,255,.25);font-style:italic">sin tags</span>';
+    return;
+  }
+  el.innerHTML = tagsDisponibles.map(t => {
+    const active = activeTagFilter.includes(t);
+    return `<button class="tag-pill${active?' active':''}" onclick="toggleTagFilter('${t}')">${t}</button>`;
+  }).join('');
+}
+function renderTagsFormSelectors() {
+  ['fh-tags-selector','fi-tags-selector'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = tagsDisponibles.length
+      ? tagsDisponibles.map(t=>`<span class="tag-selector-item" data-tag="${t}" onclick="toggleTagItem(this)">${t}</span>`).join('')
+      : '<span style="font-size:11px;color:var(--gris-l)">Sin tags — creá uno con ⚙</span>';
+  });
+}
+function toggleTagItem(el) {
+  const items = el.closest('.tag-selector-grid').querySelectorAll('.selected');
+  if (!el.classList.contains('selected') && items.length >= 10) return;
+  el.classList.toggle('selected');
+}
+function abrirGestionTags(obligatorio=false) {
+  const existing = document.getElementById('modal-tags');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'modal-tags';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal-box">
+    <div class="modal-title">${obligatorio?'⚡ Configurá tus tags':'⚙ Gestionar tags'}</div>
+    <div class="modal-sub">${obligatorio?'Creá al menos un tag (3 letras) para poder cargar operaciones.':'Administrá tus tags de cartera.'}</div>
+    <div class="tag-input-row">
+      <input type="text" id="nuevo-tag-input" class="tag-input" maxlength="3" placeholder="GAN"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
+        onkeydown="if(event.key==='Enter')agregarTag()">
+      <button onclick="agregarTag()" style="padding:9px 16px;background:var(--gan-verde);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Agregar</button>
+    </div>
+    <div id="tags-actuales" class="tag-current"></div>
+    <div id="tag-modal-error" style="font-size:11px;color:var(--rojo);margin-top:8px;display:none"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      ${obligatorio?'':'<button onclick="cerrarModalTags()" style="padding:10px 18px;background:transparent;border:1px solid var(--crema-dd);color:var(--gris);border-radius:8px;cursor:pointer">Cancelar</button>'}
+      <button onclick="guardarTags(${obligatorio})" style="padding:10px 22px;background:var(--gan-verde);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  renderTagsActualesModal();
+  setTimeout(()=>document.getElementById('nuevo-tag-input')?.focus(),100);
+}
+function renderTagsActualesModal() {
+  const el = document.getElementById('tags-actuales');
+  if (!el) return;
+  const temp = window._tempTags || [...tagsDisponibles];
+  window._tempTags = temp;
+  el.innerHTML = temp.length
+    ? temp.map((t,i)=>`<span class="tag-remove" onclick="eliminarTagTemp(${i})">${t} ✕</span>`).join('')
+    : '<span style="font-size:11px;color:var(--gris-l)">Sin tags aún</span>';
+}
+function agregarTag() {
+  const input=document.getElementById('nuevo-tag-input');
+  const errEl=document.getElementById('tag-modal-error');
+  const val=(input?.value||'').toUpperCase().trim();
+  const temp=window._tempTags||[...tagsDisponibles];
+  if(val.length!==3){errEl.textContent='El tag debe tener 3 letras.';errEl.style.display='block';return;}
+  if(temp.includes(val)){errEl.textContent='Ese tag ya existe.';errEl.style.display='block';return;}
+  if(temp.length>=10){errEl.textContent='Máximo 10 tags.';errEl.style.display='block';return;}
+  errEl.style.display='none';
+  temp.push(val); window._tempTags=temp;
+  if(input)input.value='';
+  renderTagsActualesModal();
+}
+function eliminarTagTemp(idx) { const temp=window._tempTags||[...tagsDisponibles]; temp.splice(idx,1); window._tempTags=temp; renderTagsActualesModal(); }
+async function guardarTags(obligatorio=false) {
+  const errEl=document.getElementById('tag-modal-error');
+  const temp=window._tempTags?[...window._tempTags]:[];
+  if(obligatorio&&!temp.length){errEl.textContent='Necesitás al menos un tag.';errEl.style.display='block';return;}
+  const cleanTags=temp.filter(t=>typeof t==='string'&&t.trim().length>0);
+  const {error}=await sb.from('clientes').update({tags_disponibles:cleanTags}).eq('id',currentUser.id);
+  if(error){errEl.textContent='Error: '+error.message;errEl.style.display='block';return;}
+  tagsDisponibles=[...cleanTags];
+  if(currentCliente)currentCliente.tags_disponibles=[...cleanTags];
+  window._tempTags=null;
+  cerrarModalTags();
+  renderTagFilterBar();
+  renderTagsFormSelectors();
+}
+function cerrarModalTags() { window._tempTags=null; const m=document.getElementById('modal-tags'); if(m)m.remove(); }
+
+// ── SIDEBAR ──
+function toggleCollapse() {
+  const sidebar=document.getElementById('sidebar');
+  const btn=document.getElementById('btn-collapse');
+  const isCollapsed=sidebar.classList.toggle('collapsed');
+  btn.textContent=isCollapsed?'›':'‹';
+  btn.title=isCollapsed?'Expandir menú':'Colapsar menú';
+  const lbl=sidebar.querySelector('.btn-logout .nav-label');
+  if(lbl)lbl.style.display=isCollapsed?'none':'';
+  setTimeout(()=>{
+    try{if(flujoGanChart)flujoGanChart.resize();}catch(e){}
+    try{if(margenChart)margenChart.resize();}catch(e){}
+    try{if(evolHacChart)evolHacChart.resize();}catch(e){}
+  },280);
+}
+function navTo(section, el) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const map={resumen:'sec-resumen',hacienda:'sec-hacienda',insumos:'sec-insumos',margen:'sec-margen',flujo:'sec-flujo',nueva:'sec-nueva'};
+  const target=document.getElementById(map[section]);
+  if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+  closeSidebar();
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
+
+// ── UTILS ──
+function showLoading(s){document.getElementById('loadingScreen').style.display=s?'flex':'none';}
+function fmtUSD(n){
+  const abs=Math.abs(n),sign=n<0?'-':'';
+  if(abs>=1000000)return sign+'USD '+(abs/1000000).toFixed(2)+'M';
+  if(abs>=1000)   return sign+'USD '+(abs/1000).toFixed(1)+'k';
+  return sign+'USD '+abs.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+</script>
+</body>
+</html>
