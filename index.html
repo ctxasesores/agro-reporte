@@ -461,7 +461,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
               <span id="sunburst-breadcrumb" style="font-size:11px;color:var(--gris)">Cartera total</span>
               <button id="sunburst-back" onclick="sunburstBack()" style="display:none;padding:6px 16px;border-radius:8px;border:1px solid var(--oro);background:rgba(212,160,23,.12);color:var(--oro-l);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.2px">↩ Volver</button>
             </div>
-            <div id="sunburst-container" style="width:300px;height:280px;flex-shrink:0;margin:0 auto"></div>
+            <div id="sunburst-container" style="width:380px;height:280px;flex-shrink:0;margin:0 auto"></div>
           </div>
         </div>
       </div>
@@ -1197,10 +1197,10 @@ const SB_L1_COLORS = {'Realizado':'#2a5f84','Pendiente':'#d4a017'};
 let _sb = null;
 
 // Fixed dimensions — set once, reused always
-const SB_W = 300, SB_H = 280, SB_LEGEND_W = 108;
-const SB_CHART_SZ = SB_W - SB_LEGEND_W;   // 192
-const SB_R  = SB_CHART_SZ / 2 - 4;        // outer radius — más grande
-const SB_Ri = SB_R * 0.68;                 // inner radius — anillo más delgado
+const SB_W = 380, SB_H = 280, SB_LEGEND_W = 140;
+const SB_CHART_SZ = SB_W - SB_LEGEND_W;   // 240
+const SB_R  = SB_CHART_SZ / 2 - 8;        // outer radius
+const SB_Ri = SB_R * 0.68;                 // inner radius — anillo delgado
 
 function buildLevel0() {
   const items = [];
@@ -1380,24 +1380,24 @@ function _drawDonut(container, items, level, parentChain, animate) {
     const legendG = svg.append('g')
       .attr('transform', `translate(${SB_CHART_SZ + 8}, ${CY - (items.length * 23)/2 + 6})`);
 
-    legendG.append('text').attr('x',0).attr('y',-10)
-      .style('font-size','9px').style('font-weight','700')
+    legendG.append('text').attr('x',0).attr('y',-12)
+      .style('font-size','10px').style('font-weight','700')
       .style('text-transform','uppercase').style('letter-spacing','.6px')
-      .style('fill','#4e718a').style('font-family','DM Sans,sans-serif')
+      .style('fill','#7fa8c4').style('font-family','DM Sans,sans-serif')
       .text(legendLabels[level] || '');
 
     items.forEach((item, i) => {
       const pct = total > 0 ? ((item.value/total)*100).toFixed(1) : '0';
       const col = sbItemColor(item, level, i);
-      const y   = i * 24;
+      const y   = i * 28;
       legendG.append('rect').attr('x',0).attr('y',y-1)
-        .attr('width',9).attr('height',9).attr('rx',2)
+        .attr('width',11).attr('height',11).attr('rx',2)
         .attr('fill',col).attr('fill-opacity',0.9);
       legendG.append('text').attr('x',13).attr('y',y+8)
-        .style('font-size','11px').style('fill','#dce8f5')
+        .style('font-size','12px').style('fill','#dce8f5').style('font-weight','600')
         .style('font-family','DM Sans,sans-serif').text(item.name);
-      legendG.append('text').attr('x',13).attr('y',y+19)
-        .style('font-size','9px').style('fill','#7fa8c4')
+      legendG.append('text').attr('x',13).attr('y',y+21)
+        .style('font-size','10px').style('fill','#7fa8c4')
         .style('font-family','DM Sans,sans-serif')
         .text(`${pct}%  ${fmtUSD(item.value)}`);
     });
