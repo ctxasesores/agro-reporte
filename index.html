@@ -1509,12 +1509,11 @@ function resetForm() {
 function initFormDefaults() {
   const el = document.getElementById('f-fecha');
   if (el) el.value = new Date().toISOString().split('T')[0];
-  
-  // Poblar selectores de producto dinámicamente
-  const productosUnicos = [...new Set(allOps.map(o => o.producto))].sort();
+  // Poblar selector de producto con lista fija (no depender de allOps)
   const selectProducto = document.getElementById('f-producto');
   if (selectProducto) {
-    selectProducto.innerHTML = productosUnicos.map(p => `<option value="${p}">${p}</option>`).join('');
+    selectProducto.innerHTML = '<option value="">Seleccioná...</option>' +
+      PRODUCTOS.map(p => `<option value="${p}">${p}</option>`).join('');
   }
 }
 
@@ -1620,10 +1619,9 @@ function abrirEditarOp(idx) {
   const op = opsCache[parseInt(idx)];
   if (!op) return;
   
-  // Poblar productos dinámicamente
-  const productosUnicos = [...new Set(allOps.map(o => o.producto))].sort();
+  // Poblar productos con lista fija
   const selectProducto = document.getElementById('eop-producto');
-  selectProducto.innerHTML = productosUnicos.map(p => `<option value="${p}">${p}</option>`).join('');
+  selectProducto.innerHTML = PRODUCTOS.map(p => `<option value="${p}">${p}</option>`).join('');
   
   document.getElementById('eop-id').value         = op.id;
   document.getElementById('eop-producto').value   = op.producto;
