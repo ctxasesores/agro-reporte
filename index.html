@@ -434,7 +434,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="two-col" style="margin-bottom:28px">
         <div id="sec-precios">
           <div class="section-title" style="margin-bottom:10px">Tasas implícitas</div>
-          <div class="card" style="max-height:304px;overflow:hidden;display:flex;flex-direction:column">
+          <div class="card" style="max-height:324px;overflow:hidden;display:flex;flex-direction:column">
             <!-- Header: tabs + toggle -->
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px 0;flex-shrink:0">
               <div id="tasas-tabs" style="display:flex;gap:4px"></div>
@@ -456,12 +456,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         </div>
         <div id="sec-composicion">
           <div class="section-title">Composición</div>
-          <div class="card" style="height:304px;display:flex;flex-direction:column;overflow:hidden">
+          <div class="card" style="height:324px;display:flex;flex-direction:column;overflow:hidden">
             <div style="padding:8px 14px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
               <span id="sunburst-breadcrumb" style="font-size:11px;color:var(--gris)">Cartera total</span>
-              <button id="sunburst-back" onclick="sunburstBack()" style="display:none;padding:3px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:transparent;color:var(--gris);font-size:11px;cursor:pointer">↩ Volver</button>
+              <button id="sunburst-back" onclick="sunburstBack()" style="display:none;padding:6px 16px;border-radius:8px;border:1px solid var(--oro);background:rgba(212,160,23,.12);color:var(--oro-l);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.2px">↩ Volver</button>
             </div>
-            <div id="sunburst-container" style="width:280px;height:260px;flex-shrink:0;margin:0 auto"></div>
+            <div id="sunburst-container" style="width:300px;height:280px;flex-shrink:0;margin:0 auto"></div>
           </div>
         </div>
       </div>
@@ -1197,10 +1197,10 @@ const SB_L1_COLORS = {'Realizado':'#2a5f84','Pendiente':'#d4a017'};
 let _sb = null;
 
 // Fixed dimensions — set once, reused always
-const SB_W = 280, SB_H = 260, SB_LEGEND_W = 108;
-const SB_CHART_SZ = SB_W - SB_LEGEND_W;   // 172
-const SB_R  = SB_CHART_SZ / 2 - 6;        // outer radius
-const SB_Ri = SB_R * 0.50;                 // inner radius
+const SB_W = 300, SB_H = 280, SB_LEGEND_W = 108;
+const SB_CHART_SZ = SB_W - SB_LEGEND_W;   // 192
+const SB_R  = SB_CHART_SZ / 2 - 4;        // outer radius — más grande
+const SB_Ri = SB_R * 0.68;                 // inner radius — anillo más delgado
 
 function buildLevel0() {
   const items = [];
