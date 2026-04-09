@@ -514,7 +514,7 @@ tr:hover td { background:#f9faf6; }
         <div class="card" style="margin-bottom:20px">
           <div class="card-header">
             <div><h2>Precios de referencia — Hacienda</h2>
-            <div class="card-header-sub">Cargá los precios de mercado de hacienda por categoría. Se usan para calcular margen y ratio en el panel ganadero.</div></div>
+            <div class="card-header-sub">Precios de mercado de hacienda por categoría. Se usan para calcular margen y ratio en el panel ganadero.</div></div>
           </div>
           <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
             <div class="field-group">
@@ -896,17 +896,16 @@ async function uploadCsv() {
   if (!csvData.length) return;
   const btn = document.getElementById('csv-upload-btn');
   btn.disabled=true; btn.textContent='Subiendo...';
-  const combos=[...new Set(csvData.map(r=>r.producto+'|'+r.posicion))];
-  for (const combo of combos) {
-    const [prod,pos]=combo.split('|');
-    await sb.from('precios_historicos').delete().eq('producto',prod).eq('posicion',pos);
-  }
+  // UPSERT handles conflicts — dedup first
+  const dedupMap = new Map();
+  csvData.forEach(r => dedupMap.set(r.producto+'|'+r.posicion+'|'+r.fecha, r));
+  const dedupData = Array.from(dedupMap.values());
   const batchSize=500; let uploaded=0;
-  for (let i=0;i<csvData.length;i+=batchSize) {
-    const batch=csvData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
-    const {error}=await sb.from('precios_historicos').insert(batch);
+  for (let i=0;i<dedupData.length;i+=batchSize) {
+    const batch=dedupData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
+    const {error}=await sb.from('precios_historicos').upsert(batch,{onConflict:'producto,posicion,fecha'});
     if (error) { mostrarToast('hist-toast','Error: '+error.message,'err'); btn.disabled=false; btn.textContent='↑ Subir'; return; }
-    uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+csvData.length;
+    uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+dedupData.length;
   }
   btn.disabled=false; btn.textContent='↑ Subir a Supabase';
   mostrarToast('hist-toast','✓ '+uploaded+' registros cargados.','ok');
@@ -1215,7 +1214,9 @@ async function guardarTC() {
   const fecha = document.getElementById('tc-fecha').value;
   const valor = parseFloat(document.getElementById('tc-valor').value);
   if (!fecha || isNaN(valor) || valor <= 0) { mostrarToast('tc-toast','Completá fecha y valor.','err'); return; }
-  const { error } = await sb.from('tipo_de_cambio').upsert({ fecha, valor }, { onConflict: 'fecha' });
+  // Delete existing record for that date, then insert fresh
+  await sb.from('tipo_de_cambio').delete().eq('fecha', fecha);
+  const { error } = await sb.from('tipo_de_cambio').insert({ fecha, valor });
   if (error) { mostrarToast('tc-toast','Error: '+error.message,'err'); return; }
   mostrarToast('tc-toast','✓ TC '+fecha+': $'+valor+' cargado.','ok');
   document.getElementById('tc-fecha').value = '';
@@ -1241,13 +1242,12 @@ async function eliminarTC(id) {
 
 // ══ PRECIOS HACIENDA ══
 async function guardarPrecioHac() {
-  const categoria  = document.getElementById('hp-categoria').value;
-  const vencimiento= document.getElementById('hp-vencimiento').value;
-  const precio     = parseFloat(document.getElementById('hp-precio').value);
+  const categoria   = document.getElementById('hp-categoria').value;
+  const vencimiento = document.getElementById('hp-vencimiento').value;
+  const precio      = parseFloat(document.getElementById('hp-precio').value);
   if (!categoria || !vencimiento || isNaN(precio) || precio <= 0) {
     mostrarToast('hp-toast','Completá todos los campos.','err'); return;
   }
-  // Usamos precios_mercado con el nombre de la categoría como producto
   const { error } = await sb.from('precios_mercado').upsert(
     { producto: categoria, vencimiento, precio, activo: true, updated_at: new Date().toISOString() },
     { onConflict: 'producto,vencimiento' }

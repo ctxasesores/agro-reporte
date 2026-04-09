@@ -995,11 +995,15 @@ function renderTasas() {
   const rows = Object.entries(precios);
   if (!rows.length) { el.innerHTML='<div class="empty-state">Sin precios cargados</div>'; return; }
 
+  // Excluir categorías ganaderas — solo mostrar granos
+  const CATEGORIAS_GAN = new Set(['Ternero','Novillo','Vaquillona','Vaca','Toro']);
+
   // Group by producto, exclude CONT from heatmap, keep for base
   const byProd = {};
   rows.forEach(([key, precio]) => {
     const parts = key.split('_');
     const prod  = parts[0];
+    if (CATEGORIAS_GAN.has(prod)) return; // skip hacienda
     const venc  = parts.slice(1).join('_');
     if (!byProd[prod]) byProd[prod] = {};
     byProd[prod][venc] = precio;
