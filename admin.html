@@ -186,6 +186,8 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('carteras',this)">◉ Carteras de clientes</a>
       <a class="nav-item" onclick="showSection('precios',this)">◎ Precios de mercado</a>
       <a class="nav-item" onclick="showSection('historicos',this)">📈 Serie histórica</a>
+      <a class="nav-item" onclick="showSection('tipocambio',this)">💱 Tipo de cambio</a>
+      <a class="nav-item" onclick="showSection('hacprecios',this)">🐄 Precios hacienda</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
     <div class="sidebar-footer">
@@ -468,6 +470,88 @@ tr:hover td { background:#f9faf6; }
             <table>
               <thead><tr><th>Producto</th><th>Posición</th><th>Fecha</th><th>Precio</th><th>Acciones</th></tr></thead>
               <tbody id="tbody-historicos"><tr><td colspan="5" class="empty-state">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- TIPO DE CAMBIO -->
+      <div class="section" id="sec-tipocambio">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div><h2>Cargar tipo de cambio</h2>
+            <div class="card-header-sub">El TC se usa como referencia en el panel ganadero para conversión USD/ARS</div></div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+            <div class="field-group">
+              <label class="field-label">Fecha</label>
+              <input type="date" class="field-input" id="tc-fecha">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Valor ($/USD)</label>
+              <input type="number" class="field-input" id="tc-valor" placeholder="ej: 1200" min="0" step="1">
+            </div>
+            <button class="btn-export" onclick="guardarTC()" style="height:42px">+ Cargar</button>
+          </div>
+          <div style="padding:0 20px 16px"><div id="tc-toast" class="toast"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Historial de tipo de cambio</h2>
+            <button class="btn-refresh" onclick="cargarTC()">↻ Actualizar</button>
+          </div>
+          <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+            <table>
+              <thead><tr><th>Fecha</th><th>Valor ($/USD)</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-tc"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRECIOS HACIENDA -->
+      <div class="section" id="sec-hacprecios">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div><h2>Precios de referencia — Hacienda</h2>
+            <div class="card-header-sub">Cargá los precios de mercado de hacienda por categoría. Se usan para calcular margen y ratio en el panel ganadero.</div></div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+            <div class="field-group">
+              <label class="field-label">Categoría</label>
+              <select class="field-select" id="hp-categoria">
+                <option value="">Seleccioná...</option>
+                <option>Ternero</option><option>Novillo</option><option>Vaquillona</option>
+                <option>Vaca</option><option>Toro</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Vencimiento</label>
+              <select class="field-select" id="hp-vencimiento">
+                <option value="CONT">Continuo</option>
+                <option value="4_2026">Abr 2026</option><option value="5_2026">May 2026</option>
+                <option value="6_2026">Jun 2026</option><option value="7_2026">Jul 2026</option>
+                <option value="8_2026">Ago 2026</option><option value="9_2026">Sep 2026</option>
+                <option value="10_2026">Oct 2026</option><option value="11_2026">Nov 2026</option>
+                <option value="12_2026">Dic 2026</option><option value="1_2027">Ene 2027</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Precio (USD/kg vivo)</label>
+              <input type="number" class="field-input" id="hp-precio" placeholder="ej: 1.85" min="0" step="0.001">
+            </div>
+            <button class="btn-export" onclick="guardarPrecioHac()" style="height:42px">+ Cargar</button>
+          </div>
+          <div style="padding:0 20px 16px"><div id="hp-toast" class="toast"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Precios hacienda cargados</h2>
+            <button class="btn-refresh" onclick="cargarPreciosHac()">↻ Actualizar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Categoría</th><th>Vencimiento</th><th>Precio USD/kg</th><th>Actualizado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-hacprecios"></tbody>
             </table>
           </div>
         </div>
@@ -812,16 +896,17 @@ async function uploadCsv() {
   if (!csvData.length) return;
   const btn = document.getElementById('csv-upload-btn');
   btn.disabled=true; btn.textContent='Subiendo...';
-  // Deduplicar por producto+posicion+fecha (quedarse con el último valor)
-  const dedupMap = new Map();
-  csvData.forEach(r => dedupMap.set(r.producto+'|'+r.posicion+'|'+r.fecha, r));
-  const dedupData = Array.from(dedupMap.values());
+  const combos=[...new Set(csvData.map(r=>r.producto+'|'+r.posicion))];
+  for (const combo of combos) {
+    const [prod,pos]=combo.split('|');
+    await sb.from('precios_historicos').delete().eq('producto',prod).eq('posicion',pos);
+  }
   const batchSize=500; let uploaded=0;
-  for (let i=0;i<dedupData.length;i+=batchSize) {
-    const batch=dedupData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
-    const {error}=await sb.from('precios_historicos').upsert(batch,{onConflict:'producto,posicion,fecha'});
+  for (let i=0;i<csvData.length;i+=batchSize) {
+    const batch=csvData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
+    const {error}=await sb.from('precios_historicos').insert(batch);
     if (error) { mostrarToast('hist-toast','Error: '+error.message,'err'); btn.disabled=false; btn.textContent='↑ Subir'; return; }
-    uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+dedupData.length;
+    uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+csvData.length;
   }
   btn.disabled=false; btn.textContent='↑ Subir a Supabase';
   mostrarToast('hist-toast','✓ '+uploaded+' registros cargados.','ok');
@@ -1084,14 +1169,19 @@ function showSection(name, el) {
     todas:['Historial completo','Todas las operaciones con filtros'],
     carteras:['Carteras por cliente','Resumen de posiciones por cliente'],
     precios:['Precios de mercado','Actualizá los precios de referencia para el cálculo del reporte'],
+    historicos:['Serie histórica','Cargá y gestioná los precios históricos'],
+    tipocambio:['Tipo de cambio','Registrá el tipo de cambio USD/ARS para el panel ganadero'],
+    hacprecios:['Precios de hacienda','Precios de referencia de hacienda para cálculo de margen y ratio'],
     usuarios:['Gestión de usuarios','Creá y administrá los accesos de cada cliente']
   };
   const t = titles[name] || ['',''];
   document.getElementById('page-title').textContent = t[0];
   document.getElementById('page-sub').textContent   = t[1];
-  if (name === 'precios')  { cargarPrecios(); cargarUltimaActualizacion(); }
+  if (name === 'precios')    { cargarPrecios(); cargarUltimaActualizacion(); }
   if (name === 'historicos') cargarHistoricos();
-  if (name === 'usuarios') cargarClientes();
+  if (name === 'tipocambio') cargarTC();
+  if (name === 'hacprecios') cargarPreciosHac();
+  if (name === 'usuarios')   cargarClientes();
 }
 
 // EXPORT
@@ -1118,6 +1208,75 @@ function exportExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Operaciones');
   XLSX.writeFile(wb, 'CTX_operaciones_' + new Date().toISOString().split('T')[0] + '.xlsx');
+}
+
+// ══ TIPO DE CAMBIO ══
+async function guardarTC() {
+  const fecha = document.getElementById('tc-fecha').value;
+  const valor = parseFloat(document.getElementById('tc-valor').value);
+  if (!fecha || isNaN(valor) || valor <= 0) { mostrarToast('tc-toast','Completá fecha y valor.','err'); return; }
+  const { error } = await sb.from('tipo_de_cambio').upsert({ fecha, valor }, { onConflict: 'fecha' });
+  if (error) { mostrarToast('tc-toast','Error: '+error.message,'err'); return; }
+  mostrarToast('tc-toast','✓ TC '+fecha+': $'+valor+' cargado.','ok');
+  document.getElementById('tc-fecha').value = '';
+  document.getElementById('tc-valor').value = '';
+  await cargarTC();
+}
+async function cargarTC() {
+  const { data } = await sb.from('tipo_de_cambio').select('*').order('fecha',{ascending:false}).limit(60);
+  const tbody = document.getElementById('tbody-tc');
+  if (!tbody) return;
+  if (!data || !data.length) { tbody.innerHTML='<tr><td colspan="3" class="empty-state">Sin registros</td></tr>'; return; }
+  tbody.innerHTML = data.map(r => `<tr>
+    <td style="font-weight:600">${r.fecha}</td>
+    <td style="font-weight:700">$${Number(r.valor).toLocaleString('es-AR')}</td>
+    <td><button class="btn-sm btn-rechazar" onclick="eliminarTC('${r.id}')">✕</button></td>
+  </tr>`).join('');
+}
+async function eliminarTC(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  await sb.from('tipo_de_cambio').delete().eq('id', id);
+  cargarTC();
+}
+
+// ══ PRECIOS HACIENDA ══
+async function guardarPrecioHac() {
+  const categoria  = document.getElementById('hp-categoria').value;
+  const vencimiento= document.getElementById('hp-vencimiento').value;
+  const precio     = parseFloat(document.getElementById('hp-precio').value);
+  if (!categoria || !vencimiento || isNaN(precio) || precio <= 0) {
+    mostrarToast('hp-toast','Completá todos los campos.','err'); return;
+  }
+  // Usamos precios_mercado con el nombre de la categoría como producto
+  const { error } = await sb.from('precios_mercado').upsert(
+    { producto: categoria, vencimiento, precio, activo: true, updated_at: new Date().toISOString() },
+    { onConflict: 'producto,vencimiento' }
+  );
+  if (error) { mostrarToast('hp-toast','Error: '+error.message,'err'); return; }
+  mostrarToast('hp-toast','✓ '+categoria+' '+vencimiento+' → USD '+precio+'/kg guardado.','ok');
+  document.getElementById('hp-categoria').value = '';
+  document.getElementById('hp-precio').value = '';
+  await cargarPreciosHac();
+}
+async function cargarPreciosHac() {
+  const categorias = ['Ternero','Novillo','Vaquillona','Vaca','Toro'];
+  const { data } = await sb.from('precios_mercado')
+    .select('*').eq('activo',true)
+    .in('producto', categorias)
+    .order('producto').order('vencimiento');
+  const tbody = document.getElementById('tbody-hacprecios');
+  if (!tbody) return;
+  if (!data || !data.length) { tbody.innerHTML='<tr><td colspan="5" class="empty-state">Sin precios de hacienda cargados.</td></tr>'; return; }
+  tbody.innerHTML = data.map(p => {
+    const fecha = new Date(p.updated_at||p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    return `<tr>
+      <td style="font-weight:600">${p.producto}</td>
+      <td style="font-family:monospace;font-size:12px">${p.vencimiento}</td>
+      <td style="font-weight:700">USD ${Number(p.precio).toFixed(3)}/kg</td>
+      <td style="color:var(--gris);font-size:12px">${fecha}</td>
+      <td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio('${p.id}')">Eliminar</button></td>
+    </tr>`;
+  }).join('');
 }
 
 // UTILS
