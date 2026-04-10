@@ -1061,7 +1061,7 @@ async function guardarPrecio() {
 }
 
 async function cargarPrecios() {
-  const { data } = await sb.from('precios_mercado').select('*').eq('activo',true).order('producto').order('vencimiento');
+  const { data } = await sb.from('precios_mercado').select('*').eq('activo',true).order('producto').order('vencimiento').order('updated_at',{ascending:false});
   const tbody = document.getElementById('tbody-precios');
   if (!tbody) return;
   if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>'; return; }
@@ -1144,17 +1144,51 @@ async function cargarClientes() {
       <td>${c.actividad||'—'}</td>
       <td style="color:var(--gris);font-size:12px">${fecha}</td>
       <td>${c.activo ? '<span class="badge-conf">Activo</span>' : '<span class="badge-rech">Inactivo</span>'}</td>
-      <td>${c.activo
-        ? `<button class="btn-sm btn-rechazar" onclick="toggleCliente('${cid}',false)">Desactivar</button>`
-        : `<button class="btn-sm btn-aprobar"  onclick="toggleCliente('${cid}',true)">Activar</button>`
-      }</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        ${c.activo
+          ? `<button class="btn-sm btn-rechazar" onclick="toggleCliente('${cid}',false)">Desactivar</button>`
+          : `<button class="btn-sm btn-aprobar"  onclick="toggleCliente('${cid}',true)">Activar</button>`
+        }
+        <button class="btn-sm" style="background:#fee2e2;color:#991b1b" onclick="eliminarCliente('${cid}','${(c.nombre_empresa||'').replace(/'/g,'')}','${c.codigo}')">✕ Borrar</button>
+      </td>
     </tr>`;
   }).join('');
 }
 
 async function toggleCliente(id, activo) {
-  await sb.from('clientes').update({ activo }).eq('id', id);
+  const { error } = await sb.from('clientes').update({ activo }).eq('id', id);
+  if (error) { alert('Error al cambiar estado: ' + error.message); return; }
   await cargarClientes();
+}
+
+async function eliminarCliente(id, nombre, codigo) {
+  if (!confirm(`¿Eliminar al cliente "${nombre}" (${codigo}) y TODAS sus operaciones?\n\nEsta acción no se puede deshacer.`)) return;
+  setLoading(20);
+  // Solo borra operaciones de ESTE cliente — filtra por cliente_codigo
+  const { error: errOps } = await sb.from('operaciones')
+    .delete()
+    .eq('cliente_codigo', codigo);  // SOLO operaciones de este cliente
+  if (errOps) { alert('Error al borrar operaciones: ' + errOps.message); setLoading(100); return; }
+  setLoading(50);
+  // Solo borra el registro de ESTE cliente — filtra por id
+  const { error: errCli } = await sb.from('clientes')
+    .delete()
+    .eq('id', id);  // SOLO este cliente
+  if (errCli) { alert('Error al borrar cliente: ' + errCli.message); setLoading(100); return; }
+  setLoading(75);
+  // Borrar de auth.users via Edge Function — no toca precios ni otros usuarios
+  try {
+    const res = await fetch('https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1/eliminar-usuario', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY },
+      body: JSON.stringify({ user_id: id })
+    });
+    const data = await res.json();
+    if (!res.ok) console.warn('Auth delete warning:', data.error);
+  } catch(e) { console.warn('Edge function error:', e.message); }
+  setLoading(100);
+  await loadAll();
+  alert(`✓ Cliente "${nombre}" eliminado completamente.`);
 }
 
 // NAVEGACIÓN
