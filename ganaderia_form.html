@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTX — Análisis Ganadero</title>
+<style>
+/* ── RESET & BASE ── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --verde:#1D9E75;--verde-d:#0F6E56;--verde-l:#E1F5EE;
+  --rojo:#A32D2D;--rojo-l:#FCEBEB;
+  --amber-l:#FAEEDA;--amber-d:#633806;
+  --bg:#f5f4f0;--bg2:#ffffff;--bg3:#f0eeea;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.18);
+  --txt:#1a1a18;--txt2:#5a5a56;--txt3:#8a8a84;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --r:10px;--r-sm:6px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1410;--bg2:#161d17;--bg3:#1c251e;
+    --border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.18);
+    --txt:#e8ede8;--txt2:#9aaa97;--txt3:#5a6857;
+    --verde-l:#0a2e1f;--rojo-l:#2a0f0f;--amber-l:#2a1f08;
+  }
+}
+body{font-family:'DM Sans',-apple-system,sans-serif;font-size:14px;color:var(--txt);background:var(--bg);min-height:100vh}
+.wrap{max-width:700px;margin:0 auto;padding:1.5rem 1rem 4rem}
+
+/* ── HEADER CTX ── */
+.ctx-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.ctx-logo{font-size:18px;font-weight:700;letter-spacing:-.3px;color:var(--verde)}
+.ctx-logo span{color:var(--txt2);font-weight:400}
+
+/* ── CLIENTE SELECTOR ── */
+.cliente-bar{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;flex-direction:column;gap:.75rem}
+.cliente-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.save-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status-msg{font-size:12px;color:var(--txt3);transition:color .3s}
+.status-msg.ok{color:var(--verde-d)}
+.status-msg.err{color:var(--rojo)}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:15px;font-weight:600;color:var(--txt)}
+.card-sub{font-size:12px;color:var(--txt2);margin-top:2px}
+.fields{margin-top:1.25rem;display:flex;flex-direction:column;gap:1rem;border-top:0.5px solid var(--border);padding-top:1.25rem}
+
+/* ── TOGGLE ── */
+.tog-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tog{position:relative;width:36px;height:20px;cursor:pointer}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tsl{position:absolute;inset:0;background:var(--border2);border-radius:10px;transition:background .2s}
+.tsl:before{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;background:white;border-radius:50%;transition:transform .2s}
+.tog input:checked+.tsl{background:var(--verde)}
+.tog input:checked+.tsl:before{transform:translateX(16px)}
+
+/* ── FORM ELEMENTS ── */
+label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px;font-weight:500;letter-spacing:.3px}
+input[type=number],select{width:100%;padding:8px 10px;font-size:13px;border-radius:var(--r-sm);border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt);outline:none;transition:border-color .15s}
+input[type=number]:focus,select:focus{border-color:var(--verde);background:var(--bg2)}
+.hint{font-size:11px;color:var(--txt3);margin-top:3px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.info-box{background:var(--verde-l);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 12px;font-size:12px;color:var(--verde-d);border-left:2px solid var(--verde);margin-bottom:4px}
+
+/* ── SLIDERS ── */
+.sec-lbl{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;margin-top:2px}
+.live{font-size:11px;color:var(--verde);font-weight:500;margin-left:6px;text-transform:none;letter-spacing:0}
+.sr{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.sr label{margin:0;min-width:175px;font-size:12px;color:var(--txt2);font-weight:500}
+.sr input[type=range]{flex:1;accent-color:var(--verde)}
+.sv{min-width:60px;text-align:right;font-size:13px;font-weight:600;color:var(--txt)}
+.sbench{font-size:11px;color:var(--txt3);min-width:80px;text-align:right}
+.idx-box{background:var(--bg3);border-radius:var(--r-sm);padding:10px 14px}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s,transform .1s;border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt)}
+.btn:hover{opacity:.85}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--verde);color:white;border-color:var(--verde-d)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-danger{background:var(--rojo-l);color:var(--rojo);border-color:var(--rojo)}
+
+/* ── ESCENARIOS ── */
+.esc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:.5rem}
+.esc-col:not(:last-child){border-right:0.5px solid var(--border)}
+.esc-col-hdr{padding:10px 12px;font-size:12px;font-weight:600;border-bottom:0.5px solid var(--border);text-align:center}
+.esc-col-hdr.pes{background:var(--rojo-l);color:var(--rojo)}
+.esc-col-hdr.base{background:var(--bg3);color:var(--txt2)}
+.esc-col-hdr.opt{background:var(--verde-l);color:var(--verde-d)}
+.esc-pr{display:flex;flex-direction:column;padding:8px 10px;border-bottom:0.5px solid var(--border);gap:3px}
+.esc-pr:last-child{border-bottom:none}
+.esc-pr-lbl{font-size:11px;color:var(--txt2)}
+.esc-inp{width:100%;padding:5px 8px;font-size:13px;font-weight:600;border:0.5px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--txt);outline:none}
+.esc-inp:focus{border-color:var(--verde)}
+.esc-inp.ro{background:var(--bg3);color:var(--txt2);border-color:transparent}
+
+/* ── REPORTE ── */
+.rep-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px}
+.kpi{background:var(--bg3);border-radius:var(--r-sm);padding:10px 12px}
+.kpi-lbl{font-size:11px;color:var(--txt2);margin-bottom:3px}
+.kpi-v{font-size:17px;font-weight:600}
+.kpi-u{font-size:11px;color:var(--txt2);margin-top:1px}
+.pos{color:var(--verde-d)}.neg{color:var(--rojo)}
+.mrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.mrow:last-child{border-bottom:none}
+.mrow.tot{font-weight:600;border-top:0.5px solid var(--border2);border-bottom:none;padding-top:8px;margin-top:4px}
+.mk{color:var(--txt2)}.mv{color:var(--txt)}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;margin-right:4px}
+.bt{background:var(--verde-l);color:var(--verde-d)}
+.bg-b{background:var(--bg3);color:var(--txt2)}
+.ba{background:var(--amber-l);color:var(--amber-d)}
+.divider{border:none;border-top:0.5px solid var(--border);margin:.75rem 0}
+
+/* ── ESCENARIO COMPARATIVA ── */
+.res-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem}
+.res-col{border-radius:var(--r-sm);padding:12px;text-align:center}
+.res-col.pes{background:var(--rojo-l);border:0.5px solid #F7C1C1}
+.res-col.base{background:var(--bg3);border:0.5px solid var(--border2)}
+.res-col.opt{background:var(--verde-l);border:0.5px solid #C0DD97}
+.rc-lbl{font-size:11px;font-weight:600;margin-bottom:4px}
+.res-col.pes .rc-lbl{color:var(--rojo)}
+.res-col.base .rc-lbl{color:var(--txt2)}
+.res-col.opt .rc-lbl{color:var(--verde-d)}
+.rc-val{font-size:17px;font-weight:600}
+.res-col.pes .rc-val{color:var(--rojo)}
+.res-col.opt .rc-val{color:var(--verde-d)}
+.rc-sub{font-size:11px;margin-top:3px;color:var(--txt2)}
+
+/* ── BARRAS ── */
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:100px;margin:12px 0 4px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;transition:height .3s;min-height:4px}
+.bar-lbl{font-size:12px;font-weight:600;text-align:center}
+.bar-sub{font-size:10px;color:var(--txt2);text-align:center}
+.bar.pes{background:#F09595}
+.bar.base{background:var(--verde)}
+.bar.opt{background:#97C459}
+.bar.neg-bar{background:#E24B4A}
+
+/* ── TABLA SENSIBILIDAD ── */
+.sens-wrap{overflow-x:auto;margin-bottom:8px}
+.sens-table{border-collapse:collapse;width:100%;font-size:12px}
+.sens-table th,.sens-table td{padding:6px 10px;border:0.5px solid var(--border);text-align:center}
+.sens-table th{background:var(--bg3);font-weight:600;color:var(--txt2)}
+.sens-table td.row-lbl{font-weight:600;color:var(--txt2);text-align:left;white-space:nowrap}
+.cell-pos{background:var(--verde-l);color:var(--verde-d);font-weight:600}
+.cell-neg{background:var(--rojo-l);color:var(--rojo);font-weight:600}
+.cell-neu{background:var(--amber-l);color:var(--amber-d);font-weight:600}
+
+/* ── PUNTO EQUILIBRIO ── */
+.eq-bar-bg{background:var(--bg3);border-radius:99px;height:10px;position:relative;overflow:visible;margin:6px 0 2px}
+.eq-bar-fill{height:10px;border-radius:99px;background:var(--verde);transition:width .3s}
+.eq-label-row{display:flex;justify-content:space-between;font-size:11px;color:var(--txt2)}
+.eq-marker{position:absolute;top:-3px;width:2px;height:16px;background:var(--rojo);border-radius:1px}
+.eq-marker-lbl{position:absolute;top:14px;font-size:10px;color:var(--rojo);font-weight:600;transform:translateX(-50%);white-space:nowrap}
+
+/* ── HISTORIAL MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px}
+.hist-item:last-child{border-bottom:none}
+.hist-info{flex:1;min-width:0}
+.hist-cliente{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-meta{font-size:11px;color:var(--txt2);margin-top:2px}
+.hist-acts{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.hist-act-badge{font-size:10px;padding:1px 6px;border-radius:99px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="ctx-header">
+  <div><div class="ctx-logo">CTX <span>AgroCartera</span></div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Análisis de gestión ganadera</div></div>
+</div>
+
+<!-- CLIENTE + GUARDAR/CARGAR -->
+<div class="cliente-bar">
+  <div class="cliente-row">
+    <div>
+      <label>Cliente</label>
+      <select id="sel_cliente" onchange="onClienteChange()">
+        <option value="">— Seleccioná un cliente —</option>
+      </select>
+    </div>
+    <div>
+      <label>Campaña</label>
+      <input type="text" id="campania" value="2025/2026" style="padding:8px 10px;font-size:13px;border-radius:6px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt);outline:none;width:100%">
+    </div>
+    <div style="padding-bottom:1px">
+      <button class="btn btn-sm" onclick="abrirHistorial()" title="Ver análisis guardados">📋</button>
+    </div>
+  </div>
+  <div class="save-row">
+    <button class="btn btn-primary btn-sm" onclick="guardar()">Guardar análisis</button>
+    <button class="btn btn-sm" onclick="nuevoAnalisis()">Nuevo</button>
+    <span class="status-msg" id="status_msg"></span>
+    <span style="font-size:11px;color:var(--txt3);margin-left:auto" id="last_saved"></span>
+  </div>
+</div>
+
+<!-- DATOS GENERALES -->
+<div class="card">
+  <div class="card-hdr"><div><div class="card-title">Datos generales</div><div class="card-sub">Período y superficie del establecimiento</div></div></div>
+  <div class="fields">
+    <div class="fg">
+      <div><label>Período (meses)</label><input type="number" id="periodo" value="12" min="1" max="24" oninput="recalc()"></div>
+      <div><label>Superficie ganadera total (ha)</label><input type="number" id="sup_total" value="500" min="1" oninput="recalc()"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CRÍA -->
+<div class="card">
+  <div class="card-hdr">
+    <div><div class="card-title">Cría</div><div class="card-sub">Producción de terneros propios</div></div>
+    <div class="tog-wrap">
+      <span style="font-size:12px;color:var(--txt2)">Realizo cría</span>
+      <label class="tog"><input type="checkbox" id="tog_cria" onchange="toggleMod('cria')"><span class="tsl"></span></label>
+    </div>
+  </div>
+  <div id="f_cria" style="display:none"><div class="fields">
+    <div class="fg">
+      <div><label>Vacas en servicio (cab)</label><input type="number" id="c_vacas" value="200" min="1" oninput="recalc()"></div>
+      <div><label>Toros (cab)</label><input type="number" id="c_toros" value="10" min="0" oninput="recalc()"></div>
+    </div>
+    <div><div class="sec-lbl">Índices reproductivos<span class="live">tiempo real</span></div>
+      <div class="idx-box">
+        <div class="sr"><label>% preñez</label><input type="range" id="c_prenez" min="40" max="98" value="80" step="1" oninput="upd('c_prenez','c_prenez_v','%');recalc()"><span class="sv" id="c_prenez_v">80%</span><span class="sbench">ref 65–85%</span></div>
+        <div class="sr"><label>% parición s/preñadas</label><input type="range" id="c_paricion" min="50" max="98" value="90" step="1" oninput="upd('c_paricion','c_paricion_v','%');recalc()"><span class="sv" id="c_paricion_v">90%</span><span class="sbench">ref 85–95%</span></div>
+        <div class="sr"><label>% mortandad terneros</label><input type="range" id="c_mort" min="0" max="15" value="3" step="0.5" oninput="upd('c_mort','c_mort_v','%');recalc()"><span class="sv" id="c_mort_v">3%</span><span class="sbench">ref 2–5%</span></div>
+      </div>
+    </div>
+    <div class="fg">
+      <div><label>Peso al destete (kg)</label><input type="number" id="c_peso_dest" value="160" min="80" oninput="recalc()"></div>
+      <div><label>Superficie cría (ha)</label><input type="number" id="c_sup" value="300" min="1" oninput="recalc()"></div>
+    </div>
+    <div><div class="sec-lbl">Costos directos</div>
+      <div class="fg3">
+        <div><label>Sanidad ($/cab/año)</label><input type="number" id="c_san" value="4000" min="0" oninput="recalc()"></div>
+        <div><label>Pasturas ($/ha/año)</label><input type="number" id="c_past" value="8000" min="0" oninput="recalc()"></div>
+        <div><label>Personal + otros ($/año)</label><input type="number" id="c_personal" value="800000" min="0" oninput="recalc()"></div>
+      </div>
+    </div>
+    <div class="fg">
+      <div><label>% terneros que vende al destete</label><input type="number" id="c_pct_venta" value="100" min="0" max="100" oninput="updCond();recalc()"><div class="hint">Resto pasa a recría/invernada</div></div>
+      <div><label>Precio ternero ($/kg) — base</label><input type="number" id="c_precio_ternero" value="1800" min="0" oninput="syncEsc();recalc()"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- RECRÍA -->
+<div class="card">
+  <div class="card-hdr">
+    <div><div class="card-title">Recría</div><div class="card-sub">Crecimiento ternero → novillo/vaquillona</div></div>
+    <div class="tog-wrap">
+      <span style="font-size:12px;color:var(--txt2)">Realizo recría</span>
+      <label class="tog"><input type="checkbox" id="tog_recria" onchange="toggleMod('recria')"><span class="tsl"></span></label>
+    </div>
+  </div>
+  <div id="f_recria" style="display:none"><div class="fields">
+    <div id="r_origen" class="info-box" style="display:none"></div>
+    <div id="r_compra">
+      <div class="fg">
+        <div><label>Terneros comprados (cab)</label><input type="number" id="r_cabezas" value="100" min="1" oninput="recalc()"></div>
+        <div><label>Peso compra (kg)</label><input type="number" id="r_peso_compra" value="160" min="50" oninput="recalc()"></div>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <div><label>Precio compra ternero ($/kg) — base</label><input type="number" id="r_precio_compra" value="1800" min="0" oninput="syncEsc();recalc()"></div>
+        <div></div>
+      </div>
+    </div>
+    <div class="fg">
+      <div><label>Peso salida recría (kg)</label><input type="number" id="r_peso_salida" value="300" min="100" oninput="recalc()"></div>
+      <div><label>Meses de recría</label><input type="number" id="r_meses" value="10" min="1" max="24" oninput="recalc()"></div>
+    </div>
+    <div><div class="sec-lbl">Índices de crecimiento<span class="live">tiempo real</span></div>
+      <div class="idx-box">
+        <div class="sr"><label>GDP (g/día)</label><input type="range" id="r_gdp" min="200" max="900" value="500" step="10" oninput="upd('r_gdp','r_gdp_v','g/d');syncGDP('r');recalc()"><span class="sv" id="r_gdp_v">500 g/d</span><span class="sbench">ref 400–600</span></div>
+        <div class="sr"><label>% mortandad</label><input type="range" id="r_mort" min="0" max="10" value="1" step="0.5" oninput="upd('r_mort','r_mort_v','%');recalc()"><span class="sv" id="r_mort_v">1%</span><span class="sbench">ref 0.5–2%</span></div>
+      </div>
+      <div class="hint" style="margin-top:6px" id="r_gdp_hint">GDP 500 g/d → 140 kg en 280 días (~9 meses)</div>
+    </div>
+    <div class="fg3">
+      <div><label>Sanidad ($/cab)</label><input type="number" id="r_san" value="3000" min="0" oninput="recalc()"></div>
+      <div><label>Pasturas ($/ha/año)</label><input type="number" id="r_past" value="9000" min="0" oninput="recalc()"></div>
+      <div><label>Superficie recría (ha)</label><input type="number" id="r_sup" value="150" min="1" oninput="recalc()"></div>
+    </div>
+    <div class="fg">
+      <div><label>Personal + otros ($/período)</label><input type="number" id="r_personal" value="400000" min="0" oninput="recalc()"></div>
+      <div id="r_venta_wrap" style="display:none">
+        <label>% que vende al salir de recría</label>
+        <input type="number" id="r_pct_venta" value="100" min="0" max="100" oninput="updCond();recalc()">
+        <div class="hint">Resto pasa a invernada propia</div>
+      </div>
+    </div>
+    <div id="r_precio_salida_wrap" style="display:none">
+      <div class="fg">
+        <div><label>Precio venta salida recría ($/kg) — base</label><input type="number" id="r_precio_salida" value="1600" min="0" oninput="syncEsc();recalc()"></div>
+        <div></div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- INVERNADA -->
+<div class="card">
+  <div class="card-hdr">
+    <div><div class="card-title">Invernada / feedlot</div><div class="card-sub">Engorde hasta peso de faena</div></div>
+    <div class="tog-wrap">
+      <span style="font-size:12px;color:var(--txt2)">Realizo invernada</span>
+      <label class="tog"><input type="checkbox" id="tog_inv" onchange="toggleMod('inv')"><span class="tsl"></span></label>
+    </div>
+  </div>
+  <div id="f_inv" style="display:none"><div class="fields">
+    <div id="i_origen" class="info-box" style="display:none"></div>
+    <div id="i_compra">
+      <div class="fg">
+        <div><label>Animales a engordar (cab)</label><input type="number" id="i_cabezas" value="100" min="1" oninput="recalc()"></div>
+        <div><label>Peso entrada (kg)</label><input type="number" id="i_peso_entrada" value="280" min="100" oninput="recalc()"></div>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <div><label>Precio compra entrada ($/kg) — base</label><input type="number" id="i_precio_compra" value="1600" min="0" oninput="syncEsc();recalc()"></div>
+        <div></div>
+      </div>
+    </div>
+    <div class="fg">
+      <div><label>Peso venta / faena (kg)</label><input type="number" id="i_peso_venta" value="430" min="150" oninput="recalc()"></div>
+      <div><label>Precio venta novillo ($/kg) — base</label><input type="number" id="i_precio_venta" value="2200" min="0" oninput="syncEsc();recalc()"></div>
+    </div>
+    <div><div class="sec-lbl">Índices de engorde<span class="live">tiempo real</span></div>
+      <div class="idx-box">
+        <div class="sr"><label>GDP (g/día)</label><input type="range" id="i_gdp" min="300" max="1300" value="800" step="10" oninput="upd('i_gdp','i_gdp_v','g/d');syncGDP('i');recalc()"><span class="sv" id="i_gdp_v">800 g/d</span><span class="sbench">ref 700–1100</span></div>
+        <div class="sr"><label>% mortandad</label><input type="range" id="i_mort" min="0" max="8" value="1" step="0.5" oninput="upd('i_mort','i_mort_v','%');recalc()"><span class="sv" id="i_mort_v">1%</span><span class="sbench">ref 0.5–2%</span></div>
+      </div>
+      <div class="hint" style="margin-top:6px" id="i_gdp_hint">GDP 800 g/d → 150 kg en 188 días (~6 meses)</div>
+    </div>
+    <div>
+      <label>Tipo de engorde</label>
+      <select id="i_tipo" onchange="toggleFL();recalc()" style="margin-top:4px">
+        <option value="pastoril">Pastoril (pasturas + suplementación)</option>
+        <option value="feedlot">Feedlot / confinamiento</option>
+      </select>
+    </div>
+    <div id="i_past_f">
+      <div class="fg">
+        <div><label>Pasturas ($/ha/año)</label><input type="number" id="i_past" value="10000" min="0" oninput="recalc()"></div>
+        <div><label>Superficie invernada (ha)</label><input type="number" id="i_sup" value="150" min="1" oninput="recalc()"></div>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <div><label>Suplementación ($/cab/mes)</label><input type="number" id="i_supl" value="8000" min="0" oninput="recalc()"></div>
+        <div><label>Sanidad ($/cab)</label><input type="number" id="i_san" value="3500" min="0" oninput="recalc()"></div>
+      </div>
+    </div>
+    <div id="i_fl_f" style="display:none">
+      <div><div class="sec-lbl">Conversión alimenticia<span class="live">tiempo real</span></div>
+        <div class="idx-box">
+          <div class="sr"><label>Conversión (kg MS/kg ganado)</label><input type="range" id="i_conv" min="4" max="14" value="7" step="0.5" oninput="upd('i_conv','i_conv_v','');recalc()"><span class="sv" id="i_conv_v">7</span><span class="sbench">ref 6–10</span></div>
+        </div>
+      </div>
+      <div class="fg3" style="margin-top:10px">
+        <div><label>Costo ración ($/kg MS) — base</label><input type="number" id="i_costo_racion" value="180" min="0" oninput="syncEsc();recalc()"></div>
+        <div><label>Sanidad ($/cab)</label><input type="number" id="i_san_fl" value="4000" min="0" oninput="recalc()"></div>
+        <div></div>
+      </div>
+    </div>
+    <div class="fg">
+      <div><label>Comercialización (%)</label><input type="number" id="i_com" value="3" min="0" max="15" oninput="recalc()"></div>
+      <div><label>Personal + otros ($/período)</label><input type="number" id="i_personal" value="500000" min="0" oninput="recalc()"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ESCENARIOS -->
+<div id="esc_card" class="card" style="display:none">
+  <div class="card-hdr"><div><div class="card-title">Escenarios de precio</div><div class="card-sub">Variá los precios de categorías e insumos clave</div></div></div>
+  <div class="fields"><div id="esc_wrap"></div></div>
+</div>
+
+<!-- REPORTE -->
+<div id="rep_card" class="rep-card" style="display:none">
+  <div id="rep_content"></div>
+</div>
+
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div class="modal-bg" id="modal_hist" onclick="if(event.target===this)cerrarHistorial()">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div class="modal-title">Análisis guardados</div>
+      <button class="btn btn-sm" onclick="cerrarHistorial()">✕</button>
+    </div>
+    <div id="hist_list"><div style="color:var(--txt2);font-size:13px">Cargando...</div></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG SUPABASE ──────────────────────────────────────────
+const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
+const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+
+async function supa(method, path, body){
+  const r = await fetch(SUPA_URL+'/rest/v1/'+path, {
+    method,
+    headers:{
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer '+SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST' ? 'return=representation' : 'return=representation',
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if(!r.ok){ const t=await r.text(); throw new Error(t); }
+  return r.status===204 ? null : r.json();
+}
+
+// ── ESTADO ──────────────────────────────────────────────────
+var st = {cria:false, recria:false, inv:false};
+var ESC = [];
+var currentAnalisisId = null;
+var clientes = [];
+
+// ── INICIALIZACIÓN ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async function(){
+  await cargarClientes();
+});
+
+async function cargarClientes(){
+  try{
+    const data = await supa('GET', 'clientes?select=id,nombre_empresa&order=nombre_empresa');
+    clientes = data || [];
+    const sel = document.getElementById('sel_cliente');
+    sel.innerHTML = '<option value="">— Seleccioná un cliente —</option>';
+    clientes.forEach(function(c){
+      sel.innerHTML += '<option value="'+c.id+'">'+c.nombre_empresa+'</option>';
+    });
+  }catch(e){
+    setStatus('No se pudo cargar clientes: '+e.message, 'err');
+  }
+}
+
+function onClienteChange(){
+  currentAnalisisId = null;
+  document.getElementById('last_saved').textContent = '';
+  setStatus('', '');
+}
+
+// ── SERIALIZACIÓN DEL FORMULARIO ────────────────────────────
+var FORM_FIELDS = [
+  'periodo','sup_total',
+  'c_vacas','c_toros','c_prenez','c_paricion','c_mort','c_peso_dest','c_sup',
+  'c_san','c_past','c_personal','c_pct_venta','c_precio_ternero',
+  'r_cabezas','r_peso_compra','r_precio_compra','r_peso_salida','r_meses',
+  'r_gdp','r_mort','r_san','r_past','r_sup','r_personal','r_pct_venta','r_precio_salida',
+  'i_cabezas','i_peso_entrada','i_precio_compra','i_peso_venta','i_precio_venta',
+  'i_gdp','i_mort','i_past','i_sup','i_supl','i_san','i_conv','i_costo_racion',
+  'i_san_fl','i_com','i_personal'
+];
+
+function serializarFormulario(){
+  var datos = {};
+  FORM_FIELDS.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) datos[id] = el.value;
+  });
+  var tipo = document.getElementById('i_tipo');
+  if(tipo) datos['i_tipo'] = tipo.value;
+  var cam = document.getElementById('campania');
+  if(cam) datos['campania'] = cam.value;
+  return datos;
+}
+
+function serializarEscenarios(){
+  var esc = {};
+  ESC.forEach(function(r){
+    ['p','o'].forEach(function(sfx){
+      var el = document.getElementById(r.id+'_'+sfx);
+      if(el) esc[r.id+'_'+sfx] = el.value;
+    });
+  });
+  return esc;
+}
+
+function deserializarFormulario(datos, actividades, escenarios){
+  if(!datos) return;
+  FORM_FIELDS.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el && datos[id] !== undefined) el.value = datos[id];
+  });
+  var tipo = document.getElementById('i_tipo');
+  if(tipo && datos['i_tipo']) tipo.value = datos['i_tipo'];
+  var cam = document.getElementById('campania');
+  if(cam && datos['campania']) cam.value = datos['campania'];
+
+  // Activar módulos
+  ['cria','recria','inv'].forEach(function(m){
+    var activo = actividades && actividades[m];
+    var tog = document.getElementById('tog_'+m);
+    if(tog){ tog.checked = !!activo; st[m] = !!activo; document.getElementById('f_'+m).style.display = activo?'block':'none'; }
+  });
+
+  // Actualizar displays de sliders
+  [['c_prenez','c_prenez_v','%'],['c_paricion','c_paricion_v','%'],['c_mort','c_mort_v','%'],
+   ['r_gdp','r_gdp_v','g/d'],['r_mort','r_mort_v','%'],
+   ['i_gdp','i_gdp_v','g/d'],['i_mort','i_mort_v','%'],['i_conv','i_conv_v','']
+  ].forEach(function(t){ upd(t[0],t[1],t[2]); });
+
+  toggleFL();
+  updCond();
+  renderESC();
+
+  // Restaurar escenarios después de renderizar la tabla
+  if(escenarios){
+    setTimeout(function(){
+      Object.keys(escenarios).forEach(function(k){
+        var el = document.getElementById(k);
+        if(el) el.value = escenarios[k];
+      });
+    }, 50);
+  }
+  recalc();
+}
+
+// ── GUARDAR ─────────────────────────────────────────────────
+async function guardar(){
+  var clienteId = document.getElementById('sel_cliente').value;
+  var campania = document.getElementById('campania').value.trim();
+  if(!clienteId){ setStatus('Seleccioná un cliente', 'err'); return; }
+  if(!campania){ setStatus('Ingresá la campaña', 'err'); return; }
+  if(!st.cria&&!st.recria&&!st.inv){ setStatus('Activá al menos una actividad', 'err'); return; }
+
+  setStatus('Guardando...', '');
+  var payload = {
+    cliente_id: clienteId,
+    campania: campania,
+    actividades: {cria:st.cria, recria:st.recria, inv:st.inv},
+    datos: serializarFormulario(),
+    escenarios: serializarEscenarios()
+  };
+
+  try{
+    var data;
+    if(currentAnalisisId){
+      // UPDATE
+      data = await supa('PATCH',
+        'ganaderia_analisis?id=eq.'+currentAnalisisId,
+        payload
+      );
+    }else{
+      // INSERT — buscar si ya existe uno para este cliente+campaña
+      var existing = await supa('GET',
+        'ganaderia_analisis?cliente_id=eq.'+clienteId+'&campania=eq.'+encodeURIComponent(campania)+'&select=id&limit=1'
+      );
+      if(existing && existing.length>0){
+        currentAnalisisId = existing[0].id;
+        data = await supa('PATCH',
+          'ganaderia_analisis?id=eq.'+currentAnalisisId,
+          payload
+        );
+      }else{
+        data = await supa('POST', 'ganaderia_analisis', payload);
+        if(data && data.length>0) currentAnalisisId = data[0].id;
+      }
+    }
+    var now = new Date();
+    setStatus('Guardado correctamente', 'ok');
+    document.getElementById('last_saved').textContent =
+      'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    setTimeout(function(){ setStatus('',''); }, 3000);
+  }catch(e){
+    setStatus('Error al guardar: '+e.message, 'err');
+  }
+}
+
+// ── HISTORIAL ───────────────────────────────────────────────
+async function abrirHistorial(){
+  document.getElementById('modal_hist').classList.add('open');
+  await cargarHistorial();
+}
+function cerrarHistorial(){ document.getElementById('modal_hist').classList.remove('open'); }
+
+async function cargarHistorial(){
+  var clienteId = document.getElementById('sel_cliente').value;
+  var listEl = document.getElementById('hist_list');
+  listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px">Cargando...</div>';
+
+  try{
+    var query = 'ganaderia_analisis?select=id,campania,actividades,updated_at,clientes(nombre_empresa)&order=updated_at.desc&limit=30';
+    if(clienteId) query += '&cliente_id=eq.'+clienteId;
+    var data = await supa('GET', query);
+    if(!data||!data.length){
+      listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px;padding:1rem 0">No hay análisis guardados'+(clienteId?' para este cliente':'')+'.</div>';
+      return;
+    }
+    var actColors = {cria:{bg:'var(--verde-l)',color:'var(--verde-d)'},recria:{bg:'var(--bg3)',color:'var(--txt2)'},inv:{bg:'var(--amber-l)',color:'var(--amber-d)'}};
+    var actNames = {cria:'Cría',recria:'Recría',inv:'Invernada'};
+    listEl.innerHTML = data.map(function(a){
+      var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+      var acts = Object.keys(a.actividades||{}).filter(function(k){return a.actividades[k];});
+      var actBadges = acts.map(function(k){
+        var col = actColors[k]||{bg:'var(--bg3)',color:'var(--txt2)'};
+        return '<span class="hist-act-badge" style="background:'+col.bg+';color:'+col.color+'">'+actNames[k]+'</span>';
+      }).join('');
+      var clienteNombre = a.clientes ? a.clientes.nombre_empresa : '';
+      return '<div class="hist-item"><div class="hist-info">'
+        +(clienteNombre?'<div class="hist-cliente">'+clienteNombre+'</div>':'')
+        +'<div class="hist-meta">Campaña '+a.campania+' · '+fecha+'</div>'
+        +(actBadges?'<div class="hist-acts">'+actBadges+'</div>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:6px;flex-shrink:0">'
+        +'<button class="btn btn-sm btn-primary" onclick="cargarAnalisis(\''+a.id+'\')">Cargar</button>'
+        +'<button class="btn btn-sm btn-danger" onclick="eliminarAnalisis(\''+a.id+'\',this)">Eliminar</button>'
+        +'</div></div>';
+    }).join('');
+  }catch(e){
+    listEl.innerHTML = '<div style="color:var(--rojo);font-size:13px">Error: '+e.message+'</div>';
+  }
+}
+
+async function cargarAnalisis(id){
+  try{
+    var data = await supa('GET', 'ganaderia_analisis?id=eq.'+id+'&select=*&limit=1');
+    if(!data||!data.length){ setStatus('No encontrado', 'err'); return; }
+    var a = data[0];
+    currentAnalisisId = a.id;
+    document.getElementById('sel_cliente').value = a.cliente_id || '';
+    deserializarFormulario(a.datos, a.actividades, a.escenarios);
+    var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    document.getElementById('last_saved').textContent = 'Cargado: '+a.campania+' · '+fecha;
+    setStatus('Análisis cargado', 'ok');
+    setTimeout(function(){ setStatus('',''); }, 3000);
+    cerrarHistorial();
+  }catch(e){
+    setStatus('Error al cargar: '+e.message, 'err');
+  }
+}
+
+async function eliminarAnalisis(id, btn){
+  if(!confirm('¿Eliminar este análisis? No se puede deshacer.')) return;
+  btn.disabled = true;
+  try{
+    await supa('DELETE', 'ganaderia_analisis?id=eq.'+id);
+    if(currentAnalisisId === id){ currentAnalisisId = null; nuevoAnalisis(); }
+    await cargarHistorial();
+  }catch(e){
+    setStatus('Error al eliminar: '+e.message, 'err');
+  }
+}
+
+function nuevoAnalisis(){
+  currentAnalisisId = null;
+  ['cria','recria','inv'].forEach(function(m){
+    var tog = document.getElementById('tog_'+m);
+    if(tog){ tog.checked = false; st[m] = false; document.getElementById('f_'+m).style.display = 'none'; }
+  });
+  FORM_FIELDS.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el && el.type==='number') el.value = el.defaultValue;
+  });
+  document.getElementById('rep_card').style.display = 'none';
+  document.getElementById('esc_card').style.display = 'none';
+  document.getElementById('last_saved').textContent = '';
+  setStatus('Formulario reiniciado', 'ok');
+  setTimeout(function(){ setStatus('',''); }, 2000);
+}
+
+function setStatus(msg, type){
+  var el = document.getElementById('status_msg');
+  el.textContent = msg;
+  el.className = 'status-msg' + (type?' '+type:'');
+}
+
+// ── LÓGICA DEL FORMULARIO ───────────────────────────────────
+function upd(sid,vid,unit){
+  var el = document.getElementById(sid);
+  if(!el) return;
+  var v = parseFloat(el.value);
+  var dv = document.getElementById(vid);
+  if(dv) dv.textContent = unit==='%' ? v.toFixed(1)+'%' : v+(unit?' '+unit:'');
+}
+
+function syncGDP(pref){
+  var g = parseFloat(document.getElementById(pref+'_gdp').value);
+  if(pref==='r'){
+    var pe=n('r_peso_compra')||160, ps=n('r_peso_salida'), kg=ps-pe, d=g>0?Math.round(kg/(g/1000)):0;
+    var h=document.getElementById('r_gdp_hint');
+    if(h) h.textContent='GDP '+g+' g/d → '+kg+' kg en '+d+' días (~'+Math.round(d/30)+' meses)';
+  }else{
+    var pi=n('i_peso_entrada'), pv=n('i_peso_venta'), kg2=pv-pi, d2=g>0?Math.round(kg2/(g/1000)):0;
+    var h2=document.getElementById('i_gdp_hint');
+    if(h2) h2.textContent='GDP '+g+' g/d → '+kg2+' kg en '+d2+' días (~'+Math.round(d2/30)+' meses)';
+  }
+}
+
+function toggleMod(m){
+  st[m] = document.getElementById('tog_'+m).checked;
+  document.getElementById('f_'+m).style.display = st[m]?'block':'none';
+  updCond(); renderESC(); recalc();
+}
+
+function toggleFL(){
+  var t = document.getElementById('i_tipo').value;
+  document.getElementById('i_past_f').style.display = t==='pastoril'?'block':'none';
+  document.getElementById('i_fl_f').style.display = t==='feedlot'?'block':'none';
+  renderESC(); recalc();
+}
+
+function updCond(){
+  if(st.recria){
+    var ob=document.getElementById('r_origen'), cb=document.getElementById('r_compra');
+    if(st.cria){
+      var pr=100-n('c_pct_venta');
+      ob.style.display='block';
+      ob.innerHTML=pr.toFixed(0)+'% de terneros propios de cría ingresan a recría.';
+      cb.style.display=n('c_pct_venta')>0?'block':'none';
+    }else{ ob.style.display='none'; cb.style.display='block'; }
+    var vw=document.getElementById('r_venta_wrap'), psw=document.getElementById('r_precio_salida_wrap');
+    if(st.inv){
+      vw.style.display='block';
+      psw.style.display=n('r_pct_venta')>0?'block':'none';
+    }else{ vw.style.display='none'; psw.style.display='none'; }
+  }
+  if(st.inv){
+    var ib=document.getElementById('i_origen'), ic=document.getElementById('i_compra');
+    if(st.recria){ ib.style.display='block'; ib.innerHTML=(100-n('r_pct_venta')).toFixed(0)+'% de animales de recría continúan a invernada.'; ic.style.display='block'; }
+    else if(st.cria){ ib.style.display='block'; ib.innerHTML=(100-n('c_pct_venta')).toFixed(0)+'% de terneros de cría ingresan a invernada.'; ic.style.display='block'; }
+    else{ ib.style.display='none'; ic.style.display='block'; }
+  }
+}
+
+// ── ESCENARIOS ──────────────────────────────────────────────
+function buildESC(){
+  ESC=[];
+  if(st.cria&&n('c_pct_venta')>0) ESC.push({id:'e_ct',lbl:'Precio ternero destete ($/kg)',src:'c_precio_ternero',fp:0.85,fo:1.15});
+  if(st.recria&&!st.cria) ESC.push({id:'e_rc',lbl:'Precio compra ternero ($/kg)',src:'r_precio_compra',fp:1.15,fo:0.85});
+  if(st.recria&&(n('r_pct_venta')>0||!st.inv)) ESC.push({id:'e_rs',lbl:'Precio venta salida recría ($/kg)',src:'r_precio_salida',fp:0.85,fo:1.15});
+  if(st.inv){
+    if(!st.recria&&!st.cria) ESC.push({id:'e_ic',lbl:'Precio compra entrada invernada ($/kg)',src:'i_precio_compra',fp:1.15,fo:0.85});
+    ESC.push({id:'e_iv',lbl:'Precio venta novillo/vaquillona ($/kg)',src:'i_precio_venta',fp:0.85,fo:1.15});
+    var tipo=document.getElementById('i_tipo').value;
+    if(tipo==='feedlot') ESC.push({id:'e_ir',lbl:'Costo ración ($/kg MS)',src:'i_costo_racion',fp:1.20,fo:0.80});
+    else{ ESC.push({id:'e_is',lbl:'Suplementación ($/cab/mes)',src:'i_supl',fp:1.20,fo:0.80}); ESC.push({id:'e_ip',lbl:'Pasturas invernada ($/ha/año)',src:'i_past',fp:1.15,fo:0.85}); }
+    ESC.push({id:'e_isn',lbl:'Sanidad invernada ($/cab)',src:tipo==='feedlot'?'i_san_fl':'i_san',fp:1.10,fo:0.90});
+  }
+  if(st.cria){ ESC.push({id:'e_csan',lbl:'Sanidad cría ($/cab/año)',src:'c_san',fp:1.10,fo:0.90}); ESC.push({id:'e_cpas',lbl:'Pasturas cría ($/ha/año)',src:'c_past',fp:1.15,fo:0.85}); }
+}
+
+function renderESC(){
+  buildESC();
+  if(!ESC.length){ document.getElementById('esc_card').style.display='none'; return; }
+  document.getElementById('esc_card').style.display='block';
+  var h='<div class="esc-grid"><div class="esc-col"><div class="esc-col-hdr pes">Pesimista</div>';
+  ESC.forEach(function(r){ h+='<div class="esc-pr"><div class="esc-pr-lbl">'+r.lbl+'</div><input class="esc-inp" type="number" id="'+r.id+'_p" value="'+Math.round(n(r.src)*r.fp)+'" oninput="recalc()"></div>'; });
+  h+='</div><div class="esc-col"><div class="esc-col-hdr base">Base</div>';
+  ESC.forEach(function(r){ h+='<div class="esc-pr"><div class="esc-pr-lbl">'+r.lbl+'</div><input class="esc-inp ro" type="number" id="'+r.id+'_b" value="'+Math.round(n(r.src))+'" readonly></div>'; });
+  h+='</div><div class="esc-col"><div class="esc-col-hdr opt">Optimista</div>';
+  ESC.forEach(function(r){ h+='<div class="esc-pr"><div class="esc-pr-lbl">'+r.lbl+'</div><input class="esc-inp" type="number" id="'+r.id+'_o" value="'+Math.round(n(r.src)*r.fo)+'" oninput="recalc()"></div>'; });
+  h+='</div></div>';
+  document.getElementById('esc_wrap').innerHTML=h;
+}
+
+function syncEsc(){
+  buildESC();
+  ESC.forEach(function(r){
+    var b=document.getElementById(r.id+'_b'), p=document.getElementById(r.id+'_p'), o=document.getElementById(r.id+'_o');
+    if(!b) return;
+    var nb=n(r.src);
+    b.value=Math.round(nb);
+    if(p) p.value=Math.round(nb*r.fp);
+    if(o) o.value=Math.round(nb*r.fo);
+  });
+}
+
+function ep(id,sfx){ var el=document.getElementById(id+'_'+sfx); return el?parseFloat(el.value)||0:0; }
+
+// ── CÁLCULO NÚCLEO ──────────────────────────────────────────
+function calcCore(sfx){
+  var tI=0,tE=0,tLogr=0,cTCria=0,pesoD=0;
+  if(st.cria){
+    var vac=n('c_vacas'),tor=n('c_toros'),pre=n('c_prenez')/100,par=n('c_paricion')/100,mor=n('c_mort')/100;
+    pesoD=n('c_peso_dest');
+    var pctV=n('c_pct_venta')/100;
+    var pT=ep('e_ct',sfx)||n('c_precio_ternero');
+    var sup=n('c_sup');
+    var cSan=ep('e_csan',sfx)||n('c_san');
+    var cPas=ep('e_cpas',sfx)||n('c_past');
+    var tNac=Math.round(vac*pre*par);
+    tLogr=Math.round(tNac*(1-mor));
+    var tV=Math.round(tLogr*pctV);
+    cTCria=(cSan*(vac+tor))+(cPas*sup)+n('c_personal');
+    tI+=tV*pesoD*pT; tE+=cTCria;
+  }
+  if(st.recria){
+    var cabR,peR;
+    if(st.cria){ var pr2=1-n('c_pct_venta')/100; cabR=pr2>0?Math.round(tLogr*pr2):n('r_cabezas'); peR=pesoD||n('c_peso_dest'); }
+    else{ cabR=n('r_cabezas'); peR=n('r_peso_compra'); var prc=ep('e_rc',sfx)||n('r_precio_compra'); tE+=cabR*peR*prc; }
+    var psR=n('r_peso_salida'),morR=n('r_mort')/100,cabSR=Math.round(cabR*(1-morR));
+    var pctVR=st.inv?n('r_pct_venta')/100:1, cabVR=Math.round(cabSR*pctVR);
+    var prVR=ep('e_rs',sfx)||n('r_precio_salida');
+    if(cabVR>0) tI+=cabVR*psR*prVR;
+    tE+=n('r_san')*cabR+n('r_past')*n('r_sup')+n('r_personal');
+  }
+  if(st.inv){
+    var tipo=document.getElementById('i_tipo').value;
+    var cabI=n('i_cabezas'),peI=n('i_peso_entrada'),pvI=n('i_peso_venta');
+    var morI=n('i_mort')/100,cabSI=Math.round(cabI*(1-morI));
+    var prVI=ep('e_iv',sfx)||n('i_precio_venta'),comI=n('i_com')/100;
+    tI+=cabSI*pvI*prVI*(1-comI);
+    if(!st.recria&&!st.cria){ var pci=ep('e_ic',sfx)||n('i_precio_compra'); tE+=cabI*peI*pci; }
+    var alim=0,supI=0;
+    if(tipo==='pastoril'){
+      supI=n('i_sup');
+      var supl=ep('e_is',sfx)||n('i_supl'),past=ep('e_ip',sfx)||n('i_past');
+      var mI=n('i_gdp')>0?Math.round((pvI-peI)/(n('i_gdp')/1000)/30):6;
+      alim=past*supI+supl*cabI*mI;
+    }else{ alim=(pvI-peI)*cabI*n('i_conv')*(ep('e_ir',sfx)||n('i_costo_racion')); }
+    var sanI=(tipo==='feedlot'?ep('e_isn',sfx)||n('i_san_fl'):ep('e_isn',sfx)||n('i_san'))*cabI;
+    tE+=alim+sanI+n('i_personal');
+  }
+  return{ing:tI,egr:tE,mb:tI-tE};
+}
+
+function calcSens(){
+  if(!st.inv&&!st.cria) return null;
+  var res={};
+  if(st.inv){
+    var pvBase=n('i_precio_venta'), gdpBase=n('i_gdp');
+    var prices=[0.80,0.90,1.00,1.10,1.20].map(function(f){return Math.round(pvBase*f);});
+    var gdps=[600,700,800,900,1000];
+    res.type='inv'; res.prices=prices; res.gdps=gdps; res.matrix=[];
+    gdps.forEach(function(g){
+      var row=[];
+      prices.forEach(function(p){
+        var origP=document.getElementById('i_precio_venta').value,origG=document.getElementById('i_gdp').value;
+        document.getElementById('i_precio_venta').value=p; document.getElementById('i_gdp').value=g;
+        var r=calcCore('b');
+        document.getElementById('i_precio_venta').value=origP; document.getElementById('i_gdp').value=origG;
+        row.push(r.mb);
+      });
+      res.matrix.push(row);
+    });
+  }else{
+    var ptBase=n('c_precio_ternero');
+    var prices2=[0.80,0.90,1.00,1.10,1.20].map(function(f){return Math.round(ptBase*f);});
+    var dests=[50,60,70,80,90];
+    res.type='cria'; res.prices=prices2; res.destetes=dests; res.matrix=[];
+    dests.forEach(function(d){
+      var row=[];
+      prices2.forEach(function(p){
+        var origP=document.getElementById('c_precio_ternero').value,origPre=document.getElementById('c_prenez').value;
+        document.getElementById('c_precio_ternero').value=p; document.getElementById('c_prenez').value=Math.min(98,d/0.85);
+        var r=calcCore('b');
+        document.getElementById('c_precio_ternero').value=origP; document.getElementById('c_prenez').value=origPre;
+        row.push(r.mb);
+      });
+      res.matrix.push(row);
+    });
+  }
+  return res;
+}
+
+function calcEQ(){
+  if(!st.inv&&!st.cria) return null;
+  var results=[];
+  if(st.inv){
+    var origP=document.getElementById('i_precio_venta').value;
+    for(var p=100;p<=6000;p+=10){ document.getElementById('i_precio_venta').value=p; if(calcCore('b').mb>=0){results.push(p);break;} }
+    document.getElementById('i_precio_venta').value=origP;
+    return{type:'inv',eq:results.length?results[0]:null,current:n('i_precio_venta')};
+  }else{
+    var origP2=document.getElementById('c_precio_ternero').value;
+    for(var p2=100;p2<=6000;p2+=10){ document.getElementById('c_precio_ternero').value=p2; if(calcCore('b').mb>=0){results.push(p2);break;} }
+    document.getElementById('c_precio_ternero').value=origP2;
+    return{type:'cria',eq:results.length?results[0]:null,current:n('c_precio_ternero')};
+  }
+}
+
+// ── HELPERS ─────────────────────────────────────────────────
+function n(id){ var el=document.getElementById(id); return el?parseFloat(el.value)||0:0; }
+function fm(v,d){ return Math.round(v).toLocaleString('es-AR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0}); }
+function kpi(lbl,val,unit,cls){ return '<div class="kpi"><div class="kpi-lbl">'+lbl+'</div><div class="kpi-v '+(cls||'')+'">'+val+'</div><div class="kpi-u">'+unit+'</div></div>'; }
+function mrow(k,v,tot){ return '<div class="mrow'+(tot?' tot':'')+'"><span class="mk">'+k+'</span><span class="mv">'+v+'</span></div>'; }
+function cellClass(v){ return v>50000?'cell-pos':v<-50000?'cell-neg':'cell-neu'; }
+
+// ── RENDER REPORTE ──────────────────────────────────────────
+function recalc(){
+  if(!st.cria&&!st.recria&&!st.inv){ document.getElementById('rep_card').style.display='none'; return; }
+  var base=calcCore('b'),pes=calcCore('p'),opt=calcCore('o');
+  var supT=n('sup_total');
+  var sens=calcSens(),eq=calcEQ();
+  var html='';
+
+  // — Escenarios barra —
+  html+='<div style="margin-bottom:1rem"><div class="sec-lbl" style="margin-bottom:10px">Margen bruto — comparativa de escenarios</div>';
+  var vals=[pes.mb,base.mb,opt.mb],maxAbs=Math.max.apply(null,vals.map(function(v){return Math.abs(v);}));
+  if(maxAbs===0) maxAbs=1;
+  var bdata=[{lbl:'Pesimista',val:pes.mb,cls:'pes',ha:supT>0?pes.mb/supT:0},{lbl:'Base',val:base.mb,cls:'base',ha:supT>0?base.mb/supT:0},{lbl:'Optimista',val:opt.mb,cls:'opt',ha:supT>0?opt.mb/supT:0}];
+  html+='<div class="bar-chart">';
+  bdata.forEach(function(b){
+    var h=Math.round(Math.abs(b.val)/maxAbs*88),isNeg=b.val<0;
+    html+='<div class="bar-wrap"><div class="bar-lbl '+(isNeg?'neg':b.cls==='opt'?'pos':'')+'" style="font-size:12px">$'+fm(b.val)+'</div>';
+    html+='<div class="bar '+(isNeg?'neg-bar':b.cls)+'" style="height:'+Math.max(h,4)+'px"></div>';
+    html+='<div class="bar-sub">'+b.lbl+'</div><div class="bar-sub" style="font-size:10px">$'+fm(b.ha,0)+'/ha</div></div>';
+  });
+  html+='</div>';
+  var dip=pes.mb-base.mb,dio=opt.mb-base.mb;
+  html+='<div style="font-size:12px;color:var(--txt2)">Sensibilidad vs. base: pesimista <span style="color:var(--rojo);font-weight:600">'+fm(dip)+'</span> · optimista <span style="color:var(--verde-d);font-weight:600">+'+fm(dio)+'</span></div>';
+  html+='</div><div class="divider"></div>';
+
+  // — Punto de equilibrio —
+  if(eq){
+    var pl=eq.type==='inv'?'Precio venta novillo':'Precio ternero al destete';
+    var pMax=Math.round(eq.current*1.6),pMin=0;
+    html+='<div style="margin-bottom:1rem"><div class="sec-lbl" style="margin-bottom:10px">Punto de equilibrio — '+pl+'</div>';
+    if(eq.eq){
+      var pctEQ=Math.min(99,Math.round((eq.eq-pMin)/(pMax-pMin)*100));
+      var pctAct=Math.min(99,Math.round((eq.current-pMin)/(pMax-pMin)*100));
+      var gap=eq.current-eq.eq;
+      html+='<div class="kpi-grid">';
+      html+=kpi('Precio de equilibrio','$'+fm(eq.eq),'/kg','');
+      html+=kpi('Precio actual (base)','$'+fm(eq.current),'/kg','');
+      html+=kpi('Margen de seguridad','$'+fm(gap),'/kg sobre equilibrio',gap>=0?'pos':'neg');
+      html+=kpi('% sobre equilibrio',(eq.current>0?(gap/eq.current*100).toFixed(1):0)+'%','',gap>=0?'pos':'neg');
+      html+='</div>';
+      html+='<div class="eq-bar-bg"><div class="eq-bar-fill" style="width:'+pctAct+'%"></div>';
+      html+='<div class="eq-marker" style="left:'+pctEQ+'%"><div class="eq-marker-lbl">Equilibrio $'+fm(eq.eq)+'</div></div></div>';
+      html+='<div class="eq-label-row"><span>$0</span><span>$'+fm(pMax)+'</span></div>';
+    }else{ html+='<div class="info-box">No se encontró punto de equilibrio en el rango analizado. Revisá costos y volúmenes.</div>'; }
+    html+='</div><div class="divider"></div>';
+  }
+
+  // — Tabla de sensibilidad —
+  if(sens){
+    var title=sens.type==='inv'?'Sensibilidad: precio venta × GDP':'Sensibilidad: precio ternero × % destete';
+    html+='<div style="margin-bottom:1rem"><div class="sec-lbl" style="margin-bottom:8px">'+title+'</div><div class="sens-wrap"><table class="sens-table"><thead><tr>';
+    html+='<th>'+(sens.type==='inv'?'GDP ↓  /  precio →':'Destete ↓  /  precio →')+'</th>';
+    sens.prices.forEach(function(p){ html+='<th>$'+fm(p)+'/kg</th>'; });
+    html+='</tr></thead><tbody>';
+    var rows=sens.type==='inv'?sens.gdps:sens.destetes;
+    rows.forEach(function(rv,ri){
+      html+='<tr><td class="row-lbl">'+(sens.type==='inv'?rv+' g/d':rv+'%')+'</td>';
+      sens.matrix[ri].forEach(function(v){ html+='<td class="'+cellClass(v)+'">$'+fm(v/1000,0)+'k</td>'; });
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+    html+='<div class="hint" style="margin-top:4px">Verde &gt;$50k · Rojo &lt;-$50k · Naranja = zona de equilibrio</div>';
+    html+='</div><div class="divider"></div>';
+  }
+
+  // — Detalle por actividad —
+  html+='<div><div class="sec-lbl" style="margin-bottom:8px">Detalle por actividad — escenario base</div>';
+  var tLogr=0,cTCria=0,pesoD=0;
+  if(st.cria){
+    var vac=n('c_vacas'),tor=n('c_toros'),pre=n('c_prenez')/100,par=n('c_paricion')/100,mor=n('c_mort')/100;
+    pesoD=n('c_peso_dest');
+    var pctV=n('c_pct_venta')/100,pT=n('c_precio_ternero'),sup=n('c_sup');
+    var tNac=Math.round(vac*pre*par); tLogr=Math.round(tNac*(1-mor));
+    var dest=vac>0?tLogr/vac*100:0,tV=Math.round(tLogr*pctV),tR=tLogr-tV;
+    var cSanT=n('c_san')*(vac+tor),cPasT=n('c_past')*sup,cPers=n('c_personal');
+    cTCria=cSanT+cPasT+cPers;
+    var ingV=tV*pesoD*pT,mbC=ingV-cTCria;
+    var cXKg=pesoD>0&&tLogr>0?cTCria/(tLogr*pesoD):0,kgHa=sup>0?(tLogr*pesoD)/sup:0;
+    html+='<div style="margin-bottom:1rem"><div style="margin-bottom:6px"><span class="badge bt">Cría</span></div>';
+    html+='<div class="kpi-grid">'+kpi('Terneros logrados',tLogr,'cab','')+kpi('% destete',dest.toFixed(1),'%',dest>=65?'pos':'neg')+kpi('Kg prod./ha',kgHa.toFixed(1),'kg/ha','')+kpi('Costo/kg','$'+fm(cXKg,1),'/kg','')+'</div>';
+    html+=mrow('Venta '+tV+' terneros × $'+fm(pT)+'/kg','$'+fm(ingV));
+    html+=mrow('Costos directos','-$'+fm(cTCria));
+    html+=mrow('Margen bruto cría','<span class="'+(mbC>=0?'pos':'neg')+'">$'+fm(mbC)+'</span>',true);
+    if(tR>0) html+='<div class="info-box" style="margin-top:8px">'+tR+' terneros propios pasan a la siguiente etapa — costo interno $'+fm(cXKg,1)+'/kg</div>';
+    html+='</div>';
+  }
+  if(st.recria){
+    var cabR,peR;
+    if(st.cria){ var pr2=1-n('c_pct_venta')/100; cabR=pr2>0?Math.round(tLogr*pr2):n('r_cabezas'); peR=pesoD||n('c_peso_dest'); }
+    else{ cabR=n('r_cabezas'); peR=n('r_peso_compra'); }
+    var psR=n('r_peso_salida'),morR=n('r_mort')/100,cabSR=Math.round(cabR*(1-morR));
+    var gdpRR=n('r_meses')>0?(psR-peR)/(n('r_meses')*30)*1000:0;
+    var pctVR=st.inv?n('r_pct_venta')/100:1,cabVR=Math.round(cabSR*pctVR);
+    var cosEntR=st.cria?0:cabR*peR*n('r_precio_compra');
+    var costoTR=cosEntR+n('r_san')*cabR+n('r_past')*n('r_sup')+n('r_personal');
+    var ingR=cabVR*psR*n('r_precio_salida'),mbR=ingR-costoTR;
+    var cXKgR=(psR-peR)*cabR>0?costoTR/((psR-peR)*cabR):0;
+    html+='<div style="margin-bottom:1rem"><div style="margin-bottom:6px"><span class="badge bg-b">Recría</span></div>';
+    html+='<div class="kpi-grid">'+kpi('GDP real',gdpRR.toFixed(0),'g/día',gdpRR>=450?'pos':'neg')+kpi('Kg ganados/cab',(psR-peR).toFixed(0),'kg','')+kpi('Costo/kg ganado','$'+fm(cXKgR,1),'/kg','')+'</div>';
+    if(!st.cria) html+=mrow('Compra terneros','-$'+fm(cosEntR));
+    if(cabVR>0) html+=mrow('Venta '+cabVR+' animales × $'+fm(n('r_precio_salida'))+'/kg','$'+fm(ingR));
+    html+=mrow('Costos directos','-$'+fm(costoTR-(st.cria?0:cosEntR)));
+    html+=mrow('Margen bruto recría','<span class="'+(mbR>=0?'pos':'neg')+'">$'+fm(mbR)+'</span>',true);
+    html+='</div>';
+  }
+  if(st.inv){
+    var tipo=document.getElementById('i_tipo').value;
+    var cabI=n('i_cabezas'),peI=n('i_peso_entrada'),pvI=n('i_peso_venta');
+    var morI=n('i_mort')/100,cabSI=Math.round(cabI*(1-morI));
+    var gdpI=n('i_gdp'),mI=gdpI>0?Math.round((pvI-peI)/(gdpI/1000)/30):6;
+    var precVI=n('i_precio_venta'),comI=n('i_com')/100;
+    var ingI=cabSI*pvI*precVI*(1-comI);
+    var cosCompI=(!st.recria&&!st.cria)?cabI*peI*n('i_precio_compra'):0;
+    var alimI=0,supI2=0;
+    if(tipo==='pastoril'){ supI2=n('i_sup'); alimI=n('i_past')*supI2+n('i_supl')*cabI*mI; }
+    else{ alimI=(pvI-peI)*cabI*n('i_conv')*n('i_costo_racion'); }
+    var sanI=(tipo==='feedlot'?n('i_san_fl'):n('i_san'))*cabI;
+    var costoTI=cosCompI+alimI+sanI+n('i_personal'),mbI=ingI-costoTI;
+    var cXKgI=(pvI-peI)*cabI>0?costoTI/((pvI-peI)*cabI):0,kgHaI=supI2>0?(cabSI*(pvI-peI))/supI2:0;
+    html+='<div style="margin-bottom:1rem"><div style="margin-bottom:6px"><span class="badge ba">Invernada/feedlot</span></div>';
+    html+='<div class="kpi-grid">'+kpi('GDP',gdpI,'g/día',gdpI>=700?'pos':'neg')+kpi('Meses est.',mI,'meses','')+kpi('Costo/kg ganado','$'+fm(cXKgI,1),'/kg','')+(supI2>0?kpi('Kg/ha',kgHaI.toFixed(0),'kg/ha',''):'')+(tipo==='feedlot'?kpi('Conversión',n('i_conv').toFixed(1),'kg MS/kg',''):'')+'</div>';
+    html+=mrow('Venta '+cabSI+' animales × $'+fm(precVI)+'/kg','$'+fm(ingI));
+    if(cosCompI>0) html+=mrow('Compra hacienda entrada','-$'+fm(cosCompI));
+    html+=mrow('Alimentación','-$'+fm(alimI));
+    html+=mrow('Sanidad','-$'+fm(sanI));
+    html+=mrow('Personal y otros','-$'+fm(n('i_personal')));
+    html+=mrow('Margen bruto invernada','<span class="'+(mbI>=0?'pos':'neg')+'">$'+fm(mbI)+'</span>',true);
+    html+='</div>';
+  }
+  html+='<div class="divider"></div>';
+  html+='<div class="kpi-grid">'+kpi('Ingresos totales','$'+fm(base.ing),'','')+kpi('Egresos totales','$'+fm(base.egr),'','')+kpi('Margen total','$'+fm(base.mb),'',base.mb>=0?'pos':'neg')+kpi('Margen/ha','$'+fm(supT>0?base.mb/supT:0,0),'/ha',base.mb>=0?'pos':'neg')+'</div></div>';
+
+  document.getElementById('rep_content').innerHTML=html;
+  document.getElementById('rep_card').style.display='block';
+}
+</script>
+</body>
+</html>
