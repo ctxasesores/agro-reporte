@@ -621,7 +621,7 @@ async function loadAll() {
   setLoading(30);
   const [opsRes, cliRes] = await Promise.all([
     sb.from('operaciones').select('*').order('created_at', { ascending: false }),
-    sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true)
+    sb.from('clientes').select('id', { count: 'exact' })
   ]);
   setLoading(100);
   allOps = opsRes.data || [];
@@ -1129,7 +1129,7 @@ async function crearUsuario() {
 }
 
 async function cargarClientes() {
-  const { data } = await sb.from('clientes').select('*').order('created_at',{ascending:false});
+  const { data } = await sb.from('clientes').select('*').order('activo',{ascending:false}).order('created_at',{ascending:false});
   const tbody = document.getElementById('tbody-clientes');
   if (!tbody) return;
   if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sin clientes registrados aún.</td></tr>'; return; }
