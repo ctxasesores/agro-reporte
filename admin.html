@@ -1178,13 +1178,10 @@ async function eliminarCliente(id, nombre, codigo) {
   setLoading(75);
   // Borrar de auth.users via Edge Function — no toca precios ni otros usuarios
   try {
-    const res = await fetch('https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1/eliminar-usuario', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY },
-      body: JSON.stringify({ user_id: id })
+    const { error: fnError } = await sb.functions.invoke('eliminar-usuario', {
+      body: { user_id: id }
     });
-    const data = await res.json();
-    if (!res.ok) console.warn('Auth delete warning:', data.error);
+    if (fnError) console.warn('Auth delete warning:', fnError.message);
   } catch(e) { console.warn('Edge function error:', e.message); }
   setLoading(100);
   await loadAll();
