@@ -13,7 +13,7 @@
 <link rel="manifest" href="/agro-reporte/manifest.json">
 <link rel="apple-touch-icon" href="/agro-reporte/icon-192.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Context | Reporte de Cartera</title>
+<title>[DEV] Context | Reporte de Cartera</title>
 <!-- v20260401015516 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -685,8 +685,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 </div><!-- /appShell -->
 
 <script>
-const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
-const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const SUPA_URL = 'https://ruhywnursccabvfjadfp.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1aHl3bnVyc2NjYWJ2ZmphZGZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDE0NjMsImV4cCI6MjA5MTYxNzQ2M30.zIhETP4VVjJU7ySZbGiOtGkLKNN_Wlf2a7rtkV2fHmk';
 const COLORES_PROD = {'Soja':'#5b9ec9','Maiz':'#3d7aa8','Trigo':'#8bbedd','Girasol':'#2a5f84','Sorgo':'#1e4466','Cebada':'#a8cfe8'};
 const PRODUCTOS = ['Soja','Maiz','Trigo','Girasol','Sorgo','Cebada'];
 
@@ -745,7 +745,7 @@ async function loadApp() {
       .eq('cliente_codigo', cli.codigo)
       .eq('estado','confirmada')
       .order('created_at', {ascending:false}),
-    sb.from('precios_mercado').select('*').eq('activo',true)
+    sb.from('precios_mercado').select('*').eq('activo',true).order('updated_at',{ascending:false})
   ]);
 
   // Normalize product names (remove accents for consistency)
@@ -784,9 +784,10 @@ function normalizeStr(s) {
 
 function buildPreciosMap(rows) {
   precios = {};
+  // rows ordered by updated_at DESC — keep first occurrence per key (newest price)
   rows.forEach(r => {
     const key = normalizeStr(r.producto) + '_' + r.vencimiento;
-    precios[key] = r.precio;
+    if (!(key in precios)) precios[key] = r.precio; // first = newest
   });
 }
 
@@ -1718,7 +1719,7 @@ async function refreshData() {
       .eq('cliente_codigo', currentCliente.codigo)
       .eq('estado','confirmada')
       .order('created_at', {ascending:false}),
-    sb.from('precios_mercado').select('*').eq('activo',true),
+    sb.from('precios_mercado').select('*').eq('activo',true).order('updated_at',{ascending:false}),
     sb.from('clientes').select('*').eq('id', currentUser.id).single()
   ]);
   if (cliRes.data) {

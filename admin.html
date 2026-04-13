@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Context | Panel Administrador</title>
+<title>[DEV] Context | Panel Administrador</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -586,9 +586,9 @@ tr:hover td { background:#f9faf6; }
 
 <script>
 const ADMIN_PASS   = 'ctx_admin_2026';
-const SUPA_URL     = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
-const SUPA_KEY     = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
-const FUNCTIONS_URL= 'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1';
+const SUPA_URL     = 'https://ruhywnursccabvfjadfp.supabase.co';
+const SUPA_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1aHl3bnVyc2NjYWJ2ZmphZGZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDE0NjMsImV4cCI6MjA5MTYxNzQ2M30.zIhETP4VVjJU7ySZbGiOtGkLKNN_Wlf2a7rtkV2fHmk';
+const FUNCTIONS_URL= 'https://ruhywnursccabvfjadfp.supabase.co/functions/v1';
 let sb = null;
 let allOps = [];
 let allClientesCount = 0;
@@ -992,13 +992,13 @@ async function actualizarDesdeA3() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<span>⟳</span> Conectando...'; }
   try {
     const res = await fetch(
-      'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1/actualizar-precios',
+      'https://ruhywnursccabvfjadfp.supabase.co/functions/v1/actualizar-precios',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj',
-          'apikey': 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj'
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1aHl3bnVyc2NjYWJ2ZmphZGZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDE0NjMsImV4cCI6MjA5MTYxNzQ2M30.zIhETP4VVjJU7ySZbGiOtGkLKNN_Wlf2a7rtkV2fHmk',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1aHl3bnVyc2NjYWJ2ZmphZGZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDE0NjMsImV4cCI6MjA5MTYxNzQ2M30.zIhETP4VVjJU7ySZbGiOtGkLKNN_Wlf2a7rtkV2fHmk'
         }
       }
     );
@@ -1025,7 +1025,7 @@ async function actualizarDesdeA3() {
 
 async function cargarUltimaActualizacion() {
   try {
-    const {data} = await sb.from('config').select('value').eq('key','a3_ultima_actualizacion').maybeSingle();
+    const {data} = await sb.from('config').select('value').eq('key','a3_ultima_actualizacion').single();
     const el = document.getElementById('a3-ultima');
     if (el && data?.value) {
       const d = new Date(data.value);
@@ -1319,5 +1319,6 @@ function mostrarToast(id, msg, type) {
   setTimeout(() => { el.className = 'toast'; }, 6000);
 }
 </script>
+<div style="position:fixed;bottom:12px;right:12px;background:#d9512c;color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;z-index:9999;letter-spacing:1px;opacity:.85">DEV</div>
 </body>
 </html>
