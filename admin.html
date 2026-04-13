@@ -621,7 +621,7 @@ async function loadAll() {
   setLoading(30);
   const [opsRes, cliRes] = await Promise.all([
     sb.from('operaciones').select('*').order('created_at', { ascending: false }),
-    sb.from('clientes').select('id', { count: 'exact' })
+    sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true)
   ]);
   setLoading(100);
   allOps = opsRes.data || [];
@@ -1025,7 +1025,7 @@ async function actualizarDesdeA3() {
 
 async function cargarUltimaActualizacion() {
   try {
-    const {data} = await sb.from('config').select('value').eq('key','a3_ultima_actualizacion').single();
+    const {data} = await sb.from('config').select('value').eq('key','a3_ultima_actualizacion').maybeSingle();
     const el = document.getElementById('a3-ultima');
     if (el && data?.value) {
       const d = new Date(data.value);
@@ -1129,7 +1129,7 @@ async function crearUsuario() {
 }
 
 async function cargarClientes() {
-  const { data } = await sb.from('clientes').select('*').order('activo',{ascending:false}).order('created_at',{ascending:false});
+  const { data } = await sb.from('clientes').select('*').order('created_at',{ascending:false});
   const tbody = document.getElementById('tbody-clientes');
   if (!tbody) return;
   if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sin clientes registrados aún.</td></tr>'; return; }
