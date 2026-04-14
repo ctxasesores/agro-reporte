@@ -345,7 +345,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <a class="nav-item" onclick="navTo('composicion',this)" title="Composición"><span class="nav-icon">◉</span><span class="nav-label">Composición</span></a>
       <a class="nav-item" onclick="navTo('operaciones',this)" title="Operaciones"><span class="nav-icon">≡</span><span class="nav-label">Operaciones</span></a>
       <a class="nav-item" onclick="navTo('flujo',this)" title="Flujo de fondos"><span class="nav-icon">⟳</span><span class="nav-label">Flujo de fondos</span></a>
-      <a class="nav-item" onclick="navTo('operaciones-form',this)" title="Operaciones"><span class="nav-icon">＋</span><span class="nav-label">Nueva operación</span></a>
+
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
@@ -605,81 +605,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       </div>
 
       <!-- Nueva operación -->
-      <div class="section" id="sec-operaciones-form">
-        <div class="section-title">Nueva operación</div>
-        <div class="card">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Producto</label>
-              <select class="form-select" id="f-producto">
-                <option value="">Seleccioná...</option>
-                <option>Soja</option><option>Maiz</option><option>Trigo</option>
-                <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tipo de operación</label>
-              <select class="form-select" id="f-tipo" onchange="onTipoChange()">
-                <option value="">Seleccioná...</option>
-                <option>Plan de Siembra</option><option>Stock</option>
-                <option>Precio</option><option>Futuro</option><option>FIX</option>
-                <option>PAF</option><option>Call</option><option>Put</option>
-                <option>Forward</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Lado</label>
-              <select class="form-select" id="f-lado">
-                <option value="">Seleccioná...</option>
-                <option>Compra</option><option>Venta</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha de operación</label>
-              <input type="date" class="form-input" id="f-fecha">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Volumen (toneladas)</label>
-              <input type="number" class="form-input" id="f-volumen" placeholder="ej: 500" min="0" step="1">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Precio (USD/tn)</label>
-              <input type="number" class="form-input" id="f-precio" placeholder="ej: 325" min="0" step="0.1">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Vencimiento</label>
-              <input type="date" class="form-input" id="f-vencimiento">
-            </div>
-            <div class="form-group" id="grp-ejercicio" style="display:none">
-              <label class="form-label">Precio de ejercicio (USD/tn)</label>
-              <input type="number" class="form-input" id="f-ejercicio" placeholder="ej: 350" min="0" step="0.1">
-            </div>
-            <div class="form-group full" id="grp-tags">
-              <label class="form-label">Tags <span style="color:var(--rojo)">*</span></label>
-              <div id="f-tags-selector" class="tag-selector-grid"></div>
-              <div style="font-size:10px;color:var(--gris-l);margin-top:4px">Seleccioná al menos un tag. Criterio de filtro: intersección (Y).</div>
-            </div>
-            <div class="form-group full">
-              <label class="form-label">Observaciones (opcional)</label>
-              <input type="text" class="form-input" id="f-obs" placeholder="Notas adicionales...">
-            </div>
-            <div class="form-divider"></div>
-            <div class="form-toast" id="f-toast"></div>
-            <div class="form-actions">
-              <button class="btn-cancel" onclick="resetForm()">Limpiar</button>
-              <button class="btn-submit" id="btn-guardar" onclick="guardarOperacion()">Guardar operación</button>
-            </div>
-          </div>
-        </div>
-        <!-- Operaciones cargadas -->
-        <div style="margin-top:32px">
-          <div class="section-title">Mis operaciones cargadas</div>
-          <div id="ops-guardadas-wrap">
-            <div class="card empty-state">Cargando...</div>
-          </div>
-        </div>
-      </div>
-
+      
     </div><!-- /page-body -->
   </div><!-- /main-content -->
 </div><!-- /appShell -->
@@ -1956,7 +1882,6 @@ function navTo(section, el) {
     'composicion': 'sec-composicion',
     'operaciones': 'sec-operaciones',
     'flujo':       'sec-flujo',
-    'operaciones-form': 'sec-operaciones-form'
   };
   const target = document.getElementById(map[section]);
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
