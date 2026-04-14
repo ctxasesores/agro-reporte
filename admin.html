@@ -966,9 +966,18 @@ async function actualizarDesdeMatba() {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY }
     });
-    const data = await res.json();
+    const text = await res.text();
+    let data = {};
+    try { data = JSON.parse(text); } catch(e) {
+      mostrarToast('pm-toast', '⚠ Mercado cerrado o fuera de horario — intentá durante la rueda (10:00 a 17:00 hs)', 'err');
+      return;
+    }
     if (!res.ok || !data.ok) {
-      mostrarToast('pm-toast', 'Error: ' + (data.error || 'No se pudo conectar con A3 Mercados'), 'err');
+      const errMsg = data.error || '';
+      const esMercadoCerrado = errMsg.includes('404') || errMsg.includes('Login') || errMsg.includes('login') || res.status === 404;
+      mostrarToast('pm-toast', esMercadoCerrado
+        ? '⚠ Mercado cerrado o fuera de horario — intentá durante la rueda (10:00 a 17:00 hs)'
+        : 'Error: ' + (errMsg || 'No se pudo conectar con A3 Mercados'), 'err');
     } else {
       const act = data.actualizados ?? (data.detalle ? data.detalle.filter(d => d.ok).length : 0);
       const msg = act > 0
