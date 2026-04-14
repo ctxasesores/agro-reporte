@@ -345,7 +345,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <a class="nav-item" onclick="navTo('composicion',this)" title="Composición"><span class="nav-icon">◉</span><span class="nav-label">Composición</span></a>
       <a class="nav-item" onclick="navTo('operaciones',this)" title="Operaciones"><span class="nav-icon">≡</span><span class="nav-label">Operaciones</span></a>
       <a class="nav-item" onclick="navTo('flujo',this)" title="Flujo de fondos"><span class="nav-icon">⟳</span><span class="nav-label">Flujo de fondos</span></a>
-      <a class="nav-item" onclick="navTo('nueva',this)" title="Nueva operación"><span class="nav-icon">＋</span><span class="nav-label">Nueva operación</span></a>
+      <a class="nav-item" onclick="navTo('operaciones-form',this)" title="Operaciones"><span class="nav-icon">＋</span><span class="nav-label">Nueva operación</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
@@ -481,7 +481,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
               <span style="font-size:11px;color:var(--gris);white-space:nowrap">Todo</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <select id="chart-prod" class="filter-btn" style="border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;border:1px solid var(--crema-dd)" onchange="renderPosicionesChart()">
+              <select id="chart-prod" class="filter-btn" style="border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;border:1px solid var(--crema-dd)" onchange="actualizarFiltroPos();renderPosicionesChart()">
                 <option value="">Todos los productos</option>
                 <option>Soja</option><option>Maiz</option><option>Trigo</option>
                 <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
@@ -605,7 +605,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       </div>
 
       <!-- Nueva operación -->
-      <div class="section" id="sec-nueva">
+      <div class="section" id="sec-operaciones-form">
         <div class="section-title">Nueva operación</div>
         <div class="card">
           <div class="form-grid">
@@ -672,8 +672,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           </div>
         </div>
         <!-- Operaciones cargadas -->
-        <div style="margin-top:20px">
-          <div class="section-title" style="font-size:10px">Mis operaciones cargadas</div>
+        <div style="margin-top:32px">
+          <div class="section-title">Mis operaciones cargadas</div>
           <div id="ops-guardadas-wrap">
             <div class="card empty-state">Cargando...</div>
           </div>
@@ -1956,7 +1956,7 @@ function navTo(section, el) {
     'composicion': 'sec-composicion',
     'operaciones': 'sec-operaciones',
     'flujo':       'sec-flujo',
-    'nueva':       'sec-nueva'
+    'operaciones-form': 'sec-operaciones-form'
   };
   const target = document.getElementById(map[section]);
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
