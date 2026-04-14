@@ -122,7 +122,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .hero-meta    { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:20px; }
 .kpis { display:grid; grid-template-columns:240px minmax(0,1fr); gap:16px; align-items:start; }
 .kpi-card { background:rgba(255,255,255,.07); border-radius:8px; padding:14px 16px; border:1px solid rgba(255,255,255,.06); }
-.kpi-card.full { grid-column:1; } .kpi-chart-col { background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+.kpi-card.full { grid-column:1; }
+.kpi-chart-col { background:rgba(255,255,255,.05); border-radius:8px; border:1px solid rgba(255,255,255,.06); padding:12px 14px; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
 .kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:.8px; color:rgba(255,255,255,.4); margin-bottom:6px; font-weight:600; }
 .kpi-value { font-size:20px; font-weight:600; color:white; line-height:1; }
 .kpi-value.accent { font-size:42px; font-weight:700; color:var(--oro-l); letter-spacing:-.5px; }
@@ -345,7 +346,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <a class="nav-item" onclick="navTo('composicion',this)" title="Composición"><span class="nav-icon">◉</span><span class="nav-label">Composición</span></a>
       <a class="nav-item" onclick="navTo('operaciones',this)" title="Operaciones"><span class="nav-icon">≡</span><span class="nav-label">Operaciones</span></a>
       <a class="nav-item" onclick="navTo('flujo',this)" title="Flujo de fondos"><span class="nav-icon">⟳</span><span class="nav-label">Flujo de fondos</span></a>
-      <a class="nav-item" onclick="navTo('nueva',this)" title="Nueva operación"><span class="nav-icon">＋</span><span class="nav-label">Nueva operación</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
@@ -556,57 +556,14 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
             <tbody id="d-ops-body"></tbody>
           </table>
         </div>
-      </div>
-
-
-
-
-      <!-- Flujo de Fondos -->
-      <div class="section" id="sec-flujo">
-        <div class="section-title">Flujo de fondos</div>
-
-        <!-- Filtros -->
-        <div class="card" style="margin-bottom:16px">
-          <div class="flujo-filters">
-            <select class="flujo-filter-select" id="flujo-prod" onchange="renderFlujo()">
-              <option value="">Todos los productos</option>
-              <option>Soja</option><option>Maiz</option><option>Trigo</option>
-              <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-            </select>
-            <select class="flujo-filter-select" id="flujo-tipo" onchange="renderFlujo()">
-              <option value="">Todos los tipos</option>
-              <option>Precio</option><option>FIX</option><option>Forward</option>
-              <option>Futuro</option><option>Call</option><option>Put</option>
-            </select>
+      
+        <!-- Nueva operación (acordeón) -->
+        <div style="margin-top:32px">
+          <div class="section-title" onclick="toggleAcc('acc-nueva','icon-nueva')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
+            <span>Nueva operación</span>
+            <span id="icon-nueva" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
           </div>
-          <!-- Chart -->
-          <div style="padding:16px">
-            <div style="position:relative;height:280px"><canvas id="flujoChart"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Tabla -->
-        <div class="card">
-          <div style="overflow-x:auto">
-            <table class="flujo-table">
-              <thead>
-                <tr>
-                  <th>Mes</th>
-                  <th>Ingresos</th>
-                  <th>Egresos</th>
-                  <th>Neto</th>
-                  <th>Detalle</th>
-                </tr>
-              </thead>
-              <tbody id="flujo-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nueva operación -->
-      <div class="section" id="sec-nueva">
-        <div class="section-title">Nueva operación</div>
+          <div id="acc-nueva" style="display:none;margin-top:12px">
         <div class="card">
           <div class="form-grid">
             <div class="form-group">
@@ -671,14 +628,71 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
             </div>
           </div>
         </div>
-        <!-- Operaciones cargadas -->
-        <div style="margin-top:20px">
-          <div class="section-title" style="font-size:10px">Mis operaciones cargadas</div>
-          <div id="ops-guardadas-wrap">
-            <div class="card empty-state">Cargando...</div>
+          </div><!-- /acc-nueva -->
+        </div>
+
+        <!-- Mis operaciones (acordeón) -->
+        <div style="margin-top:16px">
+          <div class="section-title" onclick="toggleAcc('acc-ops','icon-ops')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
+            <span>Mis operaciones cargadas</span>
+            <span id="icon-ops" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
+          </div>
+          <div id="acc-ops" style="display:none;margin-top:12px">
+            <div id="ops-guardadas-wrap">
+              <div class="card empty-state">Cargando...</div>
+            </div>
           </div>
         </div>
       </div>
+
+
+
+
+      <!-- Flujo de Fondos -->
+      <div class="section" id="sec-flujo">
+        <div class="section-title">Flujo de fondos</div>
+
+        <!-- Filtros -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="flujo-filters">
+            <select class="flujo-filter-select" id="flujo-prod" onchange="renderFlujo()">
+              <option value="">Todos los productos</option>
+              <option>Soja</option><option>Maiz</option><option>Trigo</option>
+              <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
+            </select>
+            <select class="flujo-filter-select" id="flujo-tipo" onchange="renderFlujo()">
+              <option value="">Todos los tipos</option>
+              <option>Precio</option><option>FIX</option><option>Forward</option>
+              <option>Futuro</option><option>Call</option><option>Put</option>
+            </select>
+          </div>
+          <!-- Chart -->
+          <div style="padding:16px">
+            <div style="position:relative;height:280px"><canvas id="flujoChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card">
+          <div style="overflow-x:auto">
+            <table class="flujo-table">
+              <thead>
+                <tr>
+                  <th>Mes</th>
+                  <th>Ingresos</th>
+                  <th>Egresos</th>
+                  <th>Neto</th>
+                  <th>Detalle</th>
+                </tr>
+              </thead>
+              <tbody id="flujo-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nueva operación -->
+
 
     </div><!-- /page-body -->
   </div><!-- /main-content -->
@@ -745,7 +759,7 @@ async function loadApp() {
       .eq('cliente_codigo', cli.codigo)
       .eq('estado','confirmada')
       .order('created_at', {ascending:false}),
-    sb.from('precios_mercado').select('*').eq('activo',true)
+    sb.from('precios_mercado').select('*').eq('activo',true).order('updated_at',{ascending:false})
   ]);
 
   // Normalize product names (remove accents for consistency)
@@ -784,9 +798,10 @@ function normalizeStr(s) {
 
 function buildPreciosMap(rows) {
   precios = {};
+  // rows ordered by updated_at DESC — keep first occurrence per key (newest price)
   rows.forEach(r => {
     const key = normalizeStr(r.producto) + '_' + r.vencimiento;
-    precios[key] = r.precio;
+    if (!(key in precios)) precios[key] = r.precio; // first = newest
   });
 }
 
@@ -1718,7 +1733,7 @@ async function refreshData() {
       .eq('cliente_codigo', currentCliente.codigo)
       .eq('estado','confirmada')
       .order('created_at', {ascending:false}),
-    sb.from('precios_mercado').select('*').eq('activo',true),
+    sb.from('precios_mercado').select('*').eq('activo',true).order('updated_at',{ascending:false}),
     sb.from('clientes').select('*').eq('id', currentUser.id).single()
   ]);
   if (cliRes.data) {
@@ -1753,6 +1768,15 @@ async function refreshData() {
 function showLoading(s) {
   document.getElementById('loadingScreen').style.display = s?'flex':'none';
 }
+function toggleAcc(id, iconId) {
+  const el   = document.getElementById(id);
+  const icon = document.getElementById(iconId);
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if (icon) icon.style.transform = open ? 'rotate(180deg)' : '';
+}
+
 function fmtUSD(n) {
   const abs = Math.abs(n);
   const sign = n<0?'-':'';
@@ -1955,7 +1979,6 @@ function navTo(section, el) {
     'composicion': 'sec-composicion',
     'operaciones': 'sec-operaciones',
     'flujo':       'sec-flujo',
-    'nueva':       'sec-nueva'
   };
   const target = document.getElementById(map[section]);
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2538,7 +2561,7 @@ function renderEvolucion() {
       else       realizado += val;
     });
     if (realizado === 0 && pendiente === 0) continue;
-    const d2 = new Date(fecha + 'T12:00:00');
+    const d2 = new Date(fecha + 'T12:00:00Z');
     labels.push(d2.toLocaleDateString('es-AR',{month:'short',year:'2-digit'}));
     realizadoSeries.push(Math.round(realizado));
     pendienteSeries.push(Math.round(pendiente));
@@ -2548,9 +2571,13 @@ function renderEvolucion() {
 
   function buildChart(canvasId, compact, existingChart) {
     const ctx = document.getElementById(canvasId)?.getContext('2d');
-    if (!ctx) return null;
-    if (existingChart) existingChart.destroy();
-    return new Chart(ctx, {
+    if (!ctx) {
+      console.warn(`[buildChart] Canvas con ID "${canvasId}" no encontrado o no soporta 2D context`);
+      return null;
+    }
+    try {
+      if (existingChart) existingChart.destroy();
+      return new Chart(ctx, {
       type:'bar',
       data:{ labels, datasets:[
         { label:'Realizado',  data:realizadoSeries,  backgroundColor:'rgba(30,153,112,0.75)',  borderColor:'#1e9970', borderWidth:1, borderRadius:2, stack:'c' },
@@ -2559,8 +2586,30 @@ function renderEvolucion() {
       options:{
         responsive:true, maintainAspectRatio:false,
         scales:{
-          x:{ stacked:true, grid:{display:false}, ticks:{font:{size:compact?8:10},color:compact?'rgba(255,255,255,.4)':'#7fa8c4',maxRotation:45,maxTicksLimit:compact?6:20} },
-          y:{ stacked:true, grid:{color:'rgba(255,255,255,.07)'}, ticks:{font:{size:compact?9:11},color:compact?'rgba(255,255,255,.4)':'#7fa8c4',maxTicksLimit:5,callback:v=>{ if(v>=1000000) return '$'+(v/1000000).toFixed(1)+'M'; if(v>=1000) return '$'+(v/1000).toFixed(0)+'k'; return '$'+v; }} }
+          x:{
+            stacked:true,
+            grid:{display:false},
+            ticks:{
+              font:{size:compact?8:10},
+              color:compact?'rgba(255,255,255,.4)':'#7fa8c4',
+              maxRotation:45,
+              maxTicksLimit:compact?6:20
+            }
+          },
+          y:{
+            stacked:true,
+            grid:{color:'rgba(255,255,255,.07)'},
+            ticks:{
+              font:{size:compact?9:11},
+              color:compact?'rgba(255,255,255,.4)':'#7fa8c4',
+              maxTicksLimit:5,
+              callback:v=>{
+                if(v>=1000000) return '$'+(v/1000000).toFixed(1)+'M';
+                if(v>=1000) return '$'+(v/1000).toFixed(0)+'k';
+                return '$'+v;
+              }
+            }
+          }
         },
         plugins:{
           legend:{display:false},
@@ -2572,6 +2621,10 @@ function renderEvolucion() {
         }
       }
     });
+    } catch (error) {
+      console.error(`[buildChart] Error creando gráfico "${canvasId}":`, error);
+      return null;
+    }
   }
 
   window._evolucionChartHero = buildChart('evolucionChartHero', true,  window._evolucionChartHero);
