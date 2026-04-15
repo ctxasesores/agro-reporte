@@ -154,9 +154,9 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 /* ── REPORTE ── */
 .rep-card{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow);transition:box-shadow .18s ease,border-color .18s ease}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px}
-.kpi{background:var(--negro-b);border-radius:var(--r-sm);padding:10px 12px;border:1px solid var(--border)}
+.kpi{background:var(--negro-b);border-radius:var(--r-sm);padding:10px 12px;border:1px solid var(--border);min-width:0;overflow:hidden}
 .kpi-lbl{font-size:11px;color:var(--txt2);margin-bottom:3px}
-.kpi-v{font-size:17px;font-weight:600}
+.kpi-v{font-size:clamp(1.1rem,1vw + .55rem,1.45rem);font-weight:600;line-height:1.15;overflow-wrap:anywhere;word-break:break-word}
 .kpi-u{font-size:11px;color:var(--txt2);margin-top:1px}
 .pos{color:var(--verde-d)}.neg{color:var(--rojo)}
 .mrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px}
@@ -311,8 +311,8 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
     </div>
     <div><div class="sec-lbl">Costos directos</div>
       <div class="fg3">
-        <div><label>Sanidad ($/cab/año)</label><input type="number" id="c_san" value="4000" min="0" oninput="recalc()"></div>
-        <div><label>Pasturas ($/ha/año)</label><input type="number" id="c_past" value="8000" min="0" oninput="recalc()"></div>
+        <div><label>Sanidad ($/cab/año)</label><input type="number" id="c_san" value="4000" min="0" oninput="syncEsc();recalc()"></div>
+        <div><label>Pasturas ($/ha/año)</label><input type="number" id="c_past" value="8000" min="0" oninput="syncEsc();recalc()"></div>
         <div><label>Personal + otros ($/año)</label><input type="number" id="c_personal" value="800000" min="0" oninput="recalc()"></div>
       </div>
     </div>
@@ -424,12 +424,12 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
     </div>
     <div id="i_past_f">
       <div class="fg">
-        <div><label>Pasturas ($/ha/año)</label><input type="number" id="i_past" value="10000" min="0" oninput="recalc()"></div>
+        <div><label>Pasturas ($/ha/año)</label><input type="number" id="i_past" value="10000" min="0" oninput="syncEsc();recalc()"></div>
         <div><label>Superficie invernada (ha)</label><input type="number" id="i_sup" value="150" min="1" oninput="recalc()"></div>
       </div>
       <div class="fg spacer-top">
-        <div><label>Suplementación ($/cab/mes)</label><input type="number" id="i_supl" value="8000" min="0" oninput="recalc()"></div>
-        <div><label>Sanidad ($/cab)</label><input type="number" id="i_san" value="3500" min="0" oninput="recalc()"></div>
+        <div><label>Suplementación ($/cab/mes)</label><input type="number" id="i_supl" value="8000" min="0" oninput="syncEsc();recalc()"></div>
+        <div><label>Sanidad ($/cab)</label><input type="number" id="i_san" value="3500" min="0" oninput="syncEsc();recalc()"></div>
       </div>
     </div>
     <div id="i_fl_f" style="display:none">
@@ -440,7 +440,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
       </div>
       <div class="fg3 spacer-top">
         <div><label>Costo ración ($/kg MS) — base</label><input type="number" id="i_costo_racion" value="180" min="0" oninput="syncEsc();recalc()"></div>
-        <div><label>Sanidad ($/cab)</label><input type="number" id="i_san_fl" value="4000" min="0" oninput="recalc()"></div>
+        <div><label>Sanidad ($/cab)</label><input type="number" id="i_san_fl" value="4000" min="0" oninput="syncEsc();recalc()"></div>
         <div></div>
       </div>
     </div>
@@ -869,52 +869,166 @@ function syncEsc(){
 }
 
 function ep(id,sfx){ var el=document.getElementById(id+'_'+sfx); return el?parseFloat(el.value)||0:0; }
+function escVal(id,sfx,directId){
+  return sfx==='b' ? n(directId) : (ep(id,sfx)||n(directId));
+}
 
 // ── CÁLCULO NÚCLEO ──────────────────────────────────────────
-function calcCore(sfx){
-  var tI=0,tE=0,tLogr=0,cTCria=0,pesoD=0;
+function calcModel(sfx){
+  var model={totals:{ing:0,egr:0,mb:0},cria:null,recria:null,inv:null};
+  var fromCria={heads:0,weight:0,costKg:0};
+  var fromRecria={heads:0,weight:0,costKg:0};
+
   if(st.cria){
     var vac=n('c_vacas'),tor=n('c_toros'),pre=n('c_prenez')/100,par=n('c_paricion')/100,mor=n('c_mort')/100;
-    pesoD=n('c_peso_dest');
+    var pesoD=n('c_peso_dest');
     var pctV=n('c_pct_venta')/100;
-    var pT=ep('e_ct',sfx)||n('c_precio_ternero');
+    var pT=escVal('e_ct',sfx,'c_precio_ternero');
     var sup=n('c_sup');
-    var cSan=ep('e_csan',sfx)||n('c_san');
-    var cPas=ep('e_cpas',sfx)||n('c_past');
+    var cSan=escVal('e_csan',sfx,'c_san');
+    var cPas=escVal('e_cpas',sfx,'c_past');
     var tNac=Math.round(vac*pre*par);
-    tLogr=Math.round(tNac*(1-mor));
+    var tLogr=Math.round(tNac*(1-mor));
     var tV=Math.round(tLogr*pctV);
-    cTCria=(cSan*(vac+tor))+(cPas*sup)+n('c_personal');
-    tI+=tV*pesoD*pT; tE+=cTCria;
+    var tR=Math.max(tLogr-tV,0);
+    var costoTotal=(cSan*(vac+tor))+(cPas*sup)+n('c_personal');
+    var costoKg=tLogr*pesoD>0?costoTotal/(tLogr*pesoD):0;
+    var ingresoVenta=tV*pesoD*pT;
+    var ingresoTransfer=tR>0&&(st.recria||st.inv)?tR*pesoD*costoKg:0;
+    var ing=ingresoVenta+ingresoTransfer;
+    model.cria={
+      logrados:tLogr,
+      vendidos:tV,
+      transferidos:tR,
+      pesoSalida:pesoD,
+      costoSanidad:cSan*(vac+tor),
+      costoPasturas:cPas*sup,
+      costoPersonal:n('c_personal'),
+      costoTotal:costoTotal,
+      costoKg:costoKg,
+      ingresoVenta:ingresoVenta,
+      ingresoTransfer:ingresoTransfer,
+      margen:ing-costoTotal,
+      destetePct:vac>0?tLogr/vac*100:0,
+      kgHa:sup>0?(tLogr*pesoD)/sup:0
+    };
+    model.totals.ing+=ing;
+    model.totals.egr+=costoTotal;
+    fromCria={heads:tR,weight:pesoD,costKg:costoKg};
   }
+
   if(st.recria){
-    var cabR,peR;
-    if(st.cria){ var pr2=1-n('c_pct_venta')/100; cabR=pr2>0?Math.round(tLogr*pr2):n('r_cabezas'); peR=pesoD||n('c_peso_dest'); }
-    else{ cabR=n('r_cabezas'); peR=n('r_peso_compra'); var prc=ep('e_rc',sfx)||n('r_precio_compra'); tE+=cabR*peR*prc; }
-    var psR=n('r_peso_salida'),morR=n('r_mort')/100,cabSR=Math.round(cabR*(1-morR));
-    var pctVR=st.inv?n('r_pct_venta')/100:1, cabVR=Math.round(cabSR*pctVR);
-    var prVR=ep('e_rs',sfx)||n('r_precio_salida');
-    if(cabVR>0) tI+=cabVR*psR*prVR;
-    tE+=n('r_san')*cabR+n('r_past')*n('r_sup')+n('r_personal');
+    var headsFromCria=fromCria.heads;
+    var targetHeadsR=n('r_cabezas');
+    var cabR=st.cria?Math.max(headsFromCria,targetHeadsR):targetHeadsR;
+    var compradosR=Math.max(0,cabR-headsFromCria);
+    var pesoCria=fromCria.weight||n('c_peso_dest');
+    var pesoCompraR=n('r_peso_compra');
+    var pesoEntradaR=cabR>0?((headsFromCria*pesoCria)+(compradosR*pesoCompraR))/cabR:0;
+    var costoTransferR=headsFromCria*pesoCria*fromCria.costKg;
+    var precioCompraR=escVal('e_rc',sfx,'r_precio_compra');
+    var costoCompraR=compradosR*pesoCompraR*precioCompraR;
+    var psR=n('r_peso_salida');
+    var morR=n('r_mort')/100;
+    var cabSR=Math.round(cabR*(1-morR));
+    var pctVR=st.inv?n('r_pct_venta')/100:1;
+    var cabVR=Math.round(cabSR*pctVR);
+    var cabTR=st.inv?Math.max(cabSR-cabVR,0):0;
+    var prVR=escVal('e_rs',sfx,'r_precio_salida');
+    var directosR=n('r_san')*cabR+n('r_past')*n('r_sup')+n('r_personal');
+    var costoTotalR=costoTransferR+costoCompraR+directosR;
+    var costoKgSalidaR=cabSR*psR>0?costoTotalR/(cabSR*psR):0;
+    var ingresoVentaR=cabVR>0?cabVR*psR*prVR:0;
+    var ingresoTransferR=cabTR>0?cabTR*psR*costoKgSalidaR:0;
+    var ingR=ingresoVentaR+ingresoTransferR;
+    model.recria={
+      cabezas:cabR,
+      comprados:compradosR,
+      desdeCria:headsFromCria,
+      pesoEntrada:pesoEntradaR,
+      pesoSalida:psR,
+      sobrevivientes:cabSR,
+      vendidos:cabVR,
+      transferidos:cabTR,
+      costoCompraMercado:costoCompraR,
+      costoTransferencia:costoTransferR,
+      costoSanidad:n('r_san')*cabR,
+      costoPasturas:n('r_past')*n('r_sup'),
+      costoPersonal:n('r_personal'),
+      costoTotal:costoTotalR,
+      costoKgSalida:costoKgSalidaR,
+      ingresoVenta:ingresoVentaR,
+      ingresoTransfer:ingresoTransferR,
+      margen:ingR-costoTotalR,
+      gdpObjetivo:n('r_gdp'),
+      gdpReal:n('r_meses')>0?(psR-pesoEntradaR)/(n('r_meses')*30)*1000:0,
+      costoKgGanado:(psR-pesoEntradaR)*cabR>0?costoTotalR/((psR-pesoEntradaR)*cabR):0
+    };
+    model.totals.ing+=ingR;
+    model.totals.egr+=costoTotalR;
+    fromRecria={heads:cabTR,weight:psR,costKg:costoKgSalidaR};
   }
+
   if(st.inv){
     var tipo=document.getElementById('i_tipo').value;
-    var cabI=n('i_cabezas'),peI=n('i_peso_entrada'),pvI=n('i_peso_venta');
+    var inherited=st.recria?fromRecria:(st.cria?fromCria:{heads:0,weight:0,costKg:0});
+    var headsTransferI=inherited.heads;
+    var targetHeadsI=n('i_cabezas');
+    var cabI=headsTransferI>0?Math.max(headsTransferI,targetHeadsI):targetHeadsI;
+    var compradosI=Math.max(0,cabI-headsTransferI);
+    var pesoTransferI=inherited.weight||n('i_peso_entrada');
+    var pesoCompraI=n('i_peso_entrada');
+    var pvI=n('i_peso_venta');
+    var costoTransferI=headsTransferI*pesoTransferI*(inherited.costKg||0);
+    var precioCompraI=escVal('e_ic',sfx,'i_precio_compra');
+    var costoCompraI=compradosI*pesoCompraI*precioCompraI;
     var morI=n('i_mort')/100,cabSI=Math.round(cabI*(1-morI));
-    var prVI=ep('e_iv',sfx)||n('i_precio_venta'),comI=n('i_com')/100;
-    tI+=cabSI*pvI*prVI*(1-comI);
-    if(!st.recria&&!st.cria){ var pci=ep('e_ic',sfx)||n('i_precio_compra'); tE+=cabI*peI*pci; }
-    var alim=0,supI=0;
+    var prVI=escVal('e_iv',sfx,'i_precio_venta'),comI=n('i_com')/100;
+    var ingresoVentaI=cabSI*pvI*prVI*(1-comI);
+    var alimI=0,supI=0,totalKgGanados=0,totalMesAnimal=0;
+    var gainTransfer=Math.max(pvI-pesoTransferI,0),gainCompra=Math.max(pvI-pesoCompraI,0);
+    var mesesTransfer=n('i_gdp')>0?Math.round(gainTransfer/(n('i_gdp')/1000)/30):6;
+    var mesesCompra=n('i_gdp')>0?Math.round(gainCompra/(n('i_gdp')/1000)/30):6;
+    totalKgGanados=(headsTransferI*gainTransfer)+(compradosI*gainCompra);
+    totalMesAnimal=(headsTransferI*mesesTransfer)+(compradosI*mesesCompra);
     if(tipo==='pastoril'){
       supI=n('i_sup');
-      var supl=ep('e_is',sfx)||n('i_supl'),past=ep('e_ip',sfx)||n('i_past');
-      var mI=n('i_gdp')>0?Math.round((pvI-peI)/(n('i_gdp')/1000)/30):6;
-      alim=past*supI+supl*cabI*mI;
-    }else{ alim=(pvI-peI)*cabI*n('i_conv')*(ep('e_ir',sfx)||n('i_costo_racion')); }
-    var sanI=(tipo==='feedlot'?ep('e_isn',sfx)||n('i_san_fl'):ep('e_isn',sfx)||n('i_san'))*cabI;
-    tE+=alim+sanI+n('i_personal');
+      var supl=escVal('e_is',sfx,'i_supl'),past=escVal('e_ip',sfx,'i_past');
+      alimI=(past*supI)+(supl*totalMesAnimal);
+    }else{
+      alimI=totalKgGanados*n('i_conv')*escVal('e_ir',sfx,'i_costo_racion');
+    }
+    var sanI=(tipo==='feedlot'?escVal('e_isn',sfx,'i_san_fl'):escVal('e_isn',sfx,'i_san'))*cabI;
+    var costoTotalI=costoTransferI+costoCompraI+alimI+sanI+n('i_personal');
+    model.inv={
+      cabezas:cabI,
+      comprados:compradosI,
+      transferidos:headsTransferI,
+      pesoTransferencia:pesoTransferI,
+      pesoCompra:pesoCompraI,
+      sobrevivientes:cabSI,
+      costoTransferencia:costoTransferI,
+      costoCompraMercado:costoCompraI,
+      alimentacion:alimI,
+      sanidad:sanI,
+      costoPersonal:n('i_personal'),
+      costoTotal:costoTotalI,
+      ingresoVenta:ingresoVentaI,
+      margen:ingresoVentaI-costoTotalI,
+      mesesEstimados:cabI>0?Math.round(totalMesAnimal/cabI):0,
+      costoKgGanado:totalKgGanados>0?costoTotalI/totalKgGanados:0,
+      kgHa:supI>0?((cabSI/cabI)*totalKgGanados)/supI:0
+    };
+    model.totals.ing+=ingresoVentaI;
+    model.totals.egr+=costoTotalI;
   }
-  return{ing:tI,egr:tE,mb:tI-tE};
+
+  model.totals.mb=model.totals.ing-model.totals.egr;
+  return model;
+}
+
+function calcCore(sfx){
+  return calcModel(sfx).totals;
 }
 
 function calcSens(){
@@ -949,7 +1063,11 @@ function calcSens(){
       prices2.forEach(function(p){
         var origP=document.getElementById('c_precio_ternero').value,origPre=document.getElementById('c_prenez').value;
         var escEl=document.getElementById('e_ct_b'), origEsc=escEl?escEl.value:null;
-        document.getElementById('c_precio_ternero').value=p; document.getElementById('c_prenez').value=Math.min(98,d/0.85);
+        var parBase=parseFloat(document.getElementById('c_paricion').value)||0;
+        var mortBase=parseFloat(document.getElementById('c_mort').value)||0;
+        var factor=(parBase/100)*(1-mortBase/100);
+        var preReq=factor>0?d/factor:d;
+        document.getElementById('c_precio_ternero').value=p; document.getElementById('c_prenez').value=Math.min(98,Math.max(40,preReq));
         if(escEl) escEl.value='';
         var r=calcCore('b');
         document.getElementById('c_precio_ternero').value=origP; document.getElementById('c_prenez').value=origPre;
@@ -996,6 +1114,13 @@ function calcEQ(){
 // ── HELPERS ─────────────────────────────────────────────────
 function n(id){ var el=document.getElementById(id); return el?parseFloat(el.value)||0:0; }
 function fm(v,d){ return Math.round(v).toLocaleString('es-AR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0}); }
+function fab(v){
+  var abs=Math.abs(v), sign=v<0?'-':'';
+  if(abs>=1000000000) return sign+'$'+(abs/1000000000).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' B';
+  if(abs>=1000000) return sign+'$'+(abs/1000000).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' M';
+  if(abs>=1000) return sign+'$'+(abs/1000).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' k';
+  return sign+'$'+fm(abs,0);
+}
 function kpi(lbl,val,unit,cls){ return '<div class="kpi"><div class="kpi-lbl">'+lbl+'</div><div class="kpi-v '+(cls||'')+'">'+val+'</div><div class="kpi-u">'+unit+'</div></div>'; }
 function mrow(k,v,tot){ return '<div class="mrow'+(tot?' tot':'')+'"><span class="mk">'+k+'</span><span class="mv">'+v+'</span></div>'; }
 function cellClass(v){ return v>50000?'cell-pos':v<-50000?'cell-neg':'cell-neu'; }
@@ -1004,7 +1129,8 @@ function cellClass(v){ return v>50000?'cell-pos':v<-50000?'cell-neg':'cell-neu';
 function recalc(){
   if(!st.cria&&!st.recria&&!st.inv){ document.getElementById('rep_card').style.display='none';
   var ph=document.getElementById('rep_placeholder'); if(ph) ph.style.display='flex'; return; }
-  var base=calcCore('b'),pes=calcCore('p'),opt=calcCore('o');
+  var baseM=calcModel('b'),pesM=calcModel('p'),optM=calcModel('o');
+  var base=baseM.totals,pes=pesM.totals,opt=optM.totals;
   var supT=n('sup_total');
   var sens=calcSens(),eq=calcEQ();
   var html='';
@@ -1086,70 +1212,53 @@ function recalc(){
 
   // — Detalle por actividad —
   html+='<div><div class="sec-lbl" style="margin-bottom:8px">Detalle por actividad — escenario base</div>';
-  var tLogr=0,cTCria=0,pesoD=0;
-  if(st.cria){
-    var vac=n('c_vacas'),tor=n('c_toros'),pre=n('c_prenez')/100,par=n('c_paricion')/100,mor=n('c_mort')/100;
-    pesoD=n('c_peso_dest');
-    var pctV=n('c_pct_venta')/100,pT=n('c_precio_ternero'),sup=n('c_sup');
-    var tNac=Math.round(vac*pre*par); tLogr=Math.round(tNac*(1-mor));
-    var dest=vac>0?tLogr/vac*100:0,tV=Math.round(tLogr*pctV),tR=tLogr-tV;
-    var cSanT=n('c_san')*(vac+tor),cPasT=n('c_past')*sup,cPers=n('c_personal');
-    cTCria=cSanT+cPasT+cPers;
-    var ingV=tV*pesoD*pT,mbC=ingV-cTCria;
-    var cXKg=pesoD>0&&tLogr>0?cTCria/(tLogr*pesoD):0,kgHa=sup>0?(tLogr*pesoD)/sup:0;
+  if(st.cria && baseM.cria){
+    var cria=baseM.cria;
+    var pT=n('c_precio_ternero');
     html+='<div style="margin-bottom:1rem"><div style="margin-bottom:6px"><span class="badge bt">Cría</span></div>';
-    html+='<div class="kpi-grid">'+kpi('Terneros logrados',tLogr,'cab','')+kpi('% destete',dest.toFixed(1),'%',dest>=65?'pos':'neg')+kpi('Kg prod./ha',kgHa.toFixed(1),'kg/ha','')+kpi('Costo/kg','$'+fm(cXKg,1),'/kg','')+'</div>';
-    html+=mrow('Venta '+tV+' terneros × $'+fm(pT)+'/kg','$'+fm(ingV));
-    html+=mrow('Costos directos','-$'+fm(cTCria));
-    html+=mrow('Margen bruto cría','<span class="'+(mbC>=0?'pos':'neg')+'">$'+fm(mbC)+'</span>',true);
-    if(tR>0) html+='<div class="info-box" style="margin-top:8px">'+tR+' terneros propios pasan a la siguiente etapa — costo interno $'+fm(cXKg,1)+'/kg</div>';
+    html+='<div class="kpi-grid">'+kpi('Terneros logrados',cria.logrados,'cab','')+kpi('% destete',cria.destetePct.toFixed(1),'%',cria.destetePct>=65?'pos':'neg')+kpi('Kg prod./ha',cria.kgHa.toFixed(1),'kg/ha','')+kpi('Costo/kg','$'+fm(cria.costoKg,1),'/kg','')+'</div>';
+    html+=mrow('Venta '+cria.vendidos+' terneros × $'+fm(pT)+'/kg','$'+fm(cria.ingresoVenta));
+    if(cria.transferidos>0) html+=mrow('Transferencia interna '+cria.transferidos+' terneros','+$'+fm(cria.ingresoTransfer));
+    html+=mrow('Sanidad','-$'+fm(cria.costoSanidad));
+    html+=mrow('Pasturas','-$'+fm(cria.costoPasturas));
+    html+=mrow('Personal y otros','-$'+fm(cria.costoPersonal));
+    html+=mrow('Costos directos','-$'+fm(cria.costoTotal));
+    html+=mrow('Margen bruto cría','<span class="'+(cria.margen>=0?'pos':'neg')+'">$'+fm(cria.margen)+'</span>',true);
+    if(cria.transferidos>0) html+='<div class="info-box" style="margin-top:8px">'+cria.transferidos+' terneros propios pasan a la siguiente etapa a costo interno de $'+fm(cria.costoKg,1)+'/kg</div>';
     html+='</div>';
   }
-  if(st.recria){
-    var cabR,peR;
-    if(st.cria){ var pr2=1-n('c_pct_venta')/100; cabR=pr2>0?Math.round(tLogr*pr2):n('r_cabezas'); peR=pesoD||n('c_peso_dest'); }
-    else{ cabR=n('r_cabezas'); peR=n('r_peso_compra'); }
-    var psR=n('r_peso_salida'),morR=n('r_mort')/100,cabSR=Math.round(cabR*(1-morR));
-    var gdpRR=n('r_meses')>0?(psR-peR)/(n('r_meses')*30)*1000:0;
-    var pctVR=st.inv?n('r_pct_venta')/100:1,cabVR=Math.round(cabSR*pctVR);
-    var cosEntR=st.cria?0:cabR*peR*n('r_precio_compra');
-    var costoTR=cosEntR+n('r_san')*cabR+n('r_past')*n('r_sup')+n('r_personal');
-    var ingR=cabVR*psR*n('r_precio_salida'),mbR=ingR-costoTR;
-    var cXKgR=(psR-peR)*cabR>0?costoTR/((psR-peR)*cabR):0;
+  if(st.recria && baseM.recria){
+    var recria=baseM.recria;
+    var gdpGap=recria.gdpReal-recria.gdpObjetivo;
     html+='<div style="margin-bottom:1rem"><div style="margin-bottom:6px"><span class="badge bg-b">Recría</span></div>';
-    html+='<div class="kpi-grid">'+kpi('GDP real',gdpRR.toFixed(0),'g/día',gdpRR>=450?'pos':'neg')+kpi('Kg ganados/cab',(psR-peR).toFixed(0),'kg','')+kpi('Costo/kg ganado','$'+fm(cXKgR,1),'/kg','')+'</div>';
-    if(!st.cria) html+=mrow('Compra terneros','-$'+fm(cosEntR));
-    if(cabVR>0) html+=mrow('Venta '+cabVR+' animales × $'+fm(n('r_precio_salida'))+'/kg','$'+fm(ingR));
-    html+=mrow('Costos directos','-$'+fm(costoTR-(st.cria?0:cosEntR)));
-    html+=mrow('Margen bruto recría','<span class="'+(mbR>=0?'pos':'neg')+'">$'+fm(mbR)+'</span>',true);
+    html+='<div class="kpi-grid">'+kpi('GDP objetivo',recria.gdpObjetivo.toFixed(0),'g/día',recria.gdpObjetivo>=450?'pos':'neg')+kpi('GDP real',recria.gdpReal.toFixed(0),'g/día',recria.gdpReal>=450?'pos':'neg')+kpi('Desvío GDP',(gdpGap>=0?'+':'')+gdpGap.toFixed(0),'g/día',gdpGap>=0?'pos':'neg')+kpi('Kg ganados/cab',(recria.pesoSalida-recria.pesoEntrada).toFixed(0),'kg','')+kpi('Costo/kg ganado','$'+fm(recria.costoKgGanado,1),'/kg','')+'</div>';
+    if(recria.costoTransferencia>0) html+=mrow('Ingreso desde cría a costo de transferencia','-$'+fm(recria.costoTransferencia));
+    if(recria.costoCompraMercado>0) html+=mrow('Compra adicional de terneros','-$'+fm(recria.costoCompraMercado));
+    if(recria.vendidos>0) html+=mrow('Venta '+recria.vendidos+' animales × $'+fm(n('r_precio_salida'))+'/kg','$'+fm(recria.ingresoVenta));
+    if(recria.transferidos>0) html+=mrow('Transferencia interna a invernada','+$'+fm(recria.ingresoTransfer));
+    html+=mrow('Sanidad','-$'+fm(recria.costoSanidad));
+    html+=mrow('Pasturas','-$'+fm(recria.costoPasturas));
+    html+=mrow('Personal y otros','-$'+fm(recria.costoPersonal));
+    html+=mrow('Costos directos','-$'+fm(recria.costoTotal-recria.costoTransferencia-recria.costoCompraMercado));
+    html+=mrow('Margen bruto recría','<span class="'+(recria.margen>=0?'pos':'neg')+'">$'+fm(recria.margen)+'</span>',true);
     html+='</div>';
   }
-  if(st.inv){
+  if(st.inv && baseM.inv){
     var tipo=document.getElementById('i_tipo').value;
-    var cabI=n('i_cabezas'),peI=n('i_peso_entrada'),pvI=n('i_peso_venta');
-    var morI=n('i_mort')/100,cabSI=Math.round(cabI*(1-morI));
-    var gdpI=n('i_gdp'),mI=gdpI>0?Math.round((pvI-peI)/(gdpI/1000)/30):6;
-    var precVI=n('i_precio_venta'),comI=n('i_com')/100;
-    var ingI=cabSI*pvI*precVI*(1-comI);
-    var cosCompI=(!st.recria&&!st.cria)?cabI*peI*n('i_precio_compra'):0;
-    var alimI=0,supI2=0;
-    if(tipo==='pastoril'){ supI2=n('i_sup'); alimI=n('i_past')*supI2+n('i_supl')*cabI*mI; }
-    else{ alimI=(pvI-peI)*cabI*n('i_conv')*n('i_costo_racion'); }
-    var sanI=(tipo==='feedlot'?n('i_san_fl'):n('i_san'))*cabI;
-    var costoTI=cosCompI+alimI+sanI+n('i_personal'),mbI=ingI-costoTI;
-    var cXKgI=(pvI-peI)*cabI>0?costoTI/((pvI-peI)*cabI):0,kgHaI=supI2>0?(cabSI*(pvI-peI))/supI2:0;
+    var inv=baseM.inv;
     html+='<div style="margin-bottom:1rem"><div style="margin-bottom:6px"><span class="badge ba">Invernada/feedlot</span></div>';
-    html+='<div class="kpi-grid">'+kpi('GDP',gdpI,'g/día',gdpI>=700?'pos':'neg')+kpi('Meses est.',mI,'meses','')+kpi('Costo/kg ganado','$'+fm(cXKgI,1),'/kg','')+(supI2>0?kpi('Kg/ha',kgHaI.toFixed(0),'kg/ha',''):'')+(tipo==='feedlot'?kpi('Conversión',n('i_conv').toFixed(1),'kg MS/kg',''):'')+'</div>';
-    html+=mrow('Venta '+cabSI+' animales × $'+fm(precVI)+'/kg','$'+fm(ingI));
-    if(cosCompI>0) html+=mrow('Compra hacienda entrada','-$'+fm(cosCompI));
-    html+=mrow('Alimentación','-$'+fm(alimI));
-    html+=mrow('Sanidad','-$'+fm(sanI));
-    html+=mrow('Personal y otros','-$'+fm(n('i_personal')));
-    html+=mrow('Margen bruto invernada','<span class="'+(mbI>=0?'pos':'neg')+'">$'+fm(mbI)+'</span>',true);
+    html+='<div class="kpi-grid">'+kpi('GDP',n('i_gdp'),'g/día',n('i_gdp')>=700?'pos':'neg')+kpi('Meses est.',inv.mesesEstimados,'meses','')+kpi('Costo/kg ganado','$'+fm(inv.costoKgGanado,1),'/kg','')+(tipo==='pastoril'?kpi('Kg/ha',inv.kgHa.toFixed(0),'kg/ha',''):'')+(tipo==='feedlot'?kpi('Conversión',n('i_conv').toFixed(1),'kg MS/kg',''):'')+'</div>';
+    html+=mrow('Venta '+inv.sobrevivientes+' animales × $'+fm(n('i_precio_venta'))+'/kg','$'+fm(inv.ingresoVenta));
+    if(inv.costoTransferencia>0) html+=mrow('Ingreso propio a costo de transferencia','-$'+fm(inv.costoTransferencia));
+    if(inv.costoCompraMercado>0) html+=mrow('Compra adicional de ingreso','-$'+fm(inv.costoCompraMercado));
+    html+=mrow('Alimentación','-$'+fm(inv.alimentacion));
+    html+=mrow('Sanidad','-$'+fm(inv.sanidad));
+    html+=mrow('Personal y otros','-$'+fm(inv.costoPersonal));
+    html+=mrow('Margen bruto invernada','<span class="'+(inv.margen>=0?'pos':'neg')+'">$'+fm(inv.margen)+'</span>',true);
     html+='</div>';
   }
   html+='<div class="divider"></div>';
-  html+='<div class="kpi-grid">'+kpi('Ingresos totales','$'+fm(base.ing),'','')+kpi('Egresos totales','$'+fm(base.egr),'','')+kpi('Margen total','$'+fm(base.mb),'',base.mb>=0?'pos':'neg')+kpi('Margen/ha','$'+fm(supT>0?base.mb/supT:0,0),'/ha',base.mb>=0?'pos':'neg')+'</div></div>';
+  html+='<div class="kpi-grid">'+kpi('Ingresos totales',fab(base.ing),'','')+kpi('Egresos totales',fab(base.egr),'','')+kpi('Margen total',fab(base.mb),'',base.mb>=0?'pos':'neg')+kpi('Margen/ha',fab(supT>0?base.mb/supT:0),'/ha',base.mb>=0?'pos':'neg')+'</div></div>';
 
   // end report
   document.getElementById('rep_content').innerHTML=html;
