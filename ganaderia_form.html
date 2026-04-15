@@ -37,42 +37,65 @@
   --txt2:     var(--gris);
   --txt3:     var(--gris-l);
   --shadow:   0 2px 16px rgba(0,0,0,.4);
+  --shadow-lg: 0 18px 40px rgba(0,0,0,.28);
   --r:10px;--r-sm:6px;
 }
-body{font-family:'DM Sans',-apple-system,sans-serif;font-size:14px;color:var(--txt);background:var(--bg);min-height:100vh}
-.wrap{max-width:1080px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
-.panel-grid{display:grid;grid-template-columns:500px 500px;gap:24px;align-items:start;margin-top:1rem}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',-apple-system,sans-serif;font-size:14px;line-height:1.45;color:var(--txt);background:
+  radial-gradient(circle at top left, rgba(42,184,138,.12), transparent 30%),
+  linear-gradient(180deg, #11263d 0%, var(--bg) 38%, #091725 100%);
+  min-height:100vh}
+.wrap{max-width:1160px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+.panel-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1fr);gap:24px;align-items:start;margin-top:1rem}
 .panel-left{display:flex;flex-direction:column;gap:12px;min-width:0}
-.panel-right{display:flex;flex-direction:column;gap:16px;min-width:0;position:sticky;top:1rem}
+.panel-right{display:flex;flex-direction:column;gap:16px;min-width:0}
 @media(max-width:1080px){
   .panel-grid{grid-template-columns:1fr}
   .panel-right{position:static}
+}
+@media(max-width:760px){
+  .wrap{padding:1rem 1rem 3rem}
+  .cliente-row,.fg,.fg3,.res-3,.kpi-grid{grid-template-columns:1fr}
+  .save-row{align-items:flex-start}
+  .save-row #last_saved{margin-left:0}
+  .sr{flex-wrap:wrap;align-items:center}
+  .sr label,.sbench{min-width:100%;max-width:none;text-align:left}
+  .bar-chart{height:auto;align-items:stretch;gap:10px}
+  .bar-wrap{gap:6px}
+  .bar{min-height:16px}
+  .modal{padding:1.1rem}
 }
 
 /* ── HEADER CTX ── */
 .ctx-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
 .ctx-logo{font-size:18px;font-weight:700;letter-spacing:-.3px;color:var(--verde)}
 .ctx-logo span{color:var(--txt2);font-weight:400}
+.ctx-brand{display:flex;align-items:center;gap:12px}
+.ctx-caption{font-size:11px;color:var(--gris);margin-top:2px;letter-spacing:.3px}
 
 /* ── CLIENTE SELECTOR ── */
-.cliente-bar{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;flex-direction:column;gap:.75rem}
+.cliente-bar{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)), var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;flex-direction:column;gap:.75rem;box-shadow:var(--shadow)}
 .cliente-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
 .save-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .status-msg{font-size:12px;color:var(--txt3);transition:color .3s}
 .status-msg.ok{color:var(--verde-d)}
 .status-msg.err{color:var(--rojo)}
+.meta-note{font-size:11px;color:var(--txt3);margin-left:auto}
 
 /* ── CARDS ── */
-.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
-.card-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.card{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
+.card:hover,.cliente-bar:hover,.rep-card:hover{border-color:rgba(255,255,255,.14);box-shadow:var(--shadow-lg)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;user-select:none}
 .card-hdr:hover{opacity:.85}
 .acc-icon{font-size:13px;color:var(--gris);transition:transform .25s;flex-shrink:0;margin-left:4px}
 .card-title{font-size:15px;font-weight:600;color:var(--txt)}
 .card-sub{font-size:12px;color:var(--txt2);margin-top:2px}
 .fields{margin-top:1.25rem;display:flex;flex-direction:column;gap:1rem;border-top:0.5px solid var(--border);padding-top:1.25rem}
+.card-actions{display:flex;align-items:center;gap:10px}
 
 /* ── TOGGLE ── */
 .tog-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tog-text{font-size:12px;color:var(--txt2)}
 .tog{position:relative;width:36px;height:20px;cursor:pointer}
 .tog input{opacity:0;width:0;height:0;position:absolute}
 .tsl{position:absolute;inset:0;background:var(--border2);border-radius:10px;transition:background .2s}
@@ -82,12 +105,13 @@ body{font-family:'DM Sans',-apple-system,sans-serif;font-size:14px;color:var(--t
 
 /* ── FORM ELEMENTS ── */
 label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px;font-weight:500;letter-spacing:.3px}
-input[type=number],select{width:100%;padding:8px 10px;font-size:13px;border-radius:var(--r-sm);border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt);outline:none;transition:border-color .15s}
-input[type=number]:focus,select:focus{border-color:var(--verde);background:var(--bg2)}
+input[type=number],input[type=text],select{width:100%;padding:8px 10px;font-size:13px;border-radius:var(--r-sm);border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt);outline:none;transition:border-color .15s, background-color .15s, box-shadow .15s}
+input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--verde);background:var(--bg2);box-shadow:0 0 0 3px rgba(30,153,112,.12)}
 .hint{font-size:11px;color:var(--txt3);margin-top:3px}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .info-box{background:rgba(30,153,112,.12);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 12px;font-size:12px;color:var(--verde-l);border-left:2px solid var(--verde);margin-bottom:4px}
+.spacer-top{margin-top:10px}
 
 /* ── SLIDERS ── */
 .sec-lbl{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;margin-top:12px}
@@ -100,12 +124,13 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
 .idx-box{background:var(--negro-b);border-radius:var(--r-sm);padding:10px 12px;border:1px solid var(--border);overflow:hidden}
 
 /* ── BUTTONS ── */
-.btn{padding:8px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s,transform .1s;border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt)}
+.btn{padding:8px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s,transform .1s,background-color .15s,border-color .15s;border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt)}
 .btn:hover{opacity:.85}
 .btn:active{transform:scale(.98)}
 .btn-primary{background:var(--verde);color:white;border-color:var(--verde-d)}
 .btn-sm{padding:6px 12px;font-size:12px}
 .btn-danger{background:var(--rojo-l);color:var(--rojo);border-color:var(--rojo)}
+.btn-icon{min-width:38px;padding-inline:10px}
 
 /* ── ESCENARIOS ── */
 .esc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:.5rem}
@@ -127,7 +152,7 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
 .two-col-rep .col-right{}
 
 /* ── REPORTE ── */
-.rep-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.rep-card{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow);transition:box-shadow .18s ease,border-color .18s ease}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px}
 .kpi{background:var(--negro-b);border-radius:var(--r-sm);padding:10px 12px;border:1px solid var(--border)}
 .kpi-lbl{font-size:11px;color:var(--txt2);margin-bottom:3px}
@@ -160,11 +185,11 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
 .rc-sub{font-size:11px;margin-top:3px;color:var(--gris)}
 
 /* ── BARRAS ── */
-.bar-chart{display:flex;align-items:flex-end;gap:8px;height:100px;margin:20px 0 8px}
-.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:140px;margin:12px 0 8px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;min-width:0}
 .bar{width:100%;border-radius:4px 4px 0 0;transition:height .3s;min-height:4px}
-.bar-lbl{font-size:12px;font-weight:600;text-align:center}
-.bar-sub{font-size:10px;color:var(--txt2);text-align:center}
+.bar-lbl{font-size:12px;font-weight:600;text-align:center;line-height:1.2;word-break:break-word}
+.bar-sub{font-size:10px;color:var(--txt2);text-align:center;line-height:1.2}
 .bar.pes{background:rgba(217,81,44,.7)}
 .bar.base{background:var(--verde)}
 .bar.opt{background:rgba(42,184,138,.8)}
@@ -190,8 +215,9 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
 /* ── HISTORIAL MODAL ── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem}
 .modal-bg.open{display:flex}
-.modal{background:var(--bg2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto}
+.modal{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:0.5px solid var(--border)}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
 .hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px}
 .hist-item:last-child{border-bottom:none}
 .hist-info{flex:1;min-width:0}
@@ -199,17 +225,22 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
 .hist-meta{font-size:11px;color:var(--txt2);margin-top:2px}
 .hist-acts{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
 .hist-act-badge{font-size:10px;padding:1px 6px;border-radius:99px;font-weight:600}
+.hist-actions{display:flex;gap:6px;flex-shrink:0}
+.placeholder-card{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--negro-s);border:1px dashed rgba(255,255,255,.12);border-radius:var(--r);padding:2rem;text-align:center;color:var(--gris);font-size:13px;min-height:220px;display:flex;flex-direction:column;justify-content:center}
+.placeholder-icon{font-size:28px;margin-bottom:12px;color:var(--oro-l)}
+.placeholder-title{font-weight:600;margin-bottom:6px;color:var(--texto)}
+.placeholder-copy{font-size:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <div class="ctx-header">
-  <div><div style="display:flex;align-items:center;gap:12px">
+  <div><div class="ctx-brand">
     <svg width="38" height="38" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
     <div>
       <div class="ctx-logo">CTX <span>Ganadería</span></div>
-      <div style="font-size:11px;color:var(--gris);margin-top:2px;letter-spacing:.3px">Análisis de caso</div>
+      <div class="ctx-caption">Análisis de caso</div>
     </div>
   </div></div>
 </div>
@@ -228,17 +259,17 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
     </div>
     <div>
       <label>Campaña</label>
-      <input type="text" id="campania" value="2025/2026" style="padding:8px 10px;font-size:13px;border-radius:6px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--txt);outline:none;width:100%">
+      <input type="text" id="campania" value="2025/2026">
     </div>
-    <div style="padding-bottom:1px">
-      <button class="btn btn-sm" onclick="abrirHistorial()" title="Ver análisis guardados">📋</button>
+    <div class="spacer-top">
+      <button class="btn btn-sm btn-icon" onclick="abrirHistorial()" title="Ver análisis guardados">📋</button>
     </div>
   </div>
   <div class="save-row">
     <button class="btn btn-primary btn-sm" onclick="guardar()">Guardar análisis</button>
     <button class="btn btn-sm" onclick="nuevoAnalisis()">Nuevo</button>
     <span class="status-msg" id="status_msg"></span>
-    <span style="font-size:11px;color:var(--txt3);margin-left:auto" id="last_saved"></span>
+    <span class="meta-note" id="last_saved"></span>
   </div>
 </div>
     <div class="card">
@@ -253,9 +284,9 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
     <div class="card">
   <div class="card-hdr" onclick="toggleAcc('acc-cria','icon-cria')">
     <div><div class="card-title">Cría</div><div class="card-sub">Producción de terneros propios</div></div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="card-actions">
       <div class="tog-wrap" onclick="event.stopPropagation()">
-        <span style="font-size:12px;color:var(--txt2)">Realizo cría</span>
+        <span class="tog-text">Realizo cría</span>
         <label class="tog"><input type="checkbox" id="tog_cria" onchange="toggleMod('cria')"><span class="tsl"></span></label>
       </div>
       <span class="acc-icon" id="icon-cria">▼</span>
@@ -295,9 +326,9 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
     <div class="card">
   <div class="card-hdr" onclick="toggleAcc('acc-recria','icon-recria')">
     <div><div class="card-title">Recría</div><div class="card-sub">Crecimiento ternero → novillo/vaquillona</div></div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="card-actions">
       <div class="tog-wrap" onclick="event.stopPropagation()">
-        <span style="font-size:12px;color:var(--txt2)">Realizo recría</span>
+        <span class="tog-text">Realizo recría</span>
         <label class="tog"><input type="checkbox" id="tog_recria" onchange="toggleMod('recria')"><span class="tsl"></span></label>
       </div>
       <span class="acc-icon" id="icon-recria">▼</span>
@@ -311,7 +342,7 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
         <div><label>Terneros comprados (cab)</label><input type="number" id="r_cabezas" value="100" min="1" oninput="recalc()"></div>
         <div><label>Peso compra (kg)</label><input type="number" id="r_peso_compra" value="160" min="50" oninput="recalc()"></div>
       </div>
-      <div class="fg" style="margin-top:10px">
+      <div class="fg spacer-top">
         <div><label>Precio compra ternero ($/kg) — base</label><input type="number" id="r_precio_compra" value="1800" min="0" oninput="syncEsc();recalc()"></div>
         <div></div>
       </div>
@@ -325,7 +356,7 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
         <div class="sr"><label>GDP (g/día)</label><input type="range" id="r_gdp" min="200" max="900" value="500" step="10" oninput="upd('r_gdp','r_gdp_v','g/d');syncGDP('r');recalc()"><span class="sv" id="r_gdp_v">500 g/d</span><span class="sbench">ref 400–600</span></div>
         <div class="sr"><label>% mortandad</label><input type="range" id="r_mort" min="0" max="10" value="1" step="0.5" oninput="upd('r_mort','r_mort_v','%');recalc()"><span class="sv" id="r_mort_v">1%</span><span class="sbench">ref 0.5–2%</span></div>
       </div>
-      <div class="hint" style="margin-top:6px" id="r_gdp_hint">GDP 500 g/d → 140 kg en 280 días (~9 meses)</div>
+      <div class="hint spacer-top" id="r_gdp_hint">GDP 500 g/d → 140 kg en 280 días (~9 meses)</div>
     </div>
     <div class="fg3">
       <div><label>Sanidad ($/cab)</label><input type="number" id="r_san" value="3000" min="0" oninput="recalc()"></div>
@@ -352,9 +383,9 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
     <div class="card">
   <div class="card-hdr" onclick="toggleAcc('acc-inv','icon-inv')">
     <div><div class="card-title">Invernada / feedlot</div><div class="card-sub">Engorde hasta peso de faena</div></div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="card-actions">
       <div class="tog-wrap" onclick="event.stopPropagation()">
-        <span style="font-size:12px;color:var(--txt2)">Realizo invernada</span>
+        <span class="tog-text">Realizo invernada</span>
         <label class="tog"><input type="checkbox" id="tog_inv" onchange="toggleMod('inv')"><span class="tsl"></span></label>
       </div>
       <span class="acc-icon" id="icon-inv">▼</span>
@@ -368,7 +399,7 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
         <div><label>Animales a engordar (cab)</label><input type="number" id="i_cabezas" value="100" min="1" oninput="recalc()"></div>
         <div><label>Peso entrada (kg)</label><input type="number" id="i_peso_entrada" value="280" min="100" oninput="recalc()"></div>
       </div>
-      <div class="fg" style="margin-top:10px">
+      <div class="fg spacer-top">
         <div><label>Precio compra entrada ($/kg) — base</label><input type="number" id="i_precio_compra" value="1600" min="0" oninput="syncEsc();recalc()"></div>
         <div></div>
       </div>
@@ -382,11 +413,11 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
         <div class="sr"><label>GDP (g/día)</label><input type="range" id="i_gdp" min="300" max="1300" value="800" step="10" oninput="upd('i_gdp','i_gdp_v','g/d');syncGDP('i');recalc()"><span class="sv" id="i_gdp_v">800 g/d</span><span class="sbench">ref 700–1100</span></div>
         <div class="sr"><label>% mortandad</label><input type="range" id="i_mort" min="0" max="8" value="1" step="0.5" oninput="upd('i_mort','i_mort_v','%');recalc()"><span class="sv" id="i_mort_v">1%</span><span class="sbench">ref 0.5–2%</span></div>
       </div>
-      <div class="hint" style="margin-top:6px" id="i_gdp_hint">GDP 800 g/d → 150 kg en 188 días (~6 meses)</div>
+      <div class="hint spacer-top" id="i_gdp_hint">GDP 800 g/d → 150 kg en 188 días (~6 meses)</div>
     </div>
     <div>
       <label>Tipo de engorde</label>
-      <select id="i_tipo" onchange="toggleFL();recalc()" style="margin-top:4px">
+      <select id="i_tipo" onchange="toggleFL();recalc()" class="spacer-top">
         <option value="pastoril">Pastoril (pasturas + suplementación)</option>
         <option value="feedlot">Feedlot / confinamiento</option>
       </select>
@@ -396,7 +427,7 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
         <div><label>Pasturas ($/ha/año)</label><input type="number" id="i_past" value="10000" min="0" oninput="recalc()"></div>
         <div><label>Superficie invernada (ha)</label><input type="number" id="i_sup" value="150" min="1" oninput="recalc()"></div>
       </div>
-      <div class="fg" style="margin-top:10px">
+      <div class="fg spacer-top">
         <div><label>Suplementación ($/cab/mes)</label><input type="number" id="i_supl" value="8000" min="0" oninput="recalc()"></div>
         <div><label>Sanidad ($/cab)</label><input type="number" id="i_san" value="3500" min="0" oninput="recalc()"></div>
       </div>
@@ -407,7 +438,7 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
           <div class="sr"><label>Conversión (kg MS/kg ganado)</label><input type="range" id="i_conv" min="4" max="14" value="7" step="0.5" oninput="upd('i_conv','i_conv_v','');recalc()"><span class="sv" id="i_conv_v">7</span><span class="sbench">ref 6–10</span></div>
         </div>
       </div>
-      <div class="fg3" style="margin-top:10px">
+      <div class="fg3 spacer-top">
         <div><label>Costo ración ($/kg MS) — base</label><input type="number" id="i_costo_racion" value="180" min="0" oninput="syncEsc();recalc()"></div>
         <div><label>Sanidad ($/cab)</label><input type="number" id="i_san_fl" value="4000" min="0" oninput="recalc()"></div>
         <div></div>
@@ -431,10 +462,10 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
     <div id="rep_card" class="rep-card" style="display:none">
   <div id="rep_content"></div>
 </div>
-    <div id="rep_placeholder" style="background:var(--negro-s);border:1px solid var(--border);border-radius:var(--r);padding:2rem;text-align:center;color:var(--gris);font-size:13px">
-    <div style="font-size:28px;margin-bottom:12px">◈</div>
-    <div style="font-weight:600;margin-bottom:6px;color:var(--texto)">Activá una actividad para ver el análisis</div>
-    <div style="font-size:12px">Habilitá Cría, Recría o Invernada en la columna izquierda</div>
+    <div id="rep_placeholder" class="placeholder-card">
+    <div class="placeholder-icon">◈</div>
+    <div class="placeholder-title">Activá una actividad para ver el análisis</div>
+    <div class="placeholder-copy">Habilitá Cría, Recría o Invernada en la columna izquierda</div>
   </div>
   </div>
 
@@ -443,9 +474,9 @@ input[type=number]:focus,select:focus{border-color:var(--verde);background:var(-
 
 <div class="modal-bg" id="modal_hist" onclick="if(event.target===this)cerrarHistorial()">
   <div class="modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <div class="modal-header">
       <div class="modal-title">Análisis guardados</div>
-      <button class="btn btn-sm" onclick="cerrarHistorial()">✕</button>
+      <button class="btn btn-sm btn-icon" onclick="cerrarHistorial()">✕</button>
     </div>
     <div id="hist_list"><div style="color:var(--txt2);font-size:13px">Cargando...</div></div>
   </div>
@@ -673,7 +704,7 @@ async function cargarHistorial(){
         +'<div class="hist-meta">Campaña '+a.campania+' · '+fecha+'</div>'
         +(actBadges?'<div class="hist-acts">'+actBadges+'</div>':'')
         +'</div>'
-        +'<div style="display:flex;gap:6px;flex-shrink:0">'
+        +'<div class="hist-actions">'
         +'<button class="btn btn-sm btn-primary" onclick="cargarAnalisis(\''+a.id+'\')">Cargar</button>'
         +'<button class="btn btn-sm btn-danger" onclick="eliminarAnalisis(\''+a.id+'\',this)">Eliminar</button>'
         +'</div></div>';
@@ -1009,14 +1040,15 @@ function recalc(){
   });
   html+='</div>';
   var dip=pes.mb-base.mb,dio=opt.mb-base.mb;
-  html+='<div style="font-size:12px;color:var(--txt2)">Sensibilidad vs. base: pesimista <span style="color:var(--rojo);font-weight:600">'+fm(dip)+'</span> · optimista <span style="color:var(--verde-d);font-weight:600">+'+fm(dio)+'</span></div>';
-  html+='</div><div class="divider"></div>';
+  html+='<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Sensibilidad vs. base: pesimista <span style="color:var(--rojo);font-weight:600">'+fm(dip)+'</span> · optimista <span style="color:var(--verde-d);font-weight:600">+'+fm(dio)+'</span></div>';
+  html+='</div>';
+  html+='<div class="divider" style="margin:20px 0"></div>';
 
   // — Punto de equilibrio —
   if(eq){
     var pl=eq.type==='inv'?'Precio venta novillo':'Precio ternero al destete';
     var pMax=Math.round(eq.current*1.6),pMin=0;
-    html+='<div style="margin-bottom:1rem"><div class="sec-lbl" style="margin-bottom:10px">Punto de equilibrio — '+pl+'</div>';
+    html+='<div style="margin-top:8px;margin-bottom:1rem"><div class="sec-lbl" style="margin-bottom:10px">Punto de equilibrio — '+pl+'</div>';
     if(eq.eq){
       var pctEQ=Math.min(99,Math.round((eq.eq-pMin)/(pMax-pMin)*100));
       var pctAct=Math.min(99,Math.round((eq.current-pMin)/(pMax-pMin)*100));
@@ -1034,11 +1066,10 @@ function recalc(){
     html+='</div>';
   }
 
-  html+='<div class="divider"></div>';
   // — Tabla de sensibilidad —
   if(sens){
     var title=sens.type==='inv'?'Sensibilidad: precio venta × GDP':'Sensibilidad: precio ternero × % destete';
-    html+='<div style="margin-bottom:1rem"><div class="sec-lbl" style="margin-bottom:8px">'+title+'</div><div class="sens-wrap"><table class="sens-table"><thead><tr>';
+    html+='<div style="margin-top:8px;margin-bottom:1rem"><div class="sec-lbl" style="margin-bottom:8px">'+title+'</div><div class="sens-wrap"><table class="sens-table"><thead><tr>';
     html+='<th>'+(sens.type==='inv'?'GDP ↓  /  precio →':'Destete ↓  /  precio →')+'</th>';
     sens.prices.forEach(function(p){ html+='<th>$'+fm(p)+'/kg</th>'; });
     html+='</tr></thead><tbody>';
