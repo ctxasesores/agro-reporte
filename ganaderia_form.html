@@ -249,29 +249,6 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 
   <!-- ── COLUMNA IZQUIERDA ── -->
   <div class="panel-left">
-    <div class="cliente-bar">
-  <div class="cliente-row">
-    <div>
-      <label>Cliente</label>
-      <select id="sel_cliente" onchange="onClienteChange()">
-        <option value="">— Seleccioná un cliente —</option>
-      </select>
-    </div>
-    <div>
-      <label>Campaña</label>
-      <input type="text" id="campania" value="2025/2026">
-    </div>
-    <div class="spacer-top">
-      <button class="btn btn-sm btn-icon" onclick="abrirHistorial()" title="Ver análisis guardados">📋</button>
-    </div>
-  </div>
-  <div class="save-row">
-    <button class="btn btn-primary btn-sm" onclick="guardar()">Guardar análisis</button>
-    <button class="btn btn-sm" onclick="nuevoAnalisis()">Nuevo</button>
-    <span class="status-msg" id="status_msg"></span>
-    <span class="meta-note" id="last_saved"></span>
-  </div>
-</div>
     <div class="card">
   <div class="card-hdr" onclick="toggleAcc('acc-datos','icon-datos')"><div><div class="card-title">Datos generales</div><div class="card-sub">Período y superficie del establecimiento</div></div><span class="acc-icon" id="icon-datos" style="transform:rotate(180deg)">▼</span></div>
   <div id="acc-datos" class="fields">
@@ -527,6 +504,7 @@ async function cargarClientes(){
     const data = await supa('GET', 'clientes?select=id,nombre_empresa&order=nombre_empresa');
     clientes = data || [];
     const sel = document.getElementById('sel_cliente');
+    if(!sel) return;
     sel.innerHTML = '<option value="">— Seleccioná un cliente —</option>';
     clientes.forEach(function(c){
       sel.innerHTML += '<option value="'+c.id+'">'+c.nombre_empresa+'</option>';
@@ -538,7 +516,8 @@ async function cargarClientes(){
 
 function onClienteChange(){
   currentAnalisisId = null;
-  document.getElementById('last_saved').textContent = '';
+  var last=document.getElementById('last_saved');
+  if(last) last.textContent = '';
   setStatus('', '');
 }
 
@@ -620,10 +599,12 @@ function deserializarFormulario(datos, actividades, escenarios){
 
 // ── GUARDAR ─────────────────────────────────────────────────
 async function guardar(){
-  var clienteId = document.getElementById('sel_cliente').value;
-  var campania = document.getElementById('campania').value.trim();
-  if(!clienteId){ setStatus('Seleccioná un cliente', 'err'); return; }
-  if(!campania){ setStatus('Ingresá la campaña', 'err'); return; }
+  var sel=document.getElementById('sel_cliente');
+  var camEl=document.getElementById('campania');
+  var clienteId = sel?sel.value:'';
+  var campania = camEl?camEl.value.trim():'';
+  if(sel && !clienteId){ setStatus('Seleccioná un cliente', 'err'); return; }
+  if(camEl && !campania){ setStatus('Ingresá la campaña', 'err'); return; }
   if(!st.cria&&!st.recria&&!st.inv){ setStatus('Activá al menos una actividad', 'err'); return; }
 
   setStatus('Guardando...', '');
@@ -661,8 +642,8 @@ async function guardar(){
     }
     var now = new Date();
     setStatus('Guardado correctamente', 'ok');
-    document.getElementById('last_saved').textContent =
-      'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    var last=document.getElementById('last_saved');
+    if(last) last.textContent = 'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setTimeout(function(){ setStatus('',''); }, 3000);
   }catch(e){
     setStatus('Error al guardar: '+e.message, 'err');
@@ -677,7 +658,8 @@ async function abrirHistorial(){
 function cerrarHistorial(){ document.getElementById('modal_hist').classList.remove('open'); }
 
 async function cargarHistorial(){
-  var clienteId = document.getElementById('sel_cliente').value;
+  var sel=document.getElementById('sel_cliente');
+  var clienteId = sel?sel.value:'';
   var listEl = document.getElementById('hist_list');
   listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px">Cargando...</div>';
 
@@ -720,10 +702,12 @@ async function cargarAnalisis(id){
     if(!data||!data.length){ setStatus('No encontrado', 'err'); return; }
     var a = data[0];
     currentAnalisisId = a.id;
-    document.getElementById('sel_cliente').value = a.cliente_id || '';
+    var sel=document.getElementById('sel_cliente');
+    if(sel) sel.value = a.cliente_id || '';
     deserializarFormulario(a.datos, a.actividades, a.escenarios);
     var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-    document.getElementById('last_saved').textContent = 'Cargado: '+a.campania+' · '+fecha;
+    var last=document.getElementById('last_saved');
+    if(last) last.textContent = 'Cargado: '+a.campania+' · '+fecha;
     setStatus('Análisis cargado', 'ok');
     setTimeout(function(){ setStatus('',''); }, 3000);
     cerrarHistorial();
@@ -756,13 +740,15 @@ function nuevoAnalisis(){
   });
   document.getElementById('rep_card').style.display = 'none';
   document.getElementById('esc_card').style.display = 'none';
-  document.getElementById('last_saved').textContent = '';
+  var last=document.getElementById('last_saved');
+  if(last) last.textContent = '';
   setStatus('Formulario reiniciado', 'ok');
   setTimeout(function(){ setStatus('',''); }, 2000);
 }
 
 function setStatus(msg, type){
   var el = document.getElementById('status_msg');
+  if(!el) return;
   el.textContent = msg;
   el.className = 'status-msg' + (type?' '+type:'');
 }
