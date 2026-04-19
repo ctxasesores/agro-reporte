@@ -147,6 +147,26 @@ tr:hover td { background:#f9faf6; }
 /* LOADING BAR */
 #loadingBar { position:fixed; top:0; left:0; height:3px; background:var(--oro); width:0; z-index:999; transition:width .3s; }
 .empty-state { padding:32px; text-align:center; color:var(--gris); font-size:14px; }
+.mini-stack { display:flex; flex-direction:column; gap:4px; }
+.mini-muted { font-size:11px; color:var(--gris); }
+.chip-row { display:flex; flex-wrap:wrap; gap:6px; }
+.chip {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 9px; border-radius:999px;
+  border:1px solid var(--crema-dd); background:var(--crema);
+  font-size:11px; font-weight:600; color:var(--texto);
+}
+.chip.gold { background:rgba(200,169,110,.12); border-color:rgba(200,169,110,.35); color:var(--oro-d); }
+.chip.green { background:#dcfce7; border-color:#bbf7d0; color:#166534; }
+.chip.red { background:#fee2e2; border-color:#fecaca; color:#991b1b; }
+.chip.gray { background:#f3f4f6; border-color:#e5e7eb; color:#4b5563; }
+.users-grid { padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.users-grid .full-span { grid-column:1/-1; }
+@media (max-width: 960px) {
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .users-grid { grid-template-columns:1fr; }
+  .users-grid .full-span { grid-column:auto; }
+}
 </style>
 </head>
 <body>
@@ -352,9 +372,9 @@ tr:hover td { background:#f9faf6; }
       <div class="section" id="sec-usuarios">
         <div class="card" style="margin-bottom:20px">
           <div class="card-header">
-            <div><h2>Crear nuevo cliente</h2><div class="card-header-sub">El cliente recibirá su email y contraseña para acceder al dashboard</div></div>
+            <div><h2>Crear nuevo cliente</h2><div class="card-header-sub">Alta operativa y configuración comercial inicial del cliente</div></div>
           </div>
-          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="users-grid">
             <div class="field-group"><label class="field-label">Nombre empresa / cliente</label><input type="text" class="field-input" id="nu-nombre" placeholder="Agropecuaria XYZ S.A."></div>
             <div class="field-group"><label class="field-label">Código interno</label><input type="text" class="field-input" id="nu-codigo" placeholder="XYZ_22"></div>
             <div class="field-group"><label class="field-label">Email</label><input type="email" class="field-input" id="nu-email" placeholder="cliente@empresa.com"></div>
@@ -366,18 +386,88 @@ tr:hover td { background:#f9faf6; }
                 <option>Agricultura y Ganadería</option><option>Tambo</option>
               </select>
             </div>
-            <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--crema-d)">
+            <div class="field-group">
+              <label class="field-label">Plan</label>
+              <select class="field-select" id="nu-plan">
+                <option value="standard">Standard</option>
+                <option value="premium">Premium</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Estado de pago</label>
+              <select class="field-select" id="nu-pago">
+                <option value="pendiente">Pendiente</option>
+                <option value="al_dia">Al día</option>
+                <option value="vencido">Vencido</option>
+                <option value="bonificado">Bonificado</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Agricultura</label>
+              <select class="field-select" id="nu-acceso-agricultura">
+                <option value="true">Habilitado</option>
+                <option value="false">Bloqueado</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Nivel Agricultura</label>
+              <select class="field-select" id="nu-nivel-agricultura">
+                <option value="ESTANDAR">ESTANDAR</option>
+                <option value="PRO">PRO</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Ganadería</label>
+              <select class="field-select" id="nu-acceso-ganaderia">
+                <option value="false">Bloqueado</option>
+                <option value="true">Habilitado</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Nivel Ganadería</label>
+              <select class="field-select" id="nu-nivel-ganaderia">
+                <option value="ESTANDAR">ESTANDAR</option>
+                <option value="PRO">PRO</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Tambo</label>
+              <select class="field-select" id="nu-acceso-tambo">
+                <option value="false">Bloqueado</option>
+                <option value="true">Habilitado</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Nivel Tambo</label>
+              <select class="field-select" id="nu-nivel-tambo">
+                <option value="ESTANDAR">ESTANDAR</option>
+                <option value="PRO">PRO</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Premium activo</label>
+              <select class="field-select" id="nu-premium">
+                <option value="false">No</option>
+                <option value="true">Sí</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Link de pago</label>
+              <input type="text" class="field-input" id="nu-payment-url" placeholder="https://...">
+            </div>
+            <div class="full-span" style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--crema-d)">
               <div id="nu-toast" class="toast"></div>
               <button class="btn-export" id="nu-btn" onclick="crearUsuario()" style="margin-left:auto">+ Crear cliente</button>
             </div>
           </div>
         </div>
         <div class="card">
-          <div class="card-header"><h2>Clientes activos</h2><button class="btn-refresh" onclick="cargarClientes()">↻ Actualizar</button></div>
+          <div class="card-header"><h2>Clientes y configuración comercial</h2><button class="btn-refresh" onclick="cargarClientes()">↻ Actualizar</button></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Nombre</th><th>Código</th><th>Email</th><th>Campaña</th><th>Actividad</th><th>Alta</th><th>Estado</th><th>Acciones</th></tr></thead>
-              <tbody id="tbody-clientes"><tr><td colspan="8" class="empty-state">Cargando...</td></tr></tbody>
+              <thead><tr><th>Cliente</th><th>Actividad</th><th>Plan / Pago</th><th>Paneles</th><th>Alta</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tbody-clientes"><tr><td colspan="7" class="empty-state">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -584,6 +674,90 @@ tr:hover td { background:#f9faf6; }
   </div>
 </div>
 
+<!-- MODAL COMERCIAL -->
+<div class="modal-overlay" id="modalComercialOverlay" onclick="closeComercialModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:760px">
+    <h3>Configurar plan, pago y paneles</h3>
+    <input type="hidden" id="cc-id">
+    <div class="modal-grid">
+      <div class="modal-group">
+        <label class="modal-label">Plan</label>
+        <select class="modal-select" id="cc-plan">
+          <option value="standard">Standard</option>
+          <option value="premium">Premium</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Estado de pago</label>
+        <select class="modal-select" id="cc-pago">
+          <option value="pendiente">Pendiente</option>
+          <option value="al_dia">Al día</option>
+          <option value="vencido">Vencido</option>
+          <option value="bonificado">Bonificado</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Agricultura</label>
+        <select class="modal-select" id="cc-acceso-agricultura">
+          <option value="true">Habilitado</option>
+          <option value="false">Bloqueado</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Nivel Agricultura</label>
+        <select class="modal-select" id="cc-nivel-agricultura">
+          <option value="ESTANDAR">ESTANDAR</option>
+          <option value="PRO">PRO</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Ganadería</label>
+        <select class="modal-select" id="cc-acceso-ganaderia">
+          <option value="true">Habilitado</option>
+          <option value="false">Bloqueado</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Nivel Ganadería</label>
+        <select class="modal-select" id="cc-nivel-ganaderia">
+          <option value="ESTANDAR">ESTANDAR</option>
+          <option value="PRO">PRO</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Tambo</label>
+        <select class="modal-select" id="cc-acceso-tambo">
+          <option value="true">Habilitado</option>
+          <option value="false">Bloqueado</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Nivel Tambo</label>
+        <select class="modal-select" id="cc-nivel-tambo">
+          <option value="ESTANDAR">ESTANDAR</option>
+          <option value="PRO">PRO</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Premium activo</label>
+        <select class="modal-select" id="cc-premium">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Link de pago</label>
+        <input type="text" class="modal-input" id="cc-payment-url" placeholder="https://...">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeComercialModal()">Cancelar</button>
+      <button class="btn-modal-save" onclick="saveComercialEdit()">Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const ADMIN_PASS   = 'ctx_admin_2026';
 const SUPA_URL     = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
@@ -592,6 +766,49 @@ const FUNCTIONS_URL= 'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1';
 let sb = null;
 let allOps = [];
 let allClientesCount = 0;
+let allClientes = [];
+
+function boolFromSelect(value) { return String(value) === 'true'; }
+function boolToSelect(value, fallback = false) { return value === undefined || value === null ? String(fallback) : String(!!value); }
+function pickFirst(obj, keys, fallback = '') {
+  for (const key of keys) {
+    if (obj && obj[key] !== undefined && obj[key] !== null && obj[key] !== '') return obj[key];
+  }
+  return fallback;
+}
+function getClienteComercialPayload(prefix) {
+  return {
+    plan: document.getElementById(prefix + '-plan').value,
+    estado_pago: document.getElementById(prefix + '-pago').value,
+    acceso_agricola: boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value),
+    agricultura_nivel: document.getElementById(prefix + '-nivel-agricultura').value,
+    acceso_ganaderia: boolFromSelect(document.getElementById(prefix + '-acceso-ganaderia').value),
+    ganaderia_nivel: document.getElementById(prefix + '-nivel-ganaderia').value,
+    acceso_tambo: boolFromSelect(document.getElementById(prefix + '-acceso-tambo').value),
+    tambo_nivel: document.getElementById(prefix + '-nivel-tambo').value,
+    premium_activo: boolFromSelect(document.getElementById(prefix + '-premium').value),
+    payment_url: document.getElementById(prefix + '-payment-url').value.trim() || null
+  };
+}
+function fillClienteComercialForm(prefix, cli = {}) {
+  document.getElementById(prefix + '-plan').value = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
+  document.getElementById(prefix + '-pago').value = pickFirst(cli, ['estado_pago','pago_estado'], 'pendiente');
+  document.getElementById(prefix + '-acceso-agricultura').value = boolToSelect(pickFirst(cli, ['acceso_agricola','panel_agricola'], true), true);
+  document.getElementById(prefix + '-nivel-agricultura').value = pickFirst(cli, ['agricultura_nivel'], 'ESTANDAR');
+  document.getElementById(prefix + '-acceso-ganaderia').value = boolToSelect(pickFirst(cli, ['acceso_ganaderia','panel_ganaderia'], false), false);
+  document.getElementById(prefix + '-nivel-ganaderia').value = pickFirst(cli, ['ganaderia_nivel'], 'ESTANDAR');
+  document.getElementById(prefix + '-acceso-tambo').value = boolToSelect(pickFirst(cli, ['acceso_tambo','panel_tambo'], false), false);
+  document.getElementById(prefix + '-nivel-tambo').value = pickFirst(cli, ['tambo_nivel'], 'ESTANDAR');
+  document.getElementById(prefix + '-premium').value = boolToSelect(pickFirst(cli, ['premium_activo','acceso_premium'], false), false);
+  document.getElementById(prefix + '-payment-url').value = pickFirst(cli, ['payment_url','link_pago','checkout_url'], '');
+}
+function buildPanelChips(cli) {
+  return [
+    { label: 'Agricultura', enabled: !!pickFirst(cli, ['acceso_agricola','panel_agricola'], true), level: pickFirst(cli, ['agricultura_nivel'], 'ESTANDAR') },
+    { label: 'Ganadería', enabled: !!pickFirst(cli, ['acceso_ganaderia','panel_ganaderia'], false), level: pickFirst(cli, ['ganaderia_nivel'], 'ESTANDAR') },
+    { label: 'Tambo', enabled: !!pickFirst(cli, ['acceso_tambo','panel_tambo'], false), level: pickFirst(cli, ['tambo_nivel'], 'ESTANDAR') }
+  ];
+}
 
 // AUTH
 document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -608,6 +825,7 @@ function logout() { location.reload(); }
 
 function initApp() {
   sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  fillClienteComercialForm('nu', {});
   loadAll();
 }
 
@@ -619,13 +837,15 @@ function setLoading(pct) {
 
 async function loadAll() {
   setLoading(30);
-  const [opsRes, cliRes] = await Promise.all([
+  const [opsRes, cliRes, cliAllRes] = await Promise.all([
     sb.from('operaciones').select('*').order('created_at', { ascending: false }),
-    sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true)
+    sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true),
+    sb.from('clientes').select('*').order('created_at', { ascending: false })
   ]);
   setLoading(100);
   allOps = opsRes.data || [];
   allClientesCount = cliRes.count || 0;
+  allClientes = cliAllRes.data || [];
   updateStats();
   renderPendientes();
   renderTodas();
@@ -1102,6 +1322,7 @@ async function crearUsuario() {
   const pass      = document.getElementById('nu-pass').value.trim();
   const campania  = document.getElementById('nu-campania').value.trim();
   const actividad = document.getElementById('nu-actividad').value;
+  const comercial = getClienteComercialPayload('nu');
   if (!nombre || !codigo || !email || !pass) { mostrarToast('nu-toast','Completá todos los campos obligatorios.','err'); return; }
   if (pass.length < 8) { mostrarToast('nu-toast','La contraseña debe tener al menos 8 caracteres.','err'); return; }
   // Check if codigo already exists
@@ -1128,8 +1349,19 @@ async function crearUsuario() {
       else if (err === 'CODIGO_DUPLICADO' || err.toLowerCase().includes('unique')) msg = 'El código "' + codigo + '" ya existe.';
       mostrarToast('nu-toast', msg, 'err'); return;
     }
+    const { data: clienteData } = await sb.from('clientes').select('id').eq('codigo', codigo).limit(1);
+    const nuevoId = clienteData && clienteData[0] ? clienteData[0].id : null;
+    if (nuevoId) {
+      const { error: configErr } = await sb.from('clientes').update(comercial).eq('id', nuevoId);
+      if (configErr) {
+        mostrarToast('nu-toast', 'Cliente creado, pero la configuración comercial no se guardó: ' + configErr.message, 'err');
+        await cargarClientes();
+        return;
+      }
+    }
     mostrarToast('nu-toast', '✓ Cliente ' + nombre + ' creado. Email: ' + email + ' / Pass: ' + pass, 'ok');
-    ['nu-nombre','nu-codigo','nu-email','nu-pass','nu-campania'].forEach(id => { document.getElementById(id).value = ''; });
+    ['nu-nombre','nu-codigo','nu-email','nu-pass','nu-campania','nu-payment-url'].forEach(id => { document.getElementById(id).value = ''; });
+    fillClienteComercialForm('nu', {});
     await cargarClientes();
   } catch(e) {
     btn.disabled = false; btn.textContent = '+ Crear cliente';
@@ -1141,19 +1373,48 @@ async function cargarClientes() {
   const { data } = await sb.from('clientes').select('*').order('created_at',{ascending:false});
   const tbody = document.getElementById('tbody-clientes');
   if (!tbody) return;
-  if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sin clientes registrados aún.</td></tr>'; return; }
+  allClientes = data || [];
+  if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Sin clientes registrados aún.</td></tr>'; return; }
   tbody.innerHTML = data.map(c => {
     const fecha = new Date(c.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     const cid = c.id;
+    const plan = pickFirst(c, ['plan','plan_nombre','plan_comercial'], 'standard');
+    const pago = pickFirst(c, ['estado_pago','pago_estado'], 'pendiente');
+    const chips = buildPanelChips(c).map(panel => {
+      const css = panel.enabled ? 'chip green' : 'chip gray';
+      const text = panel.enabled ? panel.label + ' ' + panel.level : panel.label + ' bloqueado';
+      return `<span class="${css}">${text}</span>`;
+    }).join('');
+    const premium = pickFirst(c, ['premium_activo','acceso_premium'], false);
+    const paymentUrl = pickFirst(c, ['payment_url','link_pago','checkout_url'], '');
     return `<tr>
-      <td style="font-weight:600">${c.nombre_empresa}</td>
-      <td style="font-family:monospace;font-size:12px;color:var(--gris)">${c.codigo}</td>
-      <td style="color:var(--gris);font-size:12px">${c.email}</td>
-      <td>${c.campania||'—'}</td>
-      <td>${c.actividad||'—'}</td>
+      <td>
+        <div class="mini-stack">
+          <div style="font-weight:600">${c.nombre_empresa}</div>
+          <div class="mini-muted">${c.codigo} · ${c.email}</div>
+        </div>
+      </td>
+      <td>
+        <div class="mini-stack">
+          <div>${c.actividad||'—'}</div>
+          <div class="mini-muted">Campaña ${c.campania||'—'}</div>
+        </div>
+      </td>
+      <td>
+        <div class="mini-stack">
+          <div class="chip-row">
+            <span class="chip gold">Plan ${String(plan).toUpperCase()}</span>
+            <span class="chip ${pago === 'al_dia' || pago === 'bonificado' ? 'green' : pago === 'vencido' ? 'red' : 'gray'}">${String(pago).replaceAll('_',' ')}</span>
+            ${premium ? '<span class="chip gold">Premium</span>' : ''}
+          </div>
+          <div class="mini-muted">${paymentUrl ? 'Link de pago cargado' : 'Sin link de pago'}</div>
+        </div>
+      </td>
+      <td><div class="chip-row">${chips}</div></td>
       <td style="color:var(--gris);font-size:12px">${fecha}</td>
       <td>${c.activo ? '<span class="badge-conf">Activo</span>' : '<span class="badge-rech">Inactivo</span>'}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn-sm btn-editar" onclick="openComercialModal('${cid}')">Plan y accesos</button>
         ${c.activo
           ? `<button class="btn-sm btn-rechazar" onclick="toggleCliente('${cid}',false)">Desactivar</button>`
           : `<button class="btn-sm btn-aprobar"  onclick="toggleCliente('${cid}',true)">Activar</button>`
@@ -1167,6 +1428,27 @@ async function cargarClientes() {
 async function toggleCliente(id, activo) {
   const { error } = await sb.from('clientes').update({ activo }).eq('id', id);
   if (error) { alert('Error al cambiar estado: ' + error.message); return; }
+  await cargarClientes();
+}
+
+function openComercialModal(id) {
+  const cli = allClientes.find(c => c.id === id);
+  if (!cli) return;
+  document.getElementById('cc-id').value = id;
+  fillClienteComercialForm('cc', cli);
+  document.getElementById('modalComercialOverlay').classList.add('open');
+}
+function closeComercialModal(e) {
+  if (!e || e.target === document.getElementById('modalComercialOverlay')) {
+    document.getElementById('modalComercialOverlay').classList.remove('open');
+  }
+}
+async function saveComercialEdit() {
+  const id = document.getElementById('cc-id').value;
+  const payload = getClienteComercialPayload('cc');
+  const { error } = await sb.from('clientes').update(payload).eq('id', id);
+  if (error) { alert('Error al guardar configuración comercial: ' + error.message); return; }
+  closeComercialModal();
   await cargarClientes();
 }
 
