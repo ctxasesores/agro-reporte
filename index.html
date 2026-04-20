@@ -42,6 +42,13 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 /* ── LOGIN ── */
 #loginScreen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); padding:32px 20px; }
 .login-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:32px 28px; width:100%; max-width:360px; }
+.login-badge { background:rgba(212,160,23,.15); color:var(--oro-l); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:5px 14px; border-radius:20px; border:1px solid rgba(212,160,23,.25); }
+.login-subtitle { color:rgba(255,255,255,.58); font-size:13px; text-align:center; margin:10px 0 18px; line-height:1.5; }
+.auth-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.auth-tab { padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:rgba(255,255,255,.62); font-size:13px; font-weight:700; cursor:pointer; transition:all .2s; }
+.auth-tab.active { background:rgba(212,160,23,.16); color:var(--oro-l); border-color:rgba(212,160,23,.38); }
+.auth-pane { display:none; }
+.auth-pane.active { display:block; }
 .login-card label { color:rgba(255,255,255,.65); font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; display:block; margin-bottom:7px; }
 .login-card input { width:100%; padding:13px 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.07); color:white; font-size:15px; margin-bottom:14px; outline:none; transition:border .2s; }
 .login-card input:focus { border-color:var(--oro-l); }
@@ -49,7 +56,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .btn-primary { width:100%; padding:14px; background:var(--oro); color:var(--negro); border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; margin-top:4px; transition:opacity .2s; }
 .btn-primary:hover { opacity:.88; }
 .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+.btn-secondary { width:100%; padding:13px; background:transparent; color:var(--oro-l); border:1px solid rgba(212,160,23,.35); border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; margin-top:8px; transition:all .2s; }
+.btn-secondary:hover { background:rgba(212,160,23,.08); }
 .login-error { color:#fca5a5; font-size:13px; margin-top:12px; text-align:center; display:none; }
+.login-success { color:#8ee5c5; font-size:13px; margin-top:12px; text-align:center; display:none; }
 
 /* ── LOADING ── */
 #loadingScreen { min-height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); gap:16px; }
@@ -81,29 +91,33 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .sidebar.collapsed .cli-block { display:none; }
 .cli-label  { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.3); margin-bottom:4px; }
 .cli-name   { font-size:13px; font-weight:600; color:white; line-height:1.3; }
-.cli-meta   { font-size:11px; color:rgba(255,255,255,.35); margin-top:3px; }
 
 /* nav */
 .sidebar-nav { flex:1; padding:8px 0; overflow-y:auto; overflow-x:hidden; }
-.nav-item { display:flex; align-items:center; gap:10px; padding:9px 14px; color:rgba(255,255,255,.45); font-size:13px; border-left:2px solid transparent; cursor:pointer; transition:background .15s,color .15s,padding .25s,justify-content .25s; text-decoration:none; white-space:nowrap; overflow:hidden; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:11px 14px; color:rgba(255,255,255,.45); font-size:13px; border-left:2px solid transparent; cursor:pointer; transition:background .15s,color .15s,padding .25s,justify-content .25s,border-left-color .15s,opacity .15s; text-decoration:none; white-space:nowrap; overflow:hidden; }
 .nav-icon  { font-size:16px; flex-shrink:0; width:20px; text-align:center; }
-.nav-label { transition:opacity .2s,max-width .25s; max-width:200px; overflow:hidden; }
+.nav-label { transition:opacity .2s,max-width .25s; max-width:200px; overflow:hidden; display:flex; flex-direction:column; gap:2px; min-width:0; }
+.nav-main { font-size:12px; font-weight:700; color:var(--texto); line-height:1.15; }
+.nav-sub { font-size:10px; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.6px; line-height:1.2; white-space:normal; }
 .sidebar.collapsed .nav-item { padding:10px 0; justify-content:center; }
 .sidebar.collapsed .nav-label { opacity:0; max-width:0; pointer-events:none; }
 .nav-item.active { background:rgba(212,160,23,.1); color:var(--oro-l); border-left-color:var(--oro); }
 .sidebar.collapsed .nav-item.active { border-left-color:transparent; border-right:2px solid var(--oro); }
 .nav-item:hover:not(.active) { background:rgba(255,255,255,.05); color:rgba(255,255,255,.8); }
+.nav-item.is-disabled { opacity:.48; }
 
 /* footer */
 .sidebar-footer { padding:10px 14px; border-top:1px solid rgba(255,255,255,.06); }
-.sidebar.collapsed .sidebar-footer { padding:10px 0; display:flex; justify-content:center; }
+.sidebar.collapsed .sidebar-footer { padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:8px; }
 .sidebar-tagline { color:rgba(212,160,23,.25); font-size:9px; letter-spacing:.3px; line-height:1.5; margin-bottom:8px; white-space:nowrap; transition:opacity .2s; }
 .sidebar-date { color:rgba(255,255,255,.25); font-size:11px; margin-bottom:8px; white-space:nowrap; transition:opacity .2s; }
 .sidebar.collapsed .sidebar-tagline,
 .sidebar.collapsed .sidebar-date { opacity:0; height:0; margin:0; overflow:hidden; pointer-events:none; }
 .btn-logout { width:100%; padding:8px; background:transparent; border:1px solid rgba(212,160,23,.25); color:rgba(212,160,23,.6); border-radius:8px; font-size:12px; cursor:pointer; transition:all .2s; }
 .btn-logout:hover { background:rgba(212,160,23,.08); color:var(--oro-l); }
-.sidebar.collapsed .btn-logout { width:44px; height:34px; padding:0; font-size:16px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+.sidebar.collapsed .btn-logout { width:100%; min-width:0; height:42px; padding:0 8px; font-size:17px; display:flex; align-items:center; justify-content:center; border-radius:10px; }
+.sidebar.collapsed .btn-logout .nav-label { display:none; }
+.sidebar.collapsed .btn-logout .logout-icon { display:inline !important; color:rgba(212,160,23,.82); font-size:17px; line-height:1; }
 
 /* ── TOPBAR MOBILE ── */
 .topbar-mobile { display:none; background:var(--negro); padding:12px 16px; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
@@ -131,12 +145,98 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 
 /* ── PAGE BODY ── */
 .page-body { padding:24px 28px; flex:1; background:var(--negro-b); }
+.dashboard-stage { min-height:100vh; }
+.dashboard-view { display:none; }
+.dashboard-view.active { display:block; }
+.embedded-dashboard { background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--negro-s); border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); }
+.dashboard-view.integrated-embed .page-body { padding:20px 28px 28px; }
+.dashboard-view.integrated-embed .embedded-dashboard { background:transparent; border:none; border-radius:0; box-shadow:none; overflow:visible; }
+.dashboard-view.integrated-embed .embedded-frame { min-height:calc(100vh - 120px); background:transparent; }
+.embedded-frame { width:100%; min-height:calc(100vh - 120px); border:0; background:var(--negro-b); display:block; }
+.account-shell { display:grid; gap:18px; }
+.account-hero { background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:22px 24px; }
+.account-eyebrow { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,.4); font-weight:700; margin-bottom:8px; }
+.account-title { font-size:26px; font-weight:700; color:white; letter-spacing:-.4px; margin-bottom:6px; }
+.account-copy { font-size:14px; line-height:1.6; color:rgba(255,255,255,.62); max-width:780px; }
+.account-grid { display:grid; grid-template-columns:minmax(280px, 1.05fr) minmax(0, 1.55fr); gap:14px; align-items:start; }
+.account-card { background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px; box-shadow:var(--sombra); }
+.account-card.wide { grid-column:1 / -1; }
+.account-badge { display:inline-flex; align-items:center; padding:5px 10px; border-radius:999px; border:1px solid rgba(212,160,23,.24); background:rgba(212,160,23,.08); color:var(--oro-l); font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; margin-bottom:12px; }
+.account-card h3 { font-size:18px; color:white; margin-bottom:6px; }
+.account-card p { font-size:13px; line-height:1.6; color:rgba(255,255,255,.62); margin-bottom:14px; }
+.account-mini { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.account-mini-box { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:12px 14px; }
+.account-mini-label { font-size:10px; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.38); font-weight:700; margin-bottom:6px; }
+.account-mini-value { font-size:18px; font-weight:700; color:white; }
+.account-list { display:grid; gap:10px; }
+.account-list-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px; }
+.account-list-row:last-child { border-bottom:none; }
+.account-pill { display:inline-flex; align-items:center; padding:5px 10px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; }
+.account-pill.ok { background:rgba(30,153,112,.16); color:var(--verde-l); }
+.account-pill.warn { background:rgba(212,160,23,.14); color:var(--oro-l); }
+.account-pill.off { background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); }
+.account-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.account-settings-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.account-field { display:grid; gap:8px; }
+.account-field.full { grid-column:1 / -1; }
+.account-label { font-size:10px; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.38); font-weight:700; }
+.account-select { width:100%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); color:var(--texto); border-radius:10px; padding:11px 12px; font-size:13px; outline:none; }
+.account-select:focus { border-color:rgba(212,160,23,.48); box-shadow:0 0 0 1px rgba(212,160,23,.12); }
+.account-select:disabled { opacity:.5; cursor:not-allowed; }
+.account-matrix { display:grid; gap:12px; }
+.account-product-row { display:grid; grid-template-columns:minmax(120px,.8fr) minmax(0,1fr) minmax(0,1fr); gap:10px; align-items:end; padding:12px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+.account-product-row:last-child { border-bottom:none; padding-bottom:0; }
+.account-product-name { font-size:14px; font-weight:700; color:white; }
+.account-product-copy { font-size:12px; color:rgba(255,255,255,.48); margin-top:3px; line-height:1.4; }
+.account-savebar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,255,255,.06); flex-wrap:wrap; }
+.account-status-note { font-size:12px; color:rgba(255,255,255,.48); }
+.account-status-note.ok { color:var(--verde-l); }
+.account-status-note.warn { color:var(--oro-l); }
+.account-side-stack { display:grid; gap:14px; }
+
+@media(max-width:1180px) {
+  .account-grid { grid-template-columns:1fr; }
+}
+
+@media(max-width:1024px) {
+  .account-settings-grid,
+  .account-mini { grid-template-columns:1fr; }
+  .account-product-row { grid-template-columns:1fr; align-items:start; }
+}
 
 /* ── CARDS ── */
 .card { background:var(--negro-s); border-radius:var(--radio); box-shadow:var(--sombra); border:1px solid var(--crema-dd); overflow:hidden; }
 .section { margin-bottom:28px; }
 .section-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 .section-title::after { content:''; flex:1; height:1px; background:var(--crema-dd); }
+.portal-shell { margin:14px 28px 0; background:rgba(8,20,34,.78); border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; position:relative; z-index:20; box-shadow:0 10px 24px rgba(0,0,0,.18); }
+.portal-topbar { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; padding:8px 10px; min-height:68px; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)); }
+.portal-tabs { display:flex; gap:6px; align-items:center; flex-wrap:nowrap; min-width:0; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+.portal-tabs::-webkit-scrollbar { display:none; }
+.portal-tab { min-width:92px; padding:6px 9px; border-radius:9px; border:1px solid rgba(212,160,23,.18); background:rgba(255,255,255,.035); color:rgba(255,255,255,.58); font-size:11px; font-weight:700; cursor:pointer; transition:all .2s; line-height:1.15; white-space:normal; text-align:center; min-height:42px; display:flex; align-items:center; justify-content:center; }
+.portal-tab.active { background:rgba(212,160,23,.1); color:var(--oro-l); border-color:rgba(212,160,23,.42); box-shadow:inset 0 0 0 1px rgba(212,160,23,.12); }
+.portal-topmeta { display:flex; gap:6px; flex-wrap:nowrap; align-items:center; }
+.portal-topchip { padding:6px 9px; border-radius:9px; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.07); min-width:92px; }
+.portal-topchip-label { font-size:9px; letter-spacing:.7px; text-transform:uppercase; color:rgba(255,255,255,.34); font-weight:700; margin-bottom:3px; }
+.portal-topchip-value { font-size:12px; font-weight:700; color:white; line-height:1.1; }
+.portal-cards { display:none; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding:16px; border-top:1px solid rgba(255,255,255,.06); }
+.portal-shell.expanded .portal-cards { display:grid; }
+.portal-cards .portal-pane-card { min-height:205px; }
+.portal-pane-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px; display:flex; flex-direction:column; }
+.portal-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; border:1px solid rgba(212,160,23,.24); color:var(--oro-l); background:rgba(212,160,23,.08); margin-bottom:12px; }
+.portal-title { font-size:18px; font-weight:700; color:white; margin-bottom:8px; }
+.portal-copy { font-size:13px; line-height:1.6; color:rgba(255,255,255,.66); }
+.portal-meta { display:grid; gap:10px; }
+.portal-meta-row { display:flex; justify-content:space-between; gap:12px; font-size:12px; color:var(--gris); border-top:1px solid rgba(255,255,255,.06); padding-top:10px; }
+.portal-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; }
+.portal-link { padding:10px 14px; border-radius:10px; border:none; background:var(--oro); color:var(--negro); font-size:13px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+.portal-link.secondary { background:transparent; color:var(--oro-l); border:1px solid rgba(212,160,23,.32); }
+.portal-link[aria-disabled="true"] { opacity:.48; pointer-events:none; }
+.portal-note { font-size:11px; color:var(--gris); margin:8px 12px 12px; line-height:1.5; }
+.portal-close { background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.07); color:rgba(255,255,255,.55); border-radius:9px; padding:6px 9px; font-size:11px; cursor:pointer; min-width:92px; min-height:42px; line-height:1.1; text-align:center; white-space:normal; }
+.portal-shell.expanded .portal-close { color:var(--oro-l); border-color:rgba(212,160,23,.28); }
+.dashboard-content { transition:filter .25s ease, opacity .25s ease; }
+.dashboard-content.is-blurred { filter:blur(5px); opacity:.42; pointer-events:none; user-select:none; }
 
 /* ── TWO COL ── */
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
@@ -290,6 +390,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   .main-content { margin-left:0; }
   .topbar-mobile { display:flex; }
   .two-col { grid-template-columns:1fr; }
+  .account-grid,.account-mini { grid-template-columns:1fr; }
   .page-body { padding:16px; }
   .kpi-value.accent { font-size:32px; }
   .scroll-hint { display:block; }
@@ -305,14 +406,37 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   <div style="margin-bottom:28px;display:flex;flex-direction:column;align-items:center;gap:12px">
     <svg width="56" height="56" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
     <span style="font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</span>
+    <div class="login-badge">Acceso clientes</div>
   </div>
   <div class="login-card">
-    <label>Email</label>
-    <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email">
-    <label>Contraseña</label>
-    <input type="password" id="loginPass" placeholder="••••••••">
-    <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Ingresar</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthMode('register')">Registrarme</button>
+    </div>
+    <div class="login-subtitle" id="authSubtitle">Ingresá a tu panel agrícola y a los módulos ganaderos habilitados para tu cuenta.</div>
+    <div class="auth-pane active" id="pane-login">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••">
+      <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
+      <button class="btn-secondary" type="button" onclick="switchAuthMode('register')">Quiero crear mi cuenta</button>
+    </div>
+    <div class="auth-pane" id="pane-register">
+      <label>Empresa / cliente</label>
+      <input type="text" id="regNombre" placeholder="Agropecuaria XYZ S.A." autocomplete="organization">
+      <label>Email</label>
+      <input type="email" id="regEmail" placeholder="cliente@empresa.com" autocomplete="email">
+      <label>Contraseña</label>
+      <input type="password" id="regPass" placeholder="mínimo 8 caracteres" autocomplete="new-password">
+      <label>Campaña</label>
+      <input type="text" id="regCampania" placeholder="25/26">
+      <label>Actividad principal</label>
+      <input type="text" id="regActividad" placeholder="Agricultura, Ganadería o ambas">
+      <button class="btn-primary" id="btnRegister" onclick="doRegister()">Crear cuenta</button>
+    </div>
     <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
+    <div class="login-success" id="loginSuccess">Tu cuenta fue creada. Ya puedes ingresar.</div>
   </div>
 </div>
 
@@ -338,18 +462,27 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     <div class="cli-block">
       <div class="cli-label">Cliente</div>
       <div class="cli-name" id="s-nombre">—</div>
-      <div class="cli-meta" id="s-meta">—</div>
     </div>
     <nav class="sidebar-nav">
-      <a class="nav-item active" onclick="navTo('resumen',this)" title="Resumen"><span class="nav-icon">◈</span><span class="nav-label">Resumen</span></a>
-      <a class="nav-item" onclick="navTo('precios',this)" title="Precios"><span class="nav-icon">◎</span><span class="nav-label">Precios</span></a>
-      <a class="nav-item" onclick="navTo('composicion',this)" title="Composición"><span class="nav-icon">◉</span><span class="nav-label">Composición</span></a>
-      <a class="nav-item" onclick="navTo('operaciones',this)" title="Operaciones"><span class="nav-icon">≡</span><span class="nav-label">Operaciones</span></a>
-      <a class="nav-item" onclick="navTo('flujo',this)" title="Flujo de fondos"><span class="nav-icon">⟳</span><span class="nav-label">Flujo de fondos</span></a>
+      <a class="nav-item active" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
+        <span class="nav-icon">◈</span>
+        <span class="nav-label"><span class="nav-main">Agricultura</span><span class="nav-sub" id="nav-agricultura-sub">Dashboard estándar</span></span>
+      </a>
+      <a class="nav-item" id="nav-ganaderia" onclick="switchDashboard('ganaderia',this)" title="Ganadería">
+        <span class="nav-icon">⌘</span>
+        <span class="nav-label"><span class="nav-main">Ganadería</span><span class="nav-sub" id="nav-ganaderia-sub">Dashboard estándar</span></span>
+      </a>
+      <a class="nav-item" onclick="switchDashboard('tambo',this)" title="Tambo" id="nav-tambo">
+        <span class="nav-icon">◎</span>
+        <span class="nav-label"><span class="nav-main">Tambo</span><span class="nav-sub" id="nav-tambo-sub">Sin acceso</span></span>
+      </a>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
       <div class="sidebar-date" id="s-fecha">—</div>
+      <button class="btn-logout" onclick="switchDashboard('cuenta')" title="Cuenta" style="margin-bottom:8px">
+        <span class="nav-label">Cuenta</span><span style="display:none" class="logout-icon">⚙</span>
+      </button>
       <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
         <span class="nav-label">Cerrar sesión</span><span style="display:none" class="logout-icon">⏻</span>
       </button>
@@ -371,7 +504,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div style="width:32px"></div>
     </div>
 
-    <!-- HERO -->
+    <div class="dashboard-stage">
+    <div class="dashboard-view active" id="view-agricultura">
     <div class="hero" id="sec-resumen">
       <div class="hero-eyebrow">Reporte de cartera</div>
       <div class="hero-nombre" id="d-nombre">—</div>
@@ -425,7 +559,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       </div>
     </div>
 
-    
 <!-- BODY -->
     <div class="page-body">
 
@@ -695,6 +828,92 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 
 
     </div><!-- /page-body -->
+    </div><!-- /view-agricultura -->
+
+    <div class="dashboard-view integrated-embed" id="view-ganaderia">
+      <div class="page-body">
+        <div class="embedded-dashboard">
+          <iframe class="embedded-frame" id="frame-ganaderia" src="Ganaderia/ganaderia_ESTANDAR_integrado_PRODUCCION_v2.html" title="Dashboard Ganadería"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-view" id="view-tambo">
+      <div class="page-body">
+        <div class="account-shell">
+          <div class="account-hero">
+            <div class="account-eyebrow">Tambo</div>
+            <div class="account-title">Dashboard de tambo</div>
+            <div class="account-copy">Este espacio queda reservado para la unidad de negocio tambo. Cuando el cliente tenga acceso y una versión activa, podrá verse acá sin salir de la misma página.</div>
+          </div>
+          <div class="account-card">
+            <div class="account-badge">Estado</div>
+            <h3 id="tambo-title">Sin acceso habilitado</h3>
+            <p id="tambo-copy">Actualmente esta cuenta no tiene un dashboard de tambo asignado.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-view" id="view-cuenta">
+      <div class="page-body">
+        <div class="account-shell">
+          <div class="account-hero">
+            <div class="account-eyebrow">Cuenta</div>
+            <div class="account-title">Cuenta y accesos</div>
+            <div class="account-copy">Este espacio resume el plan vigente, el estado de pago y los dashboards habilitados para la cuenta. Los cambios comerciales se gestionan desde administración.</div>
+          </div>
+          <div class="account-grid">
+            <div class="account-side-stack">
+              <div class="account-card">
+                <div class="account-badge">Resumen</div>
+                <h3>Estado actual de la cuenta</h3>
+                <p>Vista rápida del encuadre comercial y de los accesos activos en este momento.</p>
+                <div class="account-mini">
+                  <div class="account-mini-box"><div class="account-mini-label">Plan</div><div class="account-mini-value" id="cuenta-plan">—</div></div>
+                  <div class="account-mini-box"><div class="account-mini-label">Pago</div><div class="account-mini-value" id="cuenta-pago">—</div></div>
+                  <div class="account-mini-box"><div class="account-mini-label">Cuenta</div><div class="account-mini-value" id="cuenta-estado">—</div></div>
+                </div>
+              </div>
+              <div class="account-card">
+                <div class="account-badge">Productos activos</div>
+                <h3>Asignación por unidad</h3>
+                <p>Qué dashboards están habilitados hoy y bajo qué nivel de profundidad.</p>
+                <div class="account-list">
+                  <div class="account-list-row"><span>Agricultura</span><span class="account-pill ok" id="cuenta-agr-acceso">Habilitado</span></div>
+                  <div class="account-list-row"><span>Nivel agricultura</span><strong id="cuenta-agr-version">—</strong></div>
+                  <div class="account-list-row"><span>Ganadería</span><span class="account-pill" id="cuenta-gan-acceso">—</span></div>
+                  <div class="account-list-row"><span>Nivel ganadería</span><strong id="cuenta-gan-version">—</strong></div>
+                  <div class="account-list-row"><span>Tambo</span><span class="account-pill" id="cuenta-tam-acceso">—</span></div>
+                  <div class="account-list-row"><span>Nivel tambo</span><strong id="cuenta-tam-version">—</strong></div>
+                </div>
+              </div>
+            </div>
+            <div class="account-card">
+              <div class="account-badge">Configuración</div>
+              <h3>Gestión comercial centralizada</h3>
+              <p>La configuración de plan, estado de pago y accesos se administra desde el panel de administración de CTX. Desde este espacio podés consultar el estado actual de tu cuenta y solicitar cambios.</p>
+              <div class="account-list">
+                <div class="account-list-row"><span>Plan vigente</span><strong id="cuenta-plan-readonly">—</strong></div>
+                <div class="account-list-row"><span>Estado de pago</span><strong id="cuenta-pago-readonly">—</strong></div>
+                <div class="account-list-row"><span>Acceso agricultura</span><strong id="cuenta-agr-readonly">—</strong></div>
+                <div class="account-list-row"><span>Acceso ganadería</span><strong id="cuenta-gan-readonly">—</strong></div>
+                <div class="account-list-row"><span>Acceso tambo</span><strong id="cuenta-tam-readonly">—</strong></div>
+              </div>
+              <div class="account-actions">
+                <button class="portal-link secondary" type="button" onclick="openUpgradeLink()">Gestionar pago</button>
+                <button class="portal-link secondary" type="button" onclick="switchDashboard('agricultura')">Volver a agricultura</button>
+                <button class="portal-link secondary" type="button" onclick="switchDashboard('ganaderia')">Abrir ganadería</button>
+              </div>
+              <div class="account-savebar">
+                <div class="account-status-note" id="cuenta-save-status">Los cambios comerciales se gestionan desde administración.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /dashboard-stage -->
   </div><!-- /main-content -->
 </div><!-- /appShell -->
 
@@ -714,15 +933,53 @@ let activeSection = 'resumen';
 let filterProd = 'todos';
 let tagsDisponibles = [];   // ['DFL','AGR',...] — tags del cliente
 let activeTagFilter = [];   // tags seleccionados para filtrar (intersección Y)
+let currentAuthMode = 'login';
 
 // ── INIT ──
 function initSupabase() {
   if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 }
 
-document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (currentAuthMode === 'register') doRegister();
+  else doLogin();
+});
+
+function switchAuthMode(mode) {
+  currentAuthMode = mode === 'register' ? 'register' : 'login';
+  const isRegister = currentAuthMode === 'register';
+  document.getElementById('tab-login')?.classList.toggle('active', !isRegister);
+  document.getElementById('tab-register')?.classList.toggle('active', isRegister);
+  document.getElementById('pane-login')?.classList.toggle('active', !isRegister);
+  document.getElementById('pane-register')?.classList.toggle('active', isRegister);
+  const subtitle = document.getElementById('authSubtitle');
+  if (subtitle) {
+    subtitle.textContent = isRegister
+      ? 'Creá tu cuenta para que podamos habilitarte el panel agrícola, ganadería estándar y futuras versiones premium.'
+      : 'Ingresá a tu panel agrícola y a los módulos ganaderos habilitados para tu cuenta.';
+  }
+  hideAuthMessages();
+}
+
+function hideAuthMessages() {
+  const errEl = document.getElementById('loginError');
+  const okEl  = document.getElementById('loginSuccess');
+  if (errEl) errEl.style.display = 'none';
+  if (okEl) okEl.style.display = 'none';
+}
+
+function slugCodigo(nombre = '') {
+  return (nombre || 'CLIENTE')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 14) || 'CLIENTE';
+}
 
 async function doLogin() {
+  hideAuthMessages();
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value.trim();
   const btn   = document.getElementById('btnLogin');
@@ -740,6 +997,82 @@ async function doLogin() {
   await loadApp();
 }
 
+async function doRegister() {
+  hideAuthMessages();
+  initSupabase();
+  const nombre    = document.getElementById('regNombre').value.trim();
+  const email     = document.getElementById('regEmail').value.trim();
+  const pass      = document.getElementById('regPass').value.trim();
+  const campania  = document.getElementById('regCampania').value.trim();
+  const actividad = document.getElementById('regActividad').value.trim() || 'Agricultura';
+  const btn       = document.getElementById('btnRegister');
+  const errEl     = document.getElementById('loginError');
+  const okEl      = document.getElementById('loginSuccess');
+  if (!nombre || !email || !pass) {
+    errEl.textContent = 'Completá empresa, email y contraseña.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (pass.length < 8) {
+    errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Creando cuenta...';
+  const codigo = slugCodigo(nombre);
+  try {
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pass,
+      options: {
+        data: { nombre_empresa: nombre, campania, actividad, codigo }
+      }
+    });
+    if (error) throw error;
+
+    const newUser = data.user;
+    if (newUser?.id) {
+      const payload = {
+        id: newUser.id,
+        email,
+        codigo,
+        nombre_empresa: nombre,
+        campania,
+        actividad,
+        activo: true
+      };
+      const { error: insertError } = await sb.from('clientes').insert(payload);
+      if (insertError && !String(insertError.message || '').toLowerCase().includes('duplicate')) {
+        console.warn('Registro cliente pendiente:', insertError.message);
+        okEl.textContent = 'La cuenta fue creada, pero el perfil comercial quedó pendiente. Avísanos para terminar de habilitar accesos y planes.';
+        okEl.style.display = 'block';
+      } else {
+        okEl.textContent = 'Tu cuenta fue creada. Ya puedes ingresar a tu panel.';
+        okEl.style.display = 'block';
+      }
+    }
+
+    if (data.session && data.user) {
+      currentUser = data.user;
+      document.getElementById('loginScreen').style.display='none';
+      await loadApp();
+      return;
+    }
+    switchAuthMode('login');
+    document.getElementById('loginEmail').value = email;
+    document.getElementById('loginPass').value = pass;
+    okEl.textContent = okEl.textContent || 'Tu cuenta fue creada. Ya puedes ingresar.';
+    okEl.style.display = 'block';
+  } catch (error) {
+    errEl.textContent = error.message || 'No se pudo crear la cuenta.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Crear cuenta';
+  }
+}
+
 async function logout() {
   if(sb) await sb.auth.signOut();
   location.reload();
@@ -750,7 +1083,12 @@ async function loadApp() {
   initSupabase();
   // Load cliente profile
   const {data:cli} = await sb.from('clientes').select('*').eq('id', currentUser.id).single();
-  if (!cli) { alert('No se encontró tu perfil. Contactá a tu asesor.'); location.reload(); return; }
+  if (!cli) {
+    if (sb) await sb.auth.signOut();
+    alert('Tu cuenta existe, pero todavía no tiene perfil comercial habilitado. Contactá a CTX para activar tus paneles.');
+    location.reload();
+    return;
+  }
   currentCliente = cli;
 
   // Load operaciones y precios en paralelo
@@ -777,6 +1115,7 @@ async function loadApp() {
     : [];
   console.log('[CTX Tags] al cargar:', rawTags, '->', tagsDisponibles);
   renderAll();
+  renderAccessHub();
   showLoading(false);
   document.getElementById('appShell').style.display='block';
   renderTagFilterBar();
@@ -789,6 +1128,254 @@ async function loadApp() {
   if (!tagsDisponibles.length) {
     setTimeout(() => abrirGestionTags(true), 500);
   }
+}
+
+function normText(v) {
+  return (v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function boolField(...values) {
+  return values.some(v => v === true || v === 1 || v === 'true' || v === '1' || v === 'si' || v === 'sí');
+}
+
+function getClienteAccessState() {
+  const cli = currentCliente || {};
+  const actividad = normText(cli.actividad);
+  const plan = cli.plan || cli.plan_nombre || cli.plan_comercial || (boolField(cli.acceso_premium, cli.premium_activo) ? 'Premium' : 'Standard');
+  const accesoAgricola = boolField(cli.acceso_agricola, cli.panel_agricola, cli.activo) || actividad.includes('agric');
+  const accesoGanaderia = boolField(cli.acceso_ganaderia, cli.panel_ganaderia) || actividad.includes('ganader');
+  const accesoPremium = boolField(cli.acceso_premium, cli.premium_activo) || normText(plan).includes('premium');
+  const estadoPago = cli.estado_pago || cli.pago_estado || (accesoPremium ? 'activo' : 'pendiente');
+  const paymentUrl = cli.payment_url || cli.link_pago || cli.checkout_url || '';
+  return {
+    plan,
+    accesoAgricola,
+    accesoGanaderia,
+    accesoPremium,
+    estadoPago,
+    paymentUrl
+  };
+}
+
+function portalCardHtml(cfg) {
+  const disabled = !cfg.enabled;
+  return `
+    <div class="portal-pane-card" data-portal-card="${cfg.key || ''}">
+      <div class="portal-badge">${cfg.badge}</div>
+      <div class="portal-title">${cfg.title}</div>
+      <div class="portal-copy">${cfg.copy}</div>
+      <div class="portal-meta">
+        <div class="portal-meta-row"><span>Acceso</span><strong style="color:${disabled ? 'var(--gris)' : 'white'}">${disabled ? 'Bloqueado' : 'Habilitado'}</strong></div>
+        <div class="portal-meta-row"><span>Plan</span><strong style="color:white">${cfg.plan}</strong></div>
+      </div>
+      <div class="portal-actions">
+        ${cfg.href
+          ? `<a class="portal-link${disabled ? ' secondary' : ''}" ${disabled ? 'aria-disabled="true"' : `href="${cfg.href}" target="_blank" rel="noopener noreferrer"`}>${cfg.primaryLabel}</a>`
+          : `<button class="portal-link secondary" type="button" onclick="${cfg.onClick || ''}">${cfg.primaryLabel}</button>`
+        }
+        ${cfg.secondaryLabel ? `<button class="portal-link secondary" type="button" onclick="${cfg.secondaryAction || ''}">${cfg.secondaryLabel}</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function switchPortalTab(tab, btn) {
+  return;
+}
+
+function setPortalExpanded(expanded) {
+  return;
+}
+
+function togglePortalExpansion() {
+  return;
+}
+
+function getDashboardMode(producto, state) {
+  const cli = currentCliente || {};
+  if (producto === 'agricultura') {
+    const modo = (cli.agricultura_nivel || cli.agricultura_dashboard || '').toLowerCase();
+    return modo === 'pro' ? 'PRO' : 'ESTANDAR';
+  }
+  if (producto === 'ganaderia') {
+    const modo = (cli.ganaderia_nivel || cli.ganaderia_dashboard || '').toLowerCase();
+    if (modo === 'pro') return 'PRO';
+    if (modo === 'estandar' || modo === 'estándar') return 'ESTANDAR';
+    return state.accesoPremium ? 'PRO' : 'ESTANDAR';
+  }
+  if (producto === 'tambo') {
+    const modo = (cli.tambo_nivel || cli.tambo_dashboard || '').toLowerCase();
+    if (modo === 'pro') return 'PRO';
+    if (modo === 'estandar' || modo === 'estándar') return 'ESTANDAR';
+    return 'SIN ACCESO';
+  }
+  return 'ESTANDAR';
+}
+
+function setPill(id, enabled, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'account-pill ' + (enabled ? 'ok' : 'off');
+}
+
+function updateSidebarProducts(state) {
+  const modoAgr = getDashboardMode('agricultura', state);
+  const modoGan = getDashboardMode('ganaderia', state);
+  const modoTam = getDashboardMode('tambo', state);
+  const agrActivo = !!state.accesoAgricola;
+  const ganActivo = !!state.accesoGanaderia;
+  const tamboActivo = boolField(currentCliente?.acceso_tambo, currentCliente?.panel_tambo) || modoTam !== 'SIN ACCESO';
+  document.getElementById('nav-agricultura-sub').textContent = agrActivo ? `Dashboard ${modoAgr.toLowerCase()}` : 'Sin acceso';
+  document.getElementById('nav-ganaderia-sub').textContent = ganActivo ? `Dashboard ${modoGan.toLowerCase()}` : 'Sin acceso';
+  document.getElementById('nav-tambo-sub').textContent = tamboActivo ? `Dashboard ${modoTam.toLowerCase()}` : 'Sin acceso';
+  const navAgr = document.getElementById('nav-agricultura');
+  const navGan = document.getElementById('nav-ganaderia');
+  const navTambo = document.getElementById('nav-tambo');
+  if (navAgr) navAgr.classList.toggle('is-disabled', !agrActivo);
+  if (navGan) navGan.classList.toggle('is-disabled', !ganActivo);
+  if (navTambo) {
+    navTambo.classList.toggle('is-disabled', !tamboActivo);
+    navTambo.style.opacity = tamboActivo ? '' : '.55';
+  }
+}
+
+function updateCuentaDashboard(state) {
+  const modoAgr = getDashboardMode('agricultura', state);
+  const modoGan = getDashboardMode('ganaderia', state);
+  const modoTam = getDashboardMode('tambo', state);
+  const tamboActivo = boolField(currentCliente?.acceso_tambo, currentCliente?.panel_tambo) || modoTam !== 'SIN ACCESO';
+  document.getElementById('cuenta-plan').textContent = state.plan || 'Standard';
+  document.getElementById('cuenta-pago').textContent = String(state.estadoPago || 'pendiente').replace(/_/g,' ');
+  document.getElementById('cuenta-estado').textContent = currentCliente?.activo ? 'Activa' : 'Pendiente';
+  setPill('cuenta-agr-acceso', !!state.accesoAgricola, state.accesoAgricola ? 'Habilitado' : 'Bloqueado');
+  setPill('cuenta-gan-acceso', !!state.accesoGanaderia, state.accesoGanaderia ? 'Habilitado' : 'Bloqueado');
+  setPill('cuenta-tam-acceso', tamboActivo, tamboActivo ? 'Habilitado' : 'Sin acceso');
+  document.getElementById('cuenta-agr-version').textContent = state.accesoAgricola ? modoAgr : '—';
+  document.getElementById('cuenta-gan-version').textContent = state.accesoGanaderia ? modoGan : '—';
+  document.getElementById('cuenta-tam-version').textContent = tamboActivo ? modoTam : '—';
+  document.getElementById('tambo-title').textContent = tamboActivo ? 'Dashboard de tambo disponible' : 'Sin acceso habilitado';
+  document.getElementById('tambo-copy').textContent = tamboActivo
+    ? `Esta cuenta tiene habilitado el producto tambo en versión ${modoTam.toLowerCase()}.`
+    : 'Actualmente esta cuenta no tiene un dashboard de tambo asignado.';
+  fillCuentaControls(state, { modoAgr, modoGan, modoTam, tamboActivo });
+}
+
+function fillCuentaControls(state, meta = {}) {
+  const modoAgr = meta.modoAgr || getDashboardMode('agricultura', state);
+  const modoGan = meta.modoGan || getDashboardMode('ganaderia', state);
+  const modoTam = meta.modoTam || getDashboardMode('tambo', state);
+  const tamboActivo = meta.tamboActivo ?? (boolField(currentCliente?.acceso_tambo, currentCliente?.panel_tambo) || modoTam !== 'SIN ACCESO');
+  const setValue = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  };
+  setValue('cuenta-plan-select', state.plan || 'Standard');
+  setValue('cuenta-pago-select', String(state.estadoPago || 'pendiente').toLowerCase());
+  setValue('cuenta-agr-acceso-select', state.accesoAgricola ? 'on' : 'off');
+  setValue('cuenta-agr-version-select', modoAgr);
+  setValue('cuenta-gan-acceso-select', state.accesoGanaderia ? 'on' : 'off');
+  setValue('cuenta-gan-version-select', modoGan);
+  setValue('cuenta-tam-acceso-select', tamboActivo ? 'on' : 'off');
+  setValue('cuenta-tam-version-select', tamboActivo ? (modoTam === 'SIN ACCESO' ? 'ESTANDAR' : modoTam) : 'ESTANDAR');
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  setText('cuenta-plan-readonly', state.plan || 'Standard');
+  setText('cuenta-pago-readonly', String(state.estadoPago || 'pendiente').replace(/_/g, ' '));
+  setText('cuenta-agr-readonly', state.accesoAgricola ? `Habilitado · ${modoAgr}` : 'Sin acceso');
+  setText('cuenta-gan-readonly', state.accesoGanaderia ? `Habilitado · ${modoGan}` : 'Sin acceso');
+  setText('cuenta-tam-readonly', tamboActivo ? `Habilitado · ${modoTam}` : 'Sin acceso');
+  syncCuentaProduct('agricultura');
+  syncCuentaProduct('ganaderia');
+  syncCuentaProduct('tambo');
+}
+
+function syncCuentaProduct(producto) {
+  const map = {
+    agricultura: ['cuenta-agr-acceso-select', 'cuenta-agr-version-select'],
+    ganaderia: ['cuenta-gan-acceso-select', 'cuenta-gan-version-select'],
+    tambo: ['cuenta-tam-acceso-select', 'cuenta-tam-version-select']
+  };
+  const [accessId, versionId] = map[producto] || [];
+  const access = document.getElementById(accessId);
+  const version = document.getElementById(versionId);
+  if (!access || !version) return;
+  version.disabled = access.value !== 'on';
+}
+
+function setCuentaStatus(message, tone = '') {
+  const el = document.getElementById('cuenta-save-status');
+  if (!el) return;
+  el.textContent = message;
+  el.className = `account-status-note${tone ? ` ${tone}` : ''}`;
+}
+
+function buildGanaderiaSrc(mode) {
+  const clienteId = currentCliente?.id || '';
+  const clienteNombre = currentCliente?.nombre_empresa || '';
+  const userId = currentUser?.id || '';
+  const base = mode === 'PRO'
+      ? 'Ganaderia/ganaderia_PRO_integrado_PRODUCCION_v2.html'
+    : 'Ganaderia/ganaderia_ESTANDAR_integrado_PRODUCCION_v2.html';
+  const qs = new URLSearchParams();
+  if (clienteId) qs.set('cliente_id', clienteId);
+  if (clienteNombre) qs.set('cliente_nombre', clienteNombre);
+  if (userId) qs.set('user_id', userId);
+  return qs.toString() ? `${base}?${qs.toString()}` : base;
+}
+
+async function saveCuentaConfig() {
+  setCuentaStatus('La configuración comercial se gestiona desde administración.', 'warn');
+}
+
+function switchDashboard(view, el) {
+  const state = getClienteAccessState();
+  if (view === 'agricultura' && !state.accesoAgricola) {
+    view = 'cuenta';
+    el = null;
+  }
+  if (view === 'ganaderia' && !state.accesoGanaderia) {
+    view = 'cuenta';
+    el = null;
+  }
+  if (view === 'tambo') {
+    const modoTam = getDashboardMode('tambo', state);
+    const tamboActivo = boolField(currentCliente?.acceso_tambo, currentCliente?.panel_tambo) || modoTam !== 'SIN ACCESO';
+    if (!tamboActivo) {
+      view = 'cuenta';
+      el = null;
+    }
+  }
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
+  document.getElementById(`view-${view}`)?.classList.add('active');
+  if (view === 'ganaderia') {
+    const modoGan = getDashboardMode('ganaderia', state);
+    const frame = document.getElementById('frame-ganaderia');
+    const target = buildGanaderiaSrc(modoGan);
+    if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
+  }
+  closeSidebar();
+}
+
+function renderAccessHub() {
+  const state = getClienteAccessState();
+  updateSidebarProducts(state);
+  updateCuentaDashboard(state);
+  const frame = document.getElementById('frame-ganaderia');
+  if (frame) frame.src = buildGanaderiaSrc(getDashboardMode('ganaderia', state));
+}
+
+function openUpgradeLink() {
+  const paymentUrl = getClienteAccessState().paymentUrl;
+  if (paymentUrl) {
+    window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  window.open('mailto:info@ctxasesores.com?subject=Upgrade%20premium%20CTX&body=Quiero%20activar%20el%20plan%20premium%20para%20mi%20cuenta.', '_blank');
 }
 
 // ── PRECIOS MAP ──
@@ -971,9 +1558,8 @@ function calcularPorProducto() {
 function renderAll() {
   // Sidebar info
   document.getElementById('s-nombre').textContent = currentCliente.nombre_empresa;
-  document.getElementById('s-meta').textContent   = 'Campaña ' + (currentCliente.campania||'—') + ' · ' + (currentCliente.actividad||'');
   document.getElementById('d-nombre').textContent = currentCliente.nombre_empresa;
-  document.getElementById('d-meta').textContent   = 'Campaña ' + (currentCliente.campania||'—') + ' · ' + (currentCliente.actividad||'');
+  document.getElementById('d-meta').textContent   = 'Reporte agrícola';
   const now = new Date();
   document.getElementById('s-fecha').textContent  = 'Actualizado: ' + now.toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
 
@@ -1975,6 +2561,7 @@ function navTo(section, el) {
   if (el) el.classList.add('active');
   const map = {
     'resumen':     'sec-resumen',
+    'paneles':     'sec-portal',
     'precios':     'sec-precios',
     'composicion': 'sec-composicion',
     'operaciones': 'sec-operaciones',
@@ -2703,4 +3290,18 @@ if ('serviceWorker' in navigator) {
       .catch(e => console.log('SW error:', e));
   });
 }
+
+window.addEventListener('load', async () => {
+  try {
+    initSupabase();
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.user) {
+      currentUser = data.session.user;
+      document.getElementById('loginScreen').style.display='none';
+      await loadApp();
+    }
+  } catch (e) {
+    console.warn('No se pudo restaurar la sesión:', e.message);
+  }
+});
 </script>

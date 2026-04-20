@@ -176,7 +176,7 @@ tr:hover td { background:#f9faf6; }
 <div id="loginScreen">
   <svg width="52" height="52" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
   <div style="margin:12px 0 16px;font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</div>
-  <div class="login-badge">Panel Administrador</div>
+  <div class="login-badge">Panel Administrador DEV</div>
   <div class="login-card">
     <label>Contraseña de administrador</label>
     <input type="password" id="adminPass" placeholder="••••••••" autocomplete="off">
@@ -1220,17 +1220,14 @@ async function actualizarDesdeA3() {
   const btn = document.getElementById('btn-a3');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span>⟳</span> Conectando...'; }
   try {
-    const res = await fetch(
-      'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1/actualizar-precios',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj',
-          'apikey': 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj'
-        }
+    const res = await fetch(FUNCTIONS_URL + '/actualizar-precios', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'apikey': SUPA_KEY
       }
-    );
+    });
     const data = await res.json();
     if (data.ok) {
       const actualizados = data.actualizados ?? (data.detalle ? data.detalle.filter(d => d.ok).length : 0);
