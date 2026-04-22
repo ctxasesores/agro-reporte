@@ -221,6 +221,10 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 .modal{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:0.5px solid var(--border)}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.macro-modal{max-width:min(1100px,94vw);height:min(760px,88vh);padding:0;overflow:hidden;display:flex;flex-direction:column}
+.macro-modal .modal-header{padding:14px 16px;border-bottom:0.5px solid var(--border);margin-bottom:0;background:rgba(0,0,0,.12)}
+.macro-modal-copy{font-size:11px;color:var(--txt2);margin-top:3px}
+.macro-frame{width:100%;flex:1;border:0;background:var(--negro-b)}
 .hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px}
 .hist-item:last-child{border-bottom:none}
 .hist-info{flex:1;min-width:0}
@@ -253,6 +257,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
       </div>
       <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
       <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
+      <button class="btn" type="button" onclick="abrirMacro()">MACRO</button>
       <button class="btn btn-icon" type="button" onclick="nuevoAnalisis()" title="Nuevo escenario">＋</button>
     </div>
   </div>
@@ -476,55 +481,20 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
   </div>
 </div>
 
+<div class="modal-bg" id="modal_macro" onclick="if(event.target===this)cerrarMacro()">
+  <div class="modal macro-modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" style="margin-bottom:0">Panel macro</div>
+        <div class="macro-modal-copy">Indicadores BCRA integrados al análisis</div>
+      </div>
+      <button class="btn btn-sm btn-icon" type="button" onclick="cerrarMacro()">✕</button>
+    </div>
+    <iframe id="macro_frame" class="macro-frame" title="Panel Macro BCRA"></iframe>
+  </div>
+</div>
+
 <script>
-// ── SUPABASE ──────────────────────────────────────────────────
-const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
-const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
-async function supa(method, path, body){
-  const r = await fetch(SUPA_URL+'/rest/v1/'+path, {
-    method,
-    headers:{
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer '+SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-    },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  if(!r.ok){ const t=await r.text(); throw new Error(t); }
-  return r.status===204 ? null : r.json();
-}
-
-// ── PERSISTENCIA: usa ganaderia_simulaciones ──────────────────
-async function guardarEnSupabase(campania, actividades, datos, escenarios){
-  var payload = {
-    user_id:           currentUserId !== 'anonimo' ? currentUserId : null,
-    cliente_id:        currentClienteId || null,
-    modo:              REPORT_MODE,
-    nombre_simulacion: campania,
-    datos:             datos,
-    escenarios:        escenarios,
-  };
-  // Si ya tenemos un ID válido de Supabase → actualizar ese registro
-  if(currentAnalisisId && !currentAnalisisId.startsWith('sim_')){
-    await supa('PATCH', 'ganaderia_simulaciones?id=eq.'+currentAnalisisId, payload);
-    return currentAnalisisId;
-  }
-  // Sin ID → siempre crear nuevo (permite múltiples escenarios por cliente)
-  var created = await supa('POST', 'ganaderia_simulaciones', payload);
-  return created && created[0] ? created[0].id : null;
-}
-
-async function leerDeSupabase(){
-  var q = 'ganaderia_simulaciones?modo=eq.'+REPORT_MODE+'&order=updated_at.desc&limit=30';
-  if(currentClienteId) q += '&cliente_id=eq.'+currentClienteId;
-  return await supa('GET', q) || [];
-}
-
-async function borrarDeSupabase(id){
-  await supa('DELETE', 'ganaderia_simulaciones?id=eq.'+id);
-}
-
 const REPORT_MODE = 'ESTANDAR';
 
 function toggleAcc(id, iconId) {
@@ -675,56 +645,44 @@ function writeSavedAnalisis(items){
 }
 
 // ── GUARDAR ─────────────────────────────────────────────────
-
 async function guardar(){
   var sel=document.getElementById('sel_cliente');
   var camEl=document.getElementById('campania');
-  var clienteId = sel ? sel.value : '';
-  var campania = camEl ? camEl.value.trim() : '';
+  var clienteId = sel?sel.value:'';
+  var campania = camEl?camEl.value.trim():'';
   if(sel && !clienteId){ setStatus('Seleccioná un cliente', 'err'); return; }
   if(camEl && !campania){ setStatus('Ingresá la campaña', 'err'); return; }
-  if(!st.cria&&!st.recria&&!st.inv&&!st.feed){ setStatus('Activá al menos una actividad', 'err'); return; }
+  if(!st.cria&&!st.recria&&!st.inv){ setStatus('Activá al menos una actividad', 'err'); return; }
 
   setStatus('Guardando...', '');
-  var actividades = {cria:st.cria, recria:st.recria, inv:st.inv, feed:st.feed};
-  var datos = serializarFormulario();
-  var escenarios = serializarEscenarios();
+  var payload = {
+    id: currentAnalisisId || ('sim_' + Date.now()),
+    cliente_id: clienteId,
+    cliente_nombre: currentClienteNombre,
+    usuario_id: currentUserId,
+    modo: REPORT_MODE,
+    campania: campania,
+    actividades: {cria:st.cria, recria:st.recria, inv:st.inv},
+    datos: serializarFormulario(),
+    escenarios: serializarEscenarios(),
+    updated_at: new Date().toISOString()
+  };
 
-  // Try Supabase
   try{
-    var newId = await guardarEnSupabase(campania, actividades, datos, escenarios);
-    if(newId) currentAnalisisId = newId;
-    // Mirror to localStorage
-    _lsGuardar(campania, actividades, datos, escenarios);
+    var saved = readSavedAnalisis();
+    var idx = saved.findIndex(function(item){ return item.id === payload.id; });
+    if(idx >= 0) saved[idx] = payload;
+    else saved.unshift(payload);
+    writeSavedAnalisis(saved);
+    currentAnalisisId = payload.id;
     var now = new Date();
-    setStatus('Guardado', 'ok');
+    setStatus('Guardado correctamente', 'ok');
     var last=document.getElementById('last_saved');
     if(last) last.textContent = 'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setTimeout(function(){ setStatus('',''); }, 3000);
   }catch(e){
-    console.warn('Supabase guardar error, usando localStorage:', e.message);
-    _lsGuardar(campania, actividades, datos, escenarios);
-    setStatus('Guardado localmente', 'ok');
-    setTimeout(function(){ setStatus('',''); }, 3000);
+    setStatus('Error al guardar: '+e.message, 'err');
   }
-}
-
-function _lsGuardar(campania, actividades, datos, escenarios){
-  var payload = {
-    id: currentAnalisisId || ('sim_'+Date.now()),
-    cliente_id: currentClienteId,
-    modo: REPORT_MODE,
-    nombre_simulacion: campania,
-    actividades: actividades,
-    datos: datos,
-    escenarios: escenarios,
-    updated_at: new Date().toISOString()
-  };
-  var saved = readSavedAnalisis();
-  var idx = saved.findIndex(function(i){ return i.id === payload.id; });
-  if(idx >= 0) saved[idx] = payload; else saved.unshift(payload);
-  writeSavedAnalisis(saved);
-  if(!currentAnalisisId) currentAnalisisId = payload.id;
 }
 
 // ── HISTORIAL ───────────────────────────────────────────────
@@ -734,89 +692,99 @@ async function abrirHistorial(){
 }
 function cerrarHistorial(){ document.getElementById('modal_hist').classList.remove('open'); }
 
+function getMacroDashboardSrc(){
+  const fileName = 'dashboard_bcra_v28_1_5%20PROD.html';
+  if (location.protocol === 'file:') return fileName;
+  return `${location.origin}/agro-reporte/${fileName}`;
+}
+
+function abrirMacro(){
+  const frame = document.getElementById('macro_frame');
+  if (frame && frame.dataset.loaded !== '1') {
+    frame.src = getMacroDashboardSrc();
+    frame.dataset.loaded = '1';
+  }
+  document.getElementById('modal_macro').classList.add('open');
+}
+
+function cerrarMacro(){
+  document.getElementById('modal_macro').classList.remove('open');
+}
 
 async function cargarHistorial(){
   var listEl = document.getElementById('hist_list');
   listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px">Cargando...</div>';
 
-  var items = [];
   try{
-    items = await leerDeSupabase();
+    var data = readSavedAnalisis()
+      .filter(function(item){ return !currentClienteId || item.cliente_id === currentClienteId; })
+      .sort(function(a,b){ return new Date(b.updated_at) - new Date(a.updated_at); });
+    if(!data||!data.length){
+      listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px;padding:1rem 0">No hay escenarios guardados para este usuario'+(currentClienteId?' en este cliente':'')+'.</div>';
+      return;
+    }
+    var actColors = {cria:{bg:'var(--verde-l)',color:'var(--verde-d)'},recria:{bg:'var(--bg3)',color:'var(--txt2)'},inv:{bg:'var(--amber-l)',color:'var(--amber-d)'}};
+    var actNames = {cria:'Cría',recria:'Recría',inv:'Invernada'};
+    listEl.innerHTML = data.map(function(a){
+      var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+      var acts = Object.keys(a.actividades||{}).filter(function(k){return a.actividades[k];});
+      var actBadges = acts.map(function(k){
+        var col = actColors[k]||{bg:'var(--bg3)',color:'var(--txt2)'};
+        return '<span class="hist-act-badge" style="background:'+col.bg+';color:'+col.color+'">'+actNames[k]+'</span>';
+      }).join('');
+      var clienteNombre = a.cliente_nombre || currentClienteNombre || '';
+      return '<div class="hist-item"><div class="hist-info">'
+        +(clienteNombre?'<div class="hist-cliente">'+clienteNombre+'</div>':'')
+        +'<div class="hist-meta">Escenario '+a.campania+' · '+fecha+'</div>'
+        +(actBadges?'<div class="hist-acts">'+actBadges+'</div>':'')
+        +'</div>'
+        +'<div class="hist-actions">'
+        +'<button class="btn btn-sm btn-primary" onclick="editarAnalisis(\''+a.id+'\')">Editar</button>'
+        +'<button class="btn btn-sm btn-danger" onclick="eliminarAnalisis(\''+a.id+'\',this)">Borrar</button>'
+        +'</div></div>';
+    }).join('');
   }catch(e){
-    console.warn('Supabase historial error, usando localStorage:', e.message);
-    items = readSavedAnalisis()
-      .filter(function(i){ return !currentClienteId || i.cliente_id===currentClienteId; });
+    listEl.innerHTML = '<div style="color:var(--rojo);font-size:13px">Error: '+e.message+'</div>';
   }
-
-  if(!items.length){
-    listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px;padding:1rem 0">No hay escenarios guardados.</div>';
-    return;
-  }
-  listEl.innerHTML = items.map(function(a){
-    var nombre = a.nombre_simulacion || a.campania || '(sin nombre)';
-    var fecha = a.updated_at ? new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '';
-    var acts = Object.keys(a.actividades||a.datos&&a.datos.actividades||{}).filter(function(k){return (a.actividades||{})[k];});
-    var badges = acts.map(function(k){ return '<span style="font-size:10px;padding:1px 6px;border-radius:99px;font-weight:600;background:rgba(30,153,112,.2);color:var(--verde-l)">'+k+'</span>'; }).join(' ');
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px">'
-      +'<div style="flex:1;min-width:0">'
-      +'<div style="font-size:13px;font-weight:600">'+nombre+'</div>'
-      +(fecha?'<div style="font-size:11px;color:var(--txt2);margin-top:2px">'+fecha+'</div>':'')
-      +(badges?'<div style="margin-top:4px">'+badges+'</div>':'')
-      +'</div>'
-      +'<div style="display:flex;gap:6px;flex-shrink:0">'
-      +'<button class="btn btn-sm btn-primary" onclick="cargarSimulacion(\''+a.id+'\')">Cargar</button>'
-      +'<button class="btn btn-sm btn-danger" onclick="eliminarSimulacion(\''+a.id+'\',this)">Eliminar</button>'
-      +'</div></div>';
-  }).join('');
 }
 
-
-async function cargarSimulacion(id){
-  var data = null;
+async function cargarAnalisis(id){
   try{
-    var rows = await supa('GET', 'ganaderia_simulaciones?id=eq.'+id+'&select=*&limit=1');
-    data = rows && rows[0];
-  }catch(e){ console.warn('Supabase cargar error:', e.message); }
-
-  if(!data){
-    data = readSavedAnalisis().find(function(i){ return i.id === id; });
+    var data = readSavedAnalisis();
+    var a = data.find(function(item){ return item.id === id; });
+    if(!a){ setStatus('No encontrado', 'err'); return; }
+    currentAnalisisId = a.id;
+    var sel=document.getElementById('sel_cliente');
+    if(sel) sel.value = a.cliente_id || '';
+    currentClienteId = a.cliente_id || currentClienteId;
+    currentClienteNombre = a.cliente_nombre || currentClienteNombre;
+    var title = document.getElementById('report_cliente_nombre');
+    if(title) title.textContent = currentClienteNombre;
+    deserializarFormulario(a.datos, a.actividades, a.escenarios);
+    var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    var last=document.getElementById('last_saved');
+    if(last) last.textContent = 'Cargado: '+a.campania+' · '+fecha;
+    setStatus('Escenario cargado para edición', 'ok');
+    setTimeout(function(){ setStatus('',''); }, 3000);
+    cerrarHistorial();
+  }catch(e){
+    setStatus('Error al cargar: '+e.message, 'err');
   }
-  if(!data){ setStatus('No encontrado', 'err'); return; }
-
-  currentAnalisisId = data.id;
-  var campania = data.nombre_simulacion || data.campania || '';
-  var cam=document.getElementById('campania');
-  if(cam) cam.value = campania;
-  var sel=document.getElementById('sel_cliente');
-  if(sel && data.cliente_id) sel.value = data.cliente_id;
-  if(data.cliente_id) currentClienteId = data.cliente_id;
-
-  deserializarFormulario(data.datos, data.actividades || data.datos&&data.datos.actividades, data.escenarios);
-
-  var fecha = data.updated_at ? new Date(data.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '';
-  var last=document.getElementById('last_saved');
-  if(last) last.textContent = 'Cargado: '+campania+(fecha?' · '+fecha:'');
-  setStatus('Escenario cargado', 'ok');
-  setTimeout(function(){ setStatus('',''); }, 3000);
-  cerrarHistorial();
 }
 function editarAnalisis(id){
   cargarAnalisis(id);
 }
 
-
-async function eliminarSimulacion(id, btn){
-  if(!confirm('¿Eliminar esta simulación? No se puede deshacer.')) return;
+async function eliminarAnalisis(id, btn){
+  if(!confirm('¿Borrar este escenario? No se puede deshacer.')) return;
   btn.disabled = true;
   try{
-    if(!id.startsWith('sim_')) await borrarDeSupabase(id);
-    var next = readSavedAnalisis().filter(function(i){ return i.id !== id; });
+    var next = readSavedAnalisis().filter(function(item){ return item.id !== id; });
     writeSavedAnalisis(next);
     if(currentAnalisisId === id){ currentAnalisisId = null; nuevoAnalisis(); }
     await cargarHistorial();
   }catch(e){
     setStatus('Error al eliminar: '+e.message, 'err');
-    btn.disabled = false;
   }
 }
 
