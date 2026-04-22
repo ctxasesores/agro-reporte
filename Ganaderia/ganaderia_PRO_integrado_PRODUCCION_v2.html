@@ -643,19 +643,12 @@ async function guardarEnSupabase(campania, actividades, datos, escenarios){
     datos:             datos,
     escenarios:        escenarios,
   };
+  // Si ya tenemos un ID válido de Supabase → actualizar ese registro
   if(currentAnalisisId && !currentAnalisisId.startsWith('sim_')){
     await supa('PATCH', 'ganaderia_simulaciones?id=eq.'+currentAnalisisId, payload);
     return currentAnalisisId;
   }
-  // Buscar si ya existe uno para este cliente+modo+campania
-  var q = 'ganaderia_simulaciones?modo=eq.'+REPORT_MODE+'&nombre_simulacion=eq.'+encodeURIComponent(campania);
-  if(currentClienteId) q += '&cliente_id=eq.'+currentClienteId;
-  q += '&select=id&limit=1';
-  var existing = await supa('GET', q);
-  if(existing && existing.length > 0){
-    await supa('PATCH', 'ganaderia_simulaciones?id=eq.'+existing[0].id, payload);
-    return existing[0].id;
-  }
+  // Sin ID → siempre crear nuevo (permite múltiples escenarios por cliente)
   var created = await supa('POST', 'ganaderia_simulaciones', payload);
   return created && created[0] ? created[0].id : null;
 }
