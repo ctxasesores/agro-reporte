@@ -477,6 +477,61 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 </div>
 
 <script>
+// ── SUPABASE ──────────────────────────────────────────────────
+const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
+const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+async function supa(method, path, body){
+  const r = await fetch(SUPA_URL+'/rest/v1/'+path, {
+    method,
+    headers:{
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer '+SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if(!r.ok){ const t=await r.text(); throw new Error(t); }
+  return r.status===204 ? null : r.json();
+}
+
+// ── PERSISTENCIA: usa ganaderia_simulaciones ──────────────────
+async function guardarEnSupabase(campania, actividades, datos, escenarios){
+  var payload = {
+    user_id:           currentUserId !== 'anonimo' ? currentUserId : null,
+    cliente_id:        currentClienteId || null,
+    modo:              REPORT_MODE,
+    nombre_simulacion: campania,
+    datos:             datos,
+    escenarios:        escenarios,
+  };
+  if(currentAnalisisId && !currentAnalisisId.startsWith('sim_')){
+    await supa('PATCH', 'ganaderia_simulaciones?id=eq.'+currentAnalisisId, payload);
+    return currentAnalisisId;
+  }
+  // Buscar si ya existe uno para este cliente+modo+campania
+  var q = 'ganaderia_simulaciones?modo=eq.'+REPORT_MODE+'&nombre_simulacion=eq.'+encodeURIComponent(campania);
+  if(currentClienteId) q += '&cliente_id=eq.'+currentClienteId;
+  q += '&select=id&limit=1';
+  var existing = await supa('GET', q);
+  if(existing && existing.length > 0){
+    await supa('PATCH', 'ganaderia_simulaciones?id=eq.'+existing[0].id, payload);
+    return existing[0].id;
+  }
+  var created = await supa('POST', 'ganaderia_simulaciones', payload);
+  return created && created[0] ? created[0].id : null;
+}
+
+async function leerDeSupabase(){
+  var q = 'ganaderia_simulaciones?modo=eq.'+REPORT_MODE+'&order=updated_at.desc&limit=30';
+  if(currentClienteId) q += '&cliente_id=eq.'+currentClienteId;
+  return await supa('GET', q) || [];
+}
+
+async function borrarDeSupabase(id){
+  await supa('DELETE', 'ganaderia_simulaciones?id=eq.'+id);
+}
+
 const REPORT_MODE = 'ESTANDAR';
 
 function toggleAcc(id, iconId) {
@@ -627,44 +682,56 @@ function writeSavedAnalisis(items){
 }
 
 // ── GUARDAR ─────────────────────────────────────────────────
+
 async function guardar(){
   var sel=document.getElementById('sel_cliente');
   var camEl=document.getElementById('campania');
-  var clienteId = sel?sel.value:'';
-  var campania = camEl?camEl.value.trim():'';
+  var clienteId = sel ? sel.value : '';
+  var campania = camEl ? camEl.value.trim() : '';
   if(sel && !clienteId){ setStatus('Seleccioná un cliente', 'err'); return; }
   if(camEl && !campania){ setStatus('Ingresá la campaña', 'err'); return; }
-  if(!st.cria&&!st.recria&&!st.inv){ setStatus('Activá al menos una actividad', 'err'); return; }
+  if(!st.cria&&!st.recria&&!st.inv&&!st.feed){ setStatus('Activá al menos una actividad', 'err'); return; }
 
   setStatus('Guardando...', '');
-  var payload = {
-    id: currentAnalisisId || ('sim_' + Date.now()),
-    cliente_id: clienteId,
-    cliente_nombre: currentClienteNombre,
-    usuario_id: currentUserId,
-    modo: REPORT_MODE,
-    campania: campania,
-    actividades: {cria:st.cria, recria:st.recria, inv:st.inv},
-    datos: serializarFormulario(),
-    escenarios: serializarEscenarios(),
-    updated_at: new Date().toISOString()
-  };
+  var actividades = {cria:st.cria, recria:st.recria, inv:st.inv, feed:st.feed};
+  var datos = serializarFormulario();
+  var escenarios = serializarEscenarios();
 
+  // Try Supabase
   try{
-    var saved = readSavedAnalisis();
-    var idx = saved.findIndex(function(item){ return item.id === payload.id; });
-    if(idx >= 0) saved[idx] = payload;
-    else saved.unshift(payload);
-    writeSavedAnalisis(saved);
-    currentAnalisisId = payload.id;
+    var newId = await guardarEnSupabase(campania, actividades, datos, escenarios);
+    if(newId) currentAnalisisId = newId;
+    // Mirror to localStorage
+    _lsGuardar(campania, actividades, datos, escenarios);
     var now = new Date();
-    setStatus('Guardado correctamente', 'ok');
+    setStatus('Guardado', 'ok');
     var last=document.getElementById('last_saved');
     if(last) last.textContent = 'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setTimeout(function(){ setStatus('',''); }, 3000);
   }catch(e){
-    setStatus('Error al guardar: '+e.message, 'err');
+    console.warn('Supabase guardar error, usando localStorage:', e.message);
+    _lsGuardar(campania, actividades, datos, escenarios);
+    setStatus('Guardado localmente', 'ok');
+    setTimeout(function(){ setStatus('',''); }, 3000);
   }
+}
+
+function _lsGuardar(campania, actividades, datos, escenarios){
+  var payload = {
+    id: currentAnalisisId || ('sim_'+Date.now()),
+    cliente_id: currentClienteId,
+    modo: REPORT_MODE,
+    nombre_simulacion: campania,
+    actividades: actividades,
+    datos: datos,
+    escenarios: escenarios,
+    updated_at: new Date().toISOString()
+  };
+  var saved = readSavedAnalisis();
+  var idx = saved.findIndex(function(i){ return i.id === payload.id; });
+  if(idx >= 0) saved[idx] = payload; else saved.unshift(payload);
+  writeSavedAnalisis(saved);
+  if(!currentAnalisisId) currentAnalisisId = payload.id;
 }
 
 // ── HISTORIAL ───────────────────────────────────────────────
@@ -674,80 +741,89 @@ async function abrirHistorial(){
 }
 function cerrarHistorial(){ document.getElementById('modal_hist').classList.remove('open'); }
 
+
 async function cargarHistorial(){
   var listEl = document.getElementById('hist_list');
   listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px">Cargando...</div>';
 
+  var items = [];
   try{
-    var data = readSavedAnalisis()
-      .filter(function(item){ return !currentClienteId || item.cliente_id === currentClienteId; })
-      .sort(function(a,b){ return new Date(b.updated_at) - new Date(a.updated_at); });
-    if(!data||!data.length){
-      listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px;padding:1rem 0">No hay escenarios guardados para este usuario'+(currentClienteId?' en este cliente':'')+'.</div>';
-      return;
-    }
-    var actColors = {cria:{bg:'var(--verde-l)',color:'var(--verde-d)'},recria:{bg:'var(--bg3)',color:'var(--txt2)'},inv:{bg:'var(--amber-l)',color:'var(--amber-d)'}};
-    var actNames = {cria:'Cría',recria:'Recría',inv:'Invernada'};
-    listEl.innerHTML = data.map(function(a){
-      var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-      var acts = Object.keys(a.actividades||{}).filter(function(k){return a.actividades[k];});
-      var actBadges = acts.map(function(k){
-        var col = actColors[k]||{bg:'var(--bg3)',color:'var(--txt2)'};
-        return '<span class="hist-act-badge" style="background:'+col.bg+';color:'+col.color+'">'+actNames[k]+'</span>';
-      }).join('');
-      var clienteNombre = a.cliente_nombre || currentClienteNombre || '';
-      return '<div class="hist-item"><div class="hist-info">'
-        +(clienteNombre?'<div class="hist-cliente">'+clienteNombre+'</div>':'')
-        +'<div class="hist-meta">Escenario '+a.campania+' · '+fecha+'</div>'
-        +(actBadges?'<div class="hist-acts">'+actBadges+'</div>':'')
-        +'</div>'
-        +'<div class="hist-actions">'
-        +'<button class="btn btn-sm btn-primary" onclick="editarAnalisis(\''+a.id+'\')">Editar</button>'
-        +'<button class="btn btn-sm btn-danger" onclick="eliminarAnalisis(\''+a.id+'\',this)">Borrar</button>'
-        +'</div></div>';
-    }).join('');
+    items = await leerDeSupabase();
   }catch(e){
-    listEl.innerHTML = '<div style="color:var(--rojo);font-size:13px">Error: '+e.message+'</div>';
+    console.warn('Supabase historial error, usando localStorage:', e.message);
+    items = readSavedAnalisis()
+      .filter(function(i){ return !currentClienteId || i.cliente_id===currentClienteId; });
   }
+
+  if(!items.length){
+    listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px;padding:1rem 0">No hay escenarios guardados.</div>';
+    return;
+  }
+  listEl.innerHTML = items.map(function(a){
+    var nombre = a.nombre_simulacion || a.campania || '(sin nombre)';
+    var fecha = a.updated_at ? new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    var acts = Object.keys(a.actividades||a.datos&&a.datos.actividades||{}).filter(function(k){return (a.actividades||{})[k];});
+    var badges = acts.map(function(k){ return '<span style="font-size:10px;padding:1px 6px;border-radius:99px;font-weight:600;background:rgba(30,153,112,.2);color:var(--verde-l)">'+k+'</span>'; }).join(' ');
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:13px;font-weight:600">'+nombre+'</div>'
+      +(fecha?'<div style="font-size:11px;color:var(--txt2);margin-top:2px">'+fecha+'</div>':'')
+      +(badges?'<div style="margin-top:4px">'+badges+'</div>':'')
+      +'</div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0">'
+      +'<button class="btn btn-sm btn-primary" onclick="cargarSimulacion(\''+a.id+'\')">Cargar</button>'
+      +'<button class="btn btn-sm btn-danger" onclick="eliminarSimulacion(\''+a.id+'\',this)">Eliminar</button>'
+      +'</div></div>';
+  }).join('');
 }
 
-async function cargarAnalisis(id){
+
+async function cargarSimulacion(id){
+  var data = null;
   try{
-    var data = readSavedAnalisis();
-    var a = data.find(function(item){ return item.id === id; });
-    if(!a){ setStatus('No encontrado', 'err'); return; }
-    currentAnalisisId = a.id;
-    var sel=document.getElementById('sel_cliente');
-    if(sel) sel.value = a.cliente_id || '';
-    currentClienteId = a.cliente_id || currentClienteId;
-    currentClienteNombre = a.cliente_nombre || currentClienteNombre;
-    var title = document.getElementById('report_cliente_nombre');
-    if(title) title.textContent = currentClienteNombre;
-    deserializarFormulario(a.datos, a.actividades, a.escenarios);
-    var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-    var last=document.getElementById('last_saved');
-    if(last) last.textContent = 'Cargado: '+a.campania+' · '+fecha;
-    setStatus('Escenario cargado para edición', 'ok');
-    setTimeout(function(){ setStatus('',''); }, 3000);
-    cerrarHistorial();
-  }catch(e){
-    setStatus('Error al cargar: '+e.message, 'err');
+    var rows = await supa('GET', 'ganaderia_simulaciones?id=eq.'+id+'&select=*&limit=1');
+    data = rows && rows[0];
+  }catch(e){ console.warn('Supabase cargar error:', e.message); }
+
+  if(!data){
+    data = readSavedAnalisis().find(function(i){ return i.id === id; });
   }
+  if(!data){ setStatus('No encontrado', 'err'); return; }
+
+  currentAnalisisId = data.id;
+  var campania = data.nombre_simulacion || data.campania || '';
+  var cam=document.getElementById('campania');
+  if(cam) cam.value = campania;
+  var sel=document.getElementById('sel_cliente');
+  if(sel && data.cliente_id) sel.value = data.cliente_id;
+  if(data.cliente_id) currentClienteId = data.cliente_id;
+
+  deserializarFormulario(data.datos, data.actividades || data.datos&&data.datos.actividades, data.escenarios);
+
+  var fecha = data.updated_at ? new Date(data.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '';
+  var last=document.getElementById('last_saved');
+  if(last) last.textContent = 'Cargado: '+campania+(fecha?' · '+fecha:'');
+  setStatus('Escenario cargado', 'ok');
+  setTimeout(function(){ setStatus('',''); }, 3000);
+  cerrarHistorial();
 }
 function editarAnalisis(id){
   cargarAnalisis(id);
 }
 
-async function eliminarAnalisis(id, btn){
-  if(!confirm('¿Borrar este escenario? No se puede deshacer.')) return;
+
+async function eliminarSimulacion(id, btn){
+  if(!confirm('¿Eliminar esta simulación? No se puede deshacer.')) return;
   btn.disabled = true;
   try{
-    var next = readSavedAnalisis().filter(function(item){ return item.id !== id; });
+    if(!id.startsWith('sim_')) await borrarDeSupabase(id);
+    var next = readSavedAnalisis().filter(function(i){ return i.id !== id; });
     writeSavedAnalisis(next);
     if(currentAnalisisId === id){ currentAnalisisId = null; nuevoAnalisis(); }
     await cargarHistorial();
   }catch(e){
     setStatus('Error al eliminar: '+e.message, 'err');
+    btn.disabled = false;
   }
 }
 
