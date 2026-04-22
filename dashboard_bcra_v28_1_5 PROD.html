@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>CTX | Indicadores BCRA</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --negro:#132d46;
+  --negro-m:#1e3f5c;
+  --negro-s:#1a3349;
+  --negro-b:#0d2035;
+  --oro:#d4a017;
+  --oro-l:#f0ca60;
+  --oro-d:#a87c0e;
+  --verde:#1e9970;
+  --verde-l:#2ab88a;
+  --rojo:#d9512c;
+  --texto:#dce8f5;
+  --gris:#7fa8c4;
+  --gris-l:#4e718a;
+  --borde:#254560;
+  --radio:14px;
+  --sombra:0 10px 28px rgba(0,0,0,.32);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+body{background:linear-gradient(180deg,var(--negro),var(--negro-b));color:var(--texto);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.page{width:600px;height:400px;padding:12px;border-radius:24px;background:linear-gradient(180deg,#183754 0%,#10263d 100%);border:1px solid rgba(255,255,255,.08);box-shadow:var(--sombra);display:grid;grid-template-rows:58px 1fr;gap:6px;overflow:hidden}
+.hero{display:grid;grid-template-columns:1fr 244px;gap:8px;align-items:stretch;margin:0;min-height:0}
+.hero-main{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.hero-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:rgba(212,160,23,.09);border:1px solid rgba(212,160,23,.24);color:var(--oro-l);font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;align-self:flex-start}
+.hero h1{font-size:18px;line-height:1;color:white;letter-spacing:-.55px;margin-bottom:3px}
+.hero p{max-width:270px;color:rgba(220,232,245,.68);font-size:9px;line-height:1.15}
+.hero-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0}
+.meta-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:5px 7px;min-height:42px}
+.meta-k{font-size:7px;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.42);font-weight:700;margin-bottom:3px}
+.meta-v{font-size:8px;font-weight:700;color:white;line-height:1.04}
+.section-grid{display:grid;grid-template-columns:356px 1fr;grid-template-rows:1.38fr .62fr;gap:8px;min-height:0}
+.section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:9px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.section-fx-card{grid-row:1 / span 2}
+.section-fx-card .section-sub{display:none}
+.section-rates-card .section-sub,
+.section-index-card .section-sub{display:none}
+.section-rates-card .section-title,
+.section-index-card .section-title{font-size:10px;line-height:1.02;letter-spacing:-.08px;max-width:92px}
+.section-rates-card .section-date,
+.section-index-card .section-date{font-size:7px;letter-spacing:-.02em}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;padding:0 0 4px}
+.section-title{font-size:14px;font-weight:700;color:white;letter-spacing:-.25px}
+.section-sub{font-size:9px;color:rgba(220,232,245,.58);margin-top:2px;line-height:1.15}
+.section-date{font-size:9px;color:var(--gris);font-weight:600;white-space:nowrap}
+.mock-rows{display:grid;gap:4px;min-height:0;flex:1}
+.macro-row{padding:0;margin-top:10px}
+.section-fx-card .macro-row{margin-top:18px}
+.section-fx-card .macro-top{align-items:center}
+.macro-kicker{font-size:10px;font-weight:700;color:white;letter-spacing:-.14px}
+.macro-desc{font-size:7px;color:rgba(220,232,245,.58);line-height:1.1;margin-top:1px;max-width:150px}
+.macro-date{font-size:8px;color:var(--gris);font-weight:600;margin-top:2px}
+.macro-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.macro-value{text-align:right;min-width:70px}
+.macro-main{font-size:20px;font-weight:300;letter-spacing:-.35px;color:white;line-height:.95}
+.macro-unit{font-size:8px;color:rgba(220,232,245,.5);margin-top:5px;letter-spacing:.45px;text-transform:uppercase}
+.mini-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mini-stat{padding:6px 7px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);min-height:54px}
+.mini-stat .stat-label{font-size:9px;color:rgba(220,232,245,.62);line-height:1.2;max-width:110px}
+.mini-stat .stat-date{font-size:7px;color:var(--gris);font-weight:600;margin-top:4px}
+.mini-stat .stat-reading{display:flex;align-items:flex-end;gap:4px;margin-top:5px}
+.mini-stat .stat-value{font-size:17px;font-weight:500;color:white;line-height:1;letter-spacing:-.04em}
+.mini-stat .stat-unit-inline{font-size:7px;color:rgba(220,232,245,.48);text-transform:uppercase;line-height:1;margin-bottom:2px}
+.mini-stat .stat-unit{display:none}
+.index-grid .mini-stat{min-height:34px}
+.section-rates-card .mini-stat{min-height:40px;padding:5px 6px}
+.section-rates-card .mini-stat .stat-label{font-size:7px;max-width:78px}
+.section-rates-card .mini-stat .stat-reading{margin-top:4px;gap:3px}
+.section-rates-card .mini-stat .stat-value{font-size:16px}
+.section-rates-card .mini-stat .stat-unit-inline{font-size:6px}
+.section-rates-card .mini-stat .stat-date{font-size:6px;margin-top:3px}
+.section-index-card .mini-stat{min-height:28px;padding:4px 5px}
+.section-index-card .mini-stat .stat-label{font-size:7px}
+.section-index-card .mini-stat .stat-value{font-size:14px}
+.section-index-card .mini-stat .stat-unit-inline{font-size:6px}
+.section-index-card .mini-stat .stat-date{font-size:6px;margin-top:2px}
+.graph-card{margin:0;padding:7px 8px 6px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);min-height:0;overflow:hidden}
+.graph-card.graph-fx{margin-top:0;flex:0 0 auto;padding:6px 8px 2px}
+.graph-card.graph-rates{flex:1}
+.graph-title{font-size:10px;font-weight:700;color:rgba(220,232,245,.88);margin-bottom:4px;letter-spacing:.16px}
+.graph-sub{font-size:8px;color:rgba(220,232,245,.52);line-height:1.15;margin-bottom:6px}
+.axis-area{position:relative;height:90px}
+.graph-card.graph-fx .graph-title{font-size:9px;margin-bottom:2px}
+.graph-card.graph-fx .graph-sub{display:none}
+.graph-card.graph-fx .axis-area{height:104px}
+.graph-card.graph-fx .axis-track{bottom:34px}
+.graph-card.graph-fx .axis-bound{bottom:28px}
+.graph-card.graph-fx .axis-point{bottom:30px}
+.graph-card.graph-fx .axis-point .marker-label{bottom:22px}
+.graph-card.graph-fx .axis-guide{bottom:4px}
+.graph-card.graph-fx .axis-point.bottom .marker-label{top:24px}
+.graph-card.graph-rates{padding:2px 6px 4px}
+.graph-card.graph-rates .graph-title{display:none}
+.graph-card.graph-rates .graph-sub{display:none}
+.graph-card.graph-rates .axis-area{height:92px}
+.graph-card.graph-rates .axis-track{bottom:34px;left:14px;right:14px}
+.graph-card.graph-rates .axis-bound{bottom:28px}
+.graph-card.graph-rates .axis-bound .stem{height:18px}
+.graph-card.graph-rates .axis-point{bottom:30px}
+.graph-card.graph-rates .axis-point .tick{height:18px}
+.graph-card.graph-rates .axis-point .marker-label{bottom:24px;width:42px}
+.graph-card.graph-rates .axis-point .marker-value{font-size:8px}
+.graph-card.graph-rates .axis-point .marker-name{font-size:6px;line-height:1.02;margin-top:2px}
+.graph-card.graph-rates .axis-point.bottom .marker-label{top:26px}
+.axis-track{position:absolute;left:18px;right:18px;bottom:26px;height:2px;background:rgba(255,255,255,.82)}
+.axis-bound{position:absolute;bottom:20px;width:0}
+.axis-bound .stem{position:absolute;bottom:6px;width:2px;height:22px;background:rgba(255,255,255,.82)}
+.axis-bound.left .stem{left:0}
+.axis-bound.right .stem{right:0}
+.axis-guide{position:absolute;bottom:0;height:14px}
+.axis-guide .guide-line{position:absolute;left:0;right:0;top:0;height:1px;background:rgba(255,255,255,.22)}
+.axis-guide .guide-cap{position:absolute;top:-3px;width:2px;height:8px;background:rgba(255,255,255,.22)}
+.axis-guide .guide-cap.left{left:0}
+.axis-guide .guide-cap.right{right:0}
+.axis-guide .guide-label{position:absolute;top:5px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:500;color:rgba(255,255,255,.48);letter-spacing:-.02em}
+.axis-point{position:absolute;bottom:22px;width:0}
+.axis-point .tick{position:absolute;left:-1px;bottom:-6px;width:2px;height:20px;background:rgba(255,255,255,.82)}
+.axis-point .marker-label{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);text-align:center;white-space:normal;width:60px}
+.axis-point .marker-value{font-size:10px;font-weight:500;color:white;letter-spacing:-.03em;line-height:1}
+.axis-point .marker-name{font-size:8px;color:rgba(220,232,245,.62);margin-top:4px;line-height:1.15}
+.axis-point.bottom .tick{bottom:auto;top:-6px}
+.axis-point.bottom .marker-label{bottom:auto;top:22px}
+.empty-row{padding:18px 6px;border-top:1px solid rgba(255,255,255,.07);font-size:14px;color:rgba(220,232,245,.58)}
+.empty-row{padding:10px 0;font-size:10px;color:rgba(220,232,245,.58)}
+.status{display:none}
+.status.warn{color:var(--oro-l);border-color:rgba(212,160,23,.24);background:rgba(212,160,23,.07)}
+.manual-alert{padding:4px 8px;border-radius:10px;background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.22);color:var(--oro-l);font-size:8px;line-height:1.4;margin:8px 0 0;display:block;overflow-wrap:break-word}
+.footer-note{display:none}
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div class="hero-main">
+        <div class="hero-badge">Indicadores Macro</div>
+        <h1>Panel BCRA</h1>
+        <p>Reservas, tipo de cambio, tasas, inflacion, CER y UVA.</p>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-card">
+          <div class="meta-k">Fuente</div>
+          <div class="meta-v">Banco Central de la Republica Argentina</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-k">Estado</div>
+          <div class="meta-v" id="meta-updated">Esperando datos</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-grid">
+      <div class="section section-fx-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Reservas y tipo de cambio</div>
+            <div class="section-sub">Reservas y tramo cambiario.</div>
+          </div>
+          <div class="section-date" id="fx-section-date">Ultimo dato: --</div>
+        </div>
+        <div class="mock-rows" id="section-fx"></div>
+        <div id="fx-manual-alert"></div>
+      </div>
+
+      <div class="section section-rates-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Tasas e inflacion</div>
+            <div class="section-sub">Tasas, IPC y expectativas.</div>
+          </div>
+          <div class="section-date" id="rates-section-date">Ultimo dato: --</div>
+        </div>
+        <div class="mock-rows" id="section-rates"></div>
+      </div>
+
+      <div class="section section-index-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Coeficientes</div>
+            <div class="section-sub">CER y UVA.</div>
+          </div>
+          <div class="section-date" id="index-section-date">Ultimo dato: --</div>
+        </div>
+        <div class="mock-rows" id="section-indexers"></div>
+      </div>
+    </div>
+
+    <div class="status" id="status-box">Cargando indicadores desde Supabase...</div>
+    <div class="footer-note">Este dashboard consume la vista <code>bcra_latest_valores</code> y puede convivir con una carga manual o automatizada desde series oficiales del BCRA.</div>
+  </div>
+
+<script>
+const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
+const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const SERIES = {
+  reservas_bcra: {
+    section: 'fx',
+    label: 'Reservas Internacionales del BCRA',
+    desc: 'Stock de reservas internacionales informado por el BCRA.',
+    unit: 'USD millones'
+  },
+  tc_minorista: {
+    section: 'fx',
+    label: 'Tipo de Cambio Minorista',
+    desc: 'Referencia minorista por dolar estadounidense.',
+    unit: '$ por USD'
+  },
+  tc_mayorista: {
+    section: 'fx',
+    label: 'Tipo de Cambio Mayorista',
+    desc: 'Referencia mayorista por dolar estadounidense.',
+    unit: '$ por USD'
+  },
+  baibar: {
+    section: 'rates',
+    label: 'BAIBAR',
+    desc: 'Tasas de interes por prestamos entre entidades financieras privadas.',
+    unit: '% n.a.'
+  },
+  tamar_priv: {
+    section: 'rates',
+    label: 'TAMAR bancos privados',
+    desc: 'Tasa de referencia del mercado mayorista en pesos de bancos privados.',
+    unit: '% n.a.'
+  },
+  tm20_priv: {
+    section: 'rates',
+    label: 'TM20 bancos privados',
+    desc: 'Tasa pagada por depositos de mas de $20 millones.',
+    unit: '% n.a.'
+  },
+  adelantos_cc: {
+    section: 'rates',
+    label: 'Adelantos en cuenta corriente',
+    desc: 'Tasa de interes de prestamos por adelantos en cuenta corriente.',
+    unit: '% n.a.'
+  },
+  inflacion_mensual: {
+    section: 'rates',
+    label: 'Inflacion mensual',
+    desc: 'Variacion mensual del IPC general.',
+    unit: '%'
+  },
+  inflacion_interanual: {
+    section: 'rates',
+    label: 'Inflacion interanual',
+    desc: 'Variacion interanual del IPC general.',
+    unit: '% i.a.'
+  },
+  rem_12m: {
+    section: 'rates',
+    label: 'Inflacion esperada REM 12 meses',
+    desc: 'Mediana REM para los proximos 12 meses.',
+    unit: '% i.a.'
+  },
+  cer: {
+    section: 'indexers',
+    label: 'CER',
+    desc: 'Coeficiente de Estabilizacion de Referencia.',
+    unit: 'indice'
+  },
+  uva: {
+    section: 'indexers',
+    label: 'UVA',
+    desc: 'Unidad de Valor Adquisitivo.',
+    unit: 'pesos'
+  },
+  banda_superior: {
+    section: 'fx',
+    label: 'Régimen de bandas cambiarias (Límite superior)',
+    desc: 'Referencia superior del régimen de bandas cambiarias.',
+    unit: '$ por USD'
+  },
+  banda_inferior: {
+    section: 'fx',
+    label: 'Régimen de bandas cambiarias (Límite inferior)',
+    desc: 'Referencia inferior del régimen de bandas cambiarias.',
+    unit: '$ por USD'
+  }
+};
+
+const GRAPH_LABELS = {
+  banda_superior: 'Banda sup.',
+  tc_minorista: 'Minorista',
+  tc_mayorista: 'Mayorista',
+  banda_inferior: 'Banda inf.',
+  tamar_priv: 'TAMAR',
+  tm20_priv: 'TM20',
+  rem_12m: 'REM 12m',
+  inflacion_interanual: 'Inflac. i/a',
+  adelantos_cc: 'Adelantos CC'
+};
+
+const MANUAL_ALERT_LABELS = {
+  banda_superior: 'banda superior',
+  banda_inferior: 'banda inferior'
+};
+
+function formatDate(value){
+  if(!value) return '--';
+  const d = new Date(value + 'T12:00:00');
+  return d.toLocaleDateString('es-AR');
+}
+
+function formatNumber(value, unit){
+  if(value === null || value === undefined || value === '') return '—';
+  const num = Number(value);
+  if(Number.isNaN(num)) return String(value);
+  const decimals = Math.abs(num) < 10 ? 2 : 0;
+  return num.toLocaleString('es-AR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function getItem(map, code){
+  return map[code] || null;
+}
+
+function withFallback(item, fallback){
+  if (item && item.valor !== null && item.valor !== undefined && item.valor !== '') return item;
+  return fallback || item || null;
+}
+
+function buildMacroRow(code, item, titleOverride){
+  const meta = SERIES[code];
+  if(!meta || !item) return '';
+  const date = formatDate(item.fecha);
+  const value = formatNumber(item.valor, meta.unit);
+  return `
+    <div class="macro-row">
+      <div class="macro-top">
+        <div>
+          <div class="macro-kicker">${titleOverride || meta.label}</div>
+          <div class="macro-desc">${meta.desc}</div>
+          <div class="macro-date">${date}</div>
+        </div>
+        <div class="macro-value">
+          <div class="macro-main">${value}</div>
+          <div class="macro-unit">${meta.unit}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildMiniStat(code, item, titleOverride){
+  const meta = SERIES[code];
+  if(!meta || !item) return '';
+  return `
+    <div class="mini-stat">
+      <div class="stat-label">${titleOverride || meta.label}</div>
+      <div class="stat-reading">
+        <div class="stat-value">${formatNumber(item.valor, meta.unit)}</div>
+        <div class="stat-unit-inline">${String(meta.unit || '').toUpperCase()}</div>
+      </div>
+      <div class="stat-date">${formatDate(item.fecha)}</div>
+    </div>
+  `;
+}
+
+function buildGraphCard(items, title, subtitle, options = {}){
+  const valid = items.filter(item => item && item.valor !== null && item.valor !== undefined && !Number.isNaN(Number(item.valor)));
+  if(!valid.length){
+    return `<div class="graph-card"><div class="graph-title">${title}</div><div class="graph-sub">${subtitle}</div><div class="empty-row">Todavia no hay valores cargados para graficar este tramo.</div></div>`;
+  }
+  const values = valid.map(item => Number(item.valor));
+  const maxVal = Math.max.apply(null, values);
+  const minVal = Math.min.apply(null, values);
+  const upper = maxVal >= 0 ? maxVal * 1.05 : maxVal * 0.95;
+  const lower = minVal >= 0 ? minVal * 0.95 : minVal * 1.05;
+  const span = upper - lower || 1;
+  const pos = value => ((upper - value) / span) * 100;
+  const pointMeta = valid.map(item => {
+    const x = Math.max(0, Math.min(100, pos(Number(item.valor))));
+    const meta = SERIES[item.codigo] || {};
+    const placement = item.placement || meta.placement || 'top';
+    return { item, x, meta, placement };
+  });
+  const points = pointMeta.map(({ item, x, meta, placement }) => {
+    return `
+      <div class="axis-point ${placement === 'bottom' ? 'bottom' : ''}" style="left:calc(28px + (${x} * (100% - 56px) / 100));">
+        <span class="tick"></span>
+        <div class="marker-label">
+          <div class="marker-value">${formatNumber(item.valor)}</div>
+          <div class="marker-name">${GRAPH_LABELS[item.codigo] || meta.label || item.codigo}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  const leftGuide = options.leftGuideCode
+    ? pointMeta.find(p => p.item.codigo === options.leftGuideCode)
+    : null;
+  const rightGuide = options.rightGuideCode
+    ? pointMeta.find(p => p.item.codigo === options.rightGuideCode)
+    : null;
+  const guides = [
+    leftGuide ? `
+      <div class="axis-guide" style="left:28px;width:calc(${leftGuide.x}% * (100% - 56px) / 100);">
+        <span class="guide-line"></span>
+        <span class="guide-cap left"></span>
+        <span class="guide-cap right"></span>
+        <span class="guide-label">5%</span>
+      </div>
+    ` : '',
+    rightGuide ? `
+      <div class="axis-guide" style="right:28px;width:calc(${100 - rightGuide.x}% * (100% - 56px) / 100);">
+        <span class="guide-line"></span>
+        <span class="guide-cap left"></span>
+        <span class="guide-cap right"></span>
+        <span class="guide-label">5%</span>
+      </div>
+    ` : ''
+  ].join('');
+  const cardClass = options.className ? ` ${options.className}` : '';
+  return `
+    <div class="graph-card${cardClass}">
+      <div class="graph-title">${title}</div>
+      <div class="graph-sub">${subtitle}</div>
+      <div class="axis-area">
+        ${guides}
+        <div class="axis-track"></div>
+        <div class="axis-bound left" style="left:28px;">
+        <span class="stem"></span>
+        </div>
+        <div class="axis-bound right" style="right:28px;">
+        <span class="stem"></span>
+        </div>
+        ${points}
+      </div>
+    </div>
+  `;
+}
+
+function updateSectionDate(sectionId, items){
+  const dates = items.map(x => x.fecha).filter(Boolean).sort().reverse();
+  const compact = sectionId === 'rates-section-date' || sectionId === 'index-section-date';
+  const text = dates.length
+    ? (compact ? `${formatDate(dates[0])}` : `Ultimo dato: ${formatDate(dates[0])}`)
+    : (compact ? '--' : 'Ultimo dato: --');
+  document.getElementById(sectionId).textContent = text;
+}
+
+function hasValue(item){
+  return !!(item && item.valor !== null && item.valor !== undefined && item.valor !== '');
+}
+
+async function loadDashboard(){
+  const status = document.getElementById('status-box');
+  try{
+    const { data, error } = await sb
+      .from('bcra_latest_valores')
+      .select('codigo,fecha,valor,nombre,unidad,categoria')
+      .order('display_order', { ascending: true });
+
+    if(error) throw error;
+
+    const normalized = (data || []).filter(r => SERIES[r.codigo]);
+    const byCode = {};
+    normalized.forEach(item => { byCode[item.codigo] = item; });
+    const missingManual = ['banda_superior', 'banda_inferior'].filter(code => !hasValue(getItem(byCode, code)));
+    const bandSup = (() => {
+      const source = withFallback(
+        getItem(byCode,'banda_superior'),
+        { codigo:'banda_superior', fecha:'2026-04-21', valor:1688.68 }
+      );
+      return source ? { ...source, placement:'bound-left' } : null;
+    })();
+    const bandInf = (() => {
+      const source = withFallback(
+        getItem(byCode,'banda_inferior'),
+        { codigo:'banda_inferior', fecha:'2026-04-21', valor:825.98 }
+      );
+      return source ? { ...source, placement:'bound-right' } : null;
+    })();
+    const remBottom = getItem(byCode,'rem_12m') ? { ...getItem(byCode,'rem_12m'), placement:'bottom' } : null;
+    const iiaBottom = getItem(byCode,'inflacion_interanual') ? { ...getItem(byCode,'inflacion_interanual'), placement:'bottom' } : null;
+    const fxItems = [getItem(byCode,'reservas_bcra'), getItem(byCode,'tc_minorista'), getItem(byCode,'tc_mayorista'), bandSup, bandInf].filter(Boolean);
+    const rateItems = [getItem(byCode,'baibar'), getItem(byCode,'inflacion_mensual'), getItem(byCode,'tamar_priv'), getItem(byCode,'tm20_priv'), remBottom, iiaBottom, getItem(byCode,'adelantos_cc')].filter(Boolean);
+    const indexItems = [getItem(byCode,'cer'), getItem(byCode,'uva')].filter(Boolean);
+
+    document.getElementById('section-fx').innerHTML = [
+      buildMacroRow('reservas_bcra', getItem(byCode,'reservas_bcra')),
+      buildGraphCard(
+        [bandSup, getItem(byCode,'tc_minorista'), getItem(byCode,'tc_mayorista'), bandInf].filter(Boolean),
+        'Tramo grafico interno',
+        '',
+        { leftGuideCode: 'banda_superior', rightGuideCode: 'banda_inferior', className: 'graph-fx' }
+      )
+    ].filter(Boolean).join('');
+    document.getElementById('fx-manual-alert').innerHTML = missingManual.length
+      ? `<div class="manual-alert">API BCRA incompleta: falta ${missingManual.map(code => MANUAL_ALERT_LABELS[code] || code).join(' y ')}. Completar manualmente en <span style="font-family:monospace;font-weight:600;letter-spacing:-.2px;display:inline">bcra_observaciones</span>.</div>`
+      : '';
+
+    document.getElementById('section-rates').innerHTML = [
+      `<div class="mini-stat-grid">${
+        [
+          buildMiniStat('baibar', getItem(byCode,'baibar'), 'BAIBAR'),
+          buildMiniStat('inflacion_mensual', getItem(byCode,'inflacion_mensual'), 'Inflacion mensual')
+        ].filter(Boolean).join('')
+      }</div>`,
+      buildGraphCard(
+        [getItem(byCode,'tamar_priv'), getItem(byCode,'tm20_priv'), remBottom, iiaBottom, getItem(byCode,'adelantos_cc')].filter(Boolean),
+        'Tramo grafico interno',
+        'Tasas y expectativas del bloque central.',
+        { className: 'graph-rates' }
+      )
+    ].filter(Boolean).join('');
+
+    document.getElementById('section-indexers').innerHTML = [
+      `<div class="mini-stat-grid index-grid">${
+        [
+          buildMiniStat('cer', getItem(byCode,'cer')),
+          buildMiniStat('uva', getItem(byCode,'uva'))
+        ].filter(Boolean).join('')
+      }</div>`
+    ].filter(Boolean).join('') || '<div class="empty-row">Sin datos disponibles para CER y UVA.</div>';
+
+    updateSectionDate('fx-section-date', fxItems);
+    updateSectionDate('rates-section-date', rateItems);
+    updateSectionDate('index-section-date', indexItems);
+
+    const allDates = normalized.map(x => x.fecha).filter(Boolean).sort().reverse();
+    document.getElementById('meta-updated').textContent = allDates.length ? formatDate(allDates[0]) : 'Sin datos';
+    status.textContent = normalized.length
+      ? `${normalized.length} indicadores activos desde bcra_latest_valores.`
+      : 'Sin datos en bcra_latest_valores.';
+    status.className = normalized.length ? 'status' : 'status warn';
+  }catch(err){
+    console.error(err);
+    status.textContent = 'No se pudieron cargar los indicadores desde Supabase: ' + err.message;
+    status.className = 'status warn';
+  }
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
