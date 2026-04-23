@@ -839,6 +839,12 @@ function getMacroDashboardSrc(){
 }
 
 function abrirMacro(){
+  try{
+    if (window.parent && window.parent !== window && typeof window.parent.abrirMacroModal === 'function') {
+      window.parent.abrirMacroModal();
+      return;
+    }
+  }catch(_e){}
   const frame = document.getElementById('macro_frame');
   if (frame && frame.dataset.loaded !== '1') {
     frame.src = getMacroDashboardSrc();
