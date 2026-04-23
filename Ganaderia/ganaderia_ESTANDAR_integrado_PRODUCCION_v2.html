@@ -221,10 +221,10 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 .modal{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:0.5px solid var(--border)}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
-.macro-modal{max-width:min(1100px,94vw);height:min(760px,88vh);padding:0;overflow:hidden;display:flex;flex-direction:column}
-.macro-modal .modal-header{padding:14px 16px;border-bottom:0.5px solid var(--border);margin-bottom:0;background:rgba(0,0,0,.12)}
-.macro-modal-copy{font-size:11px;color:var(--txt2);margin-top:3px}
-.macro-frame{width:100%;flex:1;border:0;background:var(--negro-b)}
+.macro-modal{position:relative;width:min(600px,96vw);height:min(400px,90vh);padding:0;overflow:hidden;background:transparent;border:none;box-shadow:none}
+.macro-modal .modal-header{display:none}
+.macro-frame{width:100%;height:100%;border:0;background:transparent;display:block}
+.macro-close{position:absolute;top:10px;right:10px;z-index:2}
 .hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px}
 .hist-item:last-child{border-bottom:none}
 .hist-info{flex:1;min-width:0}
@@ -483,13 +483,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 
 <div class="modal-bg" id="modal_macro" onclick="if(event.target===this)cerrarMacro()">
   <div class="modal macro-modal">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" style="margin-bottom:0">Panel macro</div>
-        <div class="macro-modal-copy">Indicadores BCRA integrados al análisis</div>
-      </div>
-      <button class="btn btn-sm btn-icon" type="button" onclick="cerrarMacro()">✕</button>
-    </div>
+    <button class="btn btn-sm btn-icon macro-close" type="button" onclick="cerrarMacro()">✕</button>
     <iframe id="macro_frame" class="macro-frame" title="Panel Macro BCRA"></iframe>
   </div>
 </div>
@@ -693,7 +687,7 @@ async function abrirHistorial(){
 function cerrarHistorial(){ document.getElementById('modal_hist').classList.remove('open'); }
 
 function getMacroDashboardSrc(){
-  const fileName = 'dashboard_bcra_v28_1_5%20PROD.html';
+  const fileName = 'dashboard_bcra_v28_1_5%20PROD.html?embed=1';
   if (location.protocol === 'file:') return fileName;
   return `${location.origin}/agro-reporte/${fileName}`;
 }
