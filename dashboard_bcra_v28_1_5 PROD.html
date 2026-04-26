@@ -60,7 +60,7 @@ body.embed-mode .page{width:100vw;height:100vh;box-shadow:none}
 .section-date{font-size:9px;color:var(--gris);font-weight:600;white-space:nowrap}
 .mock-rows{display:grid;gap:4px;min-height:0;flex:1}
 .macro-row{padding:0;margin-top:10px}
-.section-fx-card .macro-row{margin-top:18px}
+.section-fx-card .macro-row{margin-top:14px}
 .section-fx-card .macro-top{align-items:center}
 .macro-kicker{font-size:10px;font-weight:700;color:white;letter-spacing:-.14px}
 .macro-desc{font-size:7px;color:rgba(220,232,245,.58);line-height:1.1;margin-top:1px;max-width:150px}
@@ -90,7 +90,7 @@ body.embed-mode .page{width:100vw;height:100vh;box-shadow:none}
 .section-index-card .mini-stat .stat-unit-inline{font-size:6px}
 .section-index-card .mini-stat .stat-date{font-size:6px;margin-top:2px}
 .graph-card{margin:0;padding:7px 8px 6px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);min-height:0;overflow:hidden}
-.graph-card.graph-fx{margin-top:0;flex:0 0 auto;padding:6px 8px 2px}
+.graph-card.graph-fx{margin-top:6px;flex:0 0 auto;padding:6px 8px 2px}
 .graph-card.graph-rates{flex:1}
 .graph-title{font-size:10px;font-weight:700;color:rgba(220,232,245,.88);margin-bottom:4px;letter-spacing:.16px}
 .graph-sub{font-size:8px;color:rgba(220,232,245,.52);line-height:1.15;margin-bottom:6px}
@@ -101,7 +101,9 @@ body.embed-mode .page{width:100vw;height:100vh;box-shadow:none}
 .graph-card.graph-fx .axis-track{bottom:34px}
 .graph-card.graph-fx .axis-bound{bottom:28px}
 .graph-card.graph-fx .axis-point{bottom:30px}
-.graph-card.graph-fx .axis-point .marker-label{bottom:22px}
+.graph-card.graph-fx .axis-point .marker-label{bottom:22px;width:52px}
+.graph-card.graph-fx .axis-point .marker-value{font-size:9px}
+.graph-card.graph-fx .axis-point .marker-name{font-size:7px;line-height:1.05;margin-top:3px}
 .graph-card.graph-fx .axis-guide{bottom:4px}
 .graph-card.graph-fx .axis-point.bottom .marker-label{top:24px}
 .graph-card.graph-rates{padding:2px 6px 4px}
@@ -113,10 +115,14 @@ body.embed-mode .page{width:100vw;height:100vh;box-shadow:none}
 .graph-card.graph-rates .axis-bound .stem{height:18px}
 .graph-card.graph-rates .axis-point{bottom:30px}
 .graph-card.graph-rates .axis-point .tick{height:18px}
-.graph-card.graph-rates .axis-point .marker-label{bottom:24px;width:42px}
+.graph-card.graph-rates .axis-point .marker-label{bottom:22px;width:40px}
 .graph-card.graph-rates .axis-point .marker-value{font-size:8px}
 .graph-card.graph-rates .axis-point .marker-name{font-size:6px;line-height:1.02;margin-top:2px}
-.graph-card.graph-rates .axis-point.bottom .marker-label{top:26px}
+.graph-card.graph-rates .axis-point.bottom .marker-label{top:24px}
+.graph-card.graph-fx .axis-point .marker-label.level-1{bottom:36px}
+.graph-card.graph-fx .axis-point .marker-label.level-2{bottom:50px}
+.graph-card.graph-fx .axis-point.bottom .marker-label.level-1{top:36px}
+.graph-card.graph-fx .axis-point.bottom .marker-label.level-2{top:50px}
 .axis-track{position:absolute;left:18px;right:18px;bottom:26px;height:2px;background:rgba(255,255,255,.82)}
 .axis-bound{position:absolute;bottom:20px;width:0}
 .axis-bound .stem{position:absolute;bottom:6px;width:2px;height:22px;background:rgba(255,255,255,.82)}
@@ -135,11 +141,20 @@ body.embed-mode .page{width:100vw;height:100vh;box-shadow:none}
 .axis-point .marker-name{font-size:8px;color:rgba(220,232,245,.62);margin-top:4px;line-height:1.15}
 .axis-point.bottom .tick{bottom:auto;top:-6px}
 .axis-point.bottom .marker-label{bottom:auto;top:22px}
+.axis-point .marker-label.level-1{bottom:34px}
+.axis-point .marker-label.level-2{bottom:46px}
+.axis-point.bottom .marker-label.level-1{top:34px}
+.axis-point.bottom .marker-label.level-2{top:46px}
+.graph-card.graph-rates .axis-point .marker-label.level-1{bottom:32px}
+.graph-card.graph-rates .axis-point .marker-label.level-2{bottom:42px}
+.graph-card.graph-rates .axis-point.bottom .marker-label.level-1{top:32px}
+.graph-card.graph-rates .axis-point.bottom .marker-label.level-2{top:42px}
 .empty-row{padding:18px 6px;border-top:1px solid rgba(255,255,255,.07);font-size:14px;color:rgba(220,232,245,.58)}
 .empty-row{padding:10px 0;font-size:10px;color:rgba(220,232,245,.58)}
 .status{display:none}
 .status.warn{color:var(--oro-l);border-color:rgba(212,160,23,.24);background:rgba(212,160,23,.07)}
-.manual-alert{padding:4px 8px;border-radius:10px;background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.22);color:var(--oro-l);font-size:8px;line-height:1.4;margin:8px 0 0;display:block;overflow-wrap:break-word}
+.manual-alert{padding:4px 7px;border-radius:10px;background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.22);color:var(--oro-l);font-size:7px;line-height:1.22;margin:6px 0 4px;display:block;overflow-wrap:anywhere}
+.manual-alert code{font-family:monospace;font-weight:600;letter-spacing:-.2px;color:var(--oro-l);background:none}
 .footer-note{display:none}
 </style>
 </head>
@@ -173,7 +188,7 @@ body.embed-mode .page{width:100vw;height:100vh;box-shadow:none}
           <div class="section-date" id="fx-section-date">Ultimo dato: --</div>
         </div>
         <div class="mock-rows" id="section-fx"></div>
-        <div id="fx-manual-alert"></div>
+        <div id="fx-manual-alert" style="display:none"></div>
       </div>
 
       <div class="section section-rates-card">
@@ -390,13 +405,31 @@ function buildGraphCard(items, title, subtitle, options = {}){
     const x = Math.max(0, Math.min(100, pos(Number(item.valor))));
     const meta = SERIES[item.codigo] || {};
     const placement = item.placement || meta.placement || 'top';
-    return { item, x, meta, placement };
+    return { item, x, meta, placement, level: 0 };
   });
-  const points = pointMeta.map(({ item, x, meta, placement }) => {
+  const threshold = options.className === 'graph-rates' ? 12 : (options.className === 'graph-fx' ? 18 : 10);
+  ['top','bottom'].forEach((placementKey) => {
+    const bucket = pointMeta
+      .filter(point => (point.placement === 'bottom' ? 'bottom' : 'top') === placementKey)
+      .sort((a, b) => a.x - b.x);
+    let prev = null;
+    let level = 0;
+    bucket.forEach((point) => {
+      if(prev && Math.abs(point.x - prev.x) < threshold){
+        level = (level + 1) % 3;
+      }else{
+        level = 0;
+      }
+      point.level = level;
+      prev = point;
+    });
+  });
+  const points = pointMeta.map(({ item, x, meta, placement, level }) => {
+    const extraClass = item.codigo ? ` code-${item.codigo}` : '';
     return `
-      <div class="axis-point ${placement === 'bottom' ? 'bottom' : ''}" style="left:calc(28px + (${x} * (100% - 56px) / 100));">
+      <div class="axis-point ${placement === 'bottom' ? 'bottom' : ''}${extraClass}" style="left:calc(28px + (${x} * (100% - 56px) / 100));">
         <span class="tick"></span>
-        <div class="marker-label">
+        <div class="marker-label level-${level}">
           <div class="marker-value">${formatNumber(item.valor)}</div>
           <div class="marker-name">${GRAPH_LABELS[item.codigo] || meta.label || item.codigo}</div>
         </div>
@@ -494,8 +527,13 @@ async function loadDashboard(){
     const rateItems = [getItem(byCode,'baibar'), getItem(byCode,'inflacion_mensual'), getItem(byCode,'tamar_priv'), getItem(byCode,'tm20_priv'), remBottom, iiaBottom, getItem(byCode,'adelantos_cc')].filter(Boolean);
     const indexItems = [getItem(byCode,'cer'), getItem(byCode,'uva')].filter(Boolean);
 
+    const fxManualAlertHtml = missingManual.length
+      ? `<div class="manual-alert">API BCRA incompleta: falta ${missingManual.map(code => MANUAL_ALERT_LABELS[code] || code).join(' y ')}. Completar manualmente en <code>bcra_observaciones</code>.</div>`
+      : '';
+
     document.getElementById('section-fx').innerHTML = [
       buildMacroRow('reservas_bcra', getItem(byCode,'reservas_bcra')),
+      fxManualAlertHtml,
       buildGraphCard(
         [bandSup, getItem(byCode,'tc_minorista'), getItem(byCode,'tc_mayorista'), bandInf].filter(Boolean),
         'Tramo grafico interno',
@@ -503,9 +541,7 @@ async function loadDashboard(){
         { leftGuideCode: 'banda_superior', rightGuideCode: 'banda_inferior', className: 'graph-fx' }
       )
     ].filter(Boolean).join('');
-    document.getElementById('fx-manual-alert').innerHTML = missingManual.length
-      ? `<div class="manual-alert">API BCRA incompleta: falta ${missingManual.map(code => MANUAL_ALERT_LABELS[code] || code).join(' y ')}. Completar manualmente en <span style="font-family:monospace;font-weight:600;letter-spacing:-.2px;display:inline">bcra_observaciones</span>.</div>`
-      : '';
+    document.getElementById('fx-manual-alert').innerHTML = '';
 
     document.getElementById('section-rates').innerHTML = [
       `<div class="mini-stat-grid">${
