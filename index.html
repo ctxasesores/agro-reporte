@@ -845,19 +845,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       </div>
     </div>
 
-    <div class="dashboard-view" id="view-tambo">
+    <div class="dashboard-view integrated-embed" id="view-tambo">
       <div class="page-body">
-        <div class="account-shell">
-          <div class="account-hero">
-            <div class="account-eyebrow">Tambo</div>
-            <div class="account-title">Dashboard de tambo</div>
-            <div class="account-copy">Este espacio queda reservado para la unidad de negocio tambo. Cuando el cliente tenga acceso y una versión activa, podrá verse acá sin salir de la misma página.</div>
-          </div>
-          <div class="account-card">
-            <div class="account-badge">Estado</div>
-            <h3 id="tambo-title">Sin acceso habilitado</h3>
-            <p id="tambo-copy">Actualmente esta cuenta no tiene un dashboard de tambo asignado.</p>
-          </div>
+        <div class="embedded-dashboard">
+          <iframe class="embedded-frame" id="frame-tambo" src="Tambo/tambo_integrado_PRODUCCION_v1.html?mode=ESTANDAR" title="Dashboard Tambo"></iframe>
         </div>
       </div>
     </div>
@@ -1261,10 +1252,6 @@ function updateCuentaDashboard(state) {
   document.getElementById('cuenta-agr-version').textContent = state.accesoAgricola ? modoAgr : '—';
   document.getElementById('cuenta-gan-version').textContent = state.accesoGanaderia ? modoGan : '—';
   document.getElementById('cuenta-tam-version').textContent = tamboActivo ? modoTam : '—';
-  document.getElementById('tambo-title').textContent = tamboActivo ? 'Dashboard de tambo disponible' : 'Sin acceso habilitado';
-  document.getElementById('tambo-copy').textContent = tamboActivo
-    ? `Esta cuenta tiene habilitado el producto tambo en versión ${modoTam.toLowerCase()}.`
-    : 'Actualmente esta cuenta no tiene un dashboard de tambo asignado.';
   fillCuentaControls(state, { modoAgr, modoGan, modoTam, tamboActivo });
 }
 
@@ -1333,6 +1320,19 @@ function buildGanaderiaSrc(mode) {
   return qs.toString() ? `${base}?${qs.toString()}` : base;
 }
 
+function buildTamboSrc(mode) {
+  const clienteId = currentCliente?.id || '';
+  const clienteNombre = currentCliente?.nombre_empresa || '';
+  const userId = currentUser?.id || '';
+  const base = 'Tambo/tambo_integrado_PRODUCCION_v1.html';
+  const qs = new URLSearchParams();
+  qs.set('mode', (mode || 'ESTANDAR').toUpperCase());
+  if (clienteId) qs.set('cliente_id', clienteId);
+  if (clienteNombre) qs.set('cliente_nombre', clienteNombre);
+  if (userId) qs.set('user_id', userId);
+  return `${base}?${qs.toString()}`;
+}
+
 async function saveCuentaConfig() {
   setCuentaStatus('La configuración comercial se gestiona desde administración.', 'warn');
 }
@@ -1365,6 +1365,12 @@ function switchDashboard(view, el) {
     const target = buildGanaderiaSrc(modoGan);
     if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
   }
+  if (view === 'tambo') {
+    const modoTam = getDashboardMode('tambo', state);
+    const frame = document.getElementById('frame-tambo');
+    const target = buildTamboSrc(modoTam);
+    if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
+  }
   closeSidebar();
 }
 
@@ -1372,8 +1378,10 @@ function renderAccessHub() {
   const state = getClienteAccessState();
   updateSidebarProducts(state);
   updateCuentaDashboard(state);
-  const frame = document.getElementById('frame-ganaderia');
-  if (frame) frame.src = buildGanaderiaSrc(getDashboardMode('ganaderia', state));
+  const frameGan = document.getElementById('frame-ganaderia');
+  if (frameGan) frameGan.src = buildGanaderiaSrc(getDashboardMode('ganaderia', state));
+  const frameTam = document.getElementById('frame-tambo');
+  if (frameTam) frameTam.src = buildTamboSrc(getDashboardMode('tambo', state));
 }
 
 function openUpgradeLink() {
