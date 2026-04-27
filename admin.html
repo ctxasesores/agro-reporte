@@ -777,18 +777,44 @@ function pickFirst(obj, keys, fallback = '') {
   return fallback;
 }
 function getClienteComercialPayload(prefix) {
+  const accesoAgricola = boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value);
+  const nivelAgricola = accesoAgricola ? document.getElementById(prefix + '-nivel-agricultura').value : null;
+  const accesoGanaderia = boolFromSelect(document.getElementById(prefix + '-acceso-ganaderia').value);
+  const nivelGanaderia = accesoGanaderia ? document.getElementById(prefix + '-nivel-ganaderia').value : null;
+  const accesoTambo = boolFromSelect(document.getElementById(prefix + '-acceso-tambo').value);
+  const nivelTambo = accesoTambo ? document.getElementById(prefix + '-nivel-tambo').value : null;
   return {
     plan: document.getElementById(prefix + '-plan').value,
     estado_pago: document.getElementById(prefix + '-pago').value,
-    acceso_agricola: boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value),
-    agricultura_nivel: document.getElementById(prefix + '-nivel-agricultura').value,
-    acceso_ganaderia: boolFromSelect(document.getElementById(prefix + '-acceso-ganaderia').value),
-    ganaderia_nivel: document.getElementById(prefix + '-nivel-ganaderia').value,
-    acceso_tambo: boolFromSelect(document.getElementById(prefix + '-acceso-tambo').value),
-    tambo_nivel: document.getElementById(prefix + '-nivel-tambo').value,
+    acceso_agricola: accesoAgricola,
+    agricultura_nivel: nivelAgricola,
+    panel_agricola: accesoAgricola,
+    agricultura_dashboard: nivelAgricola,
+    acceso_ganaderia: accesoGanaderia,
+    ganaderia_nivel: nivelGanaderia,
+    panel_ganaderia: accesoGanaderia,
+    ganaderia_dashboard: nivelGanaderia,
+    acceso_tambo: accesoTambo,
+    tambo_nivel: nivelTambo,
+    panel_tambo: accesoTambo,
+    tambo_dashboard: nivelTambo,
     premium_activo: boolFromSelect(document.getElementById(prefix + '-premium').value),
     payment_url: document.getElementById(prefix + '-payment-url').value.trim() || null
   };
+}
+function syncClienteComercialForm(prefix) {
+  [
+    ['agricultura', prefix + '-acceso-agricultura', prefix + '-nivel-agricultura'],
+    ['ganaderia', prefix + '-acceso-ganaderia', prefix + '-nivel-ganaderia'],
+    ['tambo', prefix + '-acceso-tambo', prefix + '-nivel-tambo']
+  ].forEach(([, accessId, levelId]) => {
+    const access = document.getElementById(accessId);
+    const level = document.getElementById(levelId);
+    if (!access || !level) return;
+    const enabled = boolFromSelect(access.value);
+    level.disabled = !enabled;
+    if (!enabled) level.value = 'ESTANDAR';
+  });
 }
 function fillClienteComercialForm(prefix, cli = {}) {
   document.getElementById(prefix + '-plan').value = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
@@ -801,6 +827,7 @@ function fillClienteComercialForm(prefix, cli = {}) {
   document.getElementById(prefix + '-nivel-tambo').value = pickFirst(cli, ['tambo_nivel'], 'ESTANDAR');
   document.getElementById(prefix + '-premium').value = boolToSelect(pickFirst(cli, ['premium_activo','acceso_premium'], false), false);
   document.getElementById(prefix + '-payment-url').value = pickFirst(cli, ['payment_url','link_pago','checkout_url'], '');
+  syncClienteComercialForm(prefix);
 }
 function buildPanelChips(cli) {
   return [
@@ -826,6 +853,12 @@ function logout() { location.reload(); }
 function initApp() {
   sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
   fillClienteComercialForm('nu', {});
+  ['nu','cc'].forEach(prefix => {
+    ['agricultura','ganaderia','tambo'].forEach(producto => {
+      const access = document.getElementById(prefix + '-acceso-' + producto);
+      if (access) access.addEventListener('change', () => syncClienteComercialForm(prefix));
+    });
+  });
   loadAll();
 }
 
