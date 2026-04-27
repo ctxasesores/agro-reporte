@@ -776,6 +776,17 @@ function pickFirst(obj, keys, fallback = '') {
   }
   return fallback;
 }
+function normText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+function hasPremiumPlan(cli = {}) {
+  const plan = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
+  return normText(plan).includes('premium');
+}
 function getClienteComercialPayload(prefix) {
   const accesoAgricola = boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value);
   const nivelAgricola = accesoAgricola ? document.getElementById(prefix + '-nivel-agricultura').value : null;
@@ -1416,6 +1427,7 @@ async function cargarClientes() {
       return `<span class="${css}">${text}</span>`;
     }).join('');
     const premium = pickFirst(c, ['premium_activo','acceso_premium'], false);
+    const showLegacyPremium = premium && !hasPremiumPlan(c);
     const paymentUrl = pickFirst(c, ['payment_url','link_pago','checkout_url'], '');
     return `<tr>
       <td>
@@ -1435,7 +1447,7 @@ async function cargarClientes() {
           <div class="chip-row">
             <span class="chip gold">Plan ${String(plan).toUpperCase()}</span>
             <span class="chip ${pago === 'al_dia' || pago === 'bonificado' ? 'green' : pago === 'vencido' ? 'red' : 'gray'}">${String(pago).replaceAll('_',' ')}</span>
-            ${premium ? '<span class="chip gold">Premium</span>' : ''}
+            ${showLegacyPremium ? '<span class="chip gold">Premium</span>' : ''}
           </div>
           <div class="mini-muted">${paymentUrl ? 'Link de pago cargado' : 'Sin link de pago'}</div>
         </div>
