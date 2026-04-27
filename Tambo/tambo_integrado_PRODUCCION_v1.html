@@ -1,1 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTX - Analisis de Tambo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --negro:#132d46;
+  --negro-m:#1e3f5c;
+  --negro-s:#1a3349;
+  --negro-b:#0d2035;
+  --crema:#f5e5b8;
+  --oro:#d4a017;
+  --oro-l:#f0ca60;
+  --verde:#1e9970;
+  --verde-d:#0f6e56;
+  --verde-l:#35c694;
+  --rojo:#d9512c;
+  --rojo-l:rgba(217,81,44,.16);
+  --gris:#7fa8c4;
+  --gris-l:#4e718a;
+  --texto:#dce8f5;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.16);
+  --shadow:0 2px 16px rgba(0,0,0,.4);
+  --shadow-lg:0 18px 40px rgba(0,0,0,.28);
+  --r:10px;
+  --r-sm:6px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  font-size:14px;line-height:1.45;color:var(--texto);background:
+  radial-gradient(circle at top right, rgba(240,202,96,.08), transparent 26%),
+  linear-gradient(180deg, #10263a 0%, #0d2035 100%);
+  min-height:100vh
+}
+.wrap{padding:8px 0 20px}
+.container{width:min(1440px, calc(100vw - 24px));margin:0 auto}
+.report-hero{display:grid;gap:12px;margin-bottom:18px;padding:0 2px}
+.report-topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.report-headline{display:grid;gap:2px}
+.report-eyebrow{font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.report-title{font-size:24px;font-weight:700;letter-spacing:-.25px;color:white;line-height:1.05}
+.report-subtitle{font-size:12px;color:rgba(255,255,255,.52)}
+.hero-badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border:1px solid var(--border2);background:rgba(255,255,255,.05);color:var(--crema)}
+.badge.ok{background:rgba(30,153,112,.16);color:var(--verde-l);border-color:rgba(42,184,138,.32)}
+.badge.warn{background:rgba(212,160,23,.18);color:var(--oro-l);border-color:rgba(240,202,96,.26)}
 
+.panel-grid{display:grid;grid-template-columns:minmax(320px, 420px) minmax(0,1fr);gap:22px;align-items:start}
+.panel-left,.panel-right{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+.card,.rep-card{
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012)), var(--negro-s);
+  border:.5px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:var(--shadow);
+}
+.card{padding:1.2rem}
+.rep-card{padding:1.25rem}
+.card:hover,.rep-card:hover{border-color:rgba(255,255,255,.14);box-shadow:var(--shadow-lg)}
+.card-title{font-size:15px;font-weight:700;color:white}
+.card-sub{font-size:12px;color:var(--gris);margin-top:4px}
+.fields{display:flex;flex-direction:column;gap:14px;margin-top:1rem}
+.sec-lbl{font-size:11px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+label{display:block;font-size:12px;color:var(--gris);margin-bottom:4px;font-weight:600;letter-spacing:.2px}
+input[type=number],input[type=text],select{
+  width:100%;padding:9px 10px;font-size:13px;border-radius:var(--r-sm);
+  border:.5px solid var(--border2);background:var(--negro-m);color:var(--texto);outline:none;
+  transition:border-color .15s, background-color .15s, box-shadow .15s
+}
+input[type=number]:focus,input[type=text]:focus,select:focus{
+  border-color:var(--verde);background:var(--negro-s);box-shadow:0 0 0 3px rgba(30,153,112,.12)
+}
+.hint{font-size:11px;color:var(--gris-l);margin-top:4px}
+.info-box{
+  background:rgba(30,153,112,.12);border-left:2px solid var(--verde);border-radius:0 var(--r-sm) var(--r-sm) 0;
+  padding:10px 12px;font-size:12px;color:var(--verde-l)
+}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px}
+.kpi{
+  background:var(--negro-b);border-radius:var(--r-sm);padding:10px 12px;border:1px solid var(--border);
+  min-width:0;overflow:hidden
+}
+.kpi-lbl{font-size:11px;color:var(--gris);margin-bottom:3px}
+.kpi-v{font-size:clamp(1.05rem, .9vw + .55rem, 1.42rem);font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+.kpi-u{font-size:11px;color:var(--gris);margin-top:2px}
+.pos{color:var(--verde-l)}
+.neg{color:#ff8d70}
+.neu{color:var(--oro-l)}
+
+.res-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.res-col{border-radius:var(--r-sm);padding:12px}
+.res-col.pes{background:rgba(217,81,44,.12);border:.5px solid rgba(217,81,44,.28)}
+.res-col.base{background:var(--negro-m);border:.5px solid var(--border2)}
+.res-col.opt{background:rgba(30,153,112,.12);border:.5px solid rgba(30,153,112,.28)}
+.rc-lbl{font-size:11px;font-weight:700;margin-bottom:4px}
+.rc-val{font-size:18px;font-weight:700}
+.rc-sub{font-size:11px;color:var(--gris);margin-top:3px}
+
+.split{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.stack{display:grid;gap:10px}
+.metric-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border)}
+.metric-row:last-child{border-bottom:none}
+.metric-k{color:var(--gris)}
+.metric-v{color:var(--texto);font-weight:600;text-align:right}
+
+.bar-list{display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:140px minmax(0,1fr) 80px;gap:10px;align-items:center}
+.bar-row label{margin:0;color:var(--texto)}
+.bar-track{height:10px;background:var(--negro-b);border-radius:999px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--oro),var(--oro-l))}
+.bar-value{font-size:12px;color:var(--gris);text-align:right}
+
+.bench-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.bench-card{background:var(--negro-b);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px}
+.bench-card h4{font-size:12px;color:white;margin-bottom:4px}
+.bench-state{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.bench-copy{font-size:12px;color:var(--gris)}
+
+.action-list{display:grid;gap:8px}
+.action-item{
+  display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;
+  background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px
+}
+.action-pill{
+  min-width:64px;text-align:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase
+}
+.action-pill.high{background:var(--rojo-l);color:#ff9f87}
+.action-pill.mid{background:rgba(212,160,23,.16);color:var(--oro-l)}
+.action-pill.low{background:rgba(30,153,112,.16);color:var(--verde-l)}
+.action-text{font-size:12px;color:var(--texto)}
+
+.table-wrap{overflow:auto}
+.mini-table{width:100%;border-collapse:collapse;font-size:12px}
+.mini-table th,.mini-table td{padding:8px 10px;border-bottom:.5px solid var(--border);text-align:left}
+.mini-table th{color:var(--gris);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+.mini-table td:last-child,.mini-table th:last-child{text-align:right}
+
+@media(max-width:1120px){
+  .panel-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .container{width:min(100vw - 14px, 100%)}
+  .report-topbar{align-items:stretch}
+  .fg,.fg3,.res-3,.split{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="container">
+    <div class="report-hero">
+      <div class="report-topbar">
+        <div class="report-headline">
+          <div class="report-eyebrow">CTX | Unidad lechera</div>
+          <div class="report-title" id="report_cliente_nombre">Cliente</div>
+          <div class="report-subtitle" id="report_subtitle">Dashboard operativo y economico del tambo</div>
+        </div>
+        <div class="hero-badges">
+          <span class="badge" id="mode_badge">Modo estandar</span>
+          <span class="badge ok" id="quality_badge">Solidos en rango</span>
+          <span class="badge warn" id="margin_badge">Margen en revision</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel-left">
+        <section class="card">
+          <div class="card-title">Configuracion del sistema</div>
+          <div class="card-sub">Base productiva, escala y precio efectivo de la leche.</div>
+          <div class="fields">
+            <div>
+              <div class="sec-lbl">Rodeo y superficie</div>
+              <div class="fg">
+                <div><label for="rodeo_total">Rodeo total</label><input type="number" id="rodeo_total" value="240" min="1"></div>
+                <div><label for="vacas_ordene">Vacas en ordene</label><input type="number" id="vacas_ordene" value="185" min="1"></div>
+                <div><label for="litros_vaca">Litros por vaca por dia</label><input type="number" id="litros_vaca" value="27.5" step="0.1" min="0"></div>
+                <div><label for="dias_mes">Dias de ordene por mes</label><input type="number" id="dias_mes" value="30" min="1" max="31"></div>
+                <div><label for="superficie">Superficie tambo (ha)</label><input type="number" id="superficie" value="165" step="0.1" min="1"></div>
+                <div><label for="consumo_ms">Consumo MS por vaca</label><input type="number" id="consumo_ms" value="22.5" step="0.1" min="0"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="sec-lbl">Precio y calidad</div>
+              <div class="fg3">
+                <div><label for="precio_base">Precio base leche</label><input type="number" id="precio_base" value="430" step="1" min="0"></div>
+                <div><label for="grasa">Grasa</label><input type="number" id="grasa" value="3.75" step="0.01" min="0"></div>
+                <div><label for="proteina">Proteina</label><input type="number" id="proteina" value="3.28" step="0.01" min="0"></div>
+                <div><label for="bonif_solidos">Bonif. solidos</label><input type="number" id="bonif_solidos" value="0.05" step="0.01" min="-1"></div>
+                <div><label for="bonif_calidad">Bonif. calidad</label><input type="number" id="bonif_calidad" value="0.02" step="0.01" min="-1"></div>
+                <div><label for="merma">Merma comercial</label><input type="number" id="merma" value="1.5" step="0.1" min="0"></div>
+              </div>
+              <div class="hint">Las bonificaciones se cargan como proporcion. Ejemplo: 0.05 = 5%.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-title">Costos por litro</div>
+          <div class="card-sub">Separados para detectar rapido donde se comprime el margen.</div>
+          <div class="fields">
+            <div class="fg">
+              <div><label for="c_alim">Alimentacion</label><input type="number" id="c_alim" value="205" step="1" min="0"></div>
+              <div><label for="c_personal">Personal</label><input type="number" id="c_personal" value="54" step="1" min="0"></div>
+              <div><label for="c_sanidad">Sanidad</label><input type="number" id="c_sanidad" value="14" step="1" min="0"></div>
+              <div><label for="c_repro">Reproduccion</label><input type="number" id="c_repro" value="10" step="1" min="0"></div>
+              <div><label for="c_energia">Energia y frio</label><input type="number" id="c_energia" value="11" step="1" min="0"></div>
+              <div><label for="c_estructura">Estructura</label><input type="number" id="c_estructura" value="26" step="1" min="0"></div>
+              <div><label for="c_recria">Reposicion / recria</label><input type="number" id="c_recria" value="19" step="1" min="0"></div>
+              <div><label for="c_impuestos">Impuestos y otros</label><input type="number" id="c_impuestos" value="12" step="1" min="0"></div>
+            </div>
+            <div class="info-box">La referencia rapida queda en costo total por litro, peso de alimentacion y eficiencia litros/kg MS.</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-title">Escenarios</div>
+          <div class="card-sub">Probamos rapidamente sensibilidad en precio, volumen y costos.</div>
+          <div class="fields">
+            <div class="sec-lbl">Ajustes porcentuales sobre base</div>
+            <div class="fg3">
+              <div><label for="pes_precio">Pesimista precio</label><input type="number" id="pes_precio" value="-8" step="0.1"></div>
+              <div><label for="pes_prod">Pesimista litros</label><input type="number" id="pes_prod" value="-5" step="0.1"></div>
+              <div><label for="pes_costo">Pesimista costo</label><input type="number" id="pes_costo" value="7" step="0.1"></div>
+              <div><label for="opt_precio">Optimista precio</label><input type="number" id="opt_precio" value="7" step="0.1"></div>
+              <div><label for="opt_prod">Optimista litros</label><input type="number" id="opt_prod" value="4" step="0.1"></div>
+              <div><label for="opt_costo">Optimista costo</label><input type="number" id="opt_costo" value="-4" step="0.1"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-title">Benchmarks de referencia</div>
+          <div class="card-sub">Objetivos simples para una lectura ejecutiva del sistema.</div>
+          <div class="fields">
+            <div class="fg">
+              <div><label for="tgt_litros_vaca">Meta litros/vaca/dia</label><input type="number" id="tgt_litros_vaca" value="28" step="0.1"></div>
+              <div><label for="tgt_costo_litro">Meta costo/litro</label><input type="number" id="tgt_costo_litro" value="360" step="1"></div>
+              <div><label for="tgt_carga">Meta vacas/ha</label><input type="number" id="tgt_carga" value="1.10" step="0.01"></div>
+              <div><label for="tgt_solidos">Meta grasa + proteina</label><input type="number" id="tgt_solidos" value="7.00" step="0.01"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="panel-right">
+        <section class="rep-card">
+          <div class="card-title">Tablero principal</div>
+          <div class="card-sub">Produccion, eficiencia, costo y resultado en una sola lectura.</div>
+          <div class="fields">
+            <div class="kpi-grid" id="top_kpis"></div>
+          </div>
+        </section>
+
+        <section class="rep-card">
+          <div class="card-title">Comparativa de escenarios</div>
+          <div class="card-sub">Cuanto se mueve el margen mensual ante cambios comerciales y operativos.</div>
+          <div class="fields">
+            <div class="res-3" id="escenarios_grid"></div>
+          </div>
+        </section>
+
+        <section class="rep-card">
+          <div class="card-title">Lectura economica</div>
+          <div class="card-sub">Descomposicion del costo y principales relaciones del negocio.</div>
+          <div class="fields split">
+            <div class="stack">
+              <div class="sec-lbl">Estructura de costos</div>
+              <div class="bar-list" id="cost_bars"></div>
+            </div>
+            <div class="stack">
+              <div class="sec-lbl">Indicadores de gestion</div>
+              <div id="metric_rows"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="rep-card">
+          <div class="card-title">Benchmarks operativos</div>
+          <div class="card-sub">Semaforos rapidos para foco de gestion.</div>
+          <div class="fields">
+            <div class="bench-grid" id="bench_grid"></div>
+          </div>
+        </section>
+
+        <section class="rep-card">
+          <div class="card-title">Prioridades sugeridas</div>
+          <div class="card-sub">Acciones recomendadas segun los desbalances detectados.</div>
+          <div class="fields">
+            <div class="action-list" id="action_list"></div>
+          </div>
+        </section>
+
+        <section class="rep-card">
+          <div class="card-title">Resumen mensual</div>
+          <div class="card-sub">Traduccion a litros, pesos y costos unitarios para conversar con el cliente.</div>
+          <div class="fields">
+            <div class="table-wrap">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th>Concepto</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="summary_table"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var REPORT_MODE = 'ESTANDAR';
+var currentClienteId = '';
+var currentClienteNombre = 'Cliente';
+var currentUserId = 'anonimo';
+
+function n(id){
+  var el = document.getElementById(id);
+  return el ? parseFloat(el.value) || 0 : 0;
+}
+
+function pc(v){ return v / 100; }
+
+function fm(v, d){
+  return Number(v || 0).toLocaleString('es-AR', {
+    minimumFractionDigits: d || 0,
+    maximumFractionDigits: d || 0
+  });
+}
+
+function money(v){
+  return '$' + fm(v, 0);
+}
+
+function pct(v, d){
+  return fm(v, d == null ? 1 : d) + '%';
+}
+
+function clamp(v, min, max){
+  return Math.max(min, Math.min(max, v));
+}
+
+function kpi(lbl, val, unit, cls){
+  return '<div class="kpi"><div class="kpi-lbl">' + lbl + '</div><div class="kpi-v ' + (cls || '') + '">' + val + '</div><div class="kpi-u">' + (unit || '') + '</div></div>';
+}
+
+function stateClass(ok, warn){
+  if(ok) return 'pos';
+  if(warn) return 'neu';
+  return 'neg';
+}
+
+function setupContext(){
+  try{
+    var params = new URLSearchParams(location.search);
+    var parentCliente = window.parent && window.parent.currentCliente ? window.parent.currentCliente : null;
+    var parentUser = window.parent && window.parent.currentUser ? window.parent.currentUser : null;
+    REPORT_MODE = (params.get('mode') || 'ESTANDAR').toUpperCase();
+    currentClienteId = params.get('cliente_id') || (parentCliente && parentCliente.id) || '';
+    currentClienteNombre = params.get('cliente_nombre') || (parentCliente && parentCliente.nombre_empresa) || 'Cliente';
+    currentUserId = params.get('user_id') || (parentUser && parentUser.id) || 'anonimo';
+  }catch(e){
+    REPORT_MODE = 'ESTANDAR';
+  }
+
+  var title = document.getElementById('report_cliente_nombre');
+  var subtitle = document.getElementById('report_subtitle');
+  var badge = document.getElementById('mode_badge');
+  if(title) title.textContent = currentClienteNombre;
+  if(subtitle) subtitle.textContent = REPORT_MODE === 'PRO'
+    ? 'Dashboard operativo, economico y de eficiencia del tambo'
+    : 'Dashboard base para leer litros, calidad, costos y margen';
+  if(badge) badge.textContent = REPORT_MODE === 'PRO' ? 'Modo pro' : 'Modo estandar';
+}
+
+function buildModel(adj){
+  adj = adj || { price:0, prod:0, cost:0 };
+
+  var rodeoTotal = Math.max(n('rodeo_total'), n('vacas_ordene'));
+  var vacasOrdene = Math.max(1, n('vacas_ordene'));
+  var litrosVaca = Math.max(0, n('litros_vaca') * (1 + adj.prod));
+  var diasMes = Math.max(1, n('dias_mes'));
+  var superficie = Math.max(1, n('superficie'));
+  var consumoMs = Math.max(0.1, n('consumo_ms'));
+  var grasa = n('grasa');
+  var proteina = n('proteina');
+  var solidos = grasa + proteina;
+  var merma = pc(n('merma'));
+
+  var litrosBrutosDia = vacasOrdene * litrosVaca;
+  var litrosVendiblesMes = litrosBrutosDia * diasMes * (1 - merma);
+  var litrosVendiblesAnio = litrosVendiblesMes * 12;
+  var litrosHaAnio = litrosVendiblesAnio / superficie;
+  var carga = vacasOrdene / superficie;
+  var vacasSecas = Math.max(0, rodeoTotal - vacasOrdene);
+  var pctOrdene = vacasOrdene / rodeoTotal * 100;
+  var msDia = vacasOrdene * consumoMs;
+  var eficiencia = litrosBrutosDia / msDia;
+  var solidosKgMes = litrosVendiblesMes * solidos / 100;
+
+  var bonifSolidos = n('bonif_solidos');
+  var bonifCalidad = n('bonif_calidad');
+  var qualityAdj = 0;
+  if(solidos >= 7.15) qualityAdj += 0.015;
+  if(solidos < 6.85) qualityAdj -= 0.02;
+  if(pctOrdene < 76) qualityAdj -= 0.01;
+
+  var precioBase = n('precio_base');
+  var precioFinal = precioBase * (1 + bonifSolidos + bonifCalidad + qualityAdj + adj.price);
+
+  var costAdj = 1 + adj.cost;
+  var costos = {
+    Alimentacion: n('c_alim') * costAdj,
+    Personal: n('c_personal') * costAdj,
+    Sanidad: n('c_sanidad') * costAdj,
+    Reproduccion: n('c_repro') * costAdj,
+    'Energia y frio': n('c_energia') * costAdj,
+    Estructura: n('c_estructura') * costAdj,
+    'Reposicion / recria': n('c_recria') * costAdj,
+    'Impuestos y otros': n('c_impuestos') * costAdj
+  };
+
+  var costoLitro = Object.values(costos).reduce(function(acc, item){ return acc + item; }, 0);
+  var ingresoMes = litrosVendiblesMes * precioFinal;
+  var egresoMes = litrosVendiblesMes * costoLitro;
+  var margenMes = ingresoMes - egresoMes;
+  var margenLitro = precioFinal - costoLitro;
+  var ioFc = costoLitro > 0 ? precioFinal / costoLitro : 0;
+
+  return {
+    rodeoTotal: rodeoTotal,
+    vacasOrdene: vacasOrdene,
+    vacasSecas: vacasSecas,
+    pctOrdene: pctOrdene,
+    litrosVaca: litrosVaca,
+    litrosBrutosDia: litrosBrutosDia,
+    litrosVendiblesMes: litrosVendiblesMes,
+    litrosVendiblesAnio: litrosVendiblesAnio,
+    litrosHaAnio: litrosHaAnio,
+    superficie: superficie,
+    consumoMs: consumoMs,
+    eficiencia: eficiencia,
+    grasa: grasa,
+    proteina: proteina,
+    solidos: solidos,
+    solidosKgMes: solidosKgMes,
+    precioFinal: precioFinal,
+    costos: costos,
+    costoLitro: costoLitro,
+    ingresoMes: ingresoMes,
+    egresoMes: egresoMes,
+    margenMes: margenMes,
+    margenAnio: margenMes * 12,
+    margenLitro: margenLitro,
+    carga: carga,
+    ioFc: ioFc
+  };
+}
+
+function render(){
+  var base = buildModel();
+  var pes = buildModel({
+    price: pc(n('pes_precio')),
+    prod: pc(n('pes_prod')),
+    cost: pc(n('pes_costo'))
+  });
+  var opt = buildModel({
+    price: pc(n('opt_precio')),
+    prod: pc(n('opt_prod')),
+    cost: pc(n('opt_costo'))
+  });
+
+  renderTop(base);
+  renderScenarios(base, pes, opt);
+  renderCosts(base);
+  renderBenchmarks(base);
+  renderActions(base);
+  renderSummary(base);
+}
+
+function renderTop(base){
+  var top = document.getElementById('top_kpis');
+  var marginCls = stateClass(base.margenLitro >= 25, base.margenLitro >= 0);
+  var solidsCls = stateClass(base.solidos >= n('tgt_solidos'), base.solidos >= (n('tgt_solidos') - 0.2));
+  var costCls = stateClass(base.costoLitro <= n('tgt_costo_litro'), base.costoLitro <= (n('tgt_costo_litro') * 1.05));
+  var litrosCls = stateClass(base.litrosVaca >= n('tgt_litros_vaca'), base.litrosVaca >= (n('tgt_litros_vaca') - 1.5));
+
+  top.innerHTML = [
+    kpi('Litros por dia', fm(base.litrosBrutosDia, 0), 'L/dia', litrosCls),
+    kpi('Litros vendibles / mes', fm(base.litrosVendiblesMes, 0), 'L/mes', ''),
+    kpi('Precio final', money(base.precioFinal), '/litro', base.precioFinal >= base.costoLitro ? 'pos' : 'neg'),
+    kpi('Costo total', money(base.costoLitro), '/litro', costCls),
+    kpi('Margen', money(base.margenLitro), '/litro', marginCls),
+    kpi('Margen mensual', money(base.margenMes), 'mensual', marginCls),
+    kpi('Solidos utiles', fm(base.solidos, 2), '%', solidsCls),
+    kpi('Eficiencia', fm(base.eficiencia, 2), 'L/kg MS', base.eficiencia >= 1.2 ? 'pos' : base.eficiencia >= 1.05 ? 'neu' : 'neg'),
+    kpi('Carga', fm(base.carga, 2), 'vacas/ha', base.carga <= n('tgt_carga') ? 'pos' : base.carga <= (n('tgt_carga') + .15) ? 'neu' : 'neg'),
+    kpi('Litros/ha/anio', fm(base.litrosHaAnio, 0), 'L/ha', ''),
+    kpi('Vacas en ordene', pct(base.pctOrdene, 1), 'del rodeo', base.pctOrdene >= 80 ? 'pos' : base.pctOrdene >= 75 ? 'neu' : 'neg'),
+    kpi('IOFC simple', fm(base.ioFc, 2), 'x', base.ioFc >= 1.05 ? 'pos' : base.ioFc >= 1 ? 'neu' : 'neg')
+  ].join('');
+
+  var qBadge = document.getElementById('quality_badge');
+  var mBadge = document.getElementById('margin_badge');
+  if(qBadge){
+    qBadge.textContent = base.solidos >= n('tgt_solidos') ? 'Solidos en rango' : 'Solidos por debajo';
+    qBadge.className = 'badge ' + (base.solidos >= n('tgt_solidos') ? 'ok' : 'warn');
+  }
+  if(mBadge){
+    if(base.margenLitro >= 25){
+      mBadge.textContent = 'Margen defendible';
+      mBadge.className = 'badge ok';
+    }else if(base.margenLitro >= 0){
+      mBadge.textContent = 'Margen fino';
+      mBadge.className = 'badge warn';
+    }else{
+      mBadge.textContent = 'Margen negativo';
+      mBadge.className = 'badge';
+    }
+  }
+}
+
+function renderScenarios(base, pes, opt){
+  var node = document.getElementById('escenarios_grid');
+  var cols = [
+    { cls:'pes', lbl:'Pesimista', model:pes },
+    { cls:'base', lbl:'Base', model:base },
+    { cls:'opt', lbl:'Optimista', model:opt }
+  ];
+  node.innerHTML = cols.map(function(item){
+    var cls = item.model.margenMes >= 0 ? 'pos' : 'neg';
+    return '<div class="res-col ' + item.cls + '">' +
+      '<div class="rc-lbl">' + item.lbl + '</div>' +
+      '<div class="rc-val ' + cls + '">' + money(item.model.margenMes) + '</div>' +
+      '<div class="rc-sub">' + money(item.model.margenLitro) + ' / litro</div>' +
+      '<div class="rc-sub">' + fm(item.model.litrosVendiblesMes, 0) + ' L/mes</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderCosts(base){
+  var total = Math.max(base.costoLitro, 1);
+  var bars = document.getElementById('cost_bars');
+  var rows = Object.keys(base.costos).sort(function(a, b){ return base.costos[b] - base.costos[a]; }).map(function(key){
+    var val = base.costos[key];
+    var width = clamp(val / total * 100, 2, 100);
+    return '<div class="bar-row">' +
+      '<label>' + key + '</label>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div>' +
+      '<div class="bar-value">' + money(val) + '</div>' +
+    '</div>';
+  });
+  bars.innerHTML = rows.join('');
+
+  var metrics = document.getElementById('metric_rows');
+  metrics.innerHTML = [
+    metricRow('Ingreso mensual', money(base.ingresoMes)),
+    metricRow('Egreso mensual', money(base.egresoMes)),
+    metricRow('Margen anualizado', money(base.margenAnio)),
+    metricRow('Kg de solidos / mes', fm(base.solidosKgMes, 0) + ' kg'),
+    metricRow('Vacas secas', fm(base.vacasSecas, 0)),
+    metricRow('Consumo total MS / dia', fm(base.vacasOrdene * base.consumoMs, 0) + ' kg')
+  ].join('');
+}
+
+function metricRow(k, v){
+  return '<div class="metric-row"><span class="metric-k">' + k + '</span><span class="metric-v">' + v + '</span></div>';
+}
+
+function renderBenchmarks(base){
+  var tgtLitros = n('tgt_litros_vaca');
+  var tgtCosto = n('tgt_costo_litro');
+  var tgtCarga = n('tgt_carga');
+  var tgtSolidos = n('tgt_solidos');
+
+  var items = [
+    benchCard('Productividad', base.litrosVaca, tgtLitros, 'L/vaca/dia', 'Mas litros por vaca con la misma estructura mejora absorcion de costos.', true),
+    benchCard('Costo unitario', base.costoLitro, tgtCosto, '$/litro', 'Es la variable mas sensible despues del precio. Vigilar alimentacion y personal.', false),
+    benchCard('Carga', base.carga, tgtCarga, 'vacas/ha', 'Mide intensidad. Si sube demasiado sin comida, suele caer la productividad.', false),
+    benchCard('Solidos', base.solidos, tgtSolidos, '%', 'La industria premia la calidad y tambien ordena la conversacion comercial.', true)
+  ];
+
+  document.getElementById('bench_grid').innerHTML = items.join('');
+}
+
+function benchCard(title, value, target, unit, copy, higherIsBetter){
+  var diff = value - target;
+  var good = higherIsBetter ? diff >= 0 : diff <= 0;
+  var warn = higherIsBetter ? diff >= -0.8 : diff <= target * 0.05;
+  var state = good ? 'En rango' : (warn ? 'Atencion' : 'Desvio');
+  var cls = good ? 'pos' : (warn ? 'neu' : 'neg');
+  return '<div class="bench-card">' +
+    '<div class="bench-state ' + cls + '">' + state + '</div>' +
+    '<h4>' + title + '</h4>' +
+    '<div class="kpi-v ' + cls + '" style="font-size:18px;margin-bottom:6px">' + fm(value, 2) + ' <span style="font-size:12px;color:var(--gris)">' + unit + '</span></div>' +
+    '<div class="bench-copy">Meta ' + fm(target, 2) + ' ' + unit + '. ' + copy + '</div>' +
+  '</div>';
+}
+
+function renderActions(base){
+  var actions = [];
+
+  if(base.margenLitro < 0){
+    actions.push(['high', 'Recalibrar precio o costo ya: el margen por litro esta negativo y cada litro adicional agranda la perdida.']);
+  }
+  if(base.costos['Alimentacion'] / base.costoLitro > 0.5){
+    actions.push(['mid', 'Alimentacion concentra mas del 50% del costo por litro. Vale abrir dieta, merma y costo de materia seca.']);
+  }
+  if(base.efficiencia < 1.1){
+    actions.push(['mid', 'La eficiencia litros/kg MS esta baja. Revisar calidad de dieta, dias en leche y vacas de cola.']);
+  }
+  if(base.solidos < n('tgt_solidos')){
+    actions.push(['mid', 'Los solidos utiles quedaron debajo de la meta. Hay espacio para recuperar precio sin crecer en litros.']);
+  }
+  if(base.pctOrdene < 78){
+    actions.push(['mid', 'Hay pocas vacas en ordene para el rodeo total. Conviene revisar reproduccion, transicion y descarte.']);
+  }
+  if(base.costoLitro <= n('tgt_costo_litro') && base.litrosVaca >= n('tgt_litros_vaca') && base.solidos >= n('tgt_solidos')){
+    actions.push(['low', 'La base esta ordenada. El siguiente salto parece mas comercial: capturar mejor precio y sostener calidad.']);
+  }
+  if(!actions.length){
+    actions.push(['low', 'Sin alertas mayores en esta simulacion. Podemos usarla como linea base para profundizar en reproduccion o flujo mensual.']);
+  }
+
+  document.getElementById('action_list').innerHTML = actions.slice(0, 5).map(function(item){
+    return '<div class="action-item"><div class="action-pill ' + item[0] + '">' + (item[0] === 'high' ? 'Alta' : item[0] === 'mid' ? 'Media' : 'Baja') + '</div><div class="action-text">' + item[1] + '</div></div>';
+  }).join('');
+}
+
+function renderSummary(base){
+  var rows = [
+    ['Litros vendidos / mes', fm(base.litrosVendiblesMes, 0) + ' L'],
+    ['Precio final promedio', money(base.precioFinal) + ' / litro'],
+    ['Costo total promedio', money(base.costoLitro) + ' / litro'],
+    ['Margen bruto mensual', money(base.margenMes)],
+    ['Margen bruto anual', money(base.margenAnio)],
+    ['Solidos utiles', fm(base.solidos, 2) + '%'],
+    ['Kg de solidos / mes', fm(base.solidosKgMes, 0) + ' kg'],
+    ['Carga animal', fm(base.carga, 2) + ' vacas/ha'],
+    ['Litros por ha por anio', fm(base.litrosHaAnio, 0) + ' L/ha'],
+    ['Vacas secas', fm(base.vacasSecas, 0)]
+  ];
+
+  document.getElementById('summary_table').innerHTML = rows.map(function(row){
+    return '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td></tr>';
+  }).join('');
+}
+
+document.querySelectorAll('input, select').forEach(function(el){
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+
+setupContext();
+render();
+</script>
+</body>
+</html>
