@@ -52,6 +52,14 @@ body{
 .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border:1px solid var(--border2);background:rgba(255,255,255,.05);color:var(--crema)}
 .badge.ok{background:rgba(30,153,112,.16);color:var(--verde-l);border-color:rgba(42,184,138,.32)}
 .badge.warn{background:rgba(212,160,23,.18);color:var(--oro-l);border-color:rgba(240,202,96,.26)}
+.control-bar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.control-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:10px}
+.action-stack{display:grid;gap:8px;min-width:280px}
+.save-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.status-msg{font-size:12px;color:var(--gris);min-height:18px}
+.status-msg.ok{color:var(--verde-l)}
+.status-msg.err{color:#ff9f87}
+.meta-note{font-size:11px;color:var(--gris-l)}
 
 .panel-grid{display:grid;grid-template-columns:minmax(320px, 420px) minmax(0,1fr);gap:22px;align-items:start}
 .panel-left,.panel-right{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -145,6 +153,23 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 .mini-table th,.mini-table td{padding:8px 10px;border-bottom:.5px solid var(--border);text-align:left}
 .mini-table th{color:var(--gris);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
 .mini-table td:last-child,.mini-table th:last-child{text-align:right}
+.btn{padding:9px 14px;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;border:.5px solid var(--border2);background:var(--negro-m);color:var(--texto)}
+.btn:hover{opacity:.88}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--verde);border-color:var(--verde-d);color:white}
+.btn-danger{background:var(--rojo-l);color:#ff9f87;border-color:rgba(217,81,44,.45)}
+.btn-sm{padding:6px 10px;font-size:12px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012)), var(--negro-s);border-radius:var(--r);padding:1.4rem;width:100%;max-width:620px;max-height:82vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:.5px solid var(--border)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:1rem}
+.modal-title{font-size:15px;font-weight:700}
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--border);gap:10px}
+.hist-item:last-child{border-bottom:none}
+.hist-info{flex:1;min-width:0}
+.hist-name{font-size:13px;font-weight:700;color:white}
+.hist-meta{font-size:11px;color:var(--gris);margin-top:3px}
+.hist-actions{display:flex;gap:6px;flex-wrap:wrap}
 
 @media(max-width:1120px){
   .panel-grid{grid-template-columns:1fr}
@@ -152,6 +177,9 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 @media(max-width:760px){
   .container{width:min(100vw - 14px, 100%)}
   .report-topbar{align-items:stretch}
+  .control-grid{grid-template-columns:1fr}
+  .action-stack{min-width:100%}
+  .save-row{justify-content:flex-start}
   .fg,.fg3,.res-3,.split{grid-template-columns:1fr}
   .bar-row{grid-template-columns:1fr}
 }
@@ -171,6 +199,41 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
           <span class="badge" id="mode_badge">Modo estandar</span>
           <span class="badge ok" id="quality_badge">Solidos en rango</span>
           <span class="badge warn" id="margin_badge">Margen en revision</span>
+        </div>
+      </div>
+      <div class="control-bar">
+        <div class="control-grid">
+          <div>
+            <label for="preset_cuenca">Cuenca base</label>
+            <select id="preset_cuenca">
+              <option value="santa_fe_central">Santa Fe Central</option>
+              <option value="villa_maria">Cordoba Villa Maria</option>
+              <option value="buenos_aires_oeste">Buenos Aires Oeste</option>
+              <option value="entre_rios">Entre Rios</option>
+            </select>
+          </div>
+          <div>
+            <label for="preset_sistema">Sistema productivo</label>
+            <select id="preset_sistema">
+              <option value="pastoril">Pastoril</option>
+              <option value="mixto">Mixto</option>
+              <option value="compost_barn">Compost barn</option>
+              <option value="free_stall">Free stall</option>
+            </select>
+          </div>
+        </div>
+        <div class="action-stack">
+          <div>
+            <label for="scenario_name">Nombre del escenario</label>
+            <input type="text" id="scenario_name" value="Base cliente" placeholder="Ej. Cuenca oeste - mixto invierno">
+          </div>
+          <div class="save-row">
+            <button class="btn" type="button" onclick="applyPresets()">Aplicar presets</button>
+            <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
+            <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
+          </div>
+          <div class="status-msg" id="save_status"></div>
+          <div class="meta-note" id="last_saved">Escenario nuevo</div>
         </div>
       </div>
     </div>
@@ -239,6 +302,25 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
               <div><label for="opt_prod">Optimista litros</label><input type="number" id="opt_prod" value="4" step="0.1"></div>
               <div><label for="opt_costo">Optimista costo</label><input type="number" id="opt_costo" value="-4" step="0.1"></div>
             </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-title">Variables del sistema productivo</div>
+          <div class="card-sub" id="system_copy">Supuestos especificos del sistema elegido. Se aplican sobre la base productiva y de costos.</div>
+          <div class="fields">
+            <div class="sec-lbl">Palancas editables del sistema</div>
+            <div class="fg">
+              <div><label for="sys_litros_adj">Ajuste litros/vaca</label><input type="number" id="sys_litros_adj" value="0" step="0.1"><div class="hint">% sobre litros por vaca del caso base.</div></div>
+              <div><label for="sys_ms_adj">Ajuste consumo MS</label><input type="number" id="sys_ms_adj" value="0" step="0.1"><div class="hint">% sobre consumo de materia seca.</div></div>
+              <div><label for="sys_alim_adj">Ajuste costo alimentacion</label><input type="number" id="sys_alim_adj" value="0" step="0.1"><div class="hint">% sobre alimentacion.</div></div>
+              <div><label for="sys_personal_adj">Ajuste costo personal</label><input type="number" id="sys_personal_adj" value="0" step="0.1"><div class="hint">% sobre personal.</div></div>
+              <div><label for="sys_energia_adj">Ajuste energia y frio</label><input type="number" id="sys_energia_adj" value="0" step="0.1"><div class="hint">% sobre energia.</div></div>
+              <div><label for="sys_estructura_adj">Ajuste estructura</label><input type="number" id="sys_estructura_adj" value="0" step="0.1"><div class="hint">% sobre estructura.</div></div>
+              <div><label for="sys_cama_efluentes">Cama y efluentes</label><input type="number" id="sys_cama_efluentes" value="0" step="1" min="0"><div class="hint">$ por litro. Relevante en sistemas estabulados.</div></div>
+              <div><label for="sys_sanidad_adj">Ajuste sanidad y reproduccion</label><input type="number" id="sys_sanidad_adj" value="0" step="0.1"><div class="hint">% sobre sanidad y reproduccion.</div></div>
+            </div>
+            <div class="info-box" id="system_note">Podés usar estas variables para representar barro, confort, cama, eficiencia del mixer o mayor presion de estructura segun el sistema.</div>
           </div>
         </section>
 
@@ -326,11 +408,60 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
   </div>
 </div>
 
+<div class="modal-bg" id="modal_hist" onclick="cerrarHistorial(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Escenarios guardados</div>
+      <button class="btn btn-sm" type="button" onclick="cerrarHistorial()">Cerrar</button>
+    </div>
+    <div id="hist_list"></div>
+  </div>
+</div>
+
 <script>
 var REPORT_MODE = 'ESTANDAR';
 var currentClienteId = '';
 var currentClienteNombre = 'Cliente';
 var currentUserId = 'anonimo';
+var currentAnalisisId = null;
+var FORM_FIELDS = [
+  'preset_cuenca','preset_sistema','scenario_name','rodeo_total','vacas_ordene','litros_vaca','dias_mes','superficie','consumo_ms',
+  'precio_base','grasa','proteina','bonif_solidos','bonif_calidad','merma',
+  'sys_litros_adj','sys_ms_adj','sys_alim_adj','sys_personal_adj','sys_energia_adj','sys_estructura_adj','sys_cama_efluentes','sys_sanidad_adj',
+  'c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos',
+  'pes_precio','pes_prod','pes_costo','opt_precio','opt_prod','opt_costo',
+  'tgt_litros_vaca','tgt_costo_litro','tgt_carga','tgt_solidos'
+];
+var CUENCA_PRESETS = {
+  santa_fe_central: { superficie:165, consumo_ms:21.8, c_alim:188, c_estructura:24, c_impuestos:11, tgt_carga:1.18, bonif_solidos:0.04 },
+  villa_maria: { superficie:190, consumo_ms:22.8, c_alim:212, c_estructura:27, c_impuestos:12, tgt_carga:1.05, bonif_solidos:0.04 },
+  buenos_aires_oeste: { superficie:220, consumo_ms:23.4, c_alim:226, c_estructura:30, c_impuestos:14, tgt_carga:0.98, bonif_solidos:0.05 },
+  entre_rios: { superficie:175, consumo_ms:22.3, c_alim:218, c_estructura:28, c_impuestos:13, tgt_carga:1.02, bonif_solidos:0.04 }
+};
+var SISTEMA_PRESETS = {
+  pastoril: { litros_vaca:25.5, consumo_ms:20.8, c_alim:185, c_energia:9, c_estructura:22, merma:1.7, tgt_costo_litro:345, sys_litros_adj:0, sys_ms_adj:0, sys_alim_adj:0, sys_personal_adj:0, sys_energia_adj:0, sys_estructura_adj:0, sys_cama_efluentes:0, sys_sanidad_adj:0 },
+  mixto: { litros_vaca:28.2, consumo_ms:22.4, c_alim:208, c_energia:11, c_estructura:26, merma:1.5, tgt_costo_litro:360, sys_litros_adj:1.5, sys_ms_adj:1.0, sys_alim_adj:2.0, sys_personal_adj:1.0, sys_energia_adj:4.0, sys_estructura_adj:5.0, sys_cama_efluentes:4, sys_sanidad_adj:1.0 },
+  compost_barn: { litros_vaca:31.2, consumo_ms:24.1, c_alim:238, c_personal:58, c_energia:15, c_estructura:42, c_impuestos:14, merma:1.2, tgt_costo_litro:392, sys_litros_adj:3.0, sys_ms_adj:2.0, sys_alim_adj:4.0, sys_personal_adj:3.0, sys_energia_adj:8.0, sys_estructura_adj:14.0, sys_cama_efluentes:14, sys_sanidad_adj:2.0 },
+  free_stall: { litros_vaca:33.0, consumo_ms:24.8, c_alim:248, c_personal:60, c_energia:18, c_estructura:48, c_impuestos:15, merma:1.1, tgt_costo_litro:405, sys_litros_adj:4.0, sys_ms_adj:2.5, sys_alim_adj:5.0, sys_personal_adj:3.5, sys_energia_adj:10.0, sys_estructura_adj:18.0, sys_cama_efluentes:18, sys_sanidad_adj:2.5 }
+};
+var SYSTEM_TEXT = {
+  pastoril: {
+    copy: 'Sistema con mayor peso del pastoreo directo. La palanca principal es la conversion pasto-litro y la ocupacion de la tierra.',
+    note: 'Usalo para representar calidad de pasto, barro, carga y eficiencia del aprovechamiento.'
+  },
+  mixto: {
+    copy: 'Sistema intermedio con mas reservas y mas comida suministrada. Gana estabilidad, pero sube la dependencia de mixer y silo.',
+    note: 'Sirve para testear cuanto suma la intensificacion sin ir a encierre total.'
+  },
+  compost_barn: {
+    copy: 'Sistema estabulado con fuerte foco en confort y control del ambiente. Pesa mas cama, energia, estructura y manejo diario.',
+    note: 'Aca conviene tocar cama y efluentes, energia, estructura y la respuesta esperada en litros por vaca.'
+  },
+  free_stall: {
+    copy: 'Sistema estabulado de mayor definicion estructural. Requiere escala y alta disciplina operativa para diluir el costo fijo.',
+    note: 'La clave es validar si el plus de litros y estabilidad compensa estructura, energia y efluentes.'
+  }
+};
 
 function n(id){
   var el = document.getElementById(id);
@@ -368,6 +499,19 @@ function stateClass(ok, warn){
   return 'neg';
 }
 
+function setStatus(msg, tone){
+  var el = document.getElementById('save_status');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.className = 'status-msg' + (tone ? ' ' + tone : '');
+}
+
+function setFieldValue(id, value){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.value = value;
+}
+
 function setupContext(){
   try{
     var params = new URLSearchParams(location.search);
@@ -391,15 +535,166 @@ function setupContext(){
   if(badge) badge.textContent = REPORT_MODE === 'PRO' ? 'Modo pro' : 'Modo estandar';
 }
 
+function applyPresetMap(map){
+  Object.keys(map || {}).forEach(function(key){
+    setFieldValue(key, map[key]);
+  });
+}
+
+function applyPresets(){
+  applyPresetMap(CUENCA_PRESETS[document.getElementById('preset_cuenca').value]);
+  applyPresetMap(SISTEMA_PRESETS[document.getElementById('preset_sistema').value]);
+  updateSystemUI();
+  render();
+  setStatus('Presets aplicados', 'ok');
+  setTimeout(function(){ setStatus('', ''); }, 1800);
+}
+
+function updateSystemUI(){
+  var system = document.getElementById('preset_sistema').value;
+  var cfg = SYSTEM_TEXT[system] || SYSTEM_TEXT.pastoril;
+  var copy = document.getElementById('system_copy');
+  var note = document.getElementById('system_note');
+  if(copy) copy.textContent = cfg.copy;
+  if(note) note.textContent = cfg.note;
+}
+
+function serializeForm(){
+  var data = {};
+  FORM_FIELDS.forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    data[id] = el.value;
+  });
+  return data;
+}
+
+function deserializeForm(data){
+  FORM_FIELDS.forEach(function(id){
+    if(data && data[id] !== undefined) setFieldValue(id, data[id]);
+  });
+  updateSystemUI();
+  render();
+}
+
+function getStorageKey(){
+  return 'ctx_tambo_escenarios_' + REPORT_MODE + '_' + currentUserId;
+}
+
+function readSavedAnalisis(){
+  try{
+    var raw = localStorage.getItem(getStorageKey());
+    var parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  }catch(e){
+    console.warn('No se pudieron leer escenarios guardados', e);
+    return [];
+  }
+}
+
+function writeSavedAnalisis(items){
+  localStorage.setItem(getStorageKey(), JSON.stringify(items));
+}
+
+function guardar(){
+  var scenarioName = (document.getElementById('scenario_name').value || '').trim();
+  if(!scenarioName){
+    setStatus('Ingresá un nombre de escenario', 'err');
+    return;
+  }
+  var payload = {
+    id: currentAnalisisId || ('tambo_' + Date.now()),
+    cliente_id: currentClienteId,
+    cliente_nombre: currentClienteNombre,
+    usuario_id: currentUserId,
+    modo: REPORT_MODE,
+    nombre: scenarioName,
+    datos: serializeForm(),
+    updated_at: new Date().toISOString()
+  };
+  try{
+    var saved = readSavedAnalisis();
+    var idx = saved.findIndex(function(item){ return item.id === payload.id; });
+    if(idx >= 0) saved[idx] = payload;
+    else saved.unshift(payload);
+    writeSavedAnalisis(saved);
+    currentAnalisisId = payload.id;
+    document.getElementById('last_saved').textContent = 'Ult. guardado: ' + new Date(payload.updated_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    setStatus('Escenario guardado correctamente', 'ok');
+    setTimeout(function(){ setStatus('', ''); }, 2200);
+  }catch(e){
+    setStatus('Error al guardar: ' + e.message, 'err');
+  }
+}
+
+function abrirHistorial(){
+  document.getElementById('modal_hist').classList.add('open');
+  cargarHistorial();
+}
+
+function cerrarHistorial(){
+  document.getElementById('modal_hist').classList.remove('open');
+}
+
+function cargarHistorial(){
+  var listEl = document.getElementById('hist_list');
+  var data = readSavedAnalisis()
+    .filter(function(item){ return !currentClienteId || item.cliente_id === currentClienteId; })
+    .sort(function(a,b){ return new Date(b.updated_at) - new Date(a.updated_at); });
+  if(!data.length){
+    listEl.innerHTML = '<div class="meta-note">No hay escenarios guardados para este usuario en este cliente.</div>';
+    return;
+  }
+  listEl.innerHTML = data.map(function(item){
+    var fecha = new Date(item.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    var hora = new Date(item.updated_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="hist-item"><div class="hist-info">'
+      + '<div class="hist-name">' + item.nombre + '</div>'
+      + '<div class="hist-meta">' + (item.cliente_nombre || currentClienteNombre || 'Cliente') + ' · ' + fecha + ' ' + hora + ' · ' + (item.datos && item.datos.preset_cuenca ? item.datos.preset_cuenca.replaceAll('_',' ') : '') + '</div>'
+      + '</div><div class="hist-actions">'
+      + '<button class="btn btn-sm btn-primary" type="button" onclick="cargarAnalisis(\'' + item.id + '\')">Editar</button>'
+      + '<button class="btn btn-sm btn-danger" type="button" onclick="eliminarAnalisis(\'' + item.id + '\')">Borrar</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function cargarAnalisis(id){
+  var item = readSavedAnalisis().find(function(entry){ return entry.id === id; });
+  if(!item){
+    setStatus('No se encontró el escenario', 'err');
+    return;
+  }
+  currentAnalisisId = item.id;
+  currentClienteId = item.cliente_id || currentClienteId;
+  currentClienteNombre = item.cliente_nombre || currentClienteNombre;
+  document.getElementById('report_cliente_nombre').textContent = currentClienteNombre;
+  deserializeForm(item.datos || {});
+  document.getElementById('last_saved').textContent = 'Cargado: ' + item.nombre;
+  setStatus('Escenario cargado para edición', 'ok');
+  cerrarHistorial();
+}
+
+function eliminarAnalisis(id){
+  if(!confirm('¿Eliminar este escenario?')) return;
+  var next = readSavedAnalisis().filter(function(item){ return item.id !== id; });
+  writeSavedAnalisis(next);
+  if(currentAnalisisId === id){
+    currentAnalisisId = null;
+    document.getElementById('last_saved').textContent = 'Escenario eliminado';
+  }
+  cargarHistorial();
+}
+
 function buildModel(adj){
   adj = adj || { price:0, prod:0, cost:0 };
 
   var rodeoTotal = Math.max(n('rodeo_total'), n('vacas_ordene'));
   var vacasOrdene = Math.max(1, n('vacas_ordene'));
-  var litrosVaca = Math.max(0, n('litros_vaca') * (1 + adj.prod));
+  var litrosVaca = Math.max(0, n('litros_vaca') * (1 + adj.prod) * (1 + pc(n('sys_litros_adj'))));
   var diasMes = Math.max(1, n('dias_mes'));
   var superficie = Math.max(1, n('superficie'));
-  var consumoMs = Math.max(0.1, n('consumo_ms'));
+  var consumoMs = Math.max(0.1, n('consumo_ms') * (1 + pc(n('sys_ms_adj'))));
+  var sistema = document.getElementById('preset_sistema').value;
   var grasa = n('grasa');
   var proteina = n('proteina');
   var solidos = grasa + proteina;
@@ -427,15 +722,16 @@ function buildModel(adj){
   var precioFinal = precioBase * (1 + bonifSolidos + bonifCalidad + qualityAdj + adj.price);
 
   var costAdj = 1 + adj.cost;
+  var estabuladoFactor = sistema === 'compost_barn' ? 1.04 : sistema === 'free_stall' ? 1.07 : sistema === 'mixto' ? 1.02 : 1;
   var costos = {
-    Alimentacion: n('c_alim') * costAdj,
-    Personal: n('c_personal') * costAdj,
-    Sanidad: n('c_sanidad') * costAdj,
-    Reproduccion: n('c_repro') * costAdj,
-    'Energia y frio': n('c_energia') * costAdj,
-    Estructura: n('c_estructura') * costAdj,
+    Alimentacion: n('c_alim') * costAdj * estabuladoFactor * (1 + pc(n('sys_alim_adj'))),
+    Personal: n('c_personal') * costAdj * (sistema === 'pastoril' ? 1 : 1.03) * (1 + pc(n('sys_personal_adj'))),
+    Sanidad: n('c_sanidad') * costAdj * (1 + pc(n('sys_sanidad_adj'))),
+    Reproduccion: n('c_repro') * costAdj * (1 + pc(n('sys_sanidad_adj'))),
+    'Energia y frio': n('c_energia') * costAdj * estabuladoFactor * (1 + pc(n('sys_energia_adj'))),
+    Estructura: n('c_estructura') * costAdj * estabuladoFactor * (1 + pc(n('sys_estructura_adj'))),
     'Reposicion / recria': n('c_recria') * costAdj,
-    'Impuestos y otros': n('c_impuestos') * costAdj
+    'Impuestos y otros': n('c_impuestos') * costAdj + n('sys_cama_efluentes')
   };
 
   var costoLitro = Object.values(costos).reduce(function(acc, item){ return acc + item; }, 0);
@@ -471,7 +767,8 @@ function buildModel(adj){
     margenAnio: margenMes * 12,
     margenLitro: margenLitro,
     carga: carga,
-    ioFc: ioFc
+    ioFc: ioFc,
+    sistema: sistema
   };
 }
 
@@ -627,6 +924,9 @@ function renderActions(base){
   if(base.efficiencia < 1.1){
     actions.push(['mid', 'La eficiencia litros/kg MS esta baja. Revisar calidad de dieta, dias en leche y vacas de cola.']);
   }
+  if((base.sistema === 'compost_barn' || base.sistema === 'free_stall') && base.costoLitro > n('tgt_costo_litro') * 1.08){
+    actions.push(['mid', 'El sistema estabulado suma estructura y energia. Vale revisar si la suba de litros por vaca compensa el costo fijo adicional.']);
+  }
   if(base.solidos < n('tgt_solidos')){
     actions.push(['mid', 'Los solidos utiles quedaron debajo de la meta. Hay espacio para recuperar precio sin crecer en litros.']);
   }
@@ -647,6 +947,9 @@ function renderActions(base){
 
 function renderSummary(base){
   var rows = [
+    ['Cuenca base', document.getElementById('preset_cuenca').selectedOptions[0].textContent],
+    ['Sistema', document.getElementById('preset_sistema').selectedOptions[0].textContent],
+    ['Cama y efluentes', money(n('sys_cama_efluentes')) + ' / litro'],
     ['Litros vendidos / mes', fm(base.litrosVendiblesMes, 0) + ' L'],
     ['Precio final promedio', money(base.precioFinal) + ' / litro'],
     ['Costo total promedio', money(base.costoLitro) + ' / litro'],
@@ -670,6 +973,8 @@ document.querySelectorAll('input, select').forEach(function(el){
 });
 
 setupContext();
+applyPresets();
+updateSystemUI();
 render();
 </script>
 </body>
