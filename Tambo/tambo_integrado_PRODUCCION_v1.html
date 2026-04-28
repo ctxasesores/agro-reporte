@@ -73,9 +73,13 @@ body{
 .card{padding:1.2rem}
 .rep-card{padding:1.25rem}
 .card:hover,.rep-card:hover{border-color:rgba(255,255,255,.14);box-shadow:var(--shadow-lg)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;user-select:none}
+.card-hdr:hover{opacity:.88}
+.acc-icon{font-size:13px;color:var(--gris);transition:transform .25s;flex-shrink:0;margin-left:4px}
 .card-title{font-size:15px;font-weight:700;color:white}
 .card-sub{font-size:12px;color:var(--gris);margin-top:4px}
 .fields{display:flex;flex-direction:column;gap:14px;margin-top:1rem}
+.preset-panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
 .sec-lbl{font-size:11px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -159,6 +163,8 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 .btn-primary{background:var(--verde);border-color:var(--verde-d);color:white}
 .btn-danger{background:var(--rojo-l);color:#ff9f87;border-color:rgba(217,81,44,.45)}
 .btn-sm{padding:6px 10px;font-size:12px}
+.macro-btn{padding:9px 14px;border-radius:999px;border:1px solid rgba(212,160,23,.35);background:rgba(212,160,23,.08);color:var(--oro-l);font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:all .15s}
+.macro-btn:hover{background:rgba(212,160,23,.16);color:white}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:center;justify-content:center;padding:1rem}
 .modal-bg.open{display:flex}
 .modal{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012)), var(--negro-s);border-radius:var(--r);padding:1.4rem;width:100%;max-width:620px;max-height:82vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:.5px solid var(--border)}
@@ -170,9 +176,13 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 .hist-name{font-size:13px;font-weight:700;color:white}
 .hist-meta{font-size:11px;color:var(--gris);margin-top:3px}
 .hist-actions{display:flex;gap:6px;flex-wrap:wrap}
+.macro-modal-shell{position:relative;width:min(1180px,96vw);height:min(760px,92vh);border-radius:24px;overflow:hidden;background:var(--negro-s);box-shadow:var(--shadow-lg);border:.5px solid var(--border)}
+.macro-modal-close{position:absolute;top:12px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(13,32,53,.92);color:white;font-size:20px;line-height:1;cursor:pointer;z-index:3}
+.macro-modal-frame{width:100%;height:100%;border:0;background:var(--negro-b);display:block}
 
 @media(max-width:1120px){
   .panel-grid{grid-template-columns:1fr}
+  .preset-panels{grid-template-columns:1fr}
 }
 @media(max-width:760px){
   .container{width:min(100vw - 14px, 100%)}
@@ -228,6 +238,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
             <input type="text" id="scenario_name" value="Base cliente" placeholder="Ej. Cuenca oeste - mixto invierno">
           </div>
           <div class="save-row">
+            <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
             <button class="btn" type="button" onclick="applyPresets()">Aplicar presets</button>
             <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
             <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
@@ -238,12 +249,72 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
       </div>
     </div>
 
+    <div class="preset-panels">
+      <section class="card">
+        <div class="card-hdr" onclick="toggleAcc('acc-cuenca','icon-cuenca')">
+          <div>
+            <div class="card-title">Variables de cuenca base</div>
+            <div class="card-sub">Supuestos regionales que empujan estructura, alimentacion y referencias comerciales.</div>
+          </div>
+          <span class="acc-icon" id="icon-cuenca" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-cuenca">
+          <div class="fg">
+            <div><label for="cuenca_superficie_ref">Superficie de referencia (ha)</label><input type="number" id="cuenca_superficie_ref" value="165" step="0.1" min="1"></div>
+            <div><label for="cuenca_c_alim_ref">Costo alimentacion de base</label><input type="number" id="cuenca_c_alim_ref" value="188" step="1" min="0"></div>
+            <div><label for="cuenca_c_estructura_ref">Costo estructura de base</label><input type="number" id="cuenca_c_estructura_ref" value="24" step="1" min="0"></div>
+            <div><label for="cuenca_c_impuestos_ref">Impuestos y otros de base</label><input type="number" id="cuenca_c_impuestos_ref" value="11" step="1" min="0"></div>
+            <div><label for="cuenca_tgt_carga_ref">Carga objetivo de cuenca</label><input type="number" id="cuenca_tgt_carga_ref" value="1.18" step="0.01" min="0"></div>
+            <div><label for="cuenca_bonif_solidos_ref">Bonif. solidos de cuenca</label><input type="number" id="cuenca_bonif_solidos_ref" value="0.04" step="0.01" min="-1"></div>
+          </div>
+          <div class="info-box">Este bloque actualiza automaticamente superficie, alimentacion, estructura, impuestos, meta de carga y bonificacion por solidos del caso base.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-hdr" onclick="toggleAcc('acc-sistema-preset','icon-sistema-preset')">
+          <div>
+            <div class="card-title">Variables del sistema productivo</div>
+            <div class="card-sub" id="system_copy">Supuestos especificos del sistema elegido. Se aplican sobre la base productiva y de costos.</div>
+          </div>
+          <span class="acc-icon" id="icon-sistema-preset" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-sistema-preset">
+          <div class="fg">
+            <div><label for="sis_litros_vaca_ref">Litros por vaca base</label><input type="number" id="sis_litros_vaca_ref" value="25.5" step="0.1" min="0"></div>
+            <div><label for="sis_consumo_ms_ref">Consumo MS base</label><input type="number" id="sis_consumo_ms_ref" value="20.8" step="0.1" min="0"></div>
+            <div><label for="sis_c_personal_ref">Costo personal de base</label><input type="number" id="sis_c_personal_ref" value="54" step="1" min="0"></div>
+            <div><label for="sis_c_energia_ref">Costo energia de base</label><input type="number" id="sis_c_energia_ref" value="9" step="1" min="0"></div>
+            <div><label for="sis_merma_ref">Merma comercial de base</label><input type="number" id="sis_merma_ref" value="1.7" step="0.1" min="0"></div>
+            <div><label for="sis_tgt_costo_ref">Meta costo/litro del sistema</label><input type="number" id="sis_tgt_costo_ref" value="345" step="1" min="0"></div>
+          </div>
+          <div class="sec-lbl">Palancas editables del sistema</div>
+          <div class="fg">
+            <div><label for="sys_litros_adj">Ajuste litros/vaca</label><input type="number" id="sys_litros_adj" value="0" step="0.1"><div class="hint">% sobre litros por vaca del caso base.</div></div>
+            <div><label for="sys_ms_adj">Ajuste consumo MS</label><input type="number" id="sys_ms_adj" value="0" step="0.1"><div class="hint">% sobre consumo de materia seca.</div></div>
+            <div><label for="sys_alim_adj">Ajuste costo alimentacion</label><input type="number" id="sys_alim_adj" value="0" step="0.1"><div class="hint">% sobre alimentacion.</div></div>
+            <div><label for="sys_personal_adj">Ajuste costo personal</label><input type="number" id="sys_personal_adj" value="0" step="0.1"><div class="hint">% sobre personal.</div></div>
+            <div><label for="sys_energia_adj">Ajuste energia y frio</label><input type="number" id="sys_energia_adj" value="0" step="0.1"><div class="hint">% sobre energia.</div></div>
+            <div><label for="sys_estructura_adj">Ajuste estructura</label><input type="number" id="sys_estructura_adj" value="0" step="0.1"><div class="hint">% sobre estructura.</div></div>
+            <div><label for="sys_cama_efluentes">Cama y efluentes</label><input type="number" id="sys_cama_efluentes" value="0" step="1" min="0"><div class="hint">$ por litro. Relevante en sistemas estabulados.</div></div>
+            <div><label for="sys_sanidad_adj">Ajuste sanidad y reproduccion</label><input type="number" id="sys_sanidad_adj" value="0" step="0.1"><div class="hint">% sobre sanidad y reproduccion.</div></div>
+          </div>
+          <div class="info-box" id="system_note">Podés usar estas variables para representar barro, confort, cama, eficiencia del mixer o mayor presion de estructura segun el sistema.</div>
+        </div>
+      </section>
+    </div>
+
     <div class="panel-grid">
       <div class="panel-left">
         <section class="card">
-          <div class="card-title">Configuracion del sistema</div>
-          <div class="card-sub">Base productiva, escala y precio efectivo de la leche.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-config','icon-config')">
+            <div>
+              <div class="card-title">Configuracion del sistema</div>
+              <div class="card-sub">Base productiva, escala y precio efectivo de la leche.</div>
+            </div>
+            <span class="acc-icon" id="icon-config" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-config">
             <div>
               <div class="sec-lbl">Rodeo y superficie</div>
               <div class="fg">
@@ -272,9 +343,14 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
         </section>
 
         <section class="card">
-          <div class="card-title">Costos por litro</div>
-          <div class="card-sub">Separados para detectar rapido donde se comprime el margen.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-costos','icon-costos')">
+            <div>
+              <div class="card-title">Costos por litro</div>
+              <div class="card-sub">Separados para detectar rapido donde se comprime el margen.</div>
+            </div>
+            <span class="acc-icon" id="icon-costos" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-costos">
             <div class="fg">
               <div><label for="c_alim">Alimentacion</label><input type="number" id="c_alim" value="205" step="1" min="0"></div>
               <div><label for="c_personal">Personal</label><input type="number" id="c_personal" value="54" step="1" min="0"></div>
@@ -290,9 +366,14 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
         </section>
 
         <section class="card">
-          <div class="card-title">Escenarios</div>
-          <div class="card-sub">Probamos rapidamente sensibilidad en precio, volumen y costos.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-escenarios','icon-escenarios')">
+            <div>
+              <div class="card-title">Escenarios</div>
+              <div class="card-sub">Probamos rapidamente sensibilidad en precio, volumen y costos.</div>
+            </div>
+            <span class="acc-icon" id="icon-escenarios" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-escenarios">
             <div class="sec-lbl">Ajustes porcentuales sobre base</div>
             <div class="fg3">
               <div><label for="pes_precio">Pesimista precio</label><input type="number" id="pes_precio" value="-8" step="0.1"></div>
@@ -306,28 +387,14 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
         </section>
 
         <section class="card">
-          <div class="card-title">Variables del sistema productivo</div>
-          <div class="card-sub" id="system_copy">Supuestos especificos del sistema elegido. Se aplican sobre la base productiva y de costos.</div>
-          <div class="fields">
-            <div class="sec-lbl">Palancas editables del sistema</div>
-            <div class="fg">
-              <div><label for="sys_litros_adj">Ajuste litros/vaca</label><input type="number" id="sys_litros_adj" value="0" step="0.1"><div class="hint">% sobre litros por vaca del caso base.</div></div>
-              <div><label for="sys_ms_adj">Ajuste consumo MS</label><input type="number" id="sys_ms_adj" value="0" step="0.1"><div class="hint">% sobre consumo de materia seca.</div></div>
-              <div><label for="sys_alim_adj">Ajuste costo alimentacion</label><input type="number" id="sys_alim_adj" value="0" step="0.1"><div class="hint">% sobre alimentacion.</div></div>
-              <div><label for="sys_personal_adj">Ajuste costo personal</label><input type="number" id="sys_personal_adj" value="0" step="0.1"><div class="hint">% sobre personal.</div></div>
-              <div><label for="sys_energia_adj">Ajuste energia y frio</label><input type="number" id="sys_energia_adj" value="0" step="0.1"><div class="hint">% sobre energia.</div></div>
-              <div><label for="sys_estructura_adj">Ajuste estructura</label><input type="number" id="sys_estructura_adj" value="0" step="0.1"><div class="hint">% sobre estructura.</div></div>
-              <div><label for="sys_cama_efluentes">Cama y efluentes</label><input type="number" id="sys_cama_efluentes" value="0" step="1" min="0"><div class="hint">$ por litro. Relevante en sistemas estabulados.</div></div>
-              <div><label for="sys_sanidad_adj">Ajuste sanidad y reproduccion</label><input type="number" id="sys_sanidad_adj" value="0" step="0.1"><div class="hint">% sobre sanidad y reproduccion.</div></div>
+          <div class="card-hdr" onclick="toggleAcc('acc-bench-base','icon-bench-base')">
+            <div>
+              <div class="card-title">Benchmarks de referencia</div>
+              <div class="card-sub">Objetivos simples para una lectura ejecutiva del sistema.</div>
             </div>
-            <div class="info-box" id="system_note">Podés usar estas variables para representar barro, confort, cama, eficiencia del mixer o mayor presion de estructura segun el sistema.</div>
+            <span class="acc-icon" id="icon-bench-base" style="transform:rotate(180deg)">▼</span>
           </div>
-        </section>
-
-        <section class="card">
-          <div class="card-title">Benchmarks de referencia</div>
-          <div class="card-sub">Objetivos simples para una lectura ejecutiva del sistema.</div>
-          <div class="fields">
+          <div class="fields" id="acc-bench-base">
             <div class="fg">
               <div><label for="tgt_litros_vaca">Meta litros/vaca/dia</label><input type="number" id="tgt_litros_vaca" value="28" step="0.1"></div>
               <div><label for="tgt_costo_litro">Meta costo/litro</label><input type="number" id="tgt_costo_litro" value="360" step="1"></div>
@@ -340,25 +407,40 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 
       <div class="panel-right">
         <section class="rep-card">
-          <div class="card-title">Tablero principal</div>
-          <div class="card-sub">Produccion, eficiencia, costo y resultado en una sola lectura.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-tablero','icon-tablero')">
+            <div>
+              <div class="card-title">Tablero principal</div>
+              <div class="card-sub">Produccion, eficiencia, costo y resultado en una sola lectura.</div>
+            </div>
+            <span class="acc-icon" id="icon-tablero" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-tablero">
             <div class="kpi-grid" id="top_kpis"></div>
           </div>
         </section>
 
         <section class="rep-card">
-          <div class="card-title">Comparativa de escenarios</div>
-          <div class="card-sub">Cuanto se mueve el margen mensual ante cambios comerciales y operativos.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-comparativa','icon-comparativa')">
+            <div>
+              <div class="card-title">Comparativa de escenarios</div>
+              <div class="card-sub">Cuanto se mueve el margen mensual ante cambios comerciales y operativos.</div>
+            </div>
+            <span class="acc-icon" id="icon-comparativa" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-comparativa">
             <div class="res-3" id="escenarios_grid"></div>
           </div>
         </section>
 
         <section class="rep-card">
-          <div class="card-title">Lectura economica</div>
-          <div class="card-sub">Descomposicion del costo y principales relaciones del negocio.</div>
-          <div class="fields split">
+          <div class="card-hdr" onclick="toggleAcc('acc-lectura','icon-lectura')">
+            <div>
+              <div class="card-title">Lectura economica</div>
+              <div class="card-sub">Descomposicion del costo y principales relaciones del negocio.</div>
+            </div>
+            <span class="acc-icon" id="icon-lectura" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields split" id="acc-lectura">
             <div class="stack">
               <div class="sec-lbl">Estructura de costos</div>
               <div class="bar-list" id="cost_bars"></div>
@@ -371,25 +453,40 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
         </section>
 
         <section class="rep-card">
-          <div class="card-title">Benchmarks operativos</div>
-          <div class="card-sub">Semaforos rapidos para foco de gestion.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-bench-op','icon-bench-op')">
+            <div>
+              <div class="card-title">Benchmarks operativos</div>
+              <div class="card-sub">Semaforos rapidos para foco de gestion.</div>
+            </div>
+            <span class="acc-icon" id="icon-bench-op" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-bench-op">
             <div class="bench-grid" id="bench_grid"></div>
           </div>
         </section>
 
         <section class="rep-card">
-          <div class="card-title">Prioridades sugeridas</div>
-          <div class="card-sub">Acciones recomendadas segun los desbalances detectados.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-prioridades','icon-prioridades')">
+            <div>
+              <div class="card-title">Prioridades sugeridas</div>
+              <div class="card-sub">Acciones recomendadas segun los desbalances detectados.</div>
+            </div>
+            <span class="acc-icon" id="icon-prioridades" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-prioridades">
             <div class="action-list" id="action_list"></div>
           </div>
         </section>
 
         <section class="rep-card">
-          <div class="card-title">Resumen mensual</div>
-          <div class="card-sub">Traduccion a litros, pesos y costos unitarios para conversar con el cliente.</div>
-          <div class="fields">
+          <div class="card-hdr" onclick="toggleAcc('acc-resumen','icon-resumen')">
+            <div>
+              <div class="card-title">Resumen mensual</div>
+              <div class="card-sub">Traduccion a litros, pesos y costos unitarios para conversar con el cliente.</div>
+            </div>
+            <span class="acc-icon" id="icon-resumen" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-resumen">
             <div class="table-wrap">
               <table class="mini-table">
                 <thead>
@@ -418,6 +515,13 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
   </div>
 </div>
 
+<div class="modal-bg" id="macroModal" style="display:none" onclick="cerrarMacroModal(event)">
+  <div class="macro-modal-shell" onclick="event.stopPropagation()">
+    <button class="macro-modal-close" type="button" onclick="cerrarMacroModal()">×</button>
+    <iframe id="macroFrame" class="macro-modal-frame" title="Panel Macro BCRA"></iframe>
+  </div>
+</div>
+
 <script>
 var REPORT_MODE = 'ESTANDAR';
 var currentClienteId = '';
@@ -427,22 +531,24 @@ var currentAnalisisId = null;
 var FORM_FIELDS = [
   'preset_cuenca','preset_sistema','scenario_name','rodeo_total','vacas_ordene','litros_vaca','dias_mes','superficie','consumo_ms',
   'precio_base','grasa','proteina','bonif_solidos','bonif_calidad','merma',
+  'cuenca_superficie_ref','cuenca_c_alim_ref','cuenca_c_estructura_ref','cuenca_c_impuestos_ref','cuenca_tgt_carga_ref','cuenca_bonif_solidos_ref',
+  'sis_litros_vaca_ref','sis_consumo_ms_ref','sis_c_personal_ref','sis_c_energia_ref','sis_merma_ref','sis_tgt_costo_ref',
   'sys_litros_adj','sys_ms_adj','sys_alim_adj','sys_personal_adj','sys_energia_adj','sys_estructura_adj','sys_cama_efluentes','sys_sanidad_adj',
   'c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos',
   'pes_precio','pes_prod','pes_costo','opt_precio','opt_prod','opt_costo',
   'tgt_litros_vaca','tgt_costo_litro','tgt_carga','tgt_solidos'
 ];
 var CUENCA_PRESETS = {
-  santa_fe_central: { superficie:165, consumo_ms:21.8, c_alim:188, c_estructura:24, c_impuestos:11, tgt_carga:1.18, bonif_solidos:0.04 },
-  villa_maria: { superficie:190, consumo_ms:22.8, c_alim:212, c_estructura:27, c_impuestos:12, tgt_carga:1.05, bonif_solidos:0.04 },
-  buenos_aires_oeste: { superficie:220, consumo_ms:23.4, c_alim:226, c_estructura:30, c_impuestos:14, tgt_carga:0.98, bonif_solidos:0.05 },
-  entre_rios: { superficie:175, consumo_ms:22.3, c_alim:218, c_estructura:28, c_impuestos:13, tgt_carga:1.02, bonif_solidos:0.04 }
+  santa_fe_central: { cuenca_superficie_ref:165, cuenca_c_alim_ref:188, cuenca_c_estructura_ref:24, cuenca_c_impuestos_ref:11, cuenca_tgt_carga_ref:1.18, cuenca_bonif_solidos_ref:0.04 },
+  villa_maria: { cuenca_superficie_ref:190, cuenca_c_alim_ref:212, cuenca_c_estructura_ref:27, cuenca_c_impuestos_ref:12, cuenca_tgt_carga_ref:1.05, cuenca_bonif_solidos_ref:0.04 },
+  buenos_aires_oeste: { cuenca_superficie_ref:220, cuenca_c_alim_ref:226, cuenca_c_estructura_ref:30, cuenca_c_impuestos_ref:14, cuenca_tgt_carga_ref:0.98, cuenca_bonif_solidos_ref:0.05 },
+  entre_rios: { cuenca_superficie_ref:175, cuenca_c_alim_ref:218, cuenca_c_estructura_ref:28, cuenca_c_impuestos_ref:13, cuenca_tgt_carga_ref:1.02, cuenca_bonif_solidos_ref:0.04 }
 };
 var SISTEMA_PRESETS = {
-  pastoril: { litros_vaca:25.5, consumo_ms:20.8, c_alim:185, c_energia:9, c_estructura:22, merma:1.7, tgt_costo_litro:345, sys_litros_adj:0, sys_ms_adj:0, sys_alim_adj:0, sys_personal_adj:0, sys_energia_adj:0, sys_estructura_adj:0, sys_cama_efluentes:0, sys_sanidad_adj:0 },
-  mixto: { litros_vaca:28.2, consumo_ms:22.4, c_alim:208, c_energia:11, c_estructura:26, merma:1.5, tgt_costo_litro:360, sys_litros_adj:1.5, sys_ms_adj:1.0, sys_alim_adj:2.0, sys_personal_adj:1.0, sys_energia_adj:4.0, sys_estructura_adj:5.0, sys_cama_efluentes:4, sys_sanidad_adj:1.0 },
-  compost_barn: { litros_vaca:31.2, consumo_ms:24.1, c_alim:238, c_personal:58, c_energia:15, c_estructura:42, c_impuestos:14, merma:1.2, tgt_costo_litro:392, sys_litros_adj:3.0, sys_ms_adj:2.0, sys_alim_adj:4.0, sys_personal_adj:3.0, sys_energia_adj:8.0, sys_estructura_adj:14.0, sys_cama_efluentes:14, sys_sanidad_adj:2.0 },
-  free_stall: { litros_vaca:33.0, consumo_ms:24.8, c_alim:248, c_personal:60, c_energia:18, c_estructura:48, c_impuestos:15, merma:1.1, tgt_costo_litro:405, sys_litros_adj:4.0, sys_ms_adj:2.5, sys_alim_adj:5.0, sys_personal_adj:3.5, sys_energia_adj:10.0, sys_estructura_adj:18.0, sys_cama_efluentes:18, sys_sanidad_adj:2.5 }
+  pastoril: { sis_litros_vaca_ref:25.5, sis_consumo_ms_ref:20.8, sis_c_personal_ref:54, sis_c_energia_ref:9, sis_merma_ref:1.7, sis_tgt_costo_ref:345, sys_litros_adj:0, sys_ms_adj:0, sys_alim_adj:0, sys_personal_adj:0, sys_energia_adj:0, sys_estructura_adj:0, sys_cama_efluentes:0, sys_sanidad_adj:0 },
+  mixto: { sis_litros_vaca_ref:28.2, sis_consumo_ms_ref:22.4, sis_c_personal_ref:55, sis_c_energia_ref:11, sis_merma_ref:1.5, sis_tgt_costo_ref:360, sys_litros_adj:1.5, sys_ms_adj:1.0, sys_alim_adj:2.0, sys_personal_adj:1.0, sys_energia_adj:4.0, sys_estructura_adj:5.0, sys_cama_efluentes:4, sys_sanidad_adj:1.0 },
+  compost_barn: { sis_litros_vaca_ref:31.2, sis_consumo_ms_ref:24.1, sis_c_personal_ref:58, sis_c_energia_ref:15, sis_merma_ref:1.2, sis_tgt_costo_ref:392, sys_litros_adj:3.0, sys_ms_adj:2.0, sys_alim_adj:4.0, sys_personal_adj:3.0, sys_energia_adj:8.0, sys_estructura_adj:14.0, sys_cama_efluentes:14, sys_sanidad_adj:2.0 },
+  free_stall: { sis_litros_vaca_ref:33.0, sis_consumo_ms_ref:24.8, sis_c_personal_ref:60, sis_c_energia_ref:18, sis_merma_ref:1.1, sis_tgt_costo_ref:405, sys_litros_adj:4.0, sys_ms_adj:2.5, sys_alim_adj:5.0, sys_personal_adj:3.5, sys_energia_adj:10.0, sys_estructura_adj:18.0, sys_cama_efluentes:18, sys_sanidad_adj:2.5 }
 };
 var SYSTEM_TEXT = {
   pastoril: {
@@ -512,6 +618,75 @@ function setFieldValue(id, value){
   el.value = value;
 }
 
+function toggleAcc(id, iconId){
+  var el = document.getElementById(id);
+  var icon = document.getElementById(iconId);
+  if(!el) return;
+  var isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : '';
+  if(icon) icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function syncCuencaToBase(){
+  setFieldValue('superficie', n('cuenca_superficie_ref'));
+  setFieldValue('c_alim', n('cuenca_c_alim_ref'));
+  setFieldValue('c_estructura', n('cuenca_c_estructura_ref'));
+  setFieldValue('c_impuestos', n('cuenca_c_impuestos_ref'));
+  setFieldValue('tgt_carga', n('cuenca_tgt_carga_ref'));
+  setFieldValue('bonif_solidos', n('cuenca_bonif_solidos_ref'));
+}
+
+function syncSistemaToBase(){
+  setFieldValue('litros_vaca', n('sis_litros_vaca_ref'));
+  setFieldValue('consumo_ms', n('sis_consumo_ms_ref'));
+  setFieldValue('c_personal', n('sis_c_personal_ref'));
+  setFieldValue('c_energia', n('sis_c_energia_ref'));
+  setFieldValue('merma', n('sis_merma_ref'));
+  setFieldValue('tgt_costo_litro', n('sis_tgt_costo_ref'));
+}
+
+function syncPresetControls(){
+  syncCuencaToBase();
+  syncSistemaToBase();
+}
+
+function syncBaseToPresetControls(){
+  setFieldValue('cuenca_superficie_ref', n('superficie'));
+  setFieldValue('cuenca_c_alim_ref', n('c_alim'));
+  setFieldValue('cuenca_c_estructura_ref', n('c_estructura'));
+  setFieldValue('cuenca_c_impuestos_ref', n('c_impuestos'));
+  setFieldValue('cuenca_tgt_carga_ref', n('tgt_carga'));
+  setFieldValue('cuenca_bonif_solidos_ref', n('bonif_solidos'));
+  setFieldValue('sis_litros_vaca_ref', n('litros_vaca'));
+  setFieldValue('sis_consumo_ms_ref', n('consumo_ms'));
+  setFieldValue('sis_c_personal_ref', n('c_personal'));
+  setFieldValue('sis_c_energia_ref', n('c_energia'));
+  setFieldValue('sis_merma_ref', n('merma'));
+  setFieldValue('sis_tgt_costo_ref', n('tgt_costo_litro'));
+}
+
+function getMacroDashboardSrc(){
+  var fileName = 'dashboard_bcra_v28_1_5_PROD.html?embed=1';
+  if(location.protocol === 'file:') return '../' + fileName;
+  return location.origin + '/agro-reporte/' + fileName;
+}
+
+function abrirMacroModal(){
+  var modal = document.getElementById('macroModal');
+  var frame = document.getElementById('macroFrame');
+  if(frame && frame.dataset.loaded !== '1'){
+    frame.src = getMacroDashboardSrc();
+    frame.dataset.loaded = '1';
+  }
+  if(modal) modal.style.display = 'flex';
+}
+
+function cerrarMacroModal(ev){
+  if(ev && ev.target && ev.target.id !== 'macroModal') return;
+  var modal = document.getElementById('macroModal');
+  if(modal) modal.style.display = 'none';
+}
+
 function setupContext(){
   try{
     var params = new URLSearchParams(location.search);
@@ -544,6 +719,7 @@ function applyPresetMap(map){
 function applyPresets(){
   applyPresetMap(CUENCA_PRESETS[document.getElementById('preset_cuenca').value]);
   applyPresetMap(SISTEMA_PRESETS[document.getElementById('preset_sistema').value]);
+  syncPresetControls();
   updateSystemUI();
   render();
   setStatus('Presets aplicados', 'ok');
@@ -573,6 +749,7 @@ function deserializeForm(data){
   FORM_FIELDS.forEach(function(id){
     if(data && data[id] !== undefined) setFieldValue(id, data[id]);
   });
+  syncPresetControls();
   updateSystemUI();
   render();
 }
@@ -970,6 +1147,34 @@ function renderSummary(base){
 document.querySelectorAll('input, select').forEach(function(el){
   el.addEventListener('input', render);
   el.addEventListener('change', render);
+});
+
+[
+  'cuenca_superficie_ref','cuenca_c_alim_ref','cuenca_c_estructura_ref','cuenca_c_impuestos_ref','cuenca_tgt_carga_ref','cuenca_bonif_solidos_ref'
+].forEach(function(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', function(){ syncCuencaToBase(); render(); });
+  el.addEventListener('change', function(){ syncCuencaToBase(); render(); });
+});
+
+[
+  'sis_litros_vaca_ref','sis_consumo_ms_ref','sis_c_personal_ref','sis_c_energia_ref','sis_merma_ref','sis_tgt_costo_ref'
+].forEach(function(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', function(){ syncSistemaToBase(); render(); });
+  el.addEventListener('change', function(){ syncSistemaToBase(); render(); });
+});
+
+[
+  'superficie','c_alim','c_estructura','c_impuestos','tgt_carga','bonif_solidos',
+  'litros_vaca','consumo_ms','c_personal','c_energia','merma','tgt_costo_litro'
+].forEach(function(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', syncBaseToPresetControls);
+  el.addEventListener('change', syncBaseToPresetControls);
 });
 
 setupContext();
