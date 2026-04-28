@@ -437,8 +437,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <input type="password" id="regPass" placeholder="mínimo 8 caracteres" autocomplete="new-password">
       <label>Campaña</label>
       <input type="text" id="regCampania" placeholder="25/26">
-      <label>Actividad principal</label>
-      <input type="text" id="regActividad" placeholder="Agricultura, Ganadería o ambas">
       <button class="btn-primary" id="btnRegister" onclick="doRegister()">Crear cuenta</button>
     </div>
     <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
@@ -1002,7 +1000,7 @@ async function doRegister() {
   const email     = document.getElementById('regEmail').value.trim();
   const pass      = document.getElementById('regPass').value.trim();
   const campania  = document.getElementById('regCampania').value.trim();
-  const actividad = document.getElementById('regActividad').value.trim() || 'Agricultura';
+  const actividad = 'Agricultura, Ganadería y Tambo';
   const btn       = document.getElementById('btnRegister');
   const errEl     = document.getElementById('loginError');
   const okEl      = document.getElementById('loginSuccess');
@@ -1038,7 +1036,19 @@ async function doRegister() {
         nombre_empresa: nombre,
         campania,
         actividad,
-        activo: true
+        activo: true,
+        acceso_agricola: true,
+        agricultura_nivel: 'ESTANDAR',
+        panel_agricola: true,
+        agricultura_dashboard: 'ESTANDAR',
+        acceso_ganaderia: true,
+        ganaderia_nivel: 'ESTANDAR',
+        panel_ganaderia: true,
+        ganaderia_dashboard: 'ESTANDAR',
+        acceso_tambo: true,
+        tambo_nivel: 'ESTANDAR',
+        panel_tambo: true,
+        tambo_dashboard: 'ESTANDAR'
       };
       const { error: insertError } = await sb.from('clientes').insert(payload);
       if (insertError && !String(insertError.message || '').toLowerCase().includes('duplicate')) {
