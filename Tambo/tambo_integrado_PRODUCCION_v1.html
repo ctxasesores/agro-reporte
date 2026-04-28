@@ -666,9 +666,10 @@ function syncBaseToPresetControls(){
 }
 
 function getMacroDashboardSrc(){
-  var fileName = 'dashboard_bcra_v28_1_5_PROD.html?embed=1';
+  var fileName = 'dashboard_bcra_v28_1_5%20PROD.html?embed=1';
   if(location.protocol === 'file:') return '../' + fileName;
-  return location.origin + '/agro-reporte/' + fileName;
+  var basePath = location.pathname.indexOf('/agro-reporte/') === 0 ? '/agro-reporte/' : '/';
+  return location.origin + basePath + fileName;
 }
 
 function abrirMacroModal(){
