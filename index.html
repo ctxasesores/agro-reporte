@@ -1462,6 +1462,34 @@ function getPrecioMasCercano(producto) {
   return bestPrecio;
 }
 
+function isExpiredMonthYear(month, year) {
+  if (!month || !year || isNaN(month) || isNaN(year)) return false;
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  return year < currentYear || (year === currentYear && month < currentMonth);
+}
+
+function parseVencKey(vencKey) {
+  if (!vencKey || vencKey === 'CONT') return null;
+  const parts = String(vencKey).split('_');
+  if (parts.length !== 2) return null;
+  const month = parseInt(parts[0], 10);
+  const year = parseInt(parts[1], 10);
+  if (isNaN(month) || isNaN(year)) return null;
+  return { month, year };
+}
+
+function isExpiredVencKey(vencKey) {
+  const parsed = parseVencKey(vencKey);
+  if (!parsed) return false;
+  return isExpiredMonthYear(parsed.month, parsed.year);
+}
+
+function isExpiredHistoricoPosicion(posicion) {
+  return isExpiredVencKey(posicion);
+}
+
 // ── TAG FILTER ──
 function getFilteredOps() {
   if (!activeTagFilter.length) return allOps;
@@ -1655,6 +1683,7 @@ function renderTasas() {
       const mes = parseInt(parts[0]), anio = parseInt(parts[1]);
       return { key:v, mes, anio, precio:p, fecha: new Date(anio, mes-1, 1) };
     })
+    .filter(v => !isExpiredMonthYear(v.mes, v.anio))
     .sort((a,b) => a.fecha - b.fecha);
 
   if (!vencList.length) { el.innerHTML='<div class="empty-state">Sin vencimientos</div>'; return; }
@@ -2638,7 +2667,7 @@ function actualizarFiltroPos() {
   // Get unique posiciones for selected product
   const posiciones = [...new Set(
     histData
-      .filter(r => !prod || r.producto === prod)
+      .filter(r => (!prod || r.producto === prod) && !isExpiredHistoricoPosicion(r.posicion))
       .map(r => r.posicion)
   )].sort();
   sel.innerHTML = '<option value="">Todos los vencimientos</option>'
@@ -2679,6 +2708,7 @@ function renderPosicionesChart() {
   let lineData = histData.filter(r => {
     if (prod && normalizeStr(r.producto) !== normalizeStr(prod)) return false;
     if (fromDate && r.fecha < fromDate) return false;
+    if (isExpiredHistoricoPosicion(r.posicion)) return false;
     // When product selected: use chosen posicion or CONT
     if (prod) {
       const useCont = !pos || pos === 'CONT';
