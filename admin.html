@@ -1403,6 +1403,7 @@ async function cargarClientes() {
           ? `<button class="btn-sm btn-rechazar" onclick="toggleCliente('${cid}',false)">Desactivar</button>`
           : `<button class="btn-sm btn-aprobar"  onclick="toggleCliente('${cid}',true)">Activar</button>`
         }
+        <button class="btn-sm" style="background:#fee2e2;color:#991b1b" onclick="eliminarCliente('${cid}','${(c.nombre_empresa||'').replace(/'/g,'')}','${c.codigo}')">✕ Borrar</button>
       </td>
     </tr>`;
   }).join('');
@@ -1433,6 +1434,32 @@ async function saveComercialEdit() {
   if (error) { alert('Error al guardar configuración comercial: ' + error.message); return; }
   closeComercialModal();
   await cargarClientes();
+}
+
+async function eliminarCliente(id, nombre, codigo) {
+  if (!confirm(`¿Eliminar al cliente "${nombre}" (${codigo}) y TODAS sus operaciones?\n\nEsta acción no se puede deshacer.`)) return;
+  setLoading(20);
+  const { error: errOps } = await sb.from('operaciones')
+    .delete()
+    .eq('cliente_codigo', codigo);
+  if (errOps) { alert('Error al borrar operaciones: ' + errOps.message); setLoading(100); return; }
+  setLoading(55);
+  const { error: errCli } = await sb.from('clientes')
+    .delete()
+    .eq('id', id);
+  if (errCli) { alert('Error al borrar cliente: ' + errCli.message); setLoading(100); return; }
+  setLoading(80);
+  try {
+    const { error: fnError } = await sb.functions.invoke('eliminar-usuario', {
+      body: { user_id: id }
+    });
+    if (fnError) console.warn('Auth delete warning:', fnError.message);
+  } catch (e) {
+    console.warn('Edge function error:', e.message);
+  }
+  setLoading(100);
+  await loadAll();
+  alert(`✓ Cliente "${nombre}" eliminado completamente.`);
 }
 
 // NAVEGACIÓN
