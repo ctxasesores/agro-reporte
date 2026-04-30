@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="/agro-reporte/icon-192.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Context | Reporte de Cartera</title>
-<!-- v20260401015516 -->
+<!-- v2026043001 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -607,6 +607,7 @@ body { background:var(--crema); color:var(--texto); min-height:100vh; -webkit-fo
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const APP_URL = 'https://ctxasesores.github.io/agro-reporte/';
 const COLORES_PROD = {'Soja':'#D95FA2','Maiz':'#66BCF2','Trigo':'#F2B3D6','Girasol':'#F2C94C','Sorgo':'#595959','Cebada':'#A8D5A2'};
 const PRODUCTOS = ['Soja','Maiz','Trigo','Girasol','Sorgo','Cebada'];
 
@@ -705,8 +706,7 @@ async function sendPasswordReset() {
   }
   btn.disabled = true;
   btn.textContent = 'Enviando...';
-  const redirectTo = window.location.origin + window.location.pathname;
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: APP_URL });
   btn.disabled = false;
   btn.textContent = 'Enviar enlace';
   if (error) {
@@ -762,6 +762,7 @@ async function saveNewPassword() {
   setTimeout(() => {
     closeResetPasswordModal();
     if (window.location.hash) history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    window.location.href = APP_URL;
   }, 1000);
 }
 
