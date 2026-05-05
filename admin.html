@@ -133,6 +133,16 @@ tr:hover td { background:#f9faf6; }
 .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
 .btn-modal-cancel { padding:10px 18px; background:transparent; border:1px solid var(--crema-d); color:var(--gris); border-radius:8px; cursor:pointer; }
 .btn-modal-save   { padding:10px 22px; background:var(--oro); color:var(--negro); border:none; border-radius:8px; font-weight:600; cursor:pointer; }
+.users-grid { padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.full-span { grid-column:1/-1; }
+.mini-stack { display:flex; flex-direction:column; gap:4px; }
+.mini-muted { font-size:12px; color:var(--gris); }
+.chip-row { display:flex; gap:6px; flex-wrap:wrap; }
+.chip { display:inline-flex; align-items:center; padding:4px 9px; border-radius:999px; font-size:11px; font-weight:600; line-height:1; }
+.chip.green { background:#dcfce7; color:#166534; }
+.chip.red { background:#fee2e2; color:#991b1b; }
+.chip.gray { background:var(--crema-d); color:var(--gris); }
+.chip.gold { background:#f5ead3; color:#8a6a2b; }
 
 /* CLIENT TABS */
 .cliente-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
@@ -147,26 +157,6 @@ tr:hover td { background:#f9faf6; }
 /* LOADING BAR */
 #loadingBar { position:fixed; top:0; left:0; height:3px; background:var(--oro); width:0; z-index:999; transition:width .3s; }
 .empty-state { padding:32px; text-align:center; color:var(--gris); font-size:14px; }
-.mini-stack { display:flex; flex-direction:column; gap:4px; }
-.mini-muted { font-size:11px; color:var(--gris); }
-.chip-row { display:flex; flex-wrap:wrap; gap:6px; }
-.chip {
-  display:inline-flex; align-items:center; gap:6px;
-  padding:4px 9px; border-radius:999px;
-  border:1px solid var(--crema-dd); background:var(--crema);
-  font-size:11px; font-weight:600; color:var(--texto);
-}
-.chip.gold { background:rgba(200,169,110,.12); border-color:rgba(200,169,110,.35); color:var(--oro-d); }
-.chip.green { background:#dcfce7; border-color:#bbf7d0; color:#166534; }
-.chip.red { background:#fee2e2; border-color:#fecaca; color:#991b1b; }
-.chip.gray { background:#f3f4f6; border-color:#e5e7eb; color:#4b5563; }
-.users-grid { padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.users-grid .full-span { grid-column:1/-1; }
-@media (max-width: 960px) {
-  .stats-row { grid-template-columns:1fr 1fr; }
-  .users-grid { grid-template-columns:1fr; }
-  .users-grid .full-span { grid-column:auto; }
-}
 </style>
 </head>
 <body>
@@ -178,10 +168,12 @@ tr:hover td { background:#f9faf6; }
   <div style="margin:12px 0 16px;font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</div>
   <div class="login-badge">Panel Administrador</div>
   <div class="login-card">
-    <label>Contraseña de administrador</label>
-    <input type="password" id="adminPass" placeholder="••••••••" autocomplete="off">
-    <button class="btn-login" onclick="doLogin()">Ingresar</button>
-    <div class="login-error" id="loginError">Contraseña incorrecta</div>
+    <label>Email de administrador</label>
+    <input type="email" id="adminEmail" placeholder="admin@empresa.com" autocomplete="email">
+    <label>Contraseña</label>
+    <input type="password" id="adminPassword" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="loginError">No se pudo iniciar sesión.</div>
   </div>
 </div>
 
@@ -206,8 +198,6 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('carteras',this)">◉ Carteras de clientes</a>
       <a class="nav-item" onclick="showSection('precios',this)">◎ Precios de mercado</a>
       <a class="nav-item" onclick="showSection('historicos',this)">📈 Serie histórica</a>
-      <a class="nav-item" onclick="showSection('tipocambio',this)">💱 Tipo de cambio</a>
-      <a class="nav-item" onclick="showSection('hacprecios',this)">🐄 Precios hacienda</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
     <div class="sidebar-footer">
@@ -565,88 +555,6 @@ tr:hover td { background:#f9faf6; }
         </div>
       </div>
 
-
-      <!-- TIPO DE CAMBIO -->
-      <div class="section" id="sec-tipocambio">
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-header">
-            <div><h2>Cargar tipo de cambio</h2>
-            <div class="card-header-sub">El TC se usa como referencia en el panel ganadero para conversión USD/ARS</div></div>
-          </div>
-          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
-            <div class="field-group">
-              <label class="field-label">Fecha</label>
-              <input type="date" class="field-input" id="tc-fecha">
-            </div>
-            <div class="field-group">
-              <label class="field-label">Valor ($/USD)</label>
-              <input type="number" class="field-input" id="tc-valor" placeholder="ej: 1200" min="0" step="1">
-            </div>
-            <button class="btn-export" onclick="guardarTC()" style="height:42px">+ Cargar</button>
-          </div>
-          <div style="padding:0 20px 16px"><div id="tc-toast" class="toast"></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>Historial de tipo de cambio</h2>
-            <button class="btn-refresh" onclick="cargarTC()">↻ Actualizar</button>
-          </div>
-          <div class="table-wrap" style="max-height:400px;overflow-y:auto">
-            <table>
-              <thead><tr><th>Fecha</th><th>Valor ($/USD)</th><th>Acciones</th></tr></thead>
-              <tbody id="tbody-tc"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PRECIOS HACIENDA -->
-      <div class="section" id="sec-hacprecios">
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-header">
-            <div><h2>Precios de referencia — Hacienda</h2>
-            <div class="card-header-sub">Precios de mercado de hacienda por categoría. Se usan para calcular margen y ratio en el panel ganadero.</div></div>
-          </div>
-          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
-            <div class="field-group">
-              <label class="field-label">Categoría</label>
-              <select class="field-select" id="hp-categoria">
-                <option value="">Seleccioná...</option>
-                <option>Ternero</option><option>Novillo</option><option>Vaquillona</option>
-                <option>Vaca</option><option>Toro</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label class="field-label">Vencimiento</label>
-              <select class="field-select" id="hp-vencimiento">
-                <option value="CONT">Continuo</option>
-                <option value="4_2026">Abr 2026</option><option value="5_2026">May 2026</option>
-                <option value="6_2026">Jun 2026</option><option value="7_2026">Jul 2026</option>
-                <option value="8_2026">Ago 2026</option><option value="9_2026">Sep 2026</option>
-                <option value="10_2026">Oct 2026</option><option value="11_2026">Nov 2026</option>
-                <option value="12_2026">Dic 2026</option><option value="1_2027">Ene 2027</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label class="field-label">Precio (USD/kg vivo)</label>
-              <input type="number" class="field-input" id="hp-precio" placeholder="ej: 1.85" min="0" step="0.001">
-            </div>
-            <button class="btn-export" onclick="guardarPrecioHac()" style="height:42px">+ Cargar</button>
-          </div>
-          <div style="padding:0 20px 16px"><div id="hp-toast" class="toast"></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>Precios hacienda cargados</h2>
-            <button class="btn-refresh" onclick="cargarPreciosHac()">↻ Actualizar</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Categoría</th><th>Vencimiento</th><th>Precio USD/kg</th><th>Actualizado</th><th>Acciones</th></tr></thead>
-              <tbody id="tbody-hacprecios"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -674,10 +582,10 @@ tr:hover td { background:#f9faf6; }
   </div>
 </div>
 
-<!-- MODAL COMERCIAL -->
+<!-- MODAL CONFIGURACION COMERCIAL -->
 <div class="modal-overlay" id="modalComercialOverlay" onclick="closeComercialModal(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:760px">
-    <h3>Configurar plan, pago y paneles</h3>
+    <h3>Plan y accesos del cliente</h3>
     <input type="hidden" id="cc-id">
     <div class="modal-grid">
       <div class="modal-group">
@@ -714,8 +622,8 @@ tr:hover td { background:#f9faf6; }
       <div class="modal-group">
         <label class="modal-label">Ganadería</label>
         <select class="modal-select" id="cc-acceso-ganaderia">
-          <option value="true">Habilitado</option>
           <option value="false">Bloqueado</option>
+          <option value="true">Habilitado</option>
         </select>
       </div>
       <div class="modal-group">
@@ -728,8 +636,8 @@ tr:hover td { background:#f9faf6; }
       <div class="modal-group">
         <label class="modal-label">Tambo</label>
         <select class="modal-select" id="cc-acceso-tambo">
-          <option value="true">Habilitado</option>
           <option value="false">Bloqueado</option>
+          <option value="true">Habilitado</option>
         </select>
       </div>
       <div class="modal-group">
@@ -742,8 +650,8 @@ tr:hover td { background:#f9faf6; }
       <div class="modal-group">
         <label class="modal-label">Premium activo</label>
         <select class="modal-select" id="cc-premium">
-          <option value="true">Sí</option>
           <option value="false">No</option>
+          <option value="true">Sí</option>
         </select>
       </div>
       <div class="modal-group">
@@ -759,7 +667,6 @@ tr:hover td { background:#f9faf6; }
 </div>
 
 <script>
-const ADMIN_PASS   = 'ctx_admin_2026';
 const SUPA_URL     = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY     = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 const FUNCTIONS_URL= 'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1';
@@ -776,19 +683,52 @@ function pickFirst(obj, keys, fallback = '') {
   }
   return fallback;
 }
+function normText(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+function hasPremiumPlan(cli = {}) {
+  const plan = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
+  return normText(plan).includes('premium');
+}
 function getClienteComercialPayload(prefix) {
+  const accesoAgricola = boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value);
+  const nivelAgricola = accesoAgricola ? document.getElementById(prefix + '-nivel-agricultura').value : null;
+  const accesoGanaderia = boolFromSelect(document.getElementById(prefix + '-acceso-ganaderia').value);
+  const nivelGanaderia = accesoGanaderia ? document.getElementById(prefix + '-nivel-ganaderia').value : null;
+  const accesoTambo = boolFromSelect(document.getElementById(prefix + '-acceso-tambo').value);
+  const nivelTambo = accesoTambo ? document.getElementById(prefix + '-nivel-tambo').value : null;
   return {
     plan: document.getElementById(prefix + '-plan').value,
     estado_pago: document.getElementById(prefix + '-pago').value,
-    acceso_agricola: boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value),
-    agricultura_nivel: document.getElementById(prefix + '-nivel-agricultura').value,
-    acceso_ganaderia: boolFromSelect(document.getElementById(prefix + '-acceso-ganaderia').value),
-    ganaderia_nivel: document.getElementById(prefix + '-nivel-ganaderia').value,
-    acceso_tambo: boolFromSelect(document.getElementById(prefix + '-acceso-tambo').value),
-    tambo_nivel: document.getElementById(prefix + '-nivel-tambo').value,
+    acceso_agricola: accesoAgricola,
+    agricultura_nivel: nivelAgricola,
+    panel_agricola: accesoAgricola,
+    agricultura_dashboard: nivelAgricola,
+    acceso_ganaderia: accesoGanaderia,
+    ganaderia_nivel: nivelGanaderia,
+    panel_ganaderia: accesoGanaderia,
+    ganaderia_dashboard: nivelGanaderia,
+    acceso_tambo: accesoTambo,
+    tambo_nivel: nivelTambo,
+    panel_tambo: accesoTambo,
+    tambo_dashboard: nivelTambo,
     premium_activo: boolFromSelect(document.getElementById(prefix + '-premium').value),
     payment_url: document.getElementById(prefix + '-payment-url').value.trim() || null
   };
+}
+function syncClienteComercialForm(prefix) {
+  [
+    ['agricultura', prefix + '-acceso-agricultura', prefix + '-nivel-agricultura'],
+    ['ganaderia', prefix + '-acceso-ganaderia', prefix + '-nivel-ganaderia'],
+    ['tambo', prefix + '-acceso-tambo', prefix + '-nivel-tambo']
+  ].forEach(([, accessId, levelId]) => {
+    const access = document.getElementById(accessId);
+    const level = document.getElementById(levelId);
+    if (!access || !level) return;
+    const enabled = boolFromSelect(access.value);
+    level.disabled = !enabled;
+    if (!enabled) level.value = 'ESTANDAR';
+  });
 }
 function fillClienteComercialForm(prefix, cli = {}) {
   document.getElementById(prefix + '-plan').value = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
@@ -801,6 +741,7 @@ function fillClienteComercialForm(prefix, cli = {}) {
   document.getElementById(prefix + '-nivel-tambo').value = pickFirst(cli, ['tambo_nivel'], 'ESTANDAR');
   document.getElementById(prefix + '-premium').value = boolToSelect(pickFirst(cli, ['premium_activo','acceso_premium'], false), false);
   document.getElementById(prefix + '-payment-url').value = pickFirst(cli, ['payment_url','link_pago','checkout_url'], '');
+  syncClienteComercialForm(prefix);
 }
 function buildPanelChips(cli) {
   return [
@@ -809,23 +750,75 @@ function buildPanelChips(cli) {
     { label: 'Tambo', enabled: !!pickFirst(cli, ['acceso_tambo','panel_tambo'], false), level: pickFirst(cli, ['tambo_nivel'], 'ESTANDAR') }
   ];
 }
+function setupUsersSection() {
+  fillClienteComercialForm('nu', {});
+  ['nu','cc'].forEach(prefix => {
+    ['agricultura','ganaderia','tambo'].forEach(producto => {
+      const access = document.getElementById(prefix + '-acceso-' + producto);
+      if (access && !access.dataset.bound) {
+        access.addEventListener('change', () => syncClienteComercialForm(prefix));
+        access.dataset.bound = 'true';
+      }
+    });
+  });
+}
 
 // AUTH
 document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-function doLogin() {
-  if (document.getElementById('adminPass').value === ADMIN_PASS) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminShell').style.display  = 'block';
-    initApp();
-  } else {
-    document.getElementById('loginError').style.display = 'block';
-  }
+function initSupabase() {
+  if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 }
-function logout() { location.reload(); }
+function setLoginError(msg) {
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+}
+async function doLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass = document.getElementById('adminPassword').value.trim();
+  const btn = document.getElementById('btnLogin');
+  const errEl = document.getElementById('loginError');
+  if (!email || !pass) {
+    setLoginError('Completá email y contraseña.');
+    return;
+  }
+  initSupabase();
+  btn.disabled = true;
+  btn.textContent = 'Ingresando...';
+  errEl.style.display = 'none';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error || !data?.user) {
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
+    setLoginError('Email o contraseña incorrectos.');
+    return;
+  }
+  const { data: perfil, error: perfilError } = await sb
+    .from('clientes')
+    .select('es_admin, nombre_empresa, email')
+    .eq('id', data.user.id)
+    .single();
+  if (perfilError || !perfil?.es_admin) {
+    await sb.auth.signOut();
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
+    setLoginError('Esta cuenta no tiene permisos de administrador.');
+    return;
+  }
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminShell').style.display  = 'block';
+  btn.disabled = false;
+  btn.textContent = 'Ingresar';
+  setupUsersSection();
+  loadAll();
+}
+async function logout() {
+  if (sb) await sb.auth.signOut();
+  location.reload();
+}
 
 function initApp() {
-  sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-  fillClienteComercialForm('nu', {});
+  initSupabase();
   loadAll();
 }
 
@@ -837,15 +830,13 @@ function setLoading(pct) {
 
 async function loadAll() {
   setLoading(30);
-  const [opsRes, cliRes, cliAllRes] = await Promise.all([
+  const [opsRes, cliRes] = await Promise.all([
     sb.from('operaciones').select('*').order('created_at', { ascending: false }),
-    sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true),
-    sb.from('clientes').select('*').order('created_at', { ascending: false })
+    sb.from('clientes').select('id', { count: 'exact' }).eq('activo', true)
   ]);
   setLoading(100);
   allOps = opsRes.data || [];
   allClientesCount = cliRes.count || 0;
-  allClientes = cliAllRes.data || [];
   updateStats();
   renderPendientes();
   renderTodas();
@@ -1116,19 +1107,27 @@ async function uploadCsv() {
   if (!csvData.length) return;
   const btn = document.getElementById('csv-upload-btn');
   btn.disabled=true; btn.textContent='Subiendo...';
-  // UPSERT handles conflicts — dedup first
+
+  // Dedup en memoria: clave = producto|posicion|fecha (normalizada)
   const dedupMap = new Map();
-  csvData.forEach(r => dedupMap.set(r.producto+'|'+r.posicion+'|'+r.fecha, r));
+  csvData.forEach(r => {
+    const producto = String(r.producto || '').trim();
+    const posicion = String(r.posicion || '').trim().toUpperCase();
+    const fecha = String(r.fecha || '').trim();
+    const key = producto+'|'+posicion+'|'+fecha;
+    dedupMap.set(key, {producto, posicion, fecha, precio:r.precio});
+  });
   const dedupData = Array.from(dedupMap.values());
+
   const batchSize=500; let uploaded=0;
   for (let i=0;i<dedupData.length;i+=batchSize) {
-    const batch=dedupData.slice(i,i+batchSize).map(r=>({producto:r.producto,posicion:r.posicion,fecha:r.fecha,precio:r.precio}));
+    const batch=dedupData.slice(i,i+batchSize);
     const {error}=await sb.from('precios_historicos').upsert(batch,{onConflict:'producto,posicion,fecha'});
     if (error) { mostrarToast('hist-toast','Error: '+error.message,'err'); btn.disabled=false; btn.textContent='↑ Subir'; return; }
     uploaded+=batch.length; btn.textContent='Subiendo... '+uploaded+'/'+dedupData.length;
   }
   btn.disabled=false; btn.textContent='↑ Subir a Supabase';
-  mostrarToast('hist-toast','✓ '+uploaded+' registros cargados.','ok');
+  mostrarToast('hist-toast','✓ '+uploaded+' registros cargados ('+csvData.length+' en CSV, '+(csvData.length-dedupData.length)+' duplicados ignorados).','ok');
   cancelCsv(); cargarHistoricos();
 }
 async function guardarHistManual() {
@@ -1137,7 +1136,7 @@ async function guardarHistManual() {
   const fecha=document.getElementById('hm-fecha').value;
   const precio=parseFloat(document.getElementById('hm-precio').value);
   if (!producto||!posicion||!fecha||isNaN(precio)||precio<=0) { mostrarToast('hm-toast','Completá todos los campos.','err'); return; }
-  const {error}=await sb.from('precios_historicos').upsert({producto,posicion,fecha,precio},{onConflict:'producto,fecha,posicion'});
+  const {error}=await sb.from('precios_historicos').upsert({producto,posicion,fecha,precio},{onConflict:'producto,posicion,fecha'});
   if (error) { mostrarToast('hm-toast','Error: '+error.message,'err'); return; }
   mostrarToast('hm-toast','✓ '+producto+' '+posicion+' '+fecha+' → $'+precio,'ok');
   document.getElementById('hm-precio').value=''; cargarHistoricos();
@@ -1186,18 +1185,9 @@ async function actualizarDesdeMatba() {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY }
     });
-    const text = await res.text();
-    let data = {};
-    try { data = JSON.parse(text); } catch(e) {
-      mostrarToast('pm-toast', '⚠ Mercado cerrado o fuera de horario — intentá durante la rueda (10:00 a 17:00 hs)', 'err');
-      return;
-    }
+    const data = await res.json();
     if (!res.ok || !data.ok) {
-      const errMsg = data.error || '';
-      const esMercadoCerrado = errMsg.includes('404') || errMsg.includes('Login') || errMsg.includes('login') || res.status === 404;
-      mostrarToast('pm-toast', esMercadoCerrado
-        ? '⚠ Mercado cerrado o fuera de horario — intentá durante la rueda (10:00 a 17:00 hs)'
-        : 'Error: ' + (errMsg || 'No se pudo conectar con A3 Mercados'), 'err');
+      mostrarToast('pm-toast', 'Error: ' + (data.error || 'No se pudo conectar con A3 Mercados'), 'err');
     } else {
       const act = data.actualizados ?? (data.detalle ? data.detalle.filter(d => d.ok).length : 0);
       const msg = act > 0
@@ -1254,7 +1244,7 @@ async function actualizarDesdeA3() {
 
 async function cargarUltimaActualizacion() {
   try {
-    const {data} = await sb.from('config').select('value').eq('key','a3_ultima_actualizacion').maybeSingle();
+    const {data} = await sb.from('config').select('value').eq('key','a3_ultima_actualizacion').single();
     const el = document.getElementById('a3-ultima');
     if (el && data?.value) {
       const d = new Date(data.value);
@@ -1290,7 +1280,7 @@ async function guardarPrecio() {
 }
 
 async function cargarPrecios() {
-  const { data } = await sb.from('precios_mercado').select('*').eq('activo',true).order('producto').order('vencimiento').order('updated_at',{ascending:false});
+  const { data } = await sb.from('precios_mercado').select('*').eq('activo',true).order('producto').order('vencimiento');
   const tbody = document.getElementById('tbody-precios');
   if (!tbody) return;
   if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>'; return; }
@@ -1386,6 +1376,7 @@ async function cargarClientes() {
       return `<span class="${css}">${text}</span>`;
     }).join('');
     const premium = pickFirst(c, ['premium_activo','acceso_premium'], false);
+    const showLegacyPremium = premium && !hasPremiumPlan(c);
     const paymentUrl = pickFirst(c, ['payment_url','link_pago','checkout_url'], '');
     return `<tr>
       <td>
@@ -1405,7 +1396,7 @@ async function cargarClientes() {
           <div class="chip-row">
             <span class="chip gold">Plan ${String(plan).toUpperCase()}</span>
             <span class="chip ${pago === 'al_dia' || pago === 'bonificado' ? 'green' : pago === 'vencido' ? 'red' : 'gray'}">${String(pago).replaceAll('_',' ')}</span>
-            ${premium ? '<span class="chip gold">Premium</span>' : ''}
+            ${showLegacyPremium ? '<span class="chip gold">Premium</span>' : ''}
           </div>
           <div class="mini-muted">${paymentUrl ? 'Link de pago cargado' : 'Sin link de pago'}</div>
         </div>
@@ -1455,25 +1446,24 @@ async function saveComercialEdit() {
 async function eliminarCliente(id, nombre, codigo) {
   if (!confirm(`¿Eliminar al cliente "${nombre}" (${codigo}) y TODAS sus operaciones?\n\nEsta acción no se puede deshacer.`)) return;
   setLoading(20);
-  // Solo borra operaciones de ESTE cliente — filtra por cliente_codigo
   const { error: errOps } = await sb.from('operaciones')
     .delete()
-    .eq('cliente_codigo', codigo);  // SOLO operaciones de este cliente
+    .eq('cliente_codigo', codigo);
   if (errOps) { alert('Error al borrar operaciones: ' + errOps.message); setLoading(100); return; }
-  setLoading(50);
-  // Solo borra el registro de ESTE cliente — filtra por id
+  setLoading(55);
   const { error: errCli } = await sb.from('clientes')
     .delete()
-    .eq('id', id);  // SOLO este cliente
+    .eq('id', id);
   if (errCli) { alert('Error al borrar cliente: ' + errCli.message); setLoading(100); return; }
-  setLoading(75);
-  // Borrar de auth.users via Edge Function — no toca precios ni otros usuarios
+  setLoading(80);
   try {
     const { error: fnError } = await sb.functions.invoke('eliminar-usuario', {
       body: { user_id: id }
     });
     if (fnError) console.warn('Auth delete warning:', fnError.message);
-  } catch(e) { console.warn('Edge function error:', e.message); }
+  } catch (e) {
+    console.warn('Edge function error:', e.message);
+  }
   setLoading(100);
   await loadAll();
   alert(`✓ Cliente "${nombre}" eliminado completamente.`);
@@ -1490,19 +1480,14 @@ function showSection(name, el) {
     todas:['Historial completo','Todas las operaciones con filtros'],
     carteras:['Carteras por cliente','Resumen de posiciones por cliente'],
     precios:['Precios de mercado','Actualizá los precios de referencia para el cálculo del reporte'],
-    historicos:['Serie histórica','Cargá y gestioná los precios históricos'],
-    tipocambio:['Tipo de cambio','Registrá el tipo de cambio USD/ARS para el panel ganadero'],
-    hacprecios:['Precios de hacienda','Precios de referencia de hacienda para cálculo de margen y ratio'],
     usuarios:['Gestión de usuarios','Creá y administrá los accesos de cada cliente']
   };
   const t = titles[name] || ['',''];
   document.getElementById('page-title').textContent = t[0];
   document.getElementById('page-sub').textContent   = t[1];
-  if (name === 'precios')    { cargarPrecios(); cargarUltimaActualizacion(); }
+  if (name === 'precios')  { cargarPrecios(); cargarUltimaActualizacion(); }
   if (name === 'historicos') cargarHistoricos();
-  if (name === 'tipocambio') cargarTC();
-  if (name === 'hacprecios') cargarPreciosHac();
-  if (name === 'usuarios')   cargarClientes();
+  if (name === 'usuarios') cargarClientes();
 }
 
 // EXPORT
@@ -1529,76 +1514,6 @@ function exportExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Operaciones');
   XLSX.writeFile(wb, 'CTX_operaciones_' + new Date().toISOString().split('T')[0] + '.xlsx');
-}
-
-// ══ TIPO DE CAMBIO ══
-async function guardarTC() {
-  const fecha = document.getElementById('tc-fecha').value;
-  const valor = parseFloat(document.getElementById('tc-valor').value);
-  if (!fecha || isNaN(valor) || valor <= 0) { mostrarToast('tc-toast','Completá fecha y valor.','err'); return; }
-  // Delete existing record for that date, then insert fresh
-  await sb.from('tipo_de_cambio').delete().eq('fecha', fecha);
-  const { error } = await sb.from('tipo_de_cambio').insert({ fecha, valor });
-  if (error) { mostrarToast('tc-toast','Error: '+error.message,'err'); return; }
-  mostrarToast('tc-toast','✓ TC '+fecha+': $'+valor+' cargado.','ok');
-  document.getElementById('tc-fecha').value = '';
-  document.getElementById('tc-valor').value = '';
-  await cargarTC();
-}
-async function cargarTC() {
-  const { data } = await sb.from('tipo_de_cambio').select('*').order('fecha',{ascending:false}).limit(60);
-  const tbody = document.getElementById('tbody-tc');
-  if (!tbody) return;
-  if (!data || !data.length) { tbody.innerHTML='<tr><td colspan="3" class="empty-state">Sin registros</td></tr>'; return; }
-  tbody.innerHTML = data.map(r => `<tr>
-    <td style="font-weight:600">${r.fecha}</td>
-    <td style="font-weight:700">$${Number(r.valor).toLocaleString('es-AR')}</td>
-    <td><button class="btn-sm btn-rechazar" onclick="eliminarTC('${r.id}')">✕</button></td>
-  </tr>`).join('');
-}
-async function eliminarTC(id) {
-  if (!confirm('¿Eliminar este registro?')) return;
-  await sb.from('tipo_de_cambio').delete().eq('id', id);
-  cargarTC();
-}
-
-// ══ PRECIOS HACIENDA ══
-async function guardarPrecioHac() {
-  const categoria   = document.getElementById('hp-categoria').value;
-  const vencimiento = document.getElementById('hp-vencimiento').value;
-  const precio      = parseFloat(document.getElementById('hp-precio').value);
-  if (!categoria || !vencimiento || isNaN(precio) || precio <= 0) {
-    mostrarToast('hp-toast','Completá todos los campos.','err'); return;
-  }
-  const { error } = await sb.from('precios_mercado').upsert(
-    { producto: categoria, vencimiento, precio, activo: true, updated_at: new Date().toISOString() },
-    { onConflict: 'producto,vencimiento' }
-  );
-  if (error) { mostrarToast('hp-toast','Error: '+error.message,'err'); return; }
-  mostrarToast('hp-toast','✓ '+categoria+' '+vencimiento+' → USD '+precio+'/kg guardado.','ok');
-  document.getElementById('hp-categoria').value = '';
-  document.getElementById('hp-precio').value = '';
-  await cargarPreciosHac();
-}
-async function cargarPreciosHac() {
-  const categorias = ['Ternero','Novillo','Vaquillona','Vaca','Toro'];
-  const { data } = await sb.from('precios_mercado')
-    .select('*').eq('activo',true)
-    .in('producto', categorias)
-    .order('producto').order('vencimiento');
-  const tbody = document.getElementById('tbody-hacprecios');
-  if (!tbody) return;
-  if (!data || !data.length) { tbody.innerHTML='<tr><td colspan="5" class="empty-state">Sin precios de hacienda cargados.</td></tr>'; return; }
-  tbody.innerHTML = data.map(p => {
-    const fecha = new Date(p.updated_at||p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-    return `<tr>
-      <td style="font-weight:600">${p.producto}</td>
-      <td style="font-family:monospace;font-size:12px">${p.vencimiento}</td>
-      <td style="font-weight:700">USD ${Number(p.precio).toFixed(3)}/kg</td>
-      <td style="color:var(--gris);font-size:12px">${fecha}</td>
-      <td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio('${p.id}')">Eliminar</button></td>
-    </tr>`;
-  }).join('');
 }
 
 // UTILS
