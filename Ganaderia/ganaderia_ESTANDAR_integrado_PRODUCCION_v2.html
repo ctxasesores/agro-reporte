@@ -221,10 +221,6 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 .modal{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:0.5px solid var(--border)}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
-.macro-modal{position:relative;width:min(600px,96vw);height:min(400px,90vh);padding:0;overflow:hidden;background:transparent;border:none;box-shadow:none}
-.macro-modal .modal-header{display:none}
-.macro-frame{width:100%;height:100%;border:0;background:transparent;display:block}
-.macro-close{position:absolute;top:10px;right:10px;z-index:2}
 .hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px}
 .hist-item:last-child{border-bottom:none}
 .hist-info{flex:1;min-width:0}
@@ -257,7 +253,6 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
       </div>
       <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
       <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
-      <button class="btn" type="button" onclick="abrirMacro()">MACRO</button>
       <button class="btn btn-icon" type="button" onclick="nuevoAnalisis()" title="Nuevo escenario">＋</button>
     </div>
   </div>
@@ -316,7 +311,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
       </div>
     </div>
     <div class="fg">
-      <div><label>% terneros que vende al destete (%)</label><input type="number" id="c_pct_venta" value="100" min="0" max="100" oninput="updCond();recalc()"><div class="hint">Resto pasa a recria/invernada.</div></div>
+      <div><label>% terneros que vende al destete</label><input type="number" id="c_pct_venta" value="100" min="0" max="100" oninput="updCond();recalc()"><div class="hint">Resto pasa a recría/invernada</div></div>
       <div><label>Precio ternero ($/kg) — base</label><input type="number" id="c_precio_ternero" value="1800" min="0" oninput="syncEsc();recalc()"></div>
     </div>
   </div></div>
@@ -348,7 +343,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
     </div>
     <div class="fg">
       <div><label>Peso salida recría (kg)</label><input type="number" id="r_peso_salida" value="300" min="100" oninput="recalc()"></div>
-      <div><label>Meses de recria (meses)</label><input type="number" id="r_meses" value="10" min="1" max="24" oninput="recalc()"></div>
+      <div><label>Meses de recría</label><input type="number" id="r_meses" value="10" min="1" max="24" oninput="recalc()"></div>
     </div>
     <div><div class="sec-lbl">Índices de crecimiento<span class="live">tiempo real</span></div>
       <div class="idx-box">
@@ -365,7 +360,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
     <div class="fg">
       <div><label>Personal + otros ($/período)</label><input type="number" id="r_personal" value="400000" min="0" oninput="recalc()"></div>
       <div id="r_venta_wrap" style="display:none">
-        <label>% que vende al salir de recria (%)</label>
+        <label>% que vende al salir de recría</label>
         <input type="number" id="r_pct_venta" value="100" min="0" max="100" oninput="updCond();recalc()">
         <div class="hint">Resto pasa a invernada propia</div>
       </div>
@@ -481,13 +476,6 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
   </div>
 </div>
 
-<div class="modal-bg" id="modal_macro" onclick="if(event.target===this)cerrarMacro()">
-  <div class="modal macro-modal">
-    <button class="btn btn-sm btn-icon macro-close" type="button" onclick="cerrarMacro()">✕</button>
-    <iframe id="macro_frame" class="macro-frame" title="Panel Macro BCRA"></iframe>
-  </div>
-</div>
-
 <script>
 const REPORT_MODE = 'ESTANDAR';
 
@@ -511,6 +499,7 @@ var currentUserId = 'anonimo';
 // ── INICIALIZACIÓN ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function(){
   initShellContext();
+  consumePendingOpenRequest();
 });
 
 function initShellContext(){
@@ -638,6 +627,128 @@ function writeSavedAnalisis(items){
   localStorage.setItem(getStorageKey(), JSON.stringify(items));
 }
 
+function consumePendingOpenRequest(){
+  try{
+    var raw = localStorage.getItem('ctx_unidades_open_request');
+    if(!raw) return false;
+    var req = JSON.parse(raw);
+    if(!req || req.source !== 'ganaderia') return false;
+    if(req.user_id && currentUserId && req.user_id !== currentUserId) return false;
+    if(req.cliente_id && currentClienteId && req.cliente_id !== currentClienteId) return false;
+    localStorage.removeItem('ctx_unidades_open_request');
+    if(req.scenario_id){
+      setTimeout(function(){ cargarAnalisis(req.scenario_id); }, 80);
+      return true;
+    }
+  }catch(e){
+    console.warn('No se pudo consumir la apertura pendiente de ganadería', e);
+  }
+  return false;
+}
+
+function roundValue(value, decimals){
+  var factor = Math.pow(10, decimals || 0);
+  return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function getScenarioModuleKey(){
+  var active = [
+    st.cria ? 'cria' : null,
+    st.recria ? 'recria' : null,
+    st.inv ? 'invernada' : null
+  ].filter(Boolean);
+  return active.length > 1 ? 'ganaderia_integral' : (active[0] || 'ganaderia_integral');
+}
+
+function buildSavedOutputs(){
+  var baseM = calcModel('b');
+  var supTotal = Math.max(1, n('sup_total'));
+  var outputs = {
+    version: 'v1',
+    modulo: getScenarioModuleKey(),
+    actividades: { cria: !!st.cria, recria: !!st.recria, invernada: !!st.inv },
+    resumen: {
+      ingresos_totales: roundValue(baseM.totals.ing, 0),
+      egresos_totales: roundValue(baseM.totals.egr, 0),
+      margen_total: roundValue(baseM.totals.mb, 0),
+      margen_ha: roundValue(baseM.totals.mb / supTotal, 0)
+    },
+    unidades: {}
+  };
+
+  if(baseM.cria){
+    var cria = baseM.cria;
+    var criaState = cria.destetePct >= 85 ? 'verde' : cria.destetePct >= 78 ? 'amarillo' : 'rojo';
+    outputs.unidades.cria = {
+      activo: true,
+      semaforo: { estado: criaState, regla: 'destete_pct' },
+      principal: { clave: 'destete_pct', valor: roundValue(cria.destetePct, 1), unidad: '%' },
+      secundarios: [
+        { clave: 'kg_destetados_ha', valor: roundValue(cria.kgHa, 1), unidad: 'kg/ha' },
+        { clave: 'costo_kg_destetado', valor: roundValue(cria.costoKg, 2), unidad: '$/kg' }
+      ],
+      kpis: {
+        terneros_logrados: roundValue(cria.logrados, 0),
+        destete_pct: roundValue(cria.destetePct, 1),
+        kg_destetados_ha: roundValue(cria.kgHa, 1),
+        costo_kg_destetado: roundValue(cria.costoKg, 2),
+        margen_total: roundValue(cria.margen, 0),
+        margen_cab: cria.logrados > 0 ? roundValue(cria.margen / cria.logrados, 0) : 0
+      }
+    };
+  }
+
+  if(baseM.recria){
+    var recria = baseM.recria;
+    var gdpGap = recria.gdpObjetivo > 0 ? recria.gdpReal / recria.gdpObjetivo : 0;
+    var recriaState = gdpGap >= 1 ? 'verde' : gdpGap >= 0.9 ? 'amarillo' : 'rojo';
+    outputs.unidades.recria = {
+      activo: true,
+      semaforo: { estado: recriaState, regla: 'gdp_real_vs_objetivo' },
+      principal: { clave: 'costo_kg_ganado', valor: roundValue(recria.costoKgGanado, 2), unidad: '$/kg' },
+      secundarios: [
+        { clave: 'gdp_real', valor: roundValue(recria.gdpReal, 0), unidad: 'g/dia' },
+        { clave: 'margen_transferencia_cab', valor: recria.cabezas > 0 ? roundValue(recria.margen / recria.cabezas, 0) : 0, unidad: '$/cab' }
+      ],
+      kpis: {
+        cabezas: roundValue(recria.cabezas, 0),
+        costo_kg_ganado: roundValue(recria.costoKgGanado, 2),
+        gdp_objetivo: roundValue(recria.gdpObjetivo, 0),
+        gdp_real: roundValue(recria.gdpReal, 0),
+        gdp_real_vs_objetivo: roundValue(gdpGap, 3),
+        margen_total: roundValue(recria.margen, 0),
+        margen_transferencia_cab: recria.cabezas > 0 ? roundValue(recria.margen / recria.cabezas, 0) : 0,
+        kg_ganados_cab: roundValue(recria.pesoSalida - recria.pesoEntrada, 0)
+      }
+    };
+  }
+
+  if(baseM.inv){
+    var inv = baseM.inv;
+    var margenCab = inv.sobrevivientes > 0 ? inv.margen / inv.sobrevivientes : 0;
+    var invState = margenCab > 0 ? 'verde' : margenCab >= -25000 ? 'amarillo' : 'rojo';
+    outputs.unidades.invernada = {
+      activo: true,
+      semaforo: { estado: invState, regla: 'margen_cabeza' },
+      principal: { clave: 'margen_cabeza', valor: roundValue(margenCab, 0), unidad: '$/cab' },
+      secundarios: [
+        { clave: 'costo_kg_ganado', valor: roundValue(inv.costoKgGanado, 2), unidad: '$/kg' },
+        { clave: 'kg_carne_ha', valor: roundValue(inv.kgHa, 1), unidad: 'kg/ha' }
+      ],
+      kpis: {
+        sobrevivientes: roundValue(inv.sobrevivientes, 0),
+        margen_cabeza: roundValue(margenCab, 0),
+        margen_total: roundValue(inv.margen, 0),
+        costo_kg_ganado: roundValue(inv.costoKgGanado, 2),
+        kg_carne_ha: roundValue(inv.kgHa, 1),
+        meses_estimados: roundValue(inv.mesesEstimados, 0)
+      }
+    };
+  }
+
+  return outputs;
+}
+
 // ── GUARDAR ─────────────────────────────────────────────────
 async function guardar(){
   var sel=document.getElementById('sel_cliente');
@@ -659,6 +770,7 @@ async function guardar(){
     actividades: {cria:st.cria, recria:st.recria, inv:st.inv},
     datos: serializarFormulario(),
     escenarios: serializarEscenarios(),
+    outputs: buildSavedOutputs(),
     updated_at: new Date().toISOString()
   };
 
@@ -685,31 +797,6 @@ async function abrirHistorial(){
   await cargarHistorial();
 }
 function cerrarHistorial(){ document.getElementById('modal_hist').classList.remove('open'); }
-
-function getMacroDashboardSrc(){
-  const fileName = 'dashboard_bcra_v28_1_5%20PROD.html?embed=1';
-  if (location.protocol === 'file:') return fileName;
-  return `${location.origin}/agro-reporte/${fileName}`;
-}
-
-function abrirMacro(){
-  try{
-    if (window.parent && window.parent !== window && typeof window.parent.abrirMacroModal === 'function') {
-      window.parent.abrirMacroModal();
-      return;
-    }
-  }catch(_e){}
-  const frame = document.getElementById('macro_frame');
-  if (frame && frame.dataset.loaded !== '1') {
-    frame.src = getMacroDashboardSrc();
-    frame.dataset.loaded = '1';
-  }
-  document.getElementById('modal_macro').classList.add('open');
-}
-
-function cerrarMacro(){
-  document.getElementById('modal_macro').classList.remove('open');
-}
 
 async function cargarHistorial(){
   var listEl = document.getElementById('hist_list');
@@ -1295,7 +1382,7 @@ function recalc(){
     var tipo=document.getElementById('i_tipo').value;
     var inv=baseM.inv;
     html+='<div style="margin-bottom:1rem"><div style="margin-bottom:6px"><span class="badge ba">Invernada/feedlot</span></div>';
-    html+='<div class="kpi-grid">'+kpi('GDP',n('i_gdp'),'g/día',n('i_gdp')>=700?'pos':'neg')+kpi('Meses est.',inv.mesesEstimados,'meses','')+kpi('Costo/kg ganado','$'+fm(inv.costoKgGanado,1),'/kg','')+(tipo==='pastoril'?kpi('Kg/ha',inv.kgHa.toFixed(0),'kg/ha',''):'')+(tipo==='feedlot'?kpi('Conversión',n('i_conv').toFixed(1),'kg MS/kg ganado',''):'')+'</div>';
+    html+='<div class="kpi-grid">'+kpi('GDP',n('i_gdp'),'g/día',n('i_gdp')>=700?'pos':'neg')+kpi('Meses est.',inv.mesesEstimados,'meses','')+kpi('Costo/kg ganado','$'+fm(inv.costoKgGanado,1),'/kg','')+(tipo==='pastoril'?kpi('Kg/ha',inv.kgHa.toFixed(0),'kg/ha',''):'')+(tipo==='feedlot'?kpi('Conversión',n('i_conv').toFixed(1),'kg MS/kg',''):'')+'</div>';
     html+=mrow('Venta '+inv.sobrevivientes+' animales × $'+fm(n('i_precio_venta'))+'/kg','$'+fm(inv.ingresoVenta));
     if(inv.costoTransferencia>0) html+=mrow('Ingreso propio a costo de transferencia','-$'+fm(inv.costoTransferencia));
     if(inv.costoCompraMercado>0) html+=mrow('Compra adicional de ingreso','-$'+fm(inv.costoCompraMercado));
