@@ -60,22 +60,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .btn-secondary:hover { background:rgba(212,160,23,.08); }
 .login-error { color:#fca5a5; font-size:13px; margin-top:12px; text-align:center; display:none; }
 .login-success { color:#8ee5c5; font-size:13px; margin-top:12px; text-align:center; display:none; }
-.login-link { margin-top:14px; font-size:13px; color:var(--oro-l); text-align:center; cursor:pointer; background:none; border:none; width:100%; }
-.login-link:hover { opacity:.85; }
-.auth-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; padding:20px; }
-.auth-modal-overlay.open { display:flex; }
-.auth-modal { width:100%; max-width:380px; background:var(--negro); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:28px 24px; box-shadow:0 10px 40px rgba(0,0,0,.28); }
-.auth-modal h3 { color:white; font-size:20px; margin-bottom:8px; }
-.auth-modal p { color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; margin-bottom:16px; }
-.auth-modal label { color:rgba(255,255,255,.65); font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; display:block; margin-bottom:7px; }
-.auth-modal input { width:100%; padding:13px 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.07); color:white; font-size:15px; margin-bottom:14px; outline:none; }
-.auth-modal input:focus { border-color:var(--oro-l); }
-.auth-modal-actions { display:flex; gap:10px; margin-top:6px; }
-.btn-modal-primary { flex:1; padding:13px; background:var(--oro); color:var(--negro); border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
-.btn-modal-primary:disabled { opacity:.5; cursor:not-allowed; }
-.auth-message { font-size:13px; margin-top:12px; display:none; }
-.auth-message.ok { display:block; color:#8ee5c5; }
-.auth-message.err { display:block; color:#fca5a5; }
 
 /* ── LOADING ── */
 #loadingScreen { min-height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); gap:16px; }
@@ -225,6 +209,56 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .section { margin-bottom:28px; }
 .section-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 .section-title::after { content:''; flex:1; height:1px; background:var(--crema-dd); }
+.business-dashboard-card { padding:18px; display:grid; gap:16px; }
+.business-dashboard-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+.business-dashboard-title { font-size:18px; font-weight:700; color:white; margin-bottom:6px; letter-spacing:-.2px; }
+.business-dashboard-copy { font-size:13px; line-height:1.6; color:rgba(255,255,255,.58); max-width:860px; }
+.business-dashboard-note { display:inline-flex; align-items:center; padding:8px 11px; border-radius:999px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); color:rgba(255,255,255,.54); font-size:11px; font-weight:700; letter-spacing:.4px; }
+.business-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.business-summary-card { background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:14px; min-height:88px; display:flex; flex-direction:column; justify-content:space-between; }
+.business-summary-label { font-size:10px; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.38); font-weight:700; }
+.business-summary-value { font-size:24px; font-weight:700; color:white; letter-spacing:-.4px; }
+.business-summary-value.is-positive { color:var(--verde-l); }
+.business-summary-value.is-negative { color:#f0856a; }
+.business-summary-sub { font-size:11px; color:rgba(255,255,255,.46); line-height:1.45; }
+.business-units-grid { display:grid; gap:12px; }
+.business-unit-card { background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:16px; display:grid; gap:14px; }
+.business-unit-card.is-empty { border-style:dashed; }
+.business-unit-top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+.business-unit-title { font-size:17px; font-weight:700; color:white; margin-bottom:4px; }
+.business-unit-source { font-size:12px; color:rgba(255,255,255,.52); line-height:1.5; }
+.business-unit-empty-copy { font-size:12px; color:rgba(255,255,255,.48); line-height:1.55; max-width:760px; }
+.business-selector-wrap { display:grid; gap:6px; min-width:280px; max-width:360px; }
+.business-selector-label { font-size:10px; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.36); font-weight:700; }
+.business-selector { width:100%; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); color:var(--texto); border-radius:10px; padding:10px 12px; font-size:12px; outline:none; }
+.business-selector:focus { border-color:rgba(212,160,23,.42); box-shadow:0 0 0 1px rgba(212,160,23,.12); }
+.business-status { display:inline-flex; align-items:center; padding:7px 11px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; }
+.business-status.verde { background:rgba(30,153,112,.16); color:var(--verde-l); }
+.business-status.amarillo { background:rgba(212,160,23,.16); color:var(--oro-l); }
+.business-status.rojo { background:rgba(217,81,44,.16); color:#f4a08b; }
+.business-status.vacio { background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); }
+.business-kpis { display:grid; grid-template-columns:1.25fr 1fr 1fr; gap:10px; }
+.business-kpi { background:rgba(8,20,34,.55); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:14px; min-height:88px; display:flex; flex-direction:column; justify-content:space-between; }
+.business-kpi.main { border-color:rgba(212,160,23,.2); background:rgba(212,160,23,.08); }
+.business-kpi-label { font-size:10px; letter-spacing:.7px; text-transform:uppercase; color:rgba(255,255,255,.38); font-weight:700; }
+.business-kpi-value { font-size:24px; font-weight:700; color:white; letter-spacing:-.3px; line-height:1.1; }
+.business-kpi.main .business-kpi-value { color:var(--oro-l); }
+.business-kpi-sub { font-size:11px; color:rgba(255,255,255,.48); line-height:1.45; }
+.business-actions { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
+.business-actions-copy { font-size:11px; color:rgba(255,255,255,.42); line-height:1.5; }
+.business-btn { padding:10px 14px; border-radius:10px; border:1px solid rgba(212,160,23,.26); background:rgba(212,160,23,.08); color:var(--oro-l); font-size:12px; font-weight:700; cursor:pointer; transition:all .2s; }
+.business-btn:hover { background:rgba(212,160,23,.14); border-color:rgba(212,160,23,.4); }
+.business-btn.secondary { background:rgba(255,255,255,.03); border-color:rgba(255,255,255,.1); color:rgba(255,255,255,.72); }
+.business-empty { padding:22px; border-radius:12px; border:1px dashed rgba(255,255,255,.12); background:rgba(255,255,255,.02); text-align:center; color:rgba(255,255,255,.52); font-size:13px; line-height:1.65; }
+
+@media(max-width:1180px) {
+  .business-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .business-kpis { grid-template-columns:1fr; }
+}
+
+@media(max-width:720px) {
+  .business-summary-grid { grid-template-columns:1fr; }
+}
 .portal-shell { margin:14px 28px 0; background:rgba(8,20,34,.78); border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; position:relative; z-index:20; box-shadow:0 10px 24px rgba(0,0,0,.18); }
 .portal-topbar { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; padding:8px 10px; min-height:68px; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)); }
 .portal-tabs { display:flex; gap:6px; align-items:center; flex-wrap:nowrap; min-width:0; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
@@ -443,7 +477,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <input type="password" id="loginPass" placeholder="••••••••">
       <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
       <button class="btn-secondary" type="button" onclick="switchAuthMode('register')">Quiero crear mi cuenta</button>
-      <button class="login-link" type="button" onclick="openForgotPasswordModal()">Olvidé mi contraseña</button>
     </div>
     <div class="auth-pane" id="pane-register">
       <label>Empresa / cliente</label>
@@ -458,36 +491,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     </div>
     <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
     <div class="login-success" id="loginSuccess">Tu cuenta fue creada. Ya puedes ingresar.</div>
-  </div>
-</div>
-
-<div class="auth-modal-overlay" id="forgotPasswordOverlay" onclick="closeForgotPasswordModal(event)">
-  <div class="auth-modal" onclick="event.stopPropagation()">
-    <h3>Recuperar contraseña</h3>
-    <p>Ingresa tu email y te enviaremos un enlace para definir una nueva contraseña.</p>
-    <label>Email</label>
-    <input type="email" id="forgotEmail" placeholder="tu@email.com" autocomplete="email">
-    <div class="auth-modal-actions">
-      <button class="btn-secondary" type="button" onclick="closeForgotPasswordModal()">Cancelar</button>
-      <button class="btn-modal-primary" type="button" id="btnForgotPassword" onclick="sendPasswordReset()">Enviar enlace</button>
-    </div>
-    <div class="auth-message" id="forgotPasswordMessage"></div>
-  </div>
-</div>
-
-<div class="auth-modal-overlay" id="resetPasswordOverlay" onclick="closeResetPasswordModal(event)">
-  <div class="auth-modal" onclick="event.stopPropagation()">
-    <h3>Nueva contraseña</h3>
-    <p>Elige una nueva contraseña para tu cuenta.</p>
-    <label>Nueva contraseña</label>
-    <input type="password" id="resetPassword" placeholder="mínimo 8 caracteres" autocomplete="new-password">
-    <label>Repetir contraseña</label>
-    <input type="password" id="resetPasswordConfirm" placeholder="repite tu contraseña" autocomplete="new-password">
-    <div class="auth-modal-actions">
-      <button class="btn-secondary" type="button" onclick="closeResetPasswordModal()">Cancelar</button>
-      <button class="btn-modal-primary" type="button" id="btnResetPassword" onclick="saveNewPassword()">Guardar contraseña</button>
-    </div>
-    <div class="auth-message" id="resetPasswordMessage"></div>
   </div>
 </div>
 
@@ -518,6 +521,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <a class="nav-item active" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
         <span class="nav-icon">◈</span>
         <span class="nav-label"><span class="nav-main">Agricultura</span><span class="nav-sub" id="nav-agricultura-sub">Dashboard estándar</span></span>
+      </a>
+      <a class="nav-item" id="nav-kpis" onclick="switchDashboard('kpis',this)" title="KPIs">
+        <span class="nav-icon">◎</span>
+        <span class="nav-label"><span class="nav-main">KPIs</span><span class="nav-sub">Unidades de negocio</span></span>
       </a>
       <a class="nav-item" id="nav-ganaderia" onclick="switchDashboard('ganaderia',this)" title="Ganadería">
         <span class="nav-icon">⌘</span>
@@ -642,9 +649,9 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <div id="sec-composicion">
           <div class="section-title">Composición</div>
           <div class="card" style="height:324px;display:flex;flex-direction:column;overflow:hidden">
-            <div style="height:30px;padding:6px 14px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-sizing:border-box">
+            <div style="padding:8px 14px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
               <span id="sunburst-breadcrumb" style="font-size:11px;color:var(--gris)">Cartera total</span>
-              <button id="sunburst-back" onclick="sunburstBack()" style="visibility:hidden;height:22px;padding:0 12px;border-radius:7px;border:1px solid var(--oro);background:rgba(212,160,23,.10);color:var(--oro-l);font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.1px;line-height:20px">↩ Volver</button>
+              <button id="sunburst-back" onclick="sunburstBack()" style="display:none;padding:6px 16px;border-radius:8px;border:1px solid var(--oro);background:rgba(212,160,23,.12);color:var(--oro-l);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.2px">↩ Volver</button>
             </div>
             <div id="sunburst-container" style="width:380px;height:280px;flex-shrink:0;margin:0 auto"></div>
           </div>
@@ -882,6 +889,25 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     </div><!-- /page-body -->
     </div><!-- /view-agricultura -->
 
+    <div class="dashboard-view" id="view-kpis">
+      <div class="page-body">
+        <div class="section" id="sec-unidades-negocio">
+          <div class="section-title">KPIs</div>
+          <div class="card business-dashboard-card">
+            <div class="business-dashboard-head">
+              <div>
+                <div class="business-dashboard-title">Unidades de negocio y escenarios fuente</div>
+                <div class="business-dashboard-copy">Esta vista queda separada del tablero agrícola y te permite leer el negocio productivo por unidad. Cada fila puede elegir manualmente el escenario fuente que alimenta sus KPIs.</div>
+              </div>
+              <div class="business-dashboard-note" id="business-dashboard-note">MVP: Leche, Cría, Recría e Invernada</div>
+            </div>
+            <div class="business-summary-grid" id="business-summary-grid"></div>
+            <div class="business-units-grid" id="business-units-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="dashboard-view integrated-embed" id="view-ganaderia">
       <div class="page-body">
         <div class="embedded-dashboard">
@@ -963,7 +989,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
-const APP_URL = 'https://ctxasesores.github.io/agro-reporte/';
 const COLORES_PROD = {'Soja':'#5b9ec9','Maiz':'#3d7aa8','Trigo':'#8bbedd','Girasol':'#2a5f84','Sorgo':'#1e4466','Cebada':'#a8cfe8'};
 const PRODUCTOS = ['Soja','Maiz','Trigo','Girasol','Sorgo','Cebada'];
 
@@ -978,30 +1003,16 @@ let filterProd = 'todos';
 let tagsDisponibles = [];   // ['DFL','AGR',...] — tags del cliente
 let activeTagFilter = [];   // tags seleccionados para filtrar (intersección Y)
 let currentAuthMode = 'login';
-let authListenerReady = false;
 
 // ── INIT ──
 function initSupabase() {
   if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-  if (!authListenerReady) {
-    sb.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        closeForgotPasswordModal();
-        openResetPasswordModal();
-      }
-    });
-    authListenerReady = true;
-  }
 }
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   if (currentAuthMode === 'register') doRegister();
   else doLogin();
-});
-document.addEventListener('DOMContentLoaded', () => {
-  initSupabase();
-  handleRecoveryReturn();
 });
 
 function switchAuthMode(mode) {
@@ -1025,100 +1036,6 @@ function hideAuthMessages() {
   const okEl  = document.getElementById('loginSuccess');
   if (errEl) errEl.style.display = 'none';
   if (okEl) okEl.style.display = 'none';
-}
-function setAuthMessage(id, msg, type) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'auth-message' + (type ? ' ' + type : '');
-}
-function openForgotPasswordModal() {
-  const email = document.getElementById('loginEmail')?.value.trim();
-  const input = document.getElementById('forgotEmail');
-  if (email && input) input.value = email;
-  document.getElementById('forgotPasswordOverlay')?.classList.add('open');
-  setAuthMessage('forgotPasswordMessage', '', '');
-}
-function closeForgotPasswordModal(e) {
-  if (!e || e.target === document.getElementById('forgotPasswordOverlay')) {
-    document.getElementById('forgotPasswordOverlay')?.classList.remove('open');
-  }
-}
-function openResetPasswordModal() {
-  document.getElementById('resetPasswordOverlay')?.classList.add('open');
-  setAuthMessage('resetPasswordMessage', '', '');
-}
-function closeResetPasswordModal(e) {
-  if (!e || e.target === document.getElementById('resetPasswordOverlay')) {
-    document.getElementById('resetPasswordOverlay')?.classList.remove('open');
-  }
-}
-async function sendPasswordReset() {
-  initSupabase();
-  const email = document.getElementById('forgotEmail').value.trim();
-  const btn = document.getElementById('btnForgotPassword');
-  if (!email) {
-    setAuthMessage('forgotPasswordMessage', 'Ingresa tu email.', 'err');
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: APP_URL });
-  btn.disabled = false;
-  btn.textContent = 'Enviar enlace';
-  if (error) {
-    setAuthMessage('forgotPasswordMessage', 'No se pudo enviar el email: ' + error.message, 'err');
-    return;
-  }
-  setAuthMessage('forgotPasswordMessage', 'Te enviamos un enlace para restablecer tu contraseña.', 'ok');
-}
-async function handleRecoveryReturn() {
-  initSupabase();
-  const hash = window.location.hash || '';
-  if (!hash.includes('type=recovery')) return;
-  openResetPasswordModal();
-  const { data } = await sb.auth.getSession();
-  if (!data.session) {
-    setAuthMessage('resetPasswordMessage', 'El enlace no es válido o ya venció. Solicita uno nuevo.', 'err');
-  }
-}
-async function saveNewPassword() {
-  initSupabase();
-  const pass = document.getElementById('resetPassword').value.trim();
-  const confirmPass = document.getElementById('resetPasswordConfirm').value.trim();
-  const btn = document.getElementById('btnResetPassword');
-  if (pass.length < 8) {
-    setAuthMessage('resetPasswordMessage', 'La nueva contraseña debe tener al menos 8 caracteres.', 'err');
-    return;
-  }
-  if (pass !== confirmPass) {
-    setAuthMessage('resetPasswordMessage', 'Las contraseñas no coinciden.', 'err');
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = 'Guardando...';
-  const { error } = await sb.auth.updateUser({ password: pass });
-  btn.disabled = false;
-  btn.textContent = 'Guardar contraseña';
-  if (error) {
-    setAuthMessage('resetPasswordMessage', 'No se pudo actualizar la contraseña: ' + error.message, 'err');
-    return;
-  }
-  setAuthMessage('resetPasswordMessage', 'Contraseña actualizada. Ya puedes ingresar.', 'ok');
-  const okEl = document.getElementById('loginSuccess');
-  if (okEl) {
-    okEl.textContent = 'Contraseña actualizada. Ingresa con tu nueva clave.';
-    okEl.style.display = 'block';
-  }
-  const errEl = document.getElementById('loginError');
-  if (errEl) errEl.style.display = 'none';
-  document.getElementById('loginPass').value = '';
-  await sb.auth.signOut();
-  setTimeout(() => {
-    closeResetPasswordModal();
-    if (window.location.hash) history.replaceState({}, document.title, window.location.pathname + window.location.search);
-    window.location.href = APP_URL;
-  }, 1000);
 }
 
 function slugCodigo(nombre = '') {
@@ -1525,6 +1442,9 @@ function switchDashboard(view, el) {
   if (el) el.classList.add('active');
   document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${view}`)?.classList.add('active');
+  if (view === 'kpis') {
+    renderBusinessUnits();
+  }
   if (view === 'ganaderia') {
     const modoGan = getDashboardMode('ganaderia', state);
     const frame = document.getElementById('frame-ganaderia');
@@ -1558,6 +1478,386 @@ function openUpgradeLink() {
   }
   window.open('mailto:info@ctxasesores.com?subject=Upgrade%20premium%20CTX&body=Quiero%20activar%20el%20plan%20premium%20para%20mi%20cuenta.', '_blank');
 }
+
+const BUSINESS_UNIT_CONFIG = {
+  leche: {
+    key: 'leche',
+    label: 'Leche',
+    source: 'tambo',
+    openView: 'tambo',
+    emptyCopy: 'Guardá un escenario de tambo para ver margen por litro, sólidos por hectárea y eficiencia alimenticia.'
+  },
+  cria: {
+    key: 'cria',
+    label: 'Cría',
+    source: 'ganaderia',
+    openView: 'ganaderia',
+    emptyCopy: 'Activá Cría y guardá un escenario para leer % destete, kg destetados por hectárea y costo por kg.'
+  },
+  recria: {
+    key: 'recria',
+    label: 'Recría',
+    source: 'ganaderia',
+    openView: 'ganaderia',
+    emptyCopy: 'Guardá un escenario con recría activa para ver costo por kg ganado, GDP real y margen por cabeza.'
+  },
+  invernada: {
+    key: 'invernada',
+    label: 'Invernada',
+    source: 'ganaderia',
+    openView: 'ganaderia',
+    emptyCopy: 'Guardá un escenario con invernada activa para ver margen por cabeza, costo por kg y kilos de carne por hectárea.'
+  }
+};
+
+let businessDashboardState = { rows: [], scenarios: [] };
+
+function getBusinessSelectionKey() {
+  const userId = currentUser?.id || 'anonimo';
+  const clienteId = currentCliente?.id || 'sin_cliente';
+  return `ctx_kpis_links_${userId}_${clienteId}`;
+}
+
+function readBusinessSelections() {
+  try {
+    const raw = localStorage.getItem(getBusinessSelectionKey());
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (error) {
+    console.warn('No se pudieron leer los vínculos de KPIs', error);
+    return {};
+  }
+}
+
+function writeBusinessSelections(data) {
+  localStorage.setItem(getBusinessSelectionKey(), JSON.stringify(data || {}));
+}
+
+function fmtArs(value, decimals = 0) {
+  return '$' + Number(value || 0).toLocaleString('es-AR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
+
+function fmtMetricValue(metric) {
+  if (!metric) return '—';
+  const value = Number(metric.valor ?? metric.value ?? 0);
+  const unit = metric.unidad || '';
+  const hasDecimals = Math.abs(value % 1) > 0.001;
+  const decimals = hasDecimals ? (Math.abs(value) < 10 ? 2 : 1) : 0;
+  if (unit.startsWith('$')) {
+    const suffix = unit.slice(1).trim();
+    return fmtArs(value, decimals) + (suffix ? ` ${suffix}` : '');
+  }
+  if (unit === '%') {
+    return value.toLocaleString('es-AR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + '%';
+  }
+  return value.toLocaleString('es-AR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + (unit ? ` ${unit}` : '');
+}
+
+function fmtScenarioDate(value) {
+  if (!value) return 'sin fecha';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return 'sin fecha';
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + ' · ' +
+    d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function readLocalArray(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.warn('No se pudo leer', key, error);
+    return [];
+  }
+}
+
+function collectProductiveScenarios() {
+  if (!currentUser?.id || !currentCliente?.id) return [];
+  const items = [];
+  const seen = new Set();
+  const prefixes = [
+    { prefix: 'ctx_tambo_escenarios_', source: 'tambo' },
+    { prefix: 'ctx_ganaderia_simulaciones_', source: 'ganaderia' }
+  ];
+
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    const match = prefixes.find(entry => key && key.startsWith(entry.prefix));
+    if (!match) continue;
+    const modeFromKey = key.includes('_PRO_') ? 'PRO' : 'ESTANDAR';
+    readLocalArray(key).forEach(item => {
+      if (!item || typeof item !== 'object') return;
+      const scenarioUserId = item.usuario_id || item.user_id || '';
+      const scenarioClienteId = item.cliente_id || '';
+      if (scenarioUserId && scenarioUserId !== currentUser.id) return;
+      if (scenarioClienteId && scenarioClienteId !== currentCliente.id) return;
+      if (!item.outputs || typeof item.outputs !== 'object') return;
+      const uniqueId = `${match.source}::${item.id || ''}::${item.updated_at || ''}`;
+      if (seen.has(uniqueId)) return;
+      seen.add(uniqueId);
+      items.push({
+        uid: uniqueId,
+        id: item.id || '',
+        source: match.source,
+        modo: item.modo || modeFromKey,
+        nombre: item.nombre || item.nombre_escenario || item.campania || 'Escenario guardado',
+        cliente_id: scenarioClienteId,
+        cliente_nombre: item.cliente_nombre || currentCliente.nombre_empresa || '',
+        user_id: scenarioUserId || currentUser.id,
+        updated_at: item.updated_at || item.created_at || '',
+        datos: item.datos || {},
+        actividades: item.actividades || {},
+        outputs: item.outputs || {}
+      });
+    });
+  }
+
+  return items.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+}
+
+function getMonthlyScenarioMargin(scenario) {
+  if (!scenario?.outputs?.resumen) return 0;
+  if (scenario.source === 'tambo') {
+    return Number(scenario.outputs.resumen.margen_mes || 0);
+  }
+  const total = Number(scenario.outputs.resumen.margen_total || 0);
+  const periodo = Math.max(1, Number(scenario.datos?.periodo || 12));
+  return total / periodo;
+}
+
+function buildBusinessRows() {
+  const scenarios = collectProductiveScenarios();
+  const selections = readBusinessSelections();
+  const rows = Object.values(BUSINESS_UNIT_CONFIG).map(cfg => {
+    const matchingScenarios = scenarios.filter(entry =>
+      entry.source === cfg.source &&
+      entry.outputs &&
+      entry.outputs.unidades &&
+      entry.outputs.unidades[cfg.key] &&
+      entry.outputs.unidades[cfg.key].activo
+    );
+    const selectedId = selections[cfg.key] || '';
+    const scenario = selectedId
+      ? matchingScenarios.find(entry => entry.id === selectedId)
+      : matchingScenarios[0];
+
+    if (!scenario) {
+      return {
+        ...cfg,
+        scenario: null,
+        state: 'vacio',
+        scenarioOptions: matchingScenarios
+      };
+    }
+
+    const unit = scenario.outputs.unidades[cfg.key] || {};
+    return {
+      ...cfg,
+      scenario,
+      scenarioOptions: matchingScenarios,
+      selectedScenarioId: selectedId || '',
+      unit,
+      state: unit.semaforo?.estado || 'vacio'
+    };
+  });
+
+  businessDashboardState = { rows, scenarios };
+  return rows;
+}
+
+function renderBusinessSummary(rows) {
+  const el = document.getElementById('business-summary-grid');
+  if (!el) return;
+  const rowsWithScenario = rows.filter(row => row.scenario);
+  const uniqueScenarios = [];
+  const seen = new Set();
+  rowsWithScenario.forEach(row => {
+    if (seen.has(row.scenario.uid)) return;
+    seen.add(row.scenario.uid);
+    uniqueScenarios.push(row.scenario);
+  });
+  const redCount = rows.filter(row => row.state === 'rojo').length;
+  const yellowCount = rows.filter(row => row.state === 'amarillo').length;
+  const monthlyMargin = uniqueScenarios.reduce((acc, scenario) => acc + getMonthlyScenarioMargin(scenario), 0);
+  const latest = uniqueScenarios
+    .map(item => item.updated_at)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b) - new Date(a))[0];
+
+  const cards = [
+    {
+      label: 'Escenarios leídos',
+      value: String(uniqueScenarios.length),
+      sub: rowsWithScenario.length ? `${rowsWithScenario.length} unidades con KPI activo` : 'Todavía no hay escenarios productivos disponibles'
+    },
+    {
+      label: 'Unidades en rojo',
+      value: String(redCount),
+      sub: yellowCount ? `${yellowCount} unidades en seguimiento` : 'Sin alertas amarillas en este corte'
+    },
+    {
+      label: 'Margen mensual visible',
+      value: fmtArs(monthlyMargin, 0),
+      sub: 'Suma deduplicada de escenarios únicos, llevada a equivalente mensual',
+      tone: monthlyMargin >= 0 ? 'is-positive' : 'is-negative'
+    },
+    {
+      label: 'Última actualización',
+      value: latest ? fmtScenarioDate(latest) : 'Sin datos',
+      sub: latest ? 'Último escenario guardado leído por este tablero' : 'Guardá un escenario en Tambo o Ganadería para activarlo'
+    }
+  ];
+
+  el.innerHTML = cards.map(card => `
+    <div class="business-summary-card">
+      <div class="business-summary-label">${card.label}</div>
+      <div class="business-summary-value ${card.tone || ''}">${card.value}</div>
+      <div class="business-summary-sub">${card.sub}</div>
+    </div>
+  `).join('');
+}
+
+function statusLabel(state) {
+  if (state === 'verde') return 'Defendible';
+  if (state === 'amarillo') return 'Seguimiento';
+  if (state === 'rojo') return 'En alerta';
+  return 'Sin escenario';
+}
+
+function scenarioMetaText(row) {
+  if (!row.scenario) return '';
+  return `${row.scenario.nombre} · ${row.scenario.source === 'tambo' ? 'Tambo' : 'Ganadería'} ${String(row.scenario.modo || 'ESTANDAR').toUpperCase()} · ${fmtScenarioDate(row.scenario.updated_at)}`;
+}
+
+function queueBusinessOpenRequest(row) {
+  if (!row?.scenario) return;
+  try {
+    localStorage.setItem('ctx_unidades_open_request', JSON.stringify({
+      source: row.source,
+      scenario_id: row.scenario.id,
+      cliente_id: currentCliente?.id || '',
+      user_id: currentUser?.id || '',
+      requested_at: new Date().toISOString()
+    }));
+  } catch (error) {
+    console.warn('No se pudo dejar la apertura pendiente del escenario', error);
+  }
+}
+
+function openBusinessSource(unitKey) {
+  const row = businessDashboardState.rows.find(entry => entry.key === unitKey);
+  if (!row) return;
+  if (row.scenario) queueBusinessOpenRequest(row);
+  const navId = row.openView === 'tambo' ? 'nav-tambo' : 'nav-ganaderia';
+  switchDashboard(row.openView, document.getElementById(navId));
+}
+
+function setBusinessScenario(unitKey, scenarioId) {
+  const next = readBusinessSelections();
+  if (scenarioId) next[unitKey] = scenarioId;
+  else delete next[unitKey];
+  writeBusinessSelections(next);
+  renderBusinessUnits();
+}
+
+function renderBusinessUnits() {
+  const grid = document.getElementById('business-units-grid');
+  const note = document.getElementById('business-dashboard-note');
+  if (!grid) return;
+  const rows = buildBusinessRows();
+  renderBusinessSummary(rows);
+  if (note) {
+    note.textContent = 'Lee el escenario más reciente por unidad. Si no aparece una fila, regrabá ese escenario con la versión nueva.';
+  }
+  if (!rows.some(row => row.scenario)) {
+    grid.innerHTML = `<div class="business-empty">Todavía no encontramos escenarios productivos con outputs listos para este cliente. Guardá uno en Tambo o Ganadería y este tablero se va a poblar automáticamente.</div>`;
+    return;
+  }
+
+  grid.innerHTML = rows.map(row => {
+    if (!row.scenario) {
+      return `
+        <div class="business-unit-card is-empty">
+          <div class="business-unit-top">
+            <div>
+              <div class="business-unit-title">${row.label}</div>
+              <div class="business-unit-empty-copy">${row.emptyCopy}</div>
+            </div>
+            <span class="business-status vacio">${statusLabel('vacio')}</span>
+          </div>
+          <div class="business-actions">
+            <div class="business-actions-copy">Esta unidad queda reservada en el tablero, pero todavía no tiene un escenario guardado para leer.</div>
+            <button class="business-btn secondary" type="button" onclick="openBusinessSource('${row.key}')">Abrir panel fuente</button>
+          </div>
+        </div>
+      `;
+    }
+
+    const principal = row.unit?.principal || null;
+    const secundarios = Array.isArray(row.unit?.secundarios) ? row.unit.secundarios.slice(0, 2) : [];
+    while (secundarios.length < 2) secundarios.push(null);
+
+    return `
+      <div class="business-unit-card">
+        <div class="business-unit-top">
+          <div>
+            <div class="business-unit-title">${row.label}</div>
+            <div class="business-unit-source">${scenarioMetaText(row)}</div>
+          </div>
+          <div style="display:grid;gap:10px;justify-items:end">
+            <span class="business-status ${row.state}">${statusLabel(row.state)}</span>
+            <div class="business-selector-wrap">
+              <div class="business-selector-label">Escenario fuente</div>
+              <select class="business-selector" onchange="setBusinessScenario('${row.key}', this.value)">
+                <option value="">Último guardado disponible</option>
+                ${row.scenarioOptions.map(option => `
+                  <option value="${option.id}" ${row.selectedScenarioId === option.id ? 'selected' : ''}>${option.nombre} · ${String(option.modo || 'ESTANDAR').toUpperCase()} · ${fmtScenarioDate(option.updated_at)}</option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="business-kpis">
+          <div class="business-kpi main">
+            <div class="business-kpi-label">${(principal?.clave || 'kpi_principal').replaceAll('_', ' ')}</div>
+            <div class="business-kpi-value">${fmtMetricValue(principal)}</div>
+            <div class="business-kpi-sub">KPI principal para leer el negocio en una sola línea.</div>
+          </div>
+          ${secundarios.map(metric => `
+            <div class="business-kpi">
+              <div class="business-kpi-label">${metric ? metric.clave.replaceAll('_', ' ') : 'sin dato'}</div>
+              <div class="business-kpi-value">${metric ? fmtMetricValue(metric) : '—'}</div>
+              <div class="business-kpi-sub">${metric ? 'Indicador explicativo del escenario fuente.' : 'Este escenario todavía no expone un KPI secundario en esta posición.'}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="business-actions">
+          <div class="business-actions-copy">Fuente: ${row.source === 'tambo' ? 'Dashboard Tambo' : 'Dashboard Ganadería'}. El botón abre el panel origen para revisar o recalibrar el escenario.</div>
+          <button class="business-btn" type="button" onclick="openBusinessSource('${row.key}')">Ver escenario fuente</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.addEventListener('storage', function(event) {
+  if (!event.key) return;
+  if (
+    event.key.startsWith('ctx_tambo_escenarios_') ||
+    event.key.startsWith('ctx_ganaderia_simulaciones_') ||
+    event.key.startsWith('ctx_kpis_links_')
+  ) {
+    renderBusinessUnits();
+  }
+});
+
+window.addEventListener('focus', function() {
+  if (currentUser && currentCliente) renderBusinessUnits();
+});
 
 // ── PRECIOS MAP ──
 function normalizeStr(s) {
@@ -1616,34 +1916,6 @@ function getPrecioMasCercano(producto) {
     if (diff < bestDiff) { bestDiff = diff; bestPrecio = precio; }
   });
   return bestPrecio;
-}
-
-function isExpiredMonthYear(month, year) {
-  if (!month || !year || isNaN(month) || isNaN(year)) return false;
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
-  return year < currentYear || (year === currentYear && month < currentMonth);
-}
-
-function parseVencKey(vencKey) {
-  if (!vencKey || vencKey === 'CONT') return null;
-  const parts = String(vencKey).split('_');
-  if (parts.length !== 2) return null;
-  const month = parseInt(parts[0], 10);
-  const year = parseInt(parts[1], 10);
-  if (isNaN(month) || isNaN(year)) return null;
-  return { month, year };
-}
-
-function isExpiredVencKey(vencKey) {
-  const parsed = parseVencKey(vencKey);
-  if (!parsed) return false;
-  return isExpiredMonthYear(parsed.month, parsed.year);
-}
-
-function isExpiredHistoricoPosicion(posicion) {
-  return isExpiredVencKey(posicion);
 }
 
 // ── TAG FILTER ──
@@ -1785,6 +2057,7 @@ function renderAll() {
   renderPrecios();
   // Tabla composición
   renderComposicion();
+  renderBusinessUnits();
   // Ops table
   renderOps();
 }
@@ -1839,7 +2112,6 @@ function renderTasas() {
       const mes = parseInt(parts[0]), anio = parseInt(parts[1]);
       return { key:v, mes, anio, precio:p, fecha: new Date(anio, mes-1, 1) };
     })
-    .filter(v => !isExpiredMonthYear(v.mes, v.anio))
     .sort((a,b) => a.fecha - b.fecha);
 
   if (!vencList.length) { el.innerHTML='<div class="empty-state">Sin vencimientos</div>'; return; }
@@ -2091,15 +2363,15 @@ function _drawDonut(container, items, level, parentChain, animate) {
   const bc  = document.getElementById('sunburst-breadcrumb');
   const btn = document.getElementById('sunburst-back');
   if (bc)  bc.textContent = crumbs.join(' › ');
-  if (btn) btn.style.visibility = level > 0 ? 'visible' : 'hidden';
+  if (btn) btn.style.display = level > 0 ? 'inline-block' : 'none';
 
   const total = items.reduce((s,d) => s+d.value, 0);
 
   // Fixed arc generators
-  const arcGen = d3.arc().innerRadius(SB_Ri).outerRadius(SB_R);
-  const arcBig = d3.arc().innerRadius(SB_Ri).outerRadius(SB_R + 7);
+  const arcGen = d3.arc().innerRadius(SB_Ri).outerRadius(SB_R).cornerRadius(3);
+  const arcBig = d3.arc().innerRadius(SB_Ri).outerRadius(SB_R + 7).cornerRadius(3);
 
-  const pie = d3.pie().value(d=>d.value).sort(null).padAngle(0.012);
+  const pie = d3.pie().value(d=>d.value).sort(null).padAngle(0.022);
   const pieData = pie(items);
 
   const CX = SB_CHART_SZ / 2;   // chart centre x
@@ -2823,7 +3095,7 @@ function actualizarFiltroPos() {
   // Get unique posiciones for selected product
   const posiciones = [...new Set(
     histData
-      .filter(r => (!prod || r.producto === prod) && !isExpiredHistoricoPosicion(r.posicion))
+      .filter(r => !prod || r.producto === prod)
       .map(r => r.posicion)
   )].sort();
   sel.innerHTML = '<option value="">Todos los vencimientos</option>'
@@ -2864,7 +3136,6 @@ function renderPosicionesChart() {
   let lineData = histData.filter(r => {
     if (prod && normalizeStr(r.producto) !== normalizeStr(prod)) return false;
     if (fromDate && r.fecha < fromDate) return false;
-    if (isExpiredHistoricoPosicion(r.posicion)) return false;
     // When product selected: use chosen posicion or CONT
     if (prod) {
       const useCont = !pos || pos === 'CONT';
@@ -3036,100 +3307,77 @@ function renderPosicionesChart() {
 // ══ FLUJO DE FONDOS ══
 let flujoChart = null;
 
-function getMesFlujo(valor) {
-  if (!valor) return '';
-  return String(valor).substring(0, 7);
-}
-
-function pushFlujo(items, mes, ingreso, egreso, detalle, op) {
-  if (!mes) return;
-  const ing = Number(ingreso) || 0;
-  const egr = Number(egreso) || 0;
-  if (ing === 0 && egr === 0) return;
-  items.push({ mes, ingreso: ing, egreso: egr, detalle, op });
-}
-
-function getPrecioCierreDerivado(op) {
-  // Para derivados usamos el precio de cierre/referencia disponible del vencimiento.
-  // Si no hay precio exacto, getPrecioMercado aplica el fallback vigente del dashboard.
-  return Number(getPrecioMercado(op.producto, op.vencimiento)) || 0;
-}
-
-function calcularFlujosPorOp(op) {
-  // Returns [{mes: 'YYYY-MM', ingreso: N, egreso: N, detalle: string}]
-  // Precio/FIX/Forward: flujo nocional al vencimiento.
-  // Futuro: resultado por diferencia al vencimiento.
-  // Opciones: prima en fecha de operación + ejercicio al vencimiento si aplica.
+function calcularFlujoPorOp(op) {
+  // Returns {mes: 'YYYY-MM', ingreso: N, egreso: N, detalle: string}
+  // Only for: Precio, FIX, Forward, Futuro, Call, Put
   const tipo = op.tipo;
   const lado = op.lado;
   const vol  = Number(op.volumen);
   const pOp  = Number(op.precio) || 0;
   const pEj  = Number(op.precio_ejercicio) || 0;
-  const pM   = getPrecioCierreDerivado(op);
+  const pM   = getPrecioMercado(op.producto, op.vencimiento) || 0;
 
-  if (!op.vencimiento || !vol) return [];
-  const items = [];
-  const vto = getMesFlujo(op.vencimiento);
-  const mesOperacion = getMesFlujo(op.fecha || op.created_at || op.updated_at) || vto;
+  if (!op.vencimiento) return null;
+  const vto  = op.vencimiento.substring(0, 7); // YYYY-MM
+  const hoy  = new Date().toISOString().substring(0, 7);
+  if (vto < hoy) return null; // solo meses futuros
+
+  let ingreso = 0, egreso = 0, detalle = '';
 
   if (['Precio','FIX','Forward'].includes(tipo)) {
     const monto = pOp * vol;
-    if (lado === 'Venta') pushFlujo(items, vto, monto, 0, 'Venta a $'+pOp.toFixed(0)+'/tn', op);
-    else                 pushFlujo(items, vto, 0, monto, 'Compra a $'+pOp.toFixed(0)+'/tn', op);
+    if (lado === 'Venta')  { ingreso = monto; detalle = 'Venta a $'+pOp.toFixed(0)+'/tn'; }
+    else                   { egreso  = monto; detalle = 'Compra a $'+pOp.toFixed(0)+'/tn'; }
   }
   else if (tipo === 'Futuro') {
-    if (!pM) return [];
-    const resultado = lado === 'Venta'
-      ? (pOp - pM) * vol
-      : (pM - pOp) * vol;
-    const detalle = 'Futuro '+lado+' $'+pOp.toFixed(0)+' | cierre $'+pM.toFixed(0);
-    if (resultado >= 0) pushFlujo(items, vto, resultado, 0, detalle, op);
-    else                pushFlujo(items, vto, 0, Math.abs(resultado), detalle, op);
+    let resultado;
+    if (lado === 'Venta')  resultado = (pOp - pM) * vol;
+    else                   resultado = (pM  - pOp) * vol;
+    if (resultado >= 0) { ingreso = resultado; }
+    else                { egreso  = Math.abs(resultado); }
+    detalle = 'Futuro '+lado+' $'+pOp.toFixed(0)+' | mdo $'+pM.toFixed(0);
   }
   else if (tipo === 'Put') {
     const prima = pOp * vol;
-    if (lado === 'Compra') pushFlujo(items, mesOperacion, 0, prima, 'Prima PUT compra $'+pOp.toFixed(0), op);
-    else                  pushFlujo(items, mesOperacion, prima, 0, 'Prima PUT venta $'+pOp.toFixed(0), op);
-
-    const valorIntrinseco = pM > 0 && pM <= pEj ? (pEj - pM) * vol : 0;
-    if (valorIntrinseco > 0) {
-      const detalle = 'Ejercicio PUT strike $'+pEj.toFixed(0)+' | cierre $'+pM.toFixed(0);
-      if (lado === 'Compra') pushFlujo(items, vto, valorIntrinseco, 0, detalle, op);
-      else                  pushFlujo(items, vto, 0, valorIntrinseco, detalle, op);
+    const ejercible = pM > 0 && pM <= pEj;
+    if (lado === 'Compra') {
+      egreso = prima; // prima siempre es egreso si compra
+      if (ejercible) {
+        const res = (pEj - pM) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'PUT Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    } else { // Venta
+      ingreso = prima;
+      if (ejercible) {
+        const res = (pM - pEj) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'PUT Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
     }
   }
   else if (tipo === 'Call') {
     const prima = pOp * vol;
-    if (lado === 'Compra') pushFlujo(items, mesOperacion, 0, prima, 'Prima CALL compra $'+pOp.toFixed(0), op);
-    else                  pushFlujo(items, mesOperacion, prima, 0, 'Prima CALL venta $'+pOp.toFixed(0), op);
-
-    const valorIntrinseco = pM > 0 && pM >= pEj ? (pM - pEj) * vol : 0;
-    if (valorIntrinseco > 0) {
-      const detalle = 'Ejercicio CALL strike $'+pEj.toFixed(0)+' | cierre $'+pM.toFixed(0);
-      if (lado === 'Compra') pushFlujo(items, vto, valorIntrinseco, 0, detalle, op);
-      else                  pushFlujo(items, vto, 0, valorIntrinseco, detalle, op);
+    const ejercible = pM > 0 && pM >= pEj;
+    if (lado === 'Compra') {
+      egreso = prima;
+      if (ejercible) {
+        const res = (pM - pEj) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'CALL Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    } else { // Venta
+      ingreso = prima;
+      if (ejercible) {
+        const res = (pEj - pM) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'CALL Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
     }
   }
-  // Plan de Siembra, Stock, PAF no generan flujo.
+  else return null; // Plan de Siembra, Stock, PAF no generan flujo
 
-  return items;
-}
-
-function calcularFlujoPorOp(op) {
-  const items = calcularFlujosPorOp(op);
-  return items[0] || null;
-}
-
-function buildMonthRange(minMes, maxMes) {
-  if (!minMes || !maxMes) return [];
-  const meses = [];
-  let cur = new Date(minMes + '-02T12:00:00');
-  const fin = new Date(maxMes + '-02T12:00:00');
-  while (cur <= fin) {
-    meses.push(cur.toISOString().substring(0,7));
-    cur.setMonth(cur.getMonth() + 1);
-  }
-  return meses;
+  return { mes: vto, ingreso, egreso, detalle, op };
 }
 
 function renderFlujo() {
@@ -3144,14 +3392,23 @@ function renderFlujo() {
   });
 
   // Calculate flows per op
-  const flujos = ops.flatMap(calcularFlujosPorOp).filter(Boolean);
+  const flujos = ops.map(calcularFlujoPorOp).filter(Boolean);
 
-  // El flujo debe reflejar la historia real del cliente: desde el primer
-  // vencimiento/fecha de operación con impacto hasta el último, incluso si ya venció.
-  const orderedMeses = flujos.map(f => f.mes).sort();
-  const minMes = orderedMeses[0];
-  const maxMes = orderedMeses[orderedMeses.length - 1];
-  const meses = buildMonthRange(minMes, maxMes);
+  // Group by month
+  const hoy = new Date().toISOString().substring(0,7);
+  const maxMes = allOps
+    .map(o => o.vencimiento ? o.vencimiento.substring(0,7) : '')
+    .filter(m => m >= hoy)
+    .sort().pop() || hoy;
+
+  // Build month range (string comparison avoids timezone issues)
+  const meses = [];
+  let cur = new Date(hoy + '-02');
+  const fin = new Date(maxMes + '-02');
+  while (cur.toISOString().substring(0,7) <= maxMes) {
+    meses.push(cur.toISOString().substring(0,7));
+    cur.setMonth(cur.getMonth() + 1);
+  }
 
   // Aggregate
   const porMes = {};
