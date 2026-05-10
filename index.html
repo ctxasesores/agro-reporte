@@ -1511,6 +1511,11 @@ const BUSINESS_UNIT_CONFIG = {
 };
 
 let businessDashboardState = { rows: [], scenarios: [] };
+let businessRemoteScenarioCache = [];
+let businessRemoteScenarioCacheKey = '';
+let businessRemoteSelectionsCache = {};
+let businessRemoteSelectionsCacheKey = '';
+let businessRemoteStatePromise = null;
 
 function getBusinessSelectionKey() {
   const userId = currentUser?.id || 'anonimo';
@@ -1531,6 +1536,15 @@ function readBusinessSelections() {
 
 function writeBusinessSelections(data) {
   localStorage.setItem(getBusinessSelectionKey(), JSON.stringify(data || {}));
+}
+
+function getBusinessRemoteCacheKey() {
+  return `${currentUser?.id || ''}::${currentCliente?.id || ''}`;
+}
+
+function getRemoteBusinessSelections() {
+  if (businessRemoteSelectionsCacheKey !== getBusinessRemoteCacheKey()) return {};
+  return businessRemoteSelectionsCache || {};
 }
 
 function fmtArs(value, decimals = 0) {
@@ -1575,7 +1589,131 @@ function readLocalArray(key) {
   }
 }
 
-function collectProductiveScenarios() {
+function numFromScenarioData(record, key, fallback = 0) {
+  const raw = record && record[key] !== undefined ? record[key] : fallback;
+  const normalized = typeof raw === 'string' ? raw.replace(',', '.') : raw;
+  const value = Number(normalized);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function pctFromScenarioData(record, key) {
+  return numFromScenarioData(record, key, 0) / 100;
+}
+
+function roundScenarioValue(value, decimals) {
+  const factor = Math.pow(10, decimals || 0);
+  return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function buildLegacyTamboOutputs(datos = {}) {
+  const rodeoTotal = Math.max(numFromScenarioData(datos, 'rodeo_total'), numFromScenarioData(datos, 'vacas_ordene'));
+  const vacasOrdene = Math.max(1, numFromScenarioData(datos, 'vacas_ordene'));
+  const litrosVaca = Math.max(0, numFromScenarioData(datos, 'litros_vaca') * (1 + pctFromScenarioData(datos, 'sys_litros_adj')));
+  const diasMes = Math.max(1, numFromScenarioData(datos, 'dias_mes'));
+  const superficie = Math.max(1, numFromScenarioData(datos, 'superficie'));
+  const consumoMs = Math.max(0.1, numFromScenarioData(datos, 'consumo_ms') * (1 + pctFromScenarioData(datos, 'sys_ms_adj')));
+  const sistema = datos.preset_sistema || 'pastoril';
+  const grasa = numFromScenarioData(datos, 'grasa');
+  const proteina = numFromScenarioData(datos, 'proteina');
+  const solidos = grasa + proteina;
+  const merma = pctFromScenarioData(datos, 'merma');
+  const litrosBrutosDia = vacasOrdene * litrosVaca;
+  const litrosVendiblesMes = litrosBrutosDia * diasMes * (1 - merma);
+  const litrosVendiblesAnio = litrosVendiblesMes * 12;
+  const litrosHaAnio = litrosVendiblesAnio / superficie;
+  const carga = vacasOrdene / superficie;
+  const msDia = vacasOrdene * consumoMs;
+  const eficiencia = litrosBrutosDia / msDia;
+  const solidosKgMes = litrosVendiblesMes * solidos / 100;
+  const bonifSolidos = numFromScenarioData(datos, 'bonif_solidos');
+  const bonifCalidad = numFromScenarioData(datos, 'bonif_calidad');
+  let qualityAdj = 0;
+  const pctOrdene = rodeoTotal > 0 ? vacasOrdene / rodeoTotal * 100 : 0;
+  if (solidos >= 7.15) qualityAdj += 0.015;
+  if (solidos < 6.85) qualityAdj -= 0.02;
+  if (pctOrdene < 76) qualityAdj -= 0.01;
+
+  const precioBase = numFromScenarioData(datos, 'precio_base');
+  const precioFinal = precioBase * (1 + bonifSolidos + bonifCalidad + qualityAdj);
+  const estabuladoFactor = sistema === 'compost_barn' ? 1.04 : sistema === 'free_stall' ? 1.07 : sistema === 'mixto' ? 1.02 : 1;
+  const costos = {
+    alimentacion: numFromScenarioData(datos, 'c_alim') * estabuladoFactor * (1 + pctFromScenarioData(datos, 'sys_alim_adj')),
+    personal: numFromScenarioData(datos, 'c_personal') * (sistema === 'pastoril' ? 1 : 1.03) * (1 + pctFromScenarioData(datos, 'sys_personal_adj')),
+    sanidad: numFromScenarioData(datos, 'c_sanidad') * (1 + pctFromScenarioData(datos, 'sys_sanidad_adj')),
+    reproduccion: numFromScenarioData(datos, 'c_repro') * (1 + pctFromScenarioData(datos, 'sys_sanidad_adj')),
+    energia: numFromScenarioData(datos, 'c_energia') * estabuladoFactor * (1 + pctFromScenarioData(datos, 'sys_energia_adj')),
+    estructura: numFromScenarioData(datos, 'c_estructura') * estabuladoFactor * (1 + pctFromScenarioData(datos, 'sys_estructura_adj')),
+    recria: numFromScenarioData(datos, 'c_recria'),
+    impuestos: numFromScenarioData(datos, 'c_impuestos') + numFromScenarioData(datos, 'sys_cama_efluentes')
+  };
+  const costoLitro = Object.values(costos).reduce((acc, value) => acc + (Number(value) || 0), 0);
+  const ingresoMes = litrosVendiblesMes * precioFinal;
+  const egresoMes = litrosVendiblesMes * costoLitro;
+  const margenMes = ingresoMes - egresoMes;
+  const margenLitro = precioFinal - costoLitro;
+  const solidsKgHaAnio = superficie > 0 ? (solidosKgMes * 12) / superficie : 0;
+  const marginState = margenLitro >= 25 ? 'verde' : margenLitro >= 0 ? 'amarillo' : 'rojo';
+
+  return {
+    version: 'v1-legacy',
+    modulo: 'tambo',
+    actividades: { leche: true },
+    resumen: {
+      ingreso_mes: roundScenarioValue(ingresoMes, 0),
+      egreso_mes: roundScenarioValue(egresoMes, 0),
+      margen_mes: roundScenarioValue(margenMes, 0),
+      margen_anio: roundScenarioValue(margenMes * 12, 0)
+    },
+    unidades: {
+      leche: {
+        activo: true,
+        semaforo: { estado: marginState, regla: 'margen_litro' },
+        principal: {
+          clave: 'margen_litro',
+          valor: roundScenarioValue(margenLitro, 2),
+          unidad: '$/L'
+        },
+        secundarios: [
+          {
+            clave: 'kg_solidos_ha_anio',
+            valor: roundScenarioValue(solidsKgHaAnio, 1),
+            unidad: 'kg/ha/anio'
+          },
+          {
+            clave: 'eficiencia_litros_kg_ms',
+            valor: roundScenarioValue(eficiencia, 2),
+            unidad: 'L/kg MS'
+          }
+        ],
+        kpis: {
+          precio_final_litro: roundScenarioValue(precioFinal, 2),
+          costo_litro: roundScenarioValue(costoLitro, 2),
+          margen_litro: roundScenarioValue(margenLitro, 2),
+          litros_vaca_dia: roundScenarioValue(litrosVaca, 2),
+          litros_ha_anio: roundScenarioValue(litrosHaAnio, 0),
+          solidos_pct: roundScenarioValue(solidos, 2),
+          solidos_kg_mes: roundScenarioValue(solidosKgMes, 0),
+          solidos_kg_ha_anio: roundScenarioValue(solidsKgHaAnio, 1),
+          eficiencia_litros_kg_ms: roundScenarioValue(eficiencia, 2),
+          carga_vacas_ha: roundScenarioValue(carga, 2),
+          vacas_ordene: roundScenarioValue(vacasOrdene, 0)
+        }
+      }
+    }
+  };
+}
+
+function normalizeScenarioOutputs(source, item) {
+  if (item?.outputs && typeof item.outputs === 'object' && Object.keys(item.outputs).length) {
+    return item.outputs;
+  }
+  if (source === 'tambo' && item?.datos && typeof item.datos === 'object') {
+    return buildLegacyTamboOutputs(item.datos);
+  }
+  return null;
+}
+
+function collectLocalProductiveScenarios() {
   if (!currentUser?.id || !currentCliente?.id) return [];
   const items = [];
   const seen = new Set();
@@ -1595,13 +1733,15 @@ function collectProductiveScenarios() {
       const scenarioClienteId = item.cliente_id || '';
       if (scenarioUserId && scenarioUserId !== currentUser.id) return;
       if (scenarioClienteId && scenarioClienteId !== currentCliente.id) return;
-      if (!item.outputs || typeof item.outputs !== 'object') return;
+      const normalizedOutputs = normalizeScenarioOutputs(match.source, item);
+      if (!normalizedOutputs || typeof normalizedOutputs !== 'object') return;
       const uniqueId = `${match.source}::${item.id || ''}::${item.updated_at || ''}`;
       if (seen.has(uniqueId)) return;
       seen.add(uniqueId);
       items.push({
         uid: uniqueId,
         id: item.id || '',
+        scenario_db_id: item.remote_id || '',
         source: match.source,
         modo: item.modo || modeFromKey,
         nombre: item.nombre || item.nombre_escenario || item.campania || 'Escenario guardado',
@@ -1611,12 +1751,129 @@ function collectProductiveScenarios() {
         updated_at: item.updated_at || item.created_at || '',
         datos: item.datos || {},
         actividades: item.actividades || {},
-        outputs: item.outputs || {}
+        outputs: normalizedOutputs
       });
     });
   }
 
   return items.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+}
+
+function mapRemoteScenarioToBusinessEntry(row) {
+  if (!row || typeof row !== 'object') return null;
+  const source = row.modulo === 'tambo' ? 'tambo' : 'ganaderia';
+  const normalizedOutputs = normalizeScenarioOutputs(source, {
+    datos: row.datos || {},
+    outputs: row.outputs || {}
+  });
+  if (!normalizedOutputs) return null;
+  return {
+    uid: `db::${row.id}`,
+    id: row.origen_local_id || row.id,
+    scenario_db_id: row.id,
+    source,
+    modo: row.modo || 'ESTANDAR',
+    nombre: row.nombre_escenario || 'Escenario guardado',
+    cliente_id: row.cliente_id || currentCliente?.id || '',
+    cliente_nombre: currentCliente?.nombre_empresa || '',
+    user_id: row.user_id || currentUser?.id || '',
+    updated_at: row.updated_at || row.created_at || '',
+    datos: row.datos || {},
+    actividades: row.actividades || {},
+    outputs: normalizedOutputs
+  };
+}
+
+function mergeProductiveScenarios(localItems, remoteItems) {
+  const merged = new Map();
+  (localItems || []).forEach(item => {
+    if (!item) return;
+    merged.set(`${item.source}::${item.id}`, item);
+  });
+  (remoteItems || []).forEach(item => {
+    if (!item) return;
+    const key = `${item.source}::${item.id}`;
+    const prev = merged.get(key);
+    merged.set(key, {
+      ...prev,
+      ...item,
+      datos: item.datos || prev?.datos || {},
+      actividades: item.actividades || prev?.actividades || {},
+      outputs: item.outputs || prev?.outputs || {}
+    });
+  });
+  return Array.from(merged.values()).sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+}
+
+async function fetchRemoteProductiveScenarios() {
+  if (!sb || !currentUser?.id || !currentCliente?.id) return [];
+  const { data, error } = await sb
+    .from('escenarios_productivos')
+    .select('id,user_id,cliente_id,modulo,modo,nombre_escenario,campania,actividades,datos,outputs,origen_local_id,updated_at,created_at,activo')
+    .eq('user_id', currentUser.id)
+    .eq('cliente_id', currentCliente.id)
+    .eq('activo', true)
+    .in('modulo', ['tambo', 'cria', 'recria', 'invernada', 'ganaderia_integral'])
+    .order('updated_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapRemoteScenarioToBusinessEntry).filter(Boolean);
+}
+
+async function fetchRemoteBusinessSelections() {
+  if (!sb || !currentUser?.id || !currentCliente?.id) return {};
+  const { data, error } = await sb
+    .from('dashboard_producto_links')
+    .select('producto_clave, escenario_id, config')
+    .eq('user_id', currentUser.id)
+    .eq('cliente_id', currentCliente.id)
+    .eq('activo', true);
+  if (error) throw error;
+  return (data || []).reduce((acc, item) => {
+    if (!item?.producto_clave) return acc;
+    acc[item.producto_clave] = {
+      scenario_db_id: item.escenario_id || '',
+      scenario_ref_id: item.config && typeof item.config === 'object' ? (item.config.scenario_ref_id || '') : ''
+    };
+    return acc;
+  }, {});
+}
+
+function refreshBusinessRemoteState() {
+  const cacheKey = getBusinessRemoteCacheKey();
+  if (!cacheKey || !currentUser?.id || !currentCliente?.id || !sb) return Promise.resolve();
+  if (
+    businessRemoteScenarioCacheKey === cacheKey &&
+    businessRemoteSelectionsCacheKey === cacheKey &&
+    businessRemoteStatePromise === null
+  ) {
+    return Promise.resolve();
+  }
+  if (businessRemoteStatePromise) return businessRemoteStatePromise;
+  businessRemoteStatePromise = Promise.all([
+    fetchRemoteProductiveScenarios(),
+    fetchRemoteBusinessSelections()
+  ]).then(([scenarios, selections]) => {
+    businessRemoteScenarioCache = scenarios || [];
+    businessRemoteScenarioCacheKey = cacheKey;
+    businessRemoteSelectionsCache = selections || {};
+    businessRemoteSelectionsCacheKey = cacheKey;
+  }).catch(error => {
+    console.warn('No se pudo sincronizar KPIs con Supabase', error);
+    businessRemoteScenarioCache = [];
+    businessRemoteScenarioCacheKey = '';
+    businessRemoteSelectionsCache = {};
+    businessRemoteSelectionsCacheKey = '';
+  }).finally(() => {
+    businessRemoteStatePromise = null;
+    renderBusinessUnits(true);
+  });
+  return businessRemoteStatePromise;
+}
+
+function collectProductiveScenarios() {
+  const localItems = collectLocalProductiveScenarios();
+  const remoteItems = businessRemoteScenarioCacheKey === getBusinessRemoteCacheKey() ? businessRemoteScenarioCache : [];
+  return mergeProductiveScenarios(localItems, remoteItems);
 }
 
 function getMonthlyScenarioMargin(scenario) {
@@ -1632,6 +1889,7 @@ function getMonthlyScenarioMargin(scenario) {
 function buildBusinessRows() {
   const scenarios = collectProductiveScenarios();
   const selections = readBusinessSelections();
+  const remoteSelections = getRemoteBusinessSelections();
   const rows = Object.values(BUSINESS_UNIT_CONFIG).map(cfg => {
     const matchingScenarios = scenarios.filter(entry =>
       entry.source === cfg.source &&
@@ -1641,9 +1899,18 @@ function buildBusinessRows() {
       entry.outputs.unidades[cfg.key].activo
     );
     const selectedId = selections[cfg.key] || '';
-    const scenario = selectedId
-      ? matchingScenarios.find(entry => entry.id === selectedId)
-      : matchingScenarios[0];
+    const remoteSelection = remoteSelections[cfg.key] || null;
+    let scenario = null;
+    if (remoteSelection?.scenario_db_id) {
+      scenario = matchingScenarios.find(entry => entry.scenario_db_id === remoteSelection.scenario_db_id) || null;
+    }
+    if (!scenario && selectedId) {
+      scenario = matchingScenarios.find(entry => entry.id === selectedId) || null;
+    }
+    if (!scenario && remoteSelection?.scenario_ref_id) {
+      scenario = matchingScenarios.find(entry => entry.id === remoteSelection.scenario_ref_id) || null;
+    }
+    if (!scenario) scenario = matchingScenarios[0];
 
     if (!scenario) {
       return {
@@ -1659,7 +1926,7 @@ function buildBusinessRows() {
       ...cfg,
       scenario,
       scenarioOptions: matchingScenarios,
-      selectedScenarioId: selectedId || '',
+      selectedScenarioId: selectedId || remoteSelection?.scenario_ref_id || scenario.id || '',
       unit,
       state: unit.semaforo?.estado || 'vacio'
     };
@@ -1756,25 +2023,72 @@ function openBusinessSource(unitKey) {
   switchDashboard(row.openView, document.getElementById(navId));
 }
 
+function getBusinessUnitPriority(unitKey) {
+  const order = ['leche', 'cria', 'recria', 'invernada'];
+  const idx = order.indexOf(unitKey);
+  return idx === -1 ? 99 : (idx + 1) * 10;
+}
+
+async function persistBusinessSelectionRemote(unitKey, scenarioId) {
+  if (!sb || !currentUser?.id || !currentCliente?.id) return;
+  const cfg = BUSINESS_UNIT_CONFIG[unitKey];
+  if (!cfg) return;
+  const scenario = businessDashboardState.scenarios.find(entry => entry.id === scenarioId && entry.source === cfg.source)
+    || businessDashboardState.rows.flatMap(row => row.scenarioOptions || []).find(entry => entry.id === scenarioId && entry.source === cfg.source)
+    || null;
+  const scenarioDbId = scenario?.scenario_db_id || null;
+  try {
+    const payload = {
+      user_id: currentUser.id,
+      cliente_id: currentCliente.id,
+      producto_clave: unitKey,
+      nombre_visible: cfg.label,
+      origen_producto: 'productivo',
+      modulo_fuente: scenario?.outputs?.modulo || (cfg.source === 'tambo' ? 'tambo' : unitKey),
+      escenario_id: scenarioDbId,
+      prioridad: getBusinessUnitPriority(unitKey),
+      activo: true,
+      config: { scenario_ref_id: scenario?.id || scenarioId || '' }
+    };
+    const { error } = await sb.from('dashboard_producto_links').upsert(payload, {
+      onConflict: 'cliente_id,producto_clave'
+    });
+    if (error) throw error;
+    const nextRemote = {
+      ...getRemoteBusinessSelections(),
+      [unitKey]: {
+        scenario_db_id: scenarioDbId || '',
+        scenario_ref_id: scenario?.id || scenarioId || ''
+      }
+    };
+    businessRemoteSelectionsCache = nextRemote;
+    businessRemoteSelectionsCacheKey = getBusinessRemoteCacheKey();
+  } catch (error) {
+    console.warn('No se pudo guardar el vínculo KPI en Supabase', error);
+  }
+}
+
 function setBusinessScenario(unitKey, scenarioId) {
   const next = readBusinessSelections();
   if (scenarioId) next[unitKey] = scenarioId;
   else delete next[unitKey];
   writeBusinessSelections(next);
   renderBusinessUnits();
+  void persistBusinessSelectionRemote(unitKey, scenarioId);
 }
 
-function renderBusinessUnits() {
+function renderBusinessUnits(skipRemoteRefresh) {
   const grid = document.getElementById('business-units-grid');
   const note = document.getElementById('business-dashboard-note');
   if (!grid) return;
+  if (!skipRemoteRefresh) void refreshBusinessRemoteState();
   const rows = buildBusinessRows();
   renderBusinessSummary(rows);
   if (note) {
-    note.textContent = 'Lee el escenario más reciente por unidad. Si no aparece una fila, regrabá ese escenario con la versión nueva.';
+    note.textContent = 'Lee los escenarios productivos guardados para este cliente. Si una fila sigue vacía, el escenario todavía no se migró o nunca fue guardado con este usuario.';
   }
   if (!rows.some(row => row.scenario)) {
-    grid.innerHTML = `<div class="business-empty">Todavía no encontramos escenarios productivos con outputs listos para este cliente. Guardá uno en Tambo o Ganadería y este tablero se va a poblar automáticamente.</div>`;
+    grid.innerHTML = `<div class="business-empty">Todavía no encontramos escenarios productivos listos para este cliente. Si ya existen en Tambo o Ganadería, esta vista los toma desde Supabase y también rescata escenarios locales compatibles.</div>`;
     return;
   }
 
