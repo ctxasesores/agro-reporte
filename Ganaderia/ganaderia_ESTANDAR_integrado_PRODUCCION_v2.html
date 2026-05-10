@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ── RESET & BASE ── */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -495,10 +496,15 @@ var currentAnalisisId = null;
 var currentClienteId = '';
 var currentClienteNombre = 'Cliente';
 var currentUserId = 'anonimo';
+var scenarioSb = null;
+var scenarioSyncPromise = null;
+const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
+const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 
 // ── INICIALIZACIÓN ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function(){
   initShellContext();
+  await syncAnalisisFromSupabase();
   consumePendingOpenRequest();
 });
 
@@ -612,6 +618,35 @@ function getStorageKey(){
   return 'ctx_ganaderia_simulaciones_' + REPORT_MODE + '_' + currentUserId;
 }
 
+function initScenarioSupabase(){
+  if(!window.supabase) return null;
+  if(!scenarioSb) scenarioSb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  return scenarioSb;
+}
+
+async function getScenarioSessionUser(){
+  var client = initScenarioSupabase();
+  if(!client) return null;
+  var res = await client.auth.getSession();
+  return res && res.data && res.data.session ? res.data.session.user : null;
+}
+
+function mergeScenarioCollections(localItems, remoteItems){
+  var map = new Map();
+  (localItems || []).forEach(function(item){
+    if(!item || !item.id) return;
+    map.set(String(item.id), item);
+  });
+  (remoteItems || []).forEach(function(item){
+    if(!item || !item.id) return;
+    var prev = map.get(String(item.id));
+    map.set(String(item.id), Object.assign({}, prev || {}, item));
+  });
+  return Array.from(map.values()).sort(function(a, b){
+    return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+  });
+}
+
 function readSavedAnalisis(){
   try{
     var raw = localStorage.getItem(getStorageKey());
@@ -625,6 +660,173 @@ function readSavedAnalisis(){
 
 function writeSavedAnalisis(items){
   localStorage.setItem(getStorageKey(), JSON.stringify(items));
+}
+
+function getScenarioModuleKeyFromItem(item){
+  if(item && item.outputs && item.outputs.modulo) return item.outputs.modulo;
+  var acts = item && item.actividades ? item.actividades : {};
+  var active = [
+    acts.cria ? 'cria' : null,
+    acts.recria ? 'recria' : null,
+    acts.inv ? 'invernada' : null
+  ].filter(Boolean);
+  return active.length > 1 ? 'ganaderia_integral' : (active[0] || 'ganaderia_integral');
+}
+
+function mapRemoteScenarioToLocal(row){
+  if(!row) return null;
+  return {
+    id: row.origen_local_id || row.id,
+    remote_id: row.id,
+    cliente_id: row.cliente_id || currentClienteId,
+    cliente_nombre: currentClienteNombre,
+    usuario_id: row.user_id || currentUserId,
+    modo: row.modo || REPORT_MODE,
+    campania: row.campania || row.nombre_escenario || 'Escenario base',
+    actividades: row.actividades || {},
+    datos: row.datos || {},
+    escenarios: row.escenarios || {},
+    outputs: row.outputs || {},
+    updated_at: row.updated_at || row.created_at || new Date().toISOString()
+  };
+}
+
+function buildRemoteScenarioPayload(item){
+  return {
+    user_id: item.usuario_id || currentUserId,
+    cliente_id: item.cliente_id || currentClienteId,
+    modulo: getScenarioModuleKeyFromItem(item),
+    modo: item.modo || REPORT_MODE,
+    nombre_escenario: item.nombre || item.nombre_simulacion || item.campania || 'Escenario ganadero',
+    campania: item.campania || null,
+    producto_contexto: null,
+    actividades: item.actividades || {},
+    datos: item.datos || {},
+    escenarios: item.escenarios || {},
+    outputs: item.outputs || {},
+    fuente: 'dashboard',
+    origen_local_id: item.id || null,
+    activo: true
+  };
+}
+
+async function fetchRemoteAnalisis(){
+  var client = initScenarioSupabase();
+  if(!client || !currentClienteId) return [];
+  var user = await getScenarioSessionUser();
+  if(!user || !user.id) return [];
+  var res = await client
+    .from('escenarios_productivos')
+    .select('id,user_id,cliente_id,modulo,modo,nombre_escenario,campania,actividades,datos,escenarios,outputs,origen_local_id,updated_at,created_at,activo')
+    .eq('user_id', user.id)
+    .eq('cliente_id', currentClienteId)
+    .in('modulo', ['cria', 'recria', 'invernada', 'ganaderia_integral'])
+    .eq('activo', true)
+    .order('updated_at', { ascending: false });
+  if(res.error) throw res.error;
+  return (res.data || []).map(mapRemoteScenarioToLocal).filter(Boolean);
+}
+
+async function upsertRemoteAnalisis(item){
+  var client = initScenarioSupabase();
+  if(!client || !currentClienteId) return null;
+  var user = await getScenarioSessionUser();
+  if(!user || !user.id) return null;
+  var payload = buildRemoteScenarioPayload(item);
+  payload.user_id = user.id;
+  var remoteId = item.remote_id || '';
+
+  if(!remoteId && item.id){
+    var existingByOrigin = await client
+      .from('escenarios_productivos')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('cliente_id', currentClienteId)
+      .eq('origen_local_id', item.id)
+      .maybeSingle();
+    if(existingByOrigin.data && existingByOrigin.data.id) remoteId = existingByOrigin.data.id;
+  }
+
+  if(!remoteId){
+    var existingByName = await client
+      .from('escenarios_productivos')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('cliente_id', currentClienteId)
+      .eq('modulo', payload.modulo)
+      .eq('modo', payload.modo)
+      .eq('nombre_escenario', payload.nombre_escenario)
+      .maybeSingle();
+    if(existingByName.data && existingByName.data.id) remoteId = existingByName.data.id;
+  }
+
+  if(remoteId){
+    var updateRes = await client
+      .from('escenarios_productivos')
+      .update(payload)
+      .eq('id', remoteId)
+      .select('id')
+      .single();
+    if(updateRes.error) throw updateRes.error;
+    return updateRes.data && updateRes.data.id ? updateRes.data.id : remoteId;
+  }
+
+  var insertRes = await client
+    .from('escenarios_productivos')
+    .insert(payload)
+    .select('id')
+    .single();
+  if(insertRes.error) throw insertRes.error;
+  return insertRes.data && insertRes.data.id ? insertRes.data.id : null;
+}
+
+async function deleteRemoteAnalisis(item){
+  var client = initScenarioSupabase();
+  if(!client || !currentClienteId || !item) return;
+  var user = await getScenarioSessionUser();
+  if(!user || !user.id) return;
+  var remoteId = item.remote_id || '';
+  if(!remoteId && item.id){
+    var lookup = await client
+      .from('escenarios_productivos')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('cliente_id', currentClienteId)
+      .eq('origen_local_id', item.id)
+      .maybeSingle();
+    if(lookup.data && lookup.data.id) remoteId = lookup.data.id;
+  }
+  if(!remoteId) return;
+  var res = await client.from('escenarios_productivos').delete().eq('id', remoteId);
+  if(res.error) throw res.error;
+}
+
+async function syncAnalisisFromSupabase(force){
+  if(scenarioSyncPromise && !force) return scenarioSyncPromise;
+  scenarioSyncPromise = (async function(){
+    var localItems = readSavedAnalisis();
+    try{
+      for(var i = 0; i < localItems.length; i += 1){
+        var localItem = localItems[i];
+        if(!localItem || !localItem.id) continue;
+        var remoteId = await upsertRemoteAnalisis(localItem);
+        if(remoteId) localItem.remote_id = remoteId;
+      }
+      writeSavedAnalisis(localItems);
+      var remoteItems = await fetchRemoteAnalisis();
+      var merged = mergeScenarioCollections(localItems, remoteItems);
+      writeSavedAnalisis(merged);
+      return merged;
+    }catch(error){
+      console.warn('Ganadería estándar sin sincronización Supabase, sigo con almacenamiento local', error);
+      return localItems;
+    }
+  })();
+  try{
+    return await scenarioSyncPromise;
+  }finally{
+    scenarioSyncPromise = null;
+  }
 }
 
 function consumePendingOpenRequest(){
@@ -760,8 +962,11 @@ async function guardar(){
   if(!st.cria&&!st.recria&&!st.inv){ setStatus('Activá al menos una actividad', 'err'); return; }
 
   setStatus('Guardando...', '');
+  var saved = readSavedAnalisis();
+  var existing = saved.find(function(item){ return item.id === currentAnalisisId; }) || null;
   var payload = {
     id: currentAnalisisId || ('sim_' + Date.now()),
+    remote_id: existing && existing.remote_id ? existing.remote_id : '',
     cliente_id: clienteId,
     cliente_nombre: currentClienteNombre,
     usuario_id: currentUserId,
@@ -775,7 +980,6 @@ async function guardar(){
   };
 
   try{
-    var saved = readSavedAnalisis();
     var idx = saved.findIndex(function(item){ return item.id === payload.id; });
     if(idx >= 0) saved[idx] = payload;
     else saved.unshift(payload);
@@ -785,6 +989,19 @@ async function guardar(){
     setStatus('Guardado correctamente', 'ok');
     var last=document.getElementById('last_saved');
     if(last) last.textContent = 'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    try{
+      var remoteId = await upsertRemoteAnalisis(payload);
+      if(remoteId){
+        var synced = readSavedAnalisis().map(function(item){
+          if(item.id === payload.id) item.remote_id = remoteId;
+          return item;
+        });
+        writeSavedAnalisis(synced);
+      }
+    }catch(syncError){
+      console.warn('Guardado remoto de ganadería estándar pendiente', syncError);
+      setStatus('Guardado localmente. La copia en Supabase quedó pendiente.', 'ok');
+    }
     setTimeout(function(){ setStatus('',''); }, 3000);
   }catch(e){
     setStatus('Error al guardar: '+e.message, 'err');
@@ -803,7 +1020,10 @@ async function cargarHistorial(){
   listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px">Cargando...</div>';
 
   try{
-    var data = readSavedAnalisis()
+    var data = await syncAnalisisFromSupabase()
+      .then(function(items){ return items; })
+      .catch(function(){ return readSavedAnalisis(); });
+    data = data
       .filter(function(item){ return !currentClienteId || item.cliente_id === currentClienteId; })
       .sort(function(a,b){ return new Date(b.updated_at) - new Date(a.updated_at); });
     if(!data||!data.length){
@@ -866,9 +1086,16 @@ async function eliminarAnalisis(id, btn){
   if(!confirm('¿Borrar este escenario? No se puede deshacer.')) return;
   btn.disabled = true;
   try{
-    var next = readSavedAnalisis().filter(function(item){ return item.id !== id; });
+    var currentItems = readSavedAnalisis();
+    var target = currentItems.find(function(item){ return item.id === id; }) || null;
+    var next = currentItems.filter(function(item){ return item.id !== id; });
     writeSavedAnalisis(next);
     if(currentAnalisisId === id){ currentAnalisisId = null; nuevoAnalisis(); }
+    try{
+      await deleteRemoteAnalisis(target);
+    }catch(syncError){
+      console.warn('Borrado remoto de ganadería estándar pendiente', syncError);
+    }
     await cargarHistorial();
   }catch(e){
     setStatus('Error al eliminar: '+e.message, 'err');
