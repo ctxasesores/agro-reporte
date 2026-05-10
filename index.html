@@ -2187,6 +2187,25 @@ function buildPreciosMap(rows) {
   });
 }
 
+function parsePrecioVencimiento(vencimiento) {
+  if (!vencimiento || vencimiento === 'CONT') return null;
+  const parts = String(vencimiento).split('_');
+  if (parts.length !== 2) return null;
+  const mes = parseInt(parts[0], 10);
+  const anio = parseInt(parts[1], 10);
+  if (!mes || !anio || mes < 1 || mes > 12) return null;
+  return { mes, anio, fecha: new Date(anio, mes - 1, 1) };
+}
+
+function isPrecioVencido(vencimiento) {
+  const parsed = parsePrecioVencimiento(vencimiento);
+  if (!parsed) return false;
+  const hoy = new Date();
+  const mesActual = hoy.getMonth() + 1;
+  const anioActual = hoy.getFullYear();
+  return parsed.anio < anioActual || (parsed.anio === anioActual && parsed.mes < mesActual);
+}
+
 // Obtener precio de mercado para un producto y fecha de vencimiento
 function getPrecioMercado(producto, fechaVto) {
   producto = normalizeStr(producto);
@@ -2202,34 +2221,33 @@ function getPrecioMercado(producto, fechaVto) {
 
   if (vencido) {
     if (['Soja','Maiz','Trigo'].includes(producto)) {
-      return precios[contKey] || precios[exactKey] || getPrecioMasCercano(producto) || null;
+      return precios[contKey] || getPrecioMasCercano(producto) || null;
     }
-    return precios[exactKey] || getPrecioMasCercano(producto) || null;
+    return getPrecioMasCercano(producto) || null;
   }
   return precios[exactKey] || precios[contKey] || getPrecioMasCercano(producto) || null;
 }
 
 function getPrecioMasCercano(producto) {
   // Find closest price in precios_mercado for this product
-  // Returns price from key with closest month-year to today
+  // Returns price from the closest non-expired month-year to today.
   const hoy = new Date();
   const prefijo = normalizeStr(producto) + '_';
   let bestDiff = Infinity;
   let bestPrecio = null;
+  let contPrecio = null;
   Object.entries(precios).forEach(([key, precio]) => {
     if (!key.startsWith(prefijo)) return;
     const part = key.replace(prefijo, '');
-    if (part === 'CONT') { bestPrecio = bestPrecio || precio; return; }
-    const cols = part.split('_');
-    if (cols.length !== 2) return;
-    const mes = parseInt(cols[0]);
-    const anio = parseInt(cols[1]);
-    if (isNaN(mes) || isNaN(anio)) return;
-    const fecha = new Date(anio, mes - 1, 1);
+    if (part === 'CONT') { contPrecio = contPrecio ?? precio; return; }
+    if (isPrecioVencido(part)) return;
+    const parsed = parsePrecioVencimiento(part);
+    if (!parsed) return;
+    const fecha = parsed.fecha;
     const diff = Math.abs(fecha - hoy);
     if (diff < bestDiff) { bestDiff = diff; bestPrecio = precio; }
   });
-  return bestPrecio;
+  return bestPrecio ?? contPrecio;
 }
 
 // ── TAG FILTER ──
@@ -2422,10 +2440,11 @@ function renderTasas() {
   const vencList = Object.entries(vencMap)
     .filter(([v]) => v !== 'CONT')
     .map(([v, p]) => {
-      const parts = v.split('_');
-      const mes = parseInt(parts[0]), anio = parseInt(parts[1]);
-      return { key:v, mes, anio, precio:p, fecha: new Date(anio, mes-1, 1) };
+      const parsed = parsePrecioVencimiento(v);
+      if (!parsed || isPrecioVencido(v)) return null;
+      return { key:v, mes: parsed.mes, anio: parsed.anio, precio:p, fecha: parsed.fecha };
     })
+    .filter(Boolean)
     .sort((a,b) => a.fecha - b.fecha);
 
   if (!vencList.length) { el.innerHTML='<div class="empty-state">Sin vencimientos</div>'; return; }
@@ -3621,77 +3640,94 @@ function renderPosicionesChart() {
 // ══ FLUJO DE FONDOS ══
 let flujoChart = null;
 
-function calcularFlujoPorOp(op) {
-  // Returns {mes: 'YYYY-MM', ingreso: N, egreso: N, detalle: string}
-  // Only for: Precio, FIX, Forward, Futuro, Call, Put
+function getMesFlujo(valor) {
+  if (!valor) return '';
+  return String(valor).substring(0, 7);
+}
+
+function pushFlujo(items, mes, ingreso, egreso, detalle, op) {
+  if (!mes) return;
+  const ing = Number(ingreso) || 0;
+  const egr = Number(egreso) || 0;
+  if (ing === 0 && egr === 0) return;
+  items.push({ mes, ingreso: ing, egreso: egr, detalle, op });
+}
+
+function getPrecioCierreDerivado(op) {
+  return Number(getPrecioMercado(op.producto, op.vencimiento)) || 0;
+}
+
+function calcularFlujosPorOp(op) {
+  // Precio/FIX/Forward: flujo nocional al vencimiento.
+  // Futuro: resultado por diferencia al vencimiento.
+  // Opciones: prima en fecha de operación + ejercicio al vencimiento si aplica.
   const tipo = op.tipo;
   const lado = op.lado;
   const vol  = Number(op.volumen);
   const pOp  = Number(op.precio) || 0;
   const pEj  = Number(op.precio_ejercicio) || 0;
-  const pM   = getPrecioMercado(op.producto, op.vencimiento) || 0;
+  const pM   = getPrecioCierreDerivado(op);
 
-  if (!op.vencimiento) return null;
-  const vto  = op.vencimiento.substring(0, 7); // YYYY-MM
-  const hoy  = new Date().toISOString().substring(0, 7);
-  if (vto < hoy) return null; // solo meses futuros
-
-  let ingreso = 0, egreso = 0, detalle = '';
+  if (!op.vencimiento || !vol) return [];
+  const items = [];
+  const vto = getMesFlujo(op.vencimiento);
+  const mesOperacion = getMesFlujo(op.fecha || op.created_at || op.updated_at) || vto;
 
   if (['Precio','FIX','Forward'].includes(tipo)) {
     const monto = pOp * vol;
-    if (lado === 'Venta')  { ingreso = monto; detalle = 'Venta a $'+pOp.toFixed(0)+'/tn'; }
-    else                   { egreso  = monto; detalle = 'Compra a $'+pOp.toFixed(0)+'/tn'; }
+    if (lado === 'Venta') pushFlujo(items, vto, monto, 0, 'Venta a $'+pOp.toFixed(0)+'/tn', op);
+    else                 pushFlujo(items, vto, 0, monto, 'Compra a $'+pOp.toFixed(0)+'/tn', op);
   }
   else if (tipo === 'Futuro') {
-    let resultado;
-    if (lado === 'Venta')  resultado = (pOp - pM) * vol;
-    else                   resultado = (pM  - pOp) * vol;
-    if (resultado >= 0) { ingreso = resultado; }
-    else                { egreso  = Math.abs(resultado); }
-    detalle = 'Futuro '+lado+' $'+pOp.toFixed(0)+' | mdo $'+pM.toFixed(0);
+    if (!pM) return [];
+    const resultado = lado === 'Venta' ? (pOp - pM) * vol : (pM - pOp) * vol;
+    const detalle = 'Futuro '+lado+' $'+pOp.toFixed(0)+' | cierre $'+pM.toFixed(0);
+    if (resultado >= 0) pushFlujo(items, vto, resultado, 0, detalle, op);
+    else                pushFlujo(items, vto, 0, Math.abs(resultado), detalle, op);
   }
   else if (tipo === 'Put') {
     const prima = pOp * vol;
-    const ejercible = pM > 0 && pM <= pEj;
-    if (lado === 'Compra') {
-      egreso = prima; // prima siempre es egreso si compra
-      if (ejercible) {
-        const res = (pEj - pM) * vol;
-        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
-      }
-      detalle = 'PUT Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
-    } else { // Venta
-      ingreso = prima;
-      if (ejercible) {
-        const res = (pM - pEj) * vol;
-        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
-      }
-      detalle = 'PUT Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    if (lado === 'Compra') pushFlujo(items, mesOperacion, 0, prima, 'Prima PUT compra $'+pOp.toFixed(0), op);
+    else                  pushFlujo(items, mesOperacion, prima, 0, 'Prima PUT venta $'+pOp.toFixed(0), op);
+
+    const valorIntrinseco = pM > 0 && pM <= pEj ? (pEj - pM) * vol : 0;
+    if (valorIntrinseco > 0) {
+      const detalle = 'Ejercicio PUT strike $'+pEj.toFixed(0)+' | cierre $'+pM.toFixed(0);
+      if (lado === 'Compra') pushFlujo(items, vto, valorIntrinseco, 0, detalle, op);
+      else                  pushFlujo(items, vto, 0, valorIntrinseco, detalle, op);
     }
   }
   else if (tipo === 'Call') {
     const prima = pOp * vol;
-    const ejercible = pM > 0 && pM >= pEj;
-    if (lado === 'Compra') {
-      egreso = prima;
-      if (ejercible) {
-        const res = (pM - pEj) * vol;
-        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
-      }
-      detalle = 'CALL Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
-    } else { // Venta
-      ingreso = prima;
-      if (ejercible) {
-        const res = (pEj - pM) * vol;
-        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
-      }
-      detalle = 'CALL Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    if (lado === 'Compra') pushFlujo(items, mesOperacion, 0, prima, 'Prima CALL compra $'+pOp.toFixed(0), op);
+    else                  pushFlujo(items, mesOperacion, prima, 0, 'Prima CALL venta $'+pOp.toFixed(0), op);
+
+    const valorIntrinseco = pM > 0 && pM >= pEj ? (pM - pEj) * vol : 0;
+    if (valorIntrinseco > 0) {
+      const detalle = 'Ejercicio CALL strike $'+pEj.toFixed(0)+' | cierre $'+pM.toFixed(0);
+      if (lado === 'Compra') pushFlujo(items, vto, valorIntrinseco, 0, detalle, op);
+      else                  pushFlujo(items, vto, 0, valorIntrinseco, detalle, op);
     }
   }
-  else return null; // Plan de Siembra, Stock, PAF no generan flujo
 
-  return { mes: vto, ingreso, egreso, detalle, op };
+  return items;
+}
+
+function calcularFlujoPorOp(op) {
+  const items = calcularFlujosPorOp(op);
+  return items[0] || null;
+}
+
+function buildMonthRange(minMes, maxMes) {
+  if (!minMes || !maxMes) return [];
+  const meses = [];
+  let cur = new Date(minMes + '-02T12:00:00');
+  const fin = new Date(maxMes + '-02T12:00:00');
+  while (cur <= fin) {
+    meses.push(cur.toISOString().substring(0,7));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return meses;
 }
 
 function renderFlujo() {
@@ -3706,23 +3742,14 @@ function renderFlujo() {
   });
 
   // Calculate flows per op
-  const flujos = ops.map(calcularFlujoPorOp).filter(Boolean);
+  const flujos = ops.flatMap(calcularFlujosPorOp).filter(Boolean);
 
-  // Group by month
-  const hoy = new Date().toISOString().substring(0,7);
-  const maxMes = allOps
-    .map(o => o.vencimiento ? o.vencimiento.substring(0,7) : '')
-    .filter(m => m >= hoy)
-    .sort().pop() || hoy;
-
-  // Build month range (string comparison avoids timezone issues)
-  const meses = [];
-  let cur = new Date(hoy + '-02');
-  const fin = new Date(maxMes + '-02');
-  while (cur.toISOString().substring(0,7) <= maxMes) {
-    meses.push(cur.toISOString().substring(0,7));
-    cur.setMonth(cur.getMonth() + 1);
-  }
+  // El flujo refleja la historia real del cliente: desde el primer
+  // vencimiento/fecha de operación con impacto hasta el último, incluso vencidos.
+  const orderedMeses = flujos.map(f => f.mes).sort();
+  const minMes = orderedMeses[0];
+  const maxMes = orderedMeses[orderedMeses.length - 1];
+  const meses = buildMonthRange(minMes, maxMes);
 
   // Aggregate
   const porMes = {};
