@@ -1,4 +1,4 @@
-const CACHE = 'ctx-cartera-v3';
+const CACHE = 'ctx-cartera-v4';
 const ASSETS = [
   '/agro-reporte/',
   '/agro-reporte/index.html'
@@ -24,7 +24,7 @@ self.addEventListener('fetch', e => {
   // Solo cachea el HTML principal, el resto va a la red
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('/agro-reporte/index.html'))
+      fetch(e.request, { cache: 'no-store' }).catch(() => caches.match('/agro-reporte/index.html'))
     );
   }
   // Recursos externos (Supabase, Chart.js, etc.) siempre van a la red
