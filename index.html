@@ -148,6 +148,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .dashboard-stage { min-height:100vh; }
 .dashboard-view { display:none; }
 .dashboard-view.active { display:block; }
+.dashboard-actions { position:sticky; top:0; z-index:25; display:flex; justify-content:flex-end; gap:8px; padding:12px 28px 0; pointer-events:none; background:linear-gradient(180deg, rgba(8,20,34,.96), rgba(8,20,34,0)); }
+.dashboard-action-btn { pointer-events:auto; min-height:32px; padding:7px 12px; border-radius:8px; border:1px solid rgba(212,160,23,.24); background:rgba(8,20,34,.86); color:rgba(255,255,255,.78); font-size:11px; font-weight:700; letter-spacing:.2px; cursor:pointer; box-shadow:0 10px 24px rgba(0,0,0,.16); font-family:'DM Sans',sans-serif; transition:background .16s,border-color .16s,color .16s,transform .16s; }
+.dashboard-action-btn:hover { background:rgba(212,160,23,.14); border-color:rgba(212,160,23,.42); color:var(--oro-l); transform:translateY(-1px); }
+.dashboard-action-btn:disabled { opacity:.55; cursor:wait; transform:none; }
 .embedded-dashboard { background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--negro-s); border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); }
 .dashboard-view.integrated-embed .page-body { padding:20px 28px 28px; }
 .dashboard-view.integrated-embed .embedded-dashboard { background:transparent; border:none; border-radius:0; box-shadow:none; overflow:visible; }
@@ -445,6 +449,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   .sidebar-overlay.open { display:block; }
   .main-content { margin-left:0; }
   .topbar-mobile { display:flex; }
+  .dashboard-actions { padding:10px 16px 0; }
   .two-col { grid-template-columns:1fr; }
   .account-grid,.account-mini { grid-template-columns:1fr; }
   .page-body { padding:16px; }
@@ -452,6 +457,16 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   .scroll-hint { display:block; }
   .form-grid { grid-template-columns:1fr; padding:14px; }
   .form-group.full { grid-column:auto; }
+}
+@media print {
+  .sidebar,.sidebar-overlay,.topbar-mobile,.dashboard-actions,.btn-collapse,.btn-logout { display:none !important; }
+  .main-content { margin-left:0 !important; }
+  .dashboard-stage { min-height:auto !important; }
+  .dashboard-view { display:none !important; }
+  .dashboard-view.active { display:block !important; }
+  .page-body { padding:0 !important; background:white !important; }
+  body { background:white !important; }
+  .hero,.card,.business-dashboard-card,.embedded-dashboard,.account-card,.account-hero { box-shadow:none !important; }
 }
 </style>
 </head>
@@ -518,13 +533,13 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="cli-name" id="s-nombre">—</div>
     </div>
     <nav class="sidebar-nav">
-      <a class="nav-item" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
-        <span class="nav-icon">◈</span>
-        <span class="nav-label"><span class="nav-main">Agricultura</span><span class="nav-sub" id="nav-agricultura-sub">Dashboard estándar</span></span>
-      </a>
       <a class="nav-item active" id="nav-kpis" onclick="switchDashboard('kpis',this)" title="KPIs">
         <span class="nav-icon">◎</span>
         <span class="nav-label"><span class="nav-main">KPIs</span><span class="nav-sub">Unidades de negocio</span></span>
+      </a>
+      <a class="nav-item" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
+        <span class="nav-icon">◈</span>
+        <span class="nav-label"><span class="nav-main">Agricultura</span><span class="nav-sub" id="nav-agricultura-sub">Dashboard estándar</span></span>
       </a>
       <a class="nav-item" id="nav-ganaderia" onclick="switchDashboard('ganaderia',this)" title="Ganadería">
         <span class="nav-icon">⌘</span>
@@ -562,6 +577,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div style="width:32px"></div>
     </div>
 
+    <div class="dashboard-actions" aria-label="Acciones del dashboard">
+      <button class="dashboard-action-btn" type="button" id="btn-dashboard-refresh" onclick="refreshActiveDashboard()">↻ Actualizar</button>
+      <button class="dashboard-action-btn" type="button" onclick="exportActiveDashboardPdf()">Exportar PDF</button>
+    </div>
     <div class="dashboard-stage">
     <div class="dashboard-view" id="view-agricultura">
     <div class="hero" id="sec-resumen">
@@ -1490,6 +1509,72 @@ function switchDashboard(view, el) {
   closeSidebar();
 }
 
+function getActiveDashboardName() {
+  const active = document.querySelector('.dashboard-view.active');
+  return active?.id?.replace('view-', '') || 'kpis';
+}
+
+function reloadDashboardFrame(frameId) {
+  const frame = document.getElementById(frameId);
+  if (!frame) return;
+  const currentSrc = frame.getAttribute('src') || frame.src;
+  if (!currentSrc) return;
+  const url = new URL(currentSrc, window.location.href);
+  url.searchParams.set('_refresh', Date.now().toString());
+  frame.src = url.href;
+}
+
+async function refreshActiveDashboard() {
+  const view = getActiveDashboardName();
+  const btn = document.getElementById('btn-dashboard-refresh');
+  const originalText = btn?.textContent || '↻ Actualizar';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '↻ Actualizando...';
+  }
+  try {
+    if (view === 'kpis') {
+      await refreshBusinessRemoteState(true);
+      renderBusinessUnits(true);
+    } else if (view === 'agricultura') {
+      await refreshData();
+    } else if (view === 'ganaderia') {
+      reloadDashboardFrame('frame-ganaderia');
+    } else if (view === 'tambo') {
+      reloadDashboardFrame('frame-tambo');
+    } else {
+      await refreshData();
+      renderAccessHub();
+    }
+  } catch (error) {
+    console.warn('No se pudo actualizar el dashboard activo', error);
+    alert('No se pudo actualizar el dashboard. Probá nuevamente en unos segundos.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+}
+
+function exportActiveDashboardPdf() {
+  const view = getActiveDashboardName();
+  const frameId = view === 'ganaderia' ? 'frame-ganaderia' : view === 'tambo' ? 'frame-tambo' : '';
+  if (frameId) {
+    const frame = document.getElementById(frameId);
+    try {
+      if (frame?.contentWindow) {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+        return;
+      }
+    } catch (error) {
+      console.warn('No se pudo imprimir el dashboard embebido, se imprime la vista principal', error);
+    }
+  }
+  window.print();
+}
+
 function renderAccessHub() {
   const state = getClienteAccessState();
   updateSidebarProducts(state);
@@ -1769,10 +1854,11 @@ async function fetchRemoteBusinessSelections() {
   }, {});
 }
 
-function refreshBusinessRemoteState() {
+function refreshBusinessRemoteState(force = false) {
   const cacheKey = getBusinessRemoteCacheKey();
   if (!cacheKey || !currentUser?.id || !currentCliente?.id || !sb) return Promise.resolve();
   if (
+    !force &&
     businessRemoteScenarioCacheKey === cacheKey &&
     businessRemoteSelectionsCacheKey === cacheKey &&
     businessRemoteStatePromise === null
