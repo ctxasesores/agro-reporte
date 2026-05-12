@@ -518,11 +518,11 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="cli-name" id="s-nombre">—</div>
     </div>
     <nav class="sidebar-nav">
-      <a class="nav-item active" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
+      <a class="nav-item" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
         <span class="nav-icon">◈</span>
         <span class="nav-label"><span class="nav-main">Agricultura</span><span class="nav-sub" id="nav-agricultura-sub">Dashboard estándar</span></span>
       </a>
-      <a class="nav-item" id="nav-kpis" onclick="switchDashboard('kpis',this)" title="KPIs">
+      <a class="nav-item active" id="nav-kpis" onclick="switchDashboard('kpis',this)" title="KPIs">
         <span class="nav-icon">◎</span>
         <span class="nav-label"><span class="nav-main">KPIs</span><span class="nav-sub">Unidades de negocio</span></span>
       </a>
@@ -563,7 +563,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     </div>
 
     <div class="dashboard-stage">
-    <div class="dashboard-view active" id="view-agricultura">
+    <div class="dashboard-view" id="view-agricultura">
     <div class="hero" id="sec-resumen">
       <div class="hero-eyebrow">Reporte de cartera</div>
       <div class="hero-nombre" id="d-nombre">—</div>
@@ -889,8 +889,36 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     </div><!-- /page-body -->
     </div><!-- /view-agricultura -->
 
-    <div class="dashboard-view" id="view-kpis">
+    <div class="dashboard-view active" id="view-kpis">
       <div class="page-body">
+        <div class="section" id="sec-kpis-detalle-producto">
+          <div class="section-title">Detalle por producto</div>
+          <div class="card">
+            <div class="scroll-hint">← Deslizá para ver todas las columnas →</div>
+            <div class="comp-table-scroll">
+              <table class="comp-table">
+                <thead>
+                  <tr>
+                    <th rowspan="2" style="text-align:left;min-width:80px">Producto</th>
+                    <th colspan="3">En Dólares Totales</th>
+                    <th colspan="2">En Toneladas</th>
+                    <th>P. prom.<br>Compra</th>
+                    <th>P. prom.<br>Venta</th>
+                    <th>P.<br>Mercado</th>
+                    <th>Delta</th>
+                    <th>Posición</th>
+                  </tr>
+                  <tr>
+                    <th>Long</th><th>Short</th><th>Neto</th>
+                    <th>Long</th><th>Short</th>
+                    <th></th><th></th><th></th><th></th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="kpi-comp-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
         <div class="section" id="sec-unidades-negocio">
           <div class="section-title">KPIs</div>
           <div class="card business-dashboard-card">
@@ -1199,6 +1227,8 @@ async function loadApp() {
   renderAccessHub();
   showLoading(false);
   document.getElementById('appShell').style.display='block';
+  await refreshBusinessRemoteState();
+  switchDashboard('kpis', document.getElementById('nav-kpis'));
   renderTagFilterBar();
   renderTagsFormSelector();
   initFormDefaults();
@@ -1517,27 +1547,6 @@ let businessRemoteSelectionsCache = {};
 let businessRemoteSelectionsCacheKey = '';
 let businessRemoteStatePromise = null;
 
-function getBusinessSelectionKey() {
-  const userId = currentUser?.id || 'anonimo';
-  const clienteId = currentCliente?.id || 'sin_cliente';
-  return `ctx_kpis_links_${userId}_${clienteId}`;
-}
-
-function readBusinessSelections() {
-  try {
-    const raw = localStorage.getItem(getBusinessSelectionKey());
-    const parsed = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (error) {
-    console.warn('No se pudieron leer los vínculos de KPIs', error);
-    return {};
-  }
-}
-
-function writeBusinessSelections(data) {
-  localStorage.setItem(getBusinessSelectionKey(), JSON.stringify(data || {}));
-}
-
 function getBusinessRemoteCacheKey() {
   return `${currentUser?.id || ''}::${currentCliente?.id || ''}`;
 }
@@ -1576,17 +1585,6 @@ function fmtScenarioDate(value) {
   if (isNaN(d.getTime())) return 'sin fecha';
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + ' · ' +
     d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-}
-
-function readLocalArray(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.warn('No se pudo leer', key, error);
-    return [];
-  }
 }
 
 function numFromScenarioData(record, key, fallback = 0) {
@@ -1713,52 +1711,6 @@ function normalizeScenarioOutputs(source, item) {
   return null;
 }
 
-function collectLocalProductiveScenarios() {
-  if (!currentUser?.id || !currentCliente?.id) return [];
-  const items = [];
-  const seen = new Set();
-  const prefixes = [
-    { prefix: 'ctx_tambo_escenarios_', source: 'tambo' },
-    { prefix: 'ctx_ganaderia_simulaciones_', source: 'ganaderia' }
-  ];
-
-  for (let i = 0; i < localStorage.length; i += 1) {
-    const key = localStorage.key(i);
-    const match = prefixes.find(entry => key && key.startsWith(entry.prefix));
-    if (!match) continue;
-    const modeFromKey = key.includes('_PRO_') ? 'PRO' : 'ESTANDAR';
-    readLocalArray(key).forEach(item => {
-      if (!item || typeof item !== 'object') return;
-      const scenarioUserId = item.usuario_id || item.user_id || '';
-      const scenarioClienteId = item.cliente_id || '';
-      if (scenarioUserId && scenarioUserId !== currentUser.id) return;
-      if (scenarioClienteId && scenarioClienteId !== currentCliente.id) return;
-      const normalizedOutputs = normalizeScenarioOutputs(match.source, item);
-      if (!normalizedOutputs || typeof normalizedOutputs !== 'object') return;
-      const uniqueId = `${match.source}::${item.id || ''}::${item.updated_at || ''}`;
-      if (seen.has(uniqueId)) return;
-      seen.add(uniqueId);
-      items.push({
-        uid: uniqueId,
-        id: item.id || '',
-        scenario_db_id: item.remote_id || '',
-        source: match.source,
-        modo: item.modo || modeFromKey,
-        nombre: item.nombre || item.nombre_escenario || item.campania || 'Escenario guardado',
-        cliente_id: scenarioClienteId,
-        cliente_nombre: item.cliente_nombre || currentCliente.nombre_empresa || '',
-        user_id: scenarioUserId || currentUser.id,
-        updated_at: item.updated_at || item.created_at || '',
-        datos: item.datos || {},
-        actividades: item.actividades || {},
-        outputs: normalizedOutputs
-      });
-    });
-  }
-
-  return items.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
-}
-
 function mapRemoteScenarioToBusinessEntry(row) {
   if (!row || typeof row !== 'object') return null;
   const source = row.modulo === 'tambo' ? 'tambo' : 'ganaderia';
@@ -1782,27 +1734,6 @@ function mapRemoteScenarioToBusinessEntry(row) {
     actividades: row.actividades || {},
     outputs: normalizedOutputs
   };
-}
-
-function mergeProductiveScenarios(localItems, remoteItems) {
-  const merged = new Map();
-  (localItems || []).forEach(item => {
-    if (!item) return;
-    merged.set(`${item.source}::${item.id}`, item);
-  });
-  (remoteItems || []).forEach(item => {
-    if (!item) return;
-    const key = `${item.source}::${item.id}`;
-    const prev = merged.get(key);
-    merged.set(key, {
-      ...prev,
-      ...item,
-      datos: item.datos || prev?.datos || {},
-      actividades: item.actividades || prev?.actividades || {},
-      outputs: item.outputs || prev?.outputs || {}
-    });
-  });
-  return Array.from(merged.values()).sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
 }
 
 async function fetchRemoteProductiveScenarios() {
@@ -1871,9 +1802,8 @@ function refreshBusinessRemoteState() {
 }
 
 function collectProductiveScenarios() {
-  const localItems = collectLocalProductiveScenarios();
-  const remoteItems = businessRemoteScenarioCacheKey === getBusinessRemoteCacheKey() ? businessRemoteScenarioCache : [];
-  return mergeProductiveScenarios(localItems, remoteItems);
+  if (businessRemoteScenarioCacheKey !== getBusinessRemoteCacheKey()) return [];
+  return Array.isArray(businessRemoteScenarioCache) ? businessRemoteScenarioCache.slice() : [];
 }
 
 function getMonthlyScenarioMargin(scenario) {
@@ -1888,7 +1818,6 @@ function getMonthlyScenarioMargin(scenario) {
 
 function buildBusinessRows() {
   const scenarios = collectProductiveScenarios();
-  const selections = readBusinessSelections();
   const remoteSelections = getRemoteBusinessSelections();
   const rows = Object.values(BUSINESS_UNIT_CONFIG).map(cfg => {
     const matchingScenarios = scenarios.filter(entry =>
@@ -1898,14 +1827,10 @@ function buildBusinessRows() {
       entry.outputs.unidades[cfg.key] &&
       entry.outputs.unidades[cfg.key].activo
     );
-    const selectedId = selections[cfg.key] || '';
     const remoteSelection = remoteSelections[cfg.key] || null;
     let scenario = null;
     if (remoteSelection?.scenario_db_id) {
       scenario = matchingScenarios.find(entry => entry.scenario_db_id === remoteSelection.scenario_db_id) || null;
-    }
-    if (!scenario && selectedId) {
-      scenario = matchingScenarios.find(entry => entry.id === selectedId) || null;
     }
     if (!scenario && remoteSelection?.scenario_ref_id) {
       scenario = matchingScenarios.find(entry => entry.id === remoteSelection.scenario_ref_id) || null;
@@ -1926,7 +1851,7 @@ function buildBusinessRows() {
       ...cfg,
       scenario,
       scenarioOptions: matchingScenarios,
-      selectedScenarioId: selectedId || remoteSelection?.scenario_ref_id || scenario.id || '',
+      selectedScenarioId: remoteSelection?.scenario_ref_id || scenario.id || '',
       unit,
       state: unit.semaforo?.estado || 'vacio'
     };
@@ -2069,10 +1994,15 @@ async function persistBusinessSelectionRemote(unitKey, scenarioId) {
 }
 
 function setBusinessScenario(unitKey, scenarioId) {
-  const next = readBusinessSelections();
-  if (scenarioId) next[unitKey] = scenarioId;
-  else delete next[unitKey];
-  writeBusinessSelections(next);
+  const nextRemote = {
+    ...getRemoteBusinessSelections(),
+    [unitKey]: {
+      scenario_db_id: '',
+      scenario_ref_id: scenarioId || ''
+    }
+  };
+  businessRemoteSelectionsCache = nextRemote;
+  businessRemoteSelectionsCacheKey = getBusinessRemoteCacheKey();
   renderBusinessUnits();
   void persistBusinessSelectionRemote(unitKey, scenarioId);
 }
@@ -2085,10 +2015,10 @@ function renderBusinessUnits(skipRemoteRefresh) {
   const rows = buildBusinessRows();
   renderBusinessSummary(rows);
   if (note) {
-    note.textContent = 'Lee los escenarios productivos guardados para este cliente. Si una fila sigue vacía, el escenario todavía no se migró o nunca fue guardado con este usuario.';
+    note.textContent = 'Lee los escenarios productivos guardados en Supabase para este cliente. Si una fila sigue vacía, todavía no existe un escenario persistido para esa unidad.';
   }
   if (!rows.some(row => row.scenario)) {
-    grid.innerHTML = `<div class="business-empty">Todavía no encontramos escenarios productivos listos para este cliente. Si ya existen en Tambo o Ganadería, esta vista los toma desde Supabase y también rescata escenarios locales compatibles.</div>`;
+    grid.innerHTML = `<div class="business-empty">Todavía no encontramos escenarios productivos listos para este cliente en Supabase. Guardá uno en Tambo o Ganadería y este tablero se va a poblar automáticamente.</div>`;
     return;
   }
 
@@ -2160,11 +2090,7 @@ function renderBusinessUnits(skipRemoteRefresh) {
 
 window.addEventListener('storage', function(event) {
   if (!event.key) return;
-  if (
-    event.key.startsWith('ctx_tambo_escenarios_') ||
-    event.key.startsWith('ctx_ganaderia_simulaciones_') ||
-    event.key.startsWith('ctx_kpis_links_')
-  ) {
+  if (event.key === 'ctx_unidades_open_request') {
     renderBusinessUnits();
   }
 });
@@ -2187,25 +2113,6 @@ function buildPreciosMap(rows) {
   });
 }
 
-function parsePrecioVencimiento(vencimiento) {
-  if (!vencimiento || vencimiento === 'CONT') return null;
-  const parts = String(vencimiento).split('_');
-  if (parts.length !== 2) return null;
-  const mes = parseInt(parts[0], 10);
-  const anio = parseInt(parts[1], 10);
-  if (!mes || !anio || mes < 1 || mes > 12) return null;
-  return { mes, anio, fecha: new Date(anio, mes - 1, 1) };
-}
-
-function isPrecioVencido(vencimiento) {
-  const parsed = parsePrecioVencimiento(vencimiento);
-  if (!parsed) return false;
-  const hoy = new Date();
-  const mesActual = hoy.getMonth() + 1;
-  const anioActual = hoy.getFullYear();
-  return parsed.anio < anioActual || (parsed.anio === anioActual && parsed.mes < mesActual);
-}
-
 // Obtener precio de mercado para un producto y fecha de vencimiento
 function getPrecioMercado(producto, fechaVto) {
   producto = normalizeStr(producto);
@@ -2221,33 +2128,34 @@ function getPrecioMercado(producto, fechaVto) {
 
   if (vencido) {
     if (['Soja','Maiz','Trigo'].includes(producto)) {
-      return precios[contKey] || getPrecioMasCercano(producto) || null;
+      return precios[contKey] || precios[exactKey] || getPrecioMasCercano(producto) || null;
     }
-    return getPrecioMasCercano(producto) || null;
+    return precios[exactKey] || getPrecioMasCercano(producto) || null;
   }
   return precios[exactKey] || precios[contKey] || getPrecioMasCercano(producto) || null;
 }
 
 function getPrecioMasCercano(producto) {
   // Find closest price in precios_mercado for this product
-  // Returns price from the closest non-expired month-year to today.
+  // Returns price from key with closest month-year to today
   const hoy = new Date();
   const prefijo = normalizeStr(producto) + '_';
   let bestDiff = Infinity;
   let bestPrecio = null;
-  let contPrecio = null;
   Object.entries(precios).forEach(([key, precio]) => {
     if (!key.startsWith(prefijo)) return;
     const part = key.replace(prefijo, '');
-    if (part === 'CONT') { contPrecio = contPrecio ?? precio; return; }
-    if (isPrecioVencido(part)) return;
-    const parsed = parsePrecioVencimiento(part);
-    if (!parsed) return;
-    const fecha = parsed.fecha;
+    if (part === 'CONT') { bestPrecio = bestPrecio || precio; return; }
+    const cols = part.split('_');
+    if (cols.length !== 2) return;
+    const mes = parseInt(cols[0]);
+    const anio = parseInt(cols[1]);
+    if (isNaN(mes) || isNaN(anio)) return;
+    const fecha = new Date(anio, mes - 1, 1);
     const diff = Math.abs(fecha - hoy);
     if (diff < bestDiff) { bestDiff = diff; bestPrecio = precio; }
   });
-  return bestPrecio ?? contPrecio;
+  return bestPrecio;
 }
 
 // ── TAG FILTER ──
@@ -2440,11 +2348,10 @@ function renderTasas() {
   const vencList = Object.entries(vencMap)
     .filter(([v]) => v !== 'CONT')
     .map(([v, p]) => {
-      const parsed = parsePrecioVencimiento(v);
-      if (!parsed || isPrecioVencido(v)) return null;
-      return { key:v, mes: parsed.mes, anio: parsed.anio, precio:p, fecha: parsed.fecha };
+      const parts = v.split('_');
+      const mes = parseInt(parts[0]), anio = parseInt(parts[1]);
+      return { key:v, mes, anio, precio:p, fecha: new Date(anio, mes-1, 1) };
     })
-    .filter(Boolean)
     .sort((a,b) => a.fecha - b.fecha);
 
   if (!vencList.length) { el.innerHTML='<div class="empty-state">Sin vencimientos</div>'; return; }
@@ -2555,10 +2462,8 @@ function renderTasas() {
 
 function renderComposicion() {
   const map = calcularPorProducto();
-  const tbody = document.getElementById('d-comp-body');
   const labels=[], vals=[], colors=[];
-
-  tbody.innerHTML = PRODUCTOS.map(prod => {
+  const rowsHTML = PRODUCTOS.map(prod => {
     const m = map[prod];
     if (!m.longTn && !m.shortTn) return '';
     const neto    = m.longVal - m.shortVal;
@@ -2584,6 +2489,11 @@ function renderComposicion() {
       <td><span class="${posClass}">${pos}</span></td>
     </tr>`;
   }).join('');
+
+  ['d-comp-body', 'kpi-comp-body'].forEach(id => {
+    const tbody = document.getElementById(id);
+    if (tbody) tbody.innerHTML = rowsHTML;
+  });
 
   // Sunburst
   renderSunburst();
@@ -3640,94 +3550,77 @@ function renderPosicionesChart() {
 // ══ FLUJO DE FONDOS ══
 let flujoChart = null;
 
-function getMesFlujo(valor) {
-  if (!valor) return '';
-  return String(valor).substring(0, 7);
-}
-
-function pushFlujo(items, mes, ingreso, egreso, detalle, op) {
-  if (!mes) return;
-  const ing = Number(ingreso) || 0;
-  const egr = Number(egreso) || 0;
-  if (ing === 0 && egr === 0) return;
-  items.push({ mes, ingreso: ing, egreso: egr, detalle, op });
-}
-
-function getPrecioCierreDerivado(op) {
-  return Number(getPrecioMercado(op.producto, op.vencimiento)) || 0;
-}
-
-function calcularFlujosPorOp(op) {
-  // Precio/FIX/Forward: flujo nocional al vencimiento.
-  // Futuro: resultado por diferencia al vencimiento.
-  // Opciones: prima en fecha de operación + ejercicio al vencimiento si aplica.
+function calcularFlujoPorOp(op) {
+  // Returns {mes: 'YYYY-MM', ingreso: N, egreso: N, detalle: string}
+  // Only for: Precio, FIX, Forward, Futuro, Call, Put
   const tipo = op.tipo;
   const lado = op.lado;
   const vol  = Number(op.volumen);
   const pOp  = Number(op.precio) || 0;
   const pEj  = Number(op.precio_ejercicio) || 0;
-  const pM   = getPrecioCierreDerivado(op);
+  const pM   = getPrecioMercado(op.producto, op.vencimiento) || 0;
 
-  if (!op.vencimiento || !vol) return [];
-  const items = [];
-  const vto = getMesFlujo(op.vencimiento);
-  const mesOperacion = getMesFlujo(op.fecha || op.created_at || op.updated_at) || vto;
+  if (!op.vencimiento) return null;
+  const vto  = op.vencimiento.substring(0, 7); // YYYY-MM
+  const hoy  = new Date().toISOString().substring(0, 7);
+  if (vto < hoy) return null; // solo meses futuros
+
+  let ingreso = 0, egreso = 0, detalle = '';
 
   if (['Precio','FIX','Forward'].includes(tipo)) {
     const monto = pOp * vol;
-    if (lado === 'Venta') pushFlujo(items, vto, monto, 0, 'Venta a $'+pOp.toFixed(0)+'/tn', op);
-    else                 pushFlujo(items, vto, 0, monto, 'Compra a $'+pOp.toFixed(0)+'/tn', op);
+    if (lado === 'Venta')  { ingreso = monto; detalle = 'Venta a $'+pOp.toFixed(0)+'/tn'; }
+    else                   { egreso  = monto; detalle = 'Compra a $'+pOp.toFixed(0)+'/tn'; }
   }
   else if (tipo === 'Futuro') {
-    if (!pM) return [];
-    const resultado = lado === 'Venta' ? (pOp - pM) * vol : (pM - pOp) * vol;
-    const detalle = 'Futuro '+lado+' $'+pOp.toFixed(0)+' | cierre $'+pM.toFixed(0);
-    if (resultado >= 0) pushFlujo(items, vto, resultado, 0, detalle, op);
-    else                pushFlujo(items, vto, 0, Math.abs(resultado), detalle, op);
+    let resultado;
+    if (lado === 'Venta')  resultado = (pOp - pM) * vol;
+    else                   resultado = (pM  - pOp) * vol;
+    if (resultado >= 0) { ingreso = resultado; }
+    else                { egreso  = Math.abs(resultado); }
+    detalle = 'Futuro '+lado+' $'+pOp.toFixed(0)+' | mdo $'+pM.toFixed(0);
   }
   else if (tipo === 'Put') {
     const prima = pOp * vol;
-    if (lado === 'Compra') pushFlujo(items, mesOperacion, 0, prima, 'Prima PUT compra $'+pOp.toFixed(0), op);
-    else                  pushFlujo(items, mesOperacion, prima, 0, 'Prima PUT venta $'+pOp.toFixed(0), op);
-
-    const valorIntrinseco = pM > 0 && pM <= pEj ? (pEj - pM) * vol : 0;
-    if (valorIntrinseco > 0) {
-      const detalle = 'Ejercicio PUT strike $'+pEj.toFixed(0)+' | cierre $'+pM.toFixed(0);
-      if (lado === 'Compra') pushFlujo(items, vto, valorIntrinseco, 0, detalle, op);
-      else                  pushFlujo(items, vto, 0, valorIntrinseco, detalle, op);
+    const ejercible = pM > 0 && pM <= pEj;
+    if (lado === 'Compra') {
+      egreso = prima; // prima siempre es egreso si compra
+      if (ejercible) {
+        const res = (pEj - pM) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'PUT Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    } else { // Venta
+      ingreso = prima;
+      if (ejercible) {
+        const res = (pM - pEj) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'PUT Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
     }
   }
   else if (tipo === 'Call') {
     const prima = pOp * vol;
-    if (lado === 'Compra') pushFlujo(items, mesOperacion, 0, prima, 'Prima CALL compra $'+pOp.toFixed(0), op);
-    else                  pushFlujo(items, mesOperacion, prima, 0, 'Prima CALL venta $'+pOp.toFixed(0), op);
-
-    const valorIntrinseco = pM > 0 && pM >= pEj ? (pM - pEj) * vol : 0;
-    if (valorIntrinseco > 0) {
-      const detalle = 'Ejercicio CALL strike $'+pEj.toFixed(0)+' | cierre $'+pM.toFixed(0);
-      if (lado === 'Compra') pushFlujo(items, vto, valorIntrinseco, 0, detalle, op);
-      else                  pushFlujo(items, vto, 0, valorIntrinseco, detalle, op);
+    const ejercible = pM > 0 && pM >= pEj;
+    if (lado === 'Compra') {
+      egreso = prima;
+      if (ejercible) {
+        const res = (pM - pEj) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'CALL Compra prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
+    } else { // Venta
+      ingreso = prima;
+      if (ejercible) {
+        const res = (pEj - pM) * vol;
+        if (res >= 0) ingreso += res; else egreso += Math.abs(res);
+      }
+      detalle = 'CALL Venta prima $'+pOp.toFixed(0)+(ejercible?' + ejercido':'');
     }
   }
+  else return null; // Plan de Siembra, Stock, PAF no generan flujo
 
-  return items;
-}
-
-function calcularFlujoPorOp(op) {
-  const items = calcularFlujosPorOp(op);
-  return items[0] || null;
-}
-
-function buildMonthRange(minMes, maxMes) {
-  if (!minMes || !maxMes) return [];
-  const meses = [];
-  let cur = new Date(minMes + '-02T12:00:00');
-  const fin = new Date(maxMes + '-02T12:00:00');
-  while (cur <= fin) {
-    meses.push(cur.toISOString().substring(0,7));
-    cur.setMonth(cur.getMonth() + 1);
-  }
-  return meses;
+  return { mes: vto, ingreso, egreso, detalle, op };
 }
 
 function renderFlujo() {
@@ -3742,14 +3635,23 @@ function renderFlujo() {
   });
 
   // Calculate flows per op
-  const flujos = ops.flatMap(calcularFlujosPorOp).filter(Boolean);
+  const flujos = ops.map(calcularFlujoPorOp).filter(Boolean);
 
-  // El flujo refleja la historia real del cliente: desde el primer
-  // vencimiento/fecha de operación con impacto hasta el último, incluso vencidos.
-  const orderedMeses = flujos.map(f => f.mes).sort();
-  const minMes = orderedMeses[0];
-  const maxMes = orderedMeses[orderedMeses.length - 1];
-  const meses = buildMonthRange(minMes, maxMes);
+  // Group by month
+  const hoy = new Date().toISOString().substring(0,7);
+  const maxMes = allOps
+    .map(o => o.vencimiento ? o.vencimiento.substring(0,7) : '')
+    .filter(m => m >= hoy)
+    .sort().pop() || hoy;
+
+  // Build month range (string comparison avoids timezone issues)
+  const meses = [];
+  let cur = new Date(hoy + '-02');
+  const fin = new Date(maxMes + '-02');
+  while (cur.toISOString().substring(0,7) <= maxMes) {
+    meses.push(cur.toISOString().substring(0,7));
+    cur.setMonth(cur.getMonth() + 1);
+  }
 
   // Aggregate
   const porMes = {};
