@@ -531,6 +531,7 @@ var currentUserId = 'anonimo';
 var currentAnalisisId = null;
 var scenarioSb = null;
 var scenarioSyncPromise = null;
+var savedAnalisisCache = [];
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 var FORM_FIELDS = [
@@ -764,6 +765,12 @@ function getStorageKey(){
   return 'ctx_tambo_escenarios_' + REPORT_MODE + '_' + currentUserId;
 }
 
+function clearLegacyLocalAnalisis(){
+  try{
+    localStorage.removeItem(getStorageKey());
+  }catch(e){}
+}
+
 function initScenarioSupabase(){
   if(!window.supabase) return null;
   if(!scenarioSb) scenarioSb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -797,18 +804,15 @@ function mergeScenarioCollections(localItems, remoteItems){
 }
 
 function readSavedAnalisis(){
-  try{
-    var raw = localStorage.getItem(getStorageKey());
-    var parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.map(enrichSavedScenario) : [];
-  }catch(e){
-    console.warn('No se pudieron leer escenarios guardados', e);
-    return [];
-  }
+  return (savedAnalisisCache || []).map(function(item){
+    return enrichSavedScenario(Object.assign({}, item));
+  });
 }
 
 function writeSavedAnalisis(items){
-  localStorage.setItem(getStorageKey(), JSON.stringify((items || []).map(enrichSavedScenario)));
+  savedAnalisisCache = (items || []).map(function(item){
+    return enrichSavedScenario(Object.assign({}, item));
+  });
 }
 
 function roundValue(value, decimals){
@@ -1013,22 +1017,14 @@ async function deleteRemoteAnalisis(item){
 async function syncAnalisisFromSupabase(force){
   if(scenarioSyncPromise && !force) return scenarioSyncPromise;
   scenarioSyncPromise = (async function(){
-    var localItems = readSavedAnalisis();
     try{
-      for(var i = 0; i < localItems.length; i += 1){
-        var localItem = enrichSavedScenario(localItems[i]);
-        if(!localItem || !localItem.id) continue;
-        var remoteId = await upsertRemoteAnalisis(localItem);
-        if(remoteId) localItem.remote_id = remoteId;
-      }
-      writeSavedAnalisis(localItems);
       var remoteItems = await fetchRemoteAnalisis();
-      var merged = mergeScenarioCollections(localItems, remoteItems);
-      writeSavedAnalisis(merged);
-      return merged;
+      writeSavedAnalisis(remoteItems);
+      clearLegacyLocalAnalisis();
+      return readSavedAnalisis();
     }catch(error){
-      console.warn('Tambo sin sincronización Supabase, sigo con almacenamiento local', error);
-      return localItems;
+      console.warn('Tambo sin sincronización Supabase', error);
+      return readSavedAnalisis();
     }
   })();
   try{
@@ -1059,26 +1055,12 @@ async function guardar(){
     updated_at: new Date().toISOString()
   });
   try{
-    var idx = saved.findIndex(function(item){ return item.id === payload.id; });
-    if(idx >= 0) saved[idx] = payload;
-    else saved.unshift(payload);
-    writeSavedAnalisis(saved);
+    var remoteId = await upsertRemoteAnalisis(payload);
+    if(remoteId) payload.remote_id = remoteId;
     currentAnalisisId = payload.id;
+    await syncAnalisisFromSupabase(true);
     document.getElementById('last_saved').textContent = 'Ult. guardado: ' + new Date(payload.updated_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setStatus('Escenario guardado correctamente', 'ok');
-    try{
-      var remoteId = await upsertRemoteAnalisis(payload);
-      if(remoteId){
-        var synced = readSavedAnalisis().map(function(item){
-          if(item.id === payload.id) item.remote_id = remoteId;
-          return item;
-        });
-        writeSavedAnalisis(synced);
-      }
-    }catch(syncError){
-      console.warn('Guardado remoto de tambo pendiente', syncError);
-      setStatus('Escenario guardado localmente. La copia en Supabase quedó pendiente.', 'ok');
-    }
     setTimeout(function(){ setStatus('', ''); }, 2200);
   }catch(e){
     setStatus('Error al guardar: ' + e.message, 'err');
@@ -1097,9 +1079,7 @@ function cerrarHistorial(){
 async function cargarHistorial(){
   var listEl = document.getElementById('hist_list');
   listEl.innerHTML = '<div class="meta-note">Cargando...</div>';
-  var data = await syncAnalisisFromSupabase()
-    .then(function(items){ return items; })
-    .catch(function(){ return readSavedAnalisis(); });
+  var data = await syncAnalisisFromSupabase(true);
   data = (data || [])
     .filter(function(item){ return !currentClienteId || item.cliente_id === currentClienteId; })
     .sort(function(a,b){ return new Date(b.updated_at) - new Date(a.updated_at); });
@@ -1140,16 +1120,16 @@ async function eliminarAnalisis(id){
   if(!confirm('¿Eliminar este escenario?')) return;
   var currentItems = readSavedAnalisis();
   var target = currentItems.find(function(item){ return item.id === id; }) || null;
-  var next = currentItems.filter(function(item){ return item.id !== id; });
-  writeSavedAnalisis(next);
-  if(currentAnalisisId === id){
-    currentAnalisisId = null;
-    document.getElementById('last_saved').textContent = 'Escenario eliminado';
-  }
   try{
     await deleteRemoteAnalisis(target);
+    if(currentAnalisisId === id){
+      currentAnalisisId = null;
+      document.getElementById('last_saved').textContent = 'Escenario eliminado';
+    }
+    await syncAnalisisFromSupabase(true);
   }catch(error){
-    console.warn('Borrado remoto de tambo pendiente', error);
+    setStatus('Error al eliminar: ' + error.message, 'err');
+    return;
   }
   await cargarHistorial();
 }
