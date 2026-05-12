@@ -498,6 +498,7 @@ var currentClienteNombre = 'Cliente';
 var currentUserId = 'anonimo';
 var scenarioSb = null;
 var scenarioSyncPromise = null;
+var savedAnalisisCache = [];
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 
@@ -618,6 +619,12 @@ function getStorageKey(){
   return 'ctx_ganaderia_simulaciones_' + REPORT_MODE + '_' + currentUserId;
 }
 
+function clearLegacyLocalAnalisis(){
+  try{
+    localStorage.removeItem(getStorageKey());
+  }catch(e){}
+}
+
 function initScenarioSupabase(){
   if(!window.supabase) return null;
   if(!scenarioSb) scenarioSb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -648,18 +655,15 @@ function mergeScenarioCollections(localItems, remoteItems){
 }
 
 function readSavedAnalisis(){
-  try{
-    var raw = localStorage.getItem(getStorageKey());
-    var parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  }catch(e){
-    console.warn('No se pudo leer simulaciones guardadas', e);
-    return [];
-  }
+  return (savedAnalisisCache || []).map(function(item){
+    return Object.assign({}, item);
+  });
 }
 
 function writeSavedAnalisis(items){
-  localStorage.setItem(getStorageKey(), JSON.stringify(items));
+  savedAnalisisCache = (items || []).map(function(item){
+    return Object.assign({}, item);
+  });
 }
 
 function getScenarioModuleKeyFromItem(item){
@@ -804,22 +808,14 @@ async function deleteRemoteAnalisis(item){
 async function syncAnalisisFromSupabase(force){
   if(scenarioSyncPromise && !force) return scenarioSyncPromise;
   scenarioSyncPromise = (async function(){
-    var localItems = readSavedAnalisis();
     try{
-      for(var i = 0; i < localItems.length; i += 1){
-        var localItem = localItems[i];
-        if(!localItem || !localItem.id) continue;
-        var remoteId = await upsertRemoteAnalisis(localItem);
-        if(remoteId) localItem.remote_id = remoteId;
-      }
-      writeSavedAnalisis(localItems);
       var remoteItems = await fetchRemoteAnalisis();
-      var merged = mergeScenarioCollections(localItems, remoteItems);
-      writeSavedAnalisis(merged);
-      return merged;
+      writeSavedAnalisis(remoteItems);
+      clearLegacyLocalAnalisis();
+      return readSavedAnalisis();
     }catch(error){
-      console.warn('Ganadería estándar sin sincronización Supabase, sigo con almacenamiento local', error);
-      return localItems;
+      console.warn('Ganadería estándar sin sincronización Supabase', error);
+      return readSavedAnalisis();
     }
   })();
   try{
@@ -980,28 +976,14 @@ async function guardar(){
   };
 
   try{
-    var idx = saved.findIndex(function(item){ return item.id === payload.id; });
-    if(idx >= 0) saved[idx] = payload;
-    else saved.unshift(payload);
-    writeSavedAnalisis(saved);
+    var remoteId = await upsertRemoteAnalisis(payload);
+    if(remoteId) payload.remote_id = remoteId;
     currentAnalisisId = payload.id;
+    await syncAnalisisFromSupabase(true);
     var now = new Date();
     setStatus('Guardado correctamente', 'ok');
     var last=document.getElementById('last_saved');
     if(last) last.textContent = 'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    try{
-      var remoteId = await upsertRemoteAnalisis(payload);
-      if(remoteId){
-        var synced = readSavedAnalisis().map(function(item){
-          if(item.id === payload.id) item.remote_id = remoteId;
-          return item;
-        });
-        writeSavedAnalisis(synced);
-      }
-    }catch(syncError){
-      console.warn('Guardado remoto de ganadería estándar pendiente', syncError);
-      setStatus('Guardado localmente. La copia en Supabase quedó pendiente.', 'ok');
-    }
     setTimeout(function(){ setStatus('',''); }, 3000);
   }catch(e){
     setStatus('Error al guardar: '+e.message, 'err');
@@ -1020,9 +1002,7 @@ async function cargarHistorial(){
   listEl.innerHTML = '<div style="color:var(--txt2);font-size:13px">Cargando...</div>';
 
   try{
-    var data = await syncAnalisisFromSupabase()
-      .then(function(items){ return items; })
-      .catch(function(){ return readSavedAnalisis(); });
+    var data = await syncAnalisisFromSupabase(true);
     data = data
       .filter(function(item){ return !currentClienteId || item.cliente_id === currentClienteId; })
       .sort(function(a,b){ return new Date(b.updated_at) - new Date(a.updated_at); });
@@ -1088,14 +1068,9 @@ async function eliminarAnalisis(id, btn){
   try{
     var currentItems = readSavedAnalisis();
     var target = currentItems.find(function(item){ return item.id === id; }) || null;
-    var next = currentItems.filter(function(item){ return item.id !== id; });
-    writeSavedAnalisis(next);
+    await deleteRemoteAnalisis(target);
     if(currentAnalisisId === id){ currentAnalisisId = null; nuevoAnalisis(); }
-    try{
-      await deleteRemoteAnalisis(target);
-    }catch(syncError){
-      console.warn('Borrado remoto de ganadería estándar pendiente', syncError);
-    }
+    await syncAnalisisFromSupabase(true);
     await cargarHistorial();
   }catch(e){
     setStatus('Error al eliminar: '+e.message, 'err');
