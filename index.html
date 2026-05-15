@@ -60,6 +60,24 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .btn-secondary:hover { background:rgba(212,160,23,.08); }
 .login-error { color:#fca5a5; font-size:13px; margin-top:12px; text-align:center; display:none; }
 .login-success { color:#8ee5c5; font-size:13px; margin-top:12px; text-align:center; display:none; }
+.login-link { margin-top:14px; font-size:13px; color:var(--oro-l); text-align:center; cursor:pointer; background:none; border:none; width:100%; }
+.login-link:hover { opacity:.85; }
+.auth-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+.auth-modal-overlay.open { display:flex; }
+.auth-modal { width:100%; max-width:380px; background:var(--negro); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:28px 24px; box-shadow:0 10px 40px rgba(0,0,0,.28); }
+.auth-modal h3 { color:white; font-size:20px; margin-bottom:8px; }
+.auth-modal p { color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; margin-bottom:16px; }
+.auth-modal label { color:rgba(255,255,255,.65); font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; display:block; margin-bottom:7px; }
+.auth-modal input { width:100%; padding:13px 15px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.07); color:white; font-size:15px; margin-bottom:14px; outline:none; }
+.auth-modal input:focus { border-color:var(--oro-l); }
+.auth-modal-actions { display:flex; gap:10px; margin-top:6px; }
+.btn-modal-secondary { flex:1; padding:13px; background:transparent; color:rgba(255,255,255,.75); border:1px solid rgba(255,255,255,.14); border-radius:10px; font-size:14px; cursor:pointer; }
+.btn-modal-secondary:hover { background:rgba(255,255,255,.04); }
+.btn-modal-primary { flex:1; padding:13px; background:var(--oro); color:var(--negro); border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
+.btn-modal-primary:disabled { opacity:.5; cursor:not-allowed; }
+.auth-message { font-size:13px; margin-top:12px; display:none; }
+.auth-message.ok { display:block; color:#bbf7d0; }
+.auth-message.err { display:block; color:#fca5a5; }
 
 /* ── LOADING ── */
 #loadingScreen { min-height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--negro); gap:16px; }
@@ -492,6 +510,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <input type="password" id="loginPass" placeholder="••••••••">
       <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
       <button class="btn-secondary" type="button" onclick="switchAuthMode('register')">Quiero crear mi cuenta</button>
+      <button class="login-link" type="button" onclick="openForgotPasswordModal()">Olvidé mi contraseña</button>
     </div>
     <div class="auth-pane" id="pane-register">
       <label>Empresa / cliente</label>
@@ -506,6 +525,36 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     </div>
     <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
     <div class="login-success" id="loginSuccess">Tu cuenta fue creada. Ya puedes ingresar.</div>
+  </div>
+</div>
+
+<div class="auth-modal-overlay" id="forgotPasswordOverlay" onclick="closeForgotPasswordModal(event)">
+  <div class="auth-modal" onclick="event.stopPropagation()">
+    <h3>Recuperar contraseña</h3>
+    <p>Ingresá tu email y te enviaremos un enlace para definir una nueva contraseña.</p>
+    <label>Email</label>
+    <input type="email" id="forgotEmail" placeholder="tu@email.com" autocomplete="email">
+    <div class="auth-modal-actions">
+      <button class="btn-modal-secondary" type="button" onclick="closeForgotPasswordModal()">Cancelar</button>
+      <button class="btn-modal-primary" type="button" id="btnForgotPassword" onclick="sendPasswordReset()">Enviar enlace</button>
+    </div>
+    <div class="auth-message" id="forgotPasswordMessage"></div>
+  </div>
+</div>
+
+<div class="auth-modal-overlay" id="resetPasswordOverlay" onclick="closeResetPasswordModal(event)">
+  <div class="auth-modal" onclick="event.stopPropagation()">
+    <h3>Nueva contraseña</h3>
+    <p>Elegí una nueva contraseña para tu cuenta.</p>
+    <label>Nueva contraseña</label>
+    <input type="password" id="resetPassword" placeholder="mínimo 8 caracteres" autocomplete="new-password">
+    <label>Repetir contraseña</label>
+    <input type="password" id="resetPasswordConfirm" placeholder="repetí tu contraseña" autocomplete="new-password">
+    <div class="auth-modal-actions">
+      <button class="btn-modal-secondary" type="button" onclick="closeResetPasswordModal()">Cancelar</button>
+      <button class="btn-modal-primary" type="button" id="btnResetPassword" onclick="saveNewPassword()">Guardar contraseña</button>
+    </div>
+    <div class="auth-message" id="resetPasswordMessage"></div>
   </div>
 </div>
 
@@ -1036,6 +1085,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const APP_URL = 'https://ctxasesores.github.io/agro-reporte/';
 const COLORES_PROD = {'Soja':'#5b9ec9','Maiz':'#3d7aa8','Trigo':'#8bbedd','Girasol':'#2a5f84','Sorgo':'#1e4466','Cebada':'#a8cfe8'};
 const PRODUCTOS = ['Soja','Maiz','Trigo','Girasol','Sorgo','Cebada'];
 
@@ -1050,14 +1100,34 @@ let filterProd = 'todos';
 let tagsDisponibles = [];   // ['DFL','AGR',...] — tags del cliente
 let activeTagFilter = [];   // tags seleccionados para filtrar (intersección Y)
 let currentAuthMode = 'login';
+let authListenerReady = false;
+let passwordRecoveryMode = false;
 
 // ── INIT ──
 function initSupabase() {
   if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  if (!authListenerReady) {
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        passwordRecoveryMode = true;
+        closeForgotPasswordModal();
+        openResetPasswordModal();
+      }
+    });
+    authListenerReady = true;
+  }
 }
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
+  if (document.getElementById('resetPasswordOverlay')?.classList.contains('open')) {
+    saveNewPassword();
+    return;
+  }
+  if (document.getElementById('forgotPasswordOverlay')?.classList.contains('open')) {
+    sendPasswordReset();
+    return;
+  }
   if (currentAuthMode === 'register') doRegister();
   else doLogin();
 });
@@ -1204,6 +1274,131 @@ async function doRegister() {
 async function logout() {
   if(sb) await sb.auth.signOut();
   location.reload();
+}
+
+function openForgotPasswordModal() {
+  const email = document.getElementById('loginEmail')?.value.trim();
+  const input = document.getElementById('forgotEmail');
+  if (email && input) input.value = email;
+  document.getElementById('forgotPasswordOverlay')?.classList.add('open');
+  setAuthMessage('forgotPasswordMessage', '', '');
+}
+
+function closeForgotPasswordModal(e) {
+  const overlay = document.getElementById('forgotPasswordOverlay');
+  if (!e || e.target === overlay) overlay?.classList.remove('open');
+}
+
+function openResetPasswordModal() {
+  document.getElementById('resetPasswordOverlay')?.classList.add('open');
+  setAuthMessage('resetPasswordMessage', '', '');
+}
+
+function closeResetPasswordModal(e) {
+  const overlay = document.getElementById('resetPasswordOverlay');
+  if (!e || e.target === overlay) overlay?.classList.remove('open');
+}
+
+function setAuthMessage(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'auth-message' + (type ? ' ' + type : '');
+}
+
+async function sendPasswordReset() {
+  initSupabase();
+  hideAuthMessages();
+  const email = document.getElementById('forgotEmail')?.value.trim();
+  const btn = document.getElementById('btnForgotPassword');
+  if (!email) {
+    setAuthMessage('forgotPasswordMessage', 'Ingresá tu email.', 'err');
+    return;
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: APP_URL });
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Enviar enlace';
+  }
+  if (error) {
+    setAuthMessage('forgotPasswordMessage', 'No se pudo enviar el email: ' + error.message, 'err');
+    return;
+  }
+  setAuthMessage('forgotPasswordMessage', 'Te enviamos un enlace para restablecer tu contraseña.', 'ok');
+  const okEl = document.getElementById('loginSuccess');
+  if (okEl) {
+    okEl.textContent = 'Revisá tu email para cambiar la contraseña.';
+    okEl.style.display = 'block';
+  }
+}
+
+function isPasswordRecoveryUrl() {
+  return (window.location.hash || '').includes('type=recovery') || (window.location.search || '').includes('type=recovery');
+}
+
+async function handleRecoveryReturn() {
+  initSupabase();
+  if (!isPasswordRecoveryUrl()) return false;
+  passwordRecoveryMode = true;
+  document.getElementById('loginScreen').style.display = 'flex';
+  closeForgotPasswordModal();
+  openResetPasswordModal();
+  const { data } = await sb.auth.getSession();
+  if (!data.session) {
+    setAuthMessage('resetPasswordMessage', 'El enlace no es válido o ya venció. Solicitá uno nuevo.', 'err');
+  }
+  return true;
+}
+
+async function saveNewPassword() {
+  initSupabase();
+  const pass = document.getElementById('resetPassword')?.value.trim() || '';
+  const confirmPass = document.getElementById('resetPasswordConfirm')?.value.trim() || '';
+  const btn = document.getElementById('btnResetPassword');
+  if (pass.length < 8) {
+    setAuthMessage('resetPasswordMessage', 'La nueva contraseña debe tener al menos 8 caracteres.', 'err');
+    return;
+  }
+  if (pass !== confirmPass) {
+    setAuthMessage('resetPasswordMessage', 'Las contraseñas no coinciden.', 'err');
+    return;
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+  }
+  const { error } = await sb.auth.updateUser({ password: pass });
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Guardar contraseña';
+  }
+  if (error) {
+    setAuthMessage('resetPasswordMessage', 'No se pudo actualizar la contraseña: ' + error.message, 'err');
+    return;
+  }
+  setAuthMessage('resetPasswordMessage', 'Contraseña actualizada. Ya podés ingresar.', 'ok');
+  const okEl = document.getElementById('loginSuccess');
+  const errEl = document.getElementById('loginError');
+  const passEl = document.getElementById('loginPass');
+  if (okEl) {
+    okEl.textContent = 'Contraseña actualizada. Ingresá con tu nueva clave.';
+    okEl.style.display = 'block';
+  }
+  if (errEl) errEl.style.display = 'none';
+  if (passEl) passEl.value = '';
+  await sb.auth.signOut();
+  passwordRecoveryMode = false;
+  setTimeout(() => {
+    closeResetPasswordModal();
+    if (window.location.hash || window.location.search) {
+      history.replaceState({}, document.title, window.location.pathname);
+    }
+    window.location.href = APP_URL;
+  }, 1000);
 }
 
 // ── LOAD APP ──
@@ -4166,6 +4361,7 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('load', async () => {
   try {
     initSupabase();
+    if (await handleRecoveryReturn()) return;
     const { data } = await sb.auth.getSession();
     if (data?.session?.user) {
       currentUser = data.session.user;
