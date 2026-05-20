@@ -385,10 +385,16 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .tag-current { display:flex; flex-wrap:wrap; gap:6px; min-height:36px; padding:6px; background:var(--negro-b); border-radius:8px; border:1px solid var(--crema-dd); }
 .tag-remove { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:.5px; background:rgba(212,160,23,.15); color:var(--oro-l); border:1px solid rgba(212,160,23,.3); cursor:pointer; }
 .tag-remove:hover { background:rgba(217,81,44,.2); color:#f0856a; border-color:rgba(217,81,44,.3); }
-.campaign-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px; }
+.campaign-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 0 16px; }
+.campaign-tabs { display:flex; gap:8px; flex-wrap:wrap; flex:1; min-width:220px; }
 .campaign-tab { padding:7px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:rgba(255,255,255,.58); font-size:12px; font-weight:700; cursor:pointer; transition:all .16s; font-family:'DM Sans',sans-serif; }
 .campaign-tab.active { background:rgba(212,160,23,.18); color:var(--oro-l); border-color:rgba(212,160,23,.45); box-shadow:0 8px 22px rgba(0,0,0,.14); }
 .campaign-tab:hover:not(.active) { background:rgba(255,255,255,.1); color:white; }
+.campaign-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.campaign-action-btn { padding:7px 11px; border-radius:999px; border:1px solid rgba(212,160,23,.32); background:rgba(212,160,23,.08); color:var(--oro-l); font-size:11px; font-weight:800; cursor:pointer; transition:all .16s; font-family:'DM Sans',sans-serif; }
+.campaign-action-btn:hover { background:rgba(212,160,23,.16); color:white; }
+.campaign-action-btn.danger { border-color:rgba(217,81,44,.34); background:rgba(217,81,44,.1); color:#f2a48f; }
+.campaign-action-btn.danger:hover { background:rgba(217,81,44,.18); color:white; }
 .campaign-form-note { grid-column:1/-1; padding:10px 13px; border-radius:9px; border:1px solid rgba(212,160,23,.24); background:rgba(212,160,23,.08); color:var(--oro-l); font-size:12px; line-height:1.45; }
 /* ── TASAS IMPLÍCITAS ── */
 .tasas-tab { padding:4px 10px; border-radius:6px; border:1px solid var(--crema-dd); background:transparent; font-size:11px; color:var(--gris); cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif; }
@@ -648,7 +654,13 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <button onclick="abrirGestionTags()" style="padding:3px 8px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.35);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">⚙ gestionar</button>
         <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
       </div>
-      <div class="campaign-tabs" id="campaign-tabs"></div>
+      <div class="campaign-toolbar">
+        <div class="campaign-tabs" id="campaign-tabs"></div>
+        <div class="campaign-actions">
+          <button class="campaign-action-btn" type="button" onclick="addCampaign()">+ Agregar campaña</button>
+          <button class="campaign-action-btn danger" type="button" onclick="deleteActiveCampaign()">Borrar campaña</button>
+        </div>
+      </div>
       <div class="kpis">
         <!-- Left: KPIs compactos -->
         <div style="display:flex;flex-direction:column;gap:8px">
@@ -1560,6 +1572,10 @@ function showAgricultureProOnlyPopup(tipo) {
   alert(`La operación "${tipo}" está disponible solo en Agricultura PRO.\n\nLa versión ESTÁNDAR permite cargar Plan de Siembra, Stock, Precio, Futuro y Forward.`);
 }
 
+function showCampaignProOnlyPopup() {
+  alert('Las campañas múltiples están disponibles solo en Agricultura PRO.\n\nEn Agricultura ESTÁNDAR podés trabajar con una campaña activa y borrar campañas viejas si tu cuenta ya las tenía cargadas.');
+}
+
 function normalizeCampaign(value) {
   return String(value || '').trim();
 }
@@ -1606,6 +1622,133 @@ function renderCampaignTabs() {
     `<button class="campaign-tab ${c === activeCampaign ? 'active' : ''}" onclick='setActiveCampaign(${JSON.stringify(c)})'>Campaña ${c}</button>`
   ).join('');
   if (note) note.textContent = `Las operaciones nuevas se guardarán en la campaña ${activeCampaign}. Cambiá la pestaña superior para cargar o ver otra campaña.`;
+}
+
+function isMissingFunctionError(error) {
+  const msg = String(error?.message || '').toLowerCase();
+  return msg.includes('function') || msg.includes('rpc') || msg.includes('schema cache');
+}
+
+async function reloadClienteProfile() {
+  if (!sb || !currentUser) return currentCliente;
+  const {data, error} = await sb.from('clientes').select('*').eq('id', currentUser.id).single();
+  if (!error && data) currentCliente = data;
+  return currentCliente;
+}
+
+async function updateClientCampaignList(nextCampaigns, primaryCampaign) {
+  const clean = parseCampaignList(nextCampaigns);
+  const primary = normalizeCampaign(primaryCampaign || clean[0] || getLegacyCampaign());
+  const payload = {
+    campanias: clean,
+    campania: primary
+  };
+  let res = await sb.from('clientes').update(payload).eq('id', currentCliente.id);
+  if (res.error && isMissingColumnError(res.error, 'campanias')) {
+    res = await sb.from('clientes').update({ campania: primary }).eq('id', currentCliente.id);
+  }
+  if (res.error) return res;
+  currentCliente = { ...currentCliente, ...payload };
+  return res;
+}
+
+async function addCampaignRemote(campaignName) {
+  const res = await sb.rpc('add_agricultura_campaign', { p_campaign: campaignName });
+  if (!res.error || !isMissingFunctionError(res.error)) return res;
+  const next = parseCampaignList([...campaignTabs, campaignName]);
+  if (!isAgriculturaPro() && next.length > 1) {
+    return { error: { message: 'Las campañas múltiples están disponibles solo en Agricultura PRO.' } };
+  }
+  return updateClientCampaignList(next, currentCliente?.campania || next[0]);
+}
+
+async function deleteCampaignRemote(campaignName) {
+  const res = await sb.rpc('delete_agricultura_campaign', { p_campaign: campaignName });
+  if (!res.error || !isMissingFunctionError(res.error)) return res;
+
+  let deleteRes = await sb.from('operaciones')
+    .delete()
+    .eq('cliente_codigo', currentCliente.codigo)
+    .eq('campania', campaignName);
+  if (deleteRes.error && !isMissingColumnError(deleteRes.error, 'campania')) return deleteRes;
+
+  if (campaignName === getLegacyCampaign()) {
+    const legacyDelete = await sb.from('operaciones')
+      .delete()
+      .eq('cliente_codigo', currentCliente.codigo)
+      .is('campania', null);
+    if (legacyDelete.error && !isMissingColumnError(legacyDelete.error, 'campania')) return legacyDelete;
+  }
+
+  const next = campaignTabs.filter(c => c !== campaignName);
+  return updateClientCampaignList(next, next[0] || getLegacyCampaign());
+}
+
+async function addCampaign() {
+  refreshCampaignState(activeCampaign);
+  if (!isAgriculturaPro() && campaignTabs.length >= 1) {
+    showCampaignProOnlyPopup();
+    return;
+  }
+
+  const campaignName = normalizeCampaign(prompt('Nombre de la nueva campaña. Ejemplo: 26/27'));
+  if (!campaignName) return;
+
+  if (campaignTabs.some(c => c.toLowerCase() === campaignName.toLowerCase())) {
+    setActiveCampaign(campaignTabs.find(c => c.toLowerCase() === campaignName.toLowerCase()) || campaignName);
+    alert('Esa campaña ya existe. Te llevé a la pestaña correspondiente.');
+    return;
+  }
+
+  const res = await addCampaignRemote(campaignName);
+  if (res.error) {
+    if (!isAgriculturaPro() && String(res.error.message || '').toLowerCase().includes('pro')) showCampaignProOnlyPopup();
+    else alert('No se pudo agregar la campaña: ' + res.error.message);
+    return;
+  }
+
+  await reloadClienteProfile();
+  activeCampaign = campaignName;
+  refreshCampaignState(activeCampaign);
+  renderAll();
+  renderFlujo();
+  renderPosicionesChart();
+  renderEvolucion();
+  cargarOpsGuardadas();
+  initFormDefaults();
+}
+
+async function deleteActiveCampaign() {
+  refreshCampaignState(activeCampaign);
+  if (!activeCampaign) return;
+  if (campaignTabs.length <= 1) {
+    alert('Debe quedar al menos una campaña activa en el reporte. Podés borrar campañas viejas cuando exista otra campaña para dejar como principal.');
+    return;
+  }
+
+  const msg = `¿Borrar la campaña "${activeCampaign}"?\n\nEsto eliminará todas las operaciones cargadas en esa campaña. Esta acción no se puede deshacer.`;
+  if (!confirm(msg)) return;
+
+  const deletedCampaign = activeCampaign;
+  const nextCampaign = campaignTabs.find(c => c !== deletedCampaign) || getLegacyCampaign();
+  const res = await deleteCampaignRemote(deletedCampaign);
+  if (res.error) {
+    alert('No se pudo borrar la campaña: ' + res.error.message);
+    return;
+  }
+
+  await reloadClienteProfile();
+  allOps = allOps.filter(op => getOperationCampaign(op) !== deletedCampaign);
+  opsCache = opsCache.filter(op => getOperationCampaign(op) !== deletedCampaign);
+  activeCampaign = nextCampaign;
+  await refreshData();
+  refreshCampaignState(activeCampaign);
+  renderAll();
+  renderFlujo();
+  renderPosicionesChart();
+  renderEvolucion();
+  cargarOpsGuardadas();
+  initFormDefaults();
 }
 
 function syncAgricultureModeUi() {
