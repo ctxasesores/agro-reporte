@@ -385,6 +385,11 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .tag-current { display:flex; flex-wrap:wrap; gap:6px; min-height:36px; padding:6px; background:var(--negro-b); border-radius:8px; border:1px solid var(--crema-dd); }
 .tag-remove { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:.5px; background:rgba(212,160,23,.15); color:var(--oro-l); border:1px solid rgba(212,160,23,.3); cursor:pointer; }
 .tag-remove:hover { background:rgba(217,81,44,.2); color:#f0856a; border-color:rgba(217,81,44,.3); }
+.campaign-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px; }
+.campaign-tab { padding:7px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:rgba(255,255,255,.58); font-size:12px; font-weight:700; cursor:pointer; transition:all .16s; font-family:'DM Sans',sans-serif; }
+.campaign-tab.active { background:rgba(212,160,23,.18); color:var(--oro-l); border-color:rgba(212,160,23,.45); box-shadow:0 8px 22px rgba(0,0,0,.14); }
+.campaign-tab:hover:not(.active) { background:rgba(255,255,255,.1); color:white; }
+.campaign-form-note { grid-column:1/-1; padding:10px 13px; border-radius:9px; border:1px solid rgba(212,160,23,.24); background:rgba(212,160,23,.08); color:var(--oro-l); font-size:12px; line-height:1.45; }
 /* ── TASAS IMPLÍCITAS ── */
 .tasas-tab { padding:4px 10px; border-radius:6px; border:1px solid var(--crema-dd); background:transparent; font-size:11px; color:var(--gris); cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif; }
 .tasas-tab.active { background:var(--negro-b); color:var(--oro-l); border-color:var(--oro); }
@@ -643,6 +648,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <button onclick="abrirGestionTags()" style="padding:3px 8px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.35);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">⚙ gestionar</button>
         <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
       </div>
+      <div class="campaign-tabs" id="campaign-tabs"></div>
       <div class="kpis">
         <!-- Left: KPIs compactos -->
         <div style="display:flex;flex-direction:column;gap:8px">
@@ -825,7 +831,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           </div>
           <div id="acc-nueva" style="display:none;margin-top:12px">
         <div class="card">
-          <div class="form-grid">
+            <div class="form-grid">
+            <div class="campaign-form-note" id="campaign-form-note">Las operaciones se guardarán en la campaña seleccionada.</div>
             <div class="form-group">
               <label class="form-label">Producto</label>
               <select class="form-select" id="f-producto">
@@ -1102,6 +1109,9 @@ let activeTagFilter = [];   // tags seleccionados para filtrar (intersección Y)
 let currentAuthMode = 'login';
 let authListenerReady = false;
 let passwordRecoveryMode = false;
+let campaignTabs = [];
+let activeCampaign = '';
+const AGRI_PRO_ONLY_TYPES = ['PAF','FIX','Call','Put'];
 
 // ── INIT ──
 function initSupabase() {
@@ -1429,6 +1439,7 @@ async function loadApp() {
     return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
+  refreshCampaignState();
   buildPreciosMap(preciosRes.data || []);
   // Load tags — normalizar null a [] siempre
   const rawTags = cli.tags_disponibles;
@@ -1535,6 +1546,142 @@ function getDashboardMode(producto, state) {
     return 'SIN ACCESO';
   }
   return 'ESTANDAR';
+}
+
+function isAgriculturaPro() {
+  return getDashboardMode('agricultura', getClienteAccessState()) === 'PRO';
+}
+
+function isProOnlyOperationType(tipo) {
+  return AGRI_PRO_ONLY_TYPES.includes(String(tipo || '').trim());
+}
+
+function showAgricultureProOnlyPopup(tipo) {
+  alert(`La operación "${tipo}" está disponible solo en Agricultura PRO.\n\nLa versión ESTÁNDAR permite cargar Plan de Siembra, Stock, Precio, Futuro y Forward.`);
+}
+
+function normalizeCampaign(value) {
+  return String(value || '').trim();
+}
+
+function parseCampaignList(value) {
+  const raw = Array.isArray(value) ? value : String(value || '').split(/[,;\n|]+/);
+  const seen = new Set();
+  return raw
+    .map(normalizeCampaign)
+    .filter(Boolean)
+    .filter(item => {
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function getLegacyCampaign() {
+  return normalizeCampaign(currentCliente?.campania || currentCliente?.campaña || 'General') || 'General';
+}
+
+function getOperationCampaign(op) {
+  return normalizeCampaign(op?.campania || op?.campaña || getLegacyCampaign());
+}
+
+function refreshCampaignState(preferred = activeCampaign) {
+  const campaigns = [
+    ...parseCampaignList(currentCliente?.campanias),
+    ...parseCampaignList(currentCliente?.campania),
+    ...allOps.map(op => getOperationCampaign(op)).filter(Boolean)
+  ];
+  campaignTabs = parseCampaignList(campaigns);
+  if (!campaignTabs.length) campaignTabs = [getLegacyCampaign()];
+  activeCampaign = campaignTabs.includes(preferred) ? preferred : campaignTabs[0];
+}
+
+function renderCampaignTabs() {
+  const el = document.getElementById('campaign-tabs');
+  const note = document.getElementById('campaign-form-note');
+  if (!el) return;
+  refreshCampaignState(activeCampaign);
+  el.innerHTML = campaignTabs.map(c =>
+    `<button class="campaign-tab ${c === activeCampaign ? 'active' : ''}" onclick='setActiveCampaign(${JSON.stringify(c)})'>Campaña ${c}</button>`
+  ).join('');
+  if (note) note.textContent = `Las operaciones nuevas se guardarán en la campaña ${activeCampaign}. Cambiá la pestaña superior para cargar o ver otra campaña.`;
+}
+
+function syncAgricultureModeUi() {
+  const isPro = isAgriculturaPro();
+  ['f-tipo','eop-tipo'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    Array.from(sel.options).forEach(opt => {
+      const base = opt.value || opt.textContent.replace(/\s+\(PRO\)$/,'');
+      if (!base) return;
+      opt.textContent = isProOnlyOperationType(base) && !isPro ? `${base} (PRO)` : base;
+      opt.value = base;
+    });
+  });
+  const flujoTipo = document.getElementById('flujo-tipo');
+  if (flujoTipo) {
+    Array.from(flujoTipo.options).forEach(opt => {
+      if (!opt.value && !opt.textContent) return;
+      const base = opt.value || opt.textContent.replace(/\s+\(PRO\)$/,'');
+      if (isProOnlyOperationType(base)) {
+        opt.disabled = !isPro;
+        opt.textContent = !isPro ? `${base} (PRO)` : base;
+        opt.value = base;
+      }
+    });
+    if (!isPro && isProOnlyOperationType(flujoTipo.value)) flujoTipo.value = '';
+  }
+}
+
+function setActiveCampaign(campaign) {
+  activeCampaign = normalizeCampaign(campaign) || getLegacyCampaign();
+  filterProd = 'todos';
+  renderCampaignTabs();
+  syncAgricultureModeUi();
+  renderAll();
+  renderFlujo();
+  renderPosicionesChart();
+  renderEvolucion();
+  cargarOpsGuardadas();
+  initFormDefaults();
+}
+
+function getCampaignOps(source = allOps) {
+  refreshCampaignState(activeCampaign);
+  const scoped = activeCampaign
+    ? source.filter(op => getOperationCampaign(op) === activeCampaign)
+    : source;
+  if (isAgriculturaPro()) return scoped;
+  return scoped.filter(op => !isProOnlyOperationType(op?.tipo));
+}
+
+function stripMissingColumnPayload(payload, columnName) {
+  const next = {...payload};
+  delete next[columnName];
+  return next;
+}
+
+function isMissingColumnError(error, columnName) {
+  const msg = String(error?.message || '').toLowerCase();
+  return msg.includes(columnName.toLowerCase()) && (msg.includes('column') || msg.includes('schema cache'));
+}
+
+async function insertOperacionWithCampaign(payload) {
+  const res = await sb.from('operaciones').insert(payload);
+  if (res.error && isMissingColumnError(res.error, 'campania')) {
+    return sb.from('operaciones').insert(stripMissingColumnPayload(payload, 'campania'));
+  }
+  return res;
+}
+
+async function updateOperacionWithCampaign(payload, id) {
+  const res = await sb.from('operaciones').update(payload).eq('id', id);
+  if (res.error && isMissingColumnError(res.error, 'campania')) {
+    return sb.from('operaciones').update(stripMissingColumnPayload(payload, 'campania')).eq('id', id);
+  }
+  return res;
 }
 
 function setPill(id, enabled, text) {
@@ -2470,9 +2617,10 @@ function isExpiredMonthYear(mes, anio) {
 
 // ── TAG FILTER ──
 function getFilteredOps() {
-  if (!activeTagFilter.length) return allOps;
+  const campaignOps = getCampaignOps();
+  if (!activeTagFilter.length) return campaignOps;
   // Intersección Y: op must have ALL active tags
-  return allOps.filter(op => {
+  return campaignOps.filter(op => {
     const opTags = op.tags || [];
     return activeTagFilter.every(t => opTags.includes(t));
   });
@@ -2590,9 +2738,10 @@ function renderAll() {
   // Sidebar info
   document.getElementById('s-nombre').textContent = currentCliente.nombre_empresa;
   document.getElementById('d-nombre').textContent = currentCliente.nombre_empresa;
-  document.getElementById('d-meta').textContent   = 'Reporte agrícola';
+  document.getElementById('d-meta').textContent   = `Reporte agrícola · ${getDashboardMode('agricultura', getClienteAccessState())} · Campaña ${activeCampaign || getLegacyCampaign()}`;
   const now = new Date();
   document.getElementById('s-fecha').textContent  = 'Actualizado: ' + now.toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+  renderCampaignTabs();
 
   // KPIs
   const {cartera,realizado,pendiente} = calcularCartera();
@@ -3092,13 +3241,13 @@ function renderOps() {
   const filtered = getFilteredOps();
   const ops = filterProd === 'todos' ? filtered : filtered.filter(o => o.producto === filterProd);
   // Filters
-  const prods = ['todos', ...new Set(allOps.map(o=>o.producto))];
+  const prods = ['todos', ...new Set(getCampaignOps().map(o=>o.producto))];
   document.getElementById('d-filters').innerHTML = prods.map(p =>
     `<button class="filter-btn ${filterProd===p?'active':''}" onclick="setFilter('${p}')">${p==='todos'?'Todos':p}</button>`
   ).join('');
 
   const tbody = document.getElementById('d-ops-body');
-  if (!ops.length) { tbody.innerHTML='<tr><td colspan="10" class="empty-state">Sin operaciones confirmadas</td></tr>'; return; }
+  if (!ops.length) { tbody.innerHTML=`<tr><td colspan="12" class="empty-state">Sin operaciones confirmadas en la campaña ${activeCampaign || getLegacyCampaign()}</td></tr>`; return; }
 
   tbody.innerHTML = ops.map((op,i) => {
     const pM  = getPrecioMercado(op.producto, op.vencimiento);
@@ -3131,7 +3280,22 @@ function setFilter(prod) { filterProd=prod; renderOps(); }
 // ── FORMULARIO NUEVA OP ──
 function onTipoChange() {
   const tipo = document.getElementById('f-tipo').value;
+  if (!isAgriculturaPro() && isProOnlyOperationType(tipo)) {
+    document.getElementById('f-tipo').value = '';
+    document.getElementById('grp-ejercicio').style.display = 'none';
+    showAgricultureProOnlyPopup(tipo);
+    return;
+  }
   document.getElementById('grp-ejercicio').style.display = ['Call','Put'].includes(tipo)?'flex':'none';
+}
+
+function onEditTipoChange() {
+  const tipoEl = document.getElementById('eop-tipo');
+  const tipo = tipoEl?.value;
+  if (!isAgriculturaPro() && isProOnlyOperationType(tipo)) {
+    if (tipoEl) tipoEl.value = '';
+    showAgricultureProOnlyPopup(tipo);
+  }
 }
 
 function resetForm() {
@@ -3153,6 +3317,8 @@ function initFormDefaults() {
     selectProducto.innerHTML = '<option value="">Seleccioná...</option>' +
       PRODUCTOS.map(p => `<option value="${p}">${p}</option>`).join('');
   }
+  const note = document.getElementById('campaign-form-note');
+  if (note) note.textContent = `Las operaciones nuevas se guardarán en la campaña ${activeCampaign || getLegacyCampaign()}. Cambiá la pestaña superior para cargar o ver otra campaña.`;
 }
 
 function showToast(msg,type) {
@@ -3178,6 +3344,10 @@ async function guardarOperacion() {
   
   // Validaciones básicas
   if (!producto||!tipo||!lado||!fecha) { showToast('Completá los campos: Producto, Tipo, Lado y Fecha.','err'); return; }
+  if (!isAgriculturaPro() && isProOnlyOperationType(tipo)) {
+    showAgricultureProOnlyPopup(tipo);
+    return;
+  }
   if (isNaN(volumen)||volumen<=0) { showToast('El volumen debe ser mayor a 0.','err'); return; }
   if (!selectedTags.length) { showToast('Seleccioná al menos un tag.','err'); return; }
   
@@ -3196,10 +3366,11 @@ async function guardarOperacion() {
   
   const btn=document.getElementById('btn-guardar');
   btn.disabled=true; btn.textContent='Guardando...';
-  const {error} = await sb.from('operaciones').insert({
+  const {error} = await insertOperacionWithCampaign({
     cliente_codigo:currentCliente.codigo, producto, tipo, lado, fecha,
     volumen, precio, vencimiento: vencimiento || null, precio_ejercicio:ejercicio, observaciones:obs, estado:'confirmada',
-    tags: selectedTags
+    tags: selectedTags,
+    campania: activeCampaign || getLegacyCampaign()
   });
   btn.disabled=false; btn.textContent='Guardar operación';
   if (error) { showToast('Error: '+error.message,'err'); return; }
@@ -3221,7 +3392,11 @@ async function cargarOpsGuardadas() {
     wrap.innerHTML='<div class="card empty-state">Todavía no hay operaciones cargadas.</div>';
     return;
   }
-  const rows = data.map((op, idx) => {
+  const rows = data
+    .map((op, idx) => ({op, idx}))
+    .filter(item => getOperationCampaign(item.op) === activeCampaign)
+    .filter(item => isAgriculturaPro() || !isProOnlyOperationType(item.op?.tipo))
+    .map(({op, idx}) => {
     const fOp  = new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     const fVto = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'});
     const lc   = op.lado==='Compra'?'pill-compra':'pill-venta';
@@ -3238,6 +3413,10 @@ async function cargarOpsGuardadas() {
       +'<td style="white-space:nowrap">'+btnEditar+btnElim+'</td>'
       +'</tr>';
   }).join('');
+  if (!rows) {
+    wrap.innerHTML=`<div class="card empty-state">Todavía no hay operaciones cargadas en la campaña ${activeCampaign}.</div>`;
+    return;
+  }
   wrap.innerHTML = '<div class="card ops-table-wrap"><table class="ops-table">'
     +'<thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Acciones</th></tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div>';
@@ -3247,7 +3426,7 @@ async function cargarOpsGuardadasConCache() {
   if (!sb || !currentCliente) return [];
   const {data} = await sb.from('operaciones').select('*')
     .eq('cliente_codigo', currentCliente.codigo)
-    .order('created_at', {ascending:false}).limit(100);
+    .order('created_at', {ascending:false}).limit(500);
   // Ensure tags field is always an array
   opsCache = (data || []).map(op => ({...op, tags: Array.isArray(op.tags) ? op.tags : (op.tags ? [op.tags] : ['DFL'])}));
   return opsCache;
@@ -3297,6 +3476,10 @@ async function guardarEditOp() {
   // Validaciones
   if (!producto) { alert('Selecciona un producto'); return; }
   if (!tipo) { alert('Selecciona un tipo de operación'); return; }
+  if (!isAgriculturaPro() && isProOnlyOperationType(tipo)) {
+    showAgricultureProOnlyPopup(tipo);
+    return;
+  }
   if (!lado) { alert('Selecciona un lado (Compra/Venta)'); return; }
   if (!fecha) { alert('Selecciona una fecha de operación'); return; }
   if (!volumen || volumen <= 0) { alert('Ingresa un volumen válido (mayor a 0)'); return; }
@@ -3315,7 +3498,7 @@ async function guardarEditOp() {
   }
   
   const editTags = Array.from(document.querySelectorAll('#eop-tags-selector .tag-selector-item.selected')).map(el => el.dataset.tag);
-  const {error} = await sb.from('operaciones').update({
+  const {error} = await updateOperacionWithCampaign({
     producto:         producto,
     tipo:             tipo,
     lado:             lado,
@@ -3326,8 +3509,9 @@ async function guardarEditOp() {
     precio_ejercicio: ejercicio,
     observaciones:    document.getElementById('eop-obs').value,
     tags:             editTags.length ? editTags : ['DFL'],
+    campania:         activeCampaign || getLegacyCampaign(),
     updated_at:       new Date().toISOString()
-  }).eq('id', id);
+  }, id);
   if (error) { alert('Error al guardar: ' + error.message); return; }
   cerrarEditarOp();
   await refreshData();
@@ -3376,6 +3560,7 @@ async function refreshData() {
     return s.normalize('NFD').replace(/[̀-ͯ]/g,'');
   };
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
+  refreshCampaignState(activeCampaign);
   buildPreciosMap(preciosRes.data || []);
   renderTagFilterBar();
   renderTagsFormSelector();
@@ -3951,7 +4136,7 @@ function renderFlujo() {
 
   // Group by month
   const hoy = new Date().toISOString().substring(0,7);
-  const maxMes = allOps
+  const maxMes = getCampaignOps()
     .map(o => o.vencimiento ? o.vencimiento.substring(0,7) : '')
     .filter(m => m >= hoy)
     .sort().pop() || hoy;
@@ -4104,7 +4289,7 @@ function renderEvolucion() {
     || document.getElementById('evol-prod-hero')?.value || '';
   const emptyEl  = document.getElementById('evol-empty');
 
-  if (!histData.length || !allOps.length) {
+  if (!histData.length || !getCampaignOps().length) {
     if (emptyEl) emptyEl.style.display = 'block';
     if (evolucionChart) { evolucionChart.destroy(); evolucionChart = null; }
     return;
@@ -4112,7 +4297,11 @@ function renderEvolucion() {
   if (emptyEl) emptyEl.style.display = 'none';
 
   const ops = filtProd ? getFilteredOps().filter(o => normalizeStr(o.producto) === normalizeStr(filtProd)) : getFilteredOps();
-  if (!ops.length) return;
+  if (!ops.length) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    if (evolucionChart) { evolucionChart.destroy(); evolucionChart = null; }
+    return;
+  }
 
   const today      = new Date().toISOString().split('T')[0];
   const firstOpDate = ops.map(o => o.fecha).filter(Boolean).sort()[0];
@@ -4278,7 +4467,7 @@ function renderEvolucion() {
       </div>
       <div class="form-group">
         <label class="form-label">Tipo</label>
-        <select class="form-select" id="eop-tipo">
+        <select class="form-select" id="eop-tipo" onchange="onEditTipoChange()">
           <option>Plan de Siembra</option><option>Stock</option><option>Precio</option>
           <option>Futuro</option><option>FIX</option><option>PAF</option>
           <option>Call</option><option>Put</option><option>Forward</option>

@@ -137,6 +137,7 @@ tr:hover td { background:#f9faf6; }
 .full-span { grid-column:1/-1; }
 .mini-stack { display:flex; flex-direction:column; gap:4px; }
 .mini-muted { font-size:12px; color:var(--gris); }
+.field-hint { font-size:11px; color:var(--gris); margin-top:4px; line-height:1.35; }
 .chip-row { display:flex; gap:6px; flex-wrap:wrap; }
 .chip { display:inline-flex; align-items:center; padding:4px 9px; border-radius:999px; font-size:11px; font-weight:600; line-height:1; }
 .chip.green { background:#dcfce7; color:#166534; }
@@ -369,7 +370,7 @@ tr:hover td { background:#f9faf6; }
             <div class="field-group"><label class="field-label">Código interno</label><input type="text" class="field-input" id="nu-codigo" placeholder="XYZ_22"></div>
             <div class="field-group"><label class="field-label">Email</label><input type="email" class="field-input" id="nu-email" placeholder="cliente@empresa.com"></div>
             <div class="field-group"><label class="field-label">Contraseña inicial</label><input type="text" class="field-input" id="nu-pass" placeholder="mínimo 8 caracteres"></div>
-            <div class="field-group"><label class="field-label">Campaña</label><input type="text" class="field-input" id="nu-campania" placeholder="25/26"></div>
+            <div class="field-group"><label class="field-label">Campañas</label><input type="text" class="field-input" id="nu-campania" placeholder="25/26, 26/27"><div class="field-hint">Separá múltiples campañas con coma. La primera queda como campaña inicial.</div></div>
             <div class="field-group"><label class="field-label">Actividad</label>
               <select class="field-select" id="nu-actividad">
                 <option>Agricultura</option><option>Ganadería</option>
@@ -605,6 +606,11 @@ tr:hover td { background:#f9faf6; }
           <option value="bonificado">Bonificado</option>
         </select>
       </div>
+      <div class="modal-group full">
+        <label class="modal-label">Campañas agrícolas</label>
+        <input type="text" class="modal-input" id="cc-campania" placeholder="25/26, 26/27">
+        <div class="field-hint">Separá múltiples campañas con coma. Los clientes las verán como pestañas en Agricultura.</div>
+      </div>
       <div class="modal-group">
         <label class="modal-label">Agricultura</label>
         <select class="modal-select" id="cc-acceso-agricultura">
@@ -686,11 +692,34 @@ function pickFirst(obj, keys, fallback = '') {
 function normText(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
+function parseCampanias(value) {
+  const raw = Array.isArray(value) ? value : String(value || '').split(/[,;\n|]+/);
+  const seen = new Set();
+  return raw
+    .map(v => String(v || '').trim())
+    .filter(Boolean)
+    .filter(v => {
+      const key = v.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+function getCampaniasFromCliente(cli = {}) {
+  const list = parseCampanias(cli.campanias);
+  const legacy = parseCampanias(cli.campania);
+  return parseCampanias([...list, ...legacy]);
+}
+function campaniasToText(cli = {}) {
+  return getCampaniasFromCliente(cli).join(', ');
+}
 function hasPremiumPlan(cli = {}) {
   const plan = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
   return normText(plan).includes('premium');
 }
 function getClienteComercialPayload(prefix) {
+  const campaniasEl = document.getElementById(prefix + '-campania');
+  const campanias = parseCampanias(campaniasEl?.value || '');
   const accesoAgricola = boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value);
   const nivelAgricola = accesoAgricola ? document.getElementById(prefix + '-nivel-agricultura').value : null;
   const accesoGanaderia = boolFromSelect(document.getElementById(prefix + '-acceso-ganaderia').value);
@@ -698,6 +727,8 @@ function getClienteComercialPayload(prefix) {
   const accesoTambo = boolFromSelect(document.getElementById(prefix + '-acceso-tambo').value);
   const nivelTambo = accesoTambo ? document.getElementById(prefix + '-nivel-tambo').value : null;
   return {
+    campania: campanias[0] || null,
+    campanias,
     plan: document.getElementById(prefix + '-plan').value,
     estado_pago: document.getElementById(prefix + '-pago').value,
     acceso_agricola: accesoAgricola,
@@ -731,6 +762,8 @@ function syncClienteComercialForm(prefix) {
   });
 }
 function fillClienteComercialForm(prefix, cli = {}) {
+  const campaniaEl = document.getElementById(prefix + '-campania');
+  if (campaniaEl) campaniaEl.value = campaniasToText(cli);
   document.getElementById(prefix + '-plan').value = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
   document.getElementById(prefix + '-pago').value = pickFirst(cli, ['estado_pago','pago_estado'], 'pendiente');
   document.getElementById(prefix + '-acceso-agricultura').value = boolToSelect(pickFirst(cli, ['acceso_agricola','panel_agricola'], true), true);
@@ -761,6 +794,23 @@ function setupUsersSection() {
       }
     });
   });
+}
+
+function isMissingColumnError(error, columnName) {
+  const msg = String(error?.message || '').toLowerCase();
+  return msg.includes(columnName.toLowerCase()) && (msg.includes('column') || msg.includes('schema cache'));
+}
+function withoutCampaniasPayload(payload) {
+  const next = {...payload};
+  delete next.campanias;
+  return next;
+}
+async function updateClienteComercial(id, payload) {
+  const res = await sb.from('clientes').update(payload).eq('id', id);
+  if (res.error && isMissingColumnError(res.error, 'campanias')) {
+    return sb.from('clientes').update(withoutCampaniasPayload(payload)).eq('id', id);
+  }
+  return res;
 }
 
 // AUTH
@@ -1310,7 +1360,8 @@ async function crearUsuario() {
   const codigo    = document.getElementById('nu-codigo').value.trim().toUpperCase();
   const email     = document.getElementById('nu-email').value.trim();
   const pass      = document.getElementById('nu-pass').value.trim();
-  const campania  = document.getElementById('nu-campania').value.trim();
+  const campanias = parseCampanias(document.getElementById('nu-campania').value);
+  const campania  = campanias[0] || '';
   const actividad = document.getElementById('nu-actividad').value;
   const comercial = getClienteComercialPayload('nu');
   if (!nombre || !codigo || !email || !pass) { mostrarToast('nu-toast','Completá todos los campos obligatorios.','err'); return; }
@@ -1342,7 +1393,7 @@ async function crearUsuario() {
     const { data: clienteData } = await sb.from('clientes').select('id').eq('codigo', codigo).limit(1);
     const nuevoId = clienteData && clienteData[0] ? clienteData[0].id : null;
     if (nuevoId) {
-      const { error: configErr } = await sb.from('clientes').update(comercial).eq('id', nuevoId);
+      const { error: configErr } = await updateClienteComercial(nuevoId, comercial);
       if (configErr) {
         mostrarToast('nu-toast', 'Cliente creado, pero la configuración comercial no se guardó: ' + configErr.message, 'err');
         await cargarClientes();
@@ -1388,7 +1439,7 @@ async function cargarClientes() {
       <td>
         <div class="mini-stack">
           <div>${c.actividad||'—'}</div>
-          <div class="mini-muted">Campaña ${c.campania||'—'}</div>
+          <div class="mini-muted">Campañas ${campaniasToText(c) || '—'}</div>
         </div>
       </td>
       <td>
@@ -1437,7 +1488,7 @@ function closeComercialModal(e) {
 async function saveComercialEdit() {
   const id = document.getElementById('cc-id').value;
   const payload = getClienteComercialPayload('cc');
-  const { error } = await sb.from('clientes').update(payload).eq('id', id);
+  const { error } = await updateClienteComercial(id, payload);
   if (error) { alert('Error al guardar configuración comercial: ' + error.message); return; }
   closeComercialModal();
   await cargarClientes();
