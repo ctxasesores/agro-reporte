@@ -370,7 +370,7 @@ tr:hover td { background:#f9faf6; }
             <div class="field-group"><label class="field-label">Código interno</label><input type="text" class="field-input" id="nu-codigo" placeholder="XYZ_22"></div>
             <div class="field-group"><label class="field-label">Email</label><input type="email" class="field-input" id="nu-email" placeholder="cliente@empresa.com"></div>
             <div class="field-group"><label class="field-label">Contraseña inicial</label><input type="text" class="field-input" id="nu-pass" placeholder="mínimo 8 caracteres"></div>
-            <div class="field-group"><label class="field-label">Campañas</label><input type="text" class="field-input" id="nu-campania" placeholder="25/26, 26/27"><div class="field-hint">Separá múltiples campañas con coma. La primera queda como campaña inicial.</div></div>
+            <div class="field-group"><label class="field-label">Campañas</label><input type="text" class="field-input" id="nu-campania" placeholder="25/26, 26/27"><div class="field-hint">Separá múltiples campañas con coma. Más de una campaña solo está disponible con Agricultura PRO.</div></div>
             <div class="field-group"><label class="field-label">Actividad</label>
               <select class="field-select" id="nu-actividad">
                 <option>Agricultura</option><option>Ganadería</option>
@@ -609,7 +609,7 @@ tr:hover td { background:#f9faf6; }
       <div class="modal-group full">
         <label class="modal-label">Campañas agrícolas</label>
         <input type="text" class="modal-input" id="cc-campania" placeholder="25/26, 26/27">
-        <div class="field-hint">Separá múltiples campañas con coma. Los clientes las verán como pestañas en Agricultura.</div>
+        <div class="field-hint">Separá múltiples campañas con coma. Más de una campaña solo está disponible con Agricultura PRO.</div>
       </div>
       <div class="modal-group">
         <label class="modal-label">Agricultura</label>
@@ -717,11 +717,22 @@ function hasPremiumPlan(cli = {}) {
   const plan = pickFirst(cli, ['plan','plan_nombre','plan_comercial'], 'standard');
   return normText(plan).includes('premium');
 }
+function isAgriculturaProLevel(value) {
+  return String(value || '').toUpperCase() === 'PRO';
+}
+function normalizeCampaniasForAgricultura(prefix, campanias, nivelAgricola) {
+  if (isAgriculturaProLevel(nivelAgricola) || campanias.length <= 1) return campanias;
+  const first = campanias.slice(0, 1);
+  const el = document.getElementById(prefix + '-campania');
+  if (el) el.value = first.join(', ');
+  alert('Agricultura ESTANDAR admite una sola campaña. Para múltiples campañas cambiá el nivel de Agricultura a PRO. Dejé cargada solo la primera campaña.');
+  return first;
+}
 function getClienteComercialPayload(prefix) {
-  const campaniasEl = document.getElementById(prefix + '-campania');
-  const campanias = parseCampanias(campaniasEl?.value || '');
   const accesoAgricola = boolFromSelect(document.getElementById(prefix + '-acceso-agricultura').value);
   const nivelAgricola = accesoAgricola ? document.getElementById(prefix + '-nivel-agricultura').value : null;
+  const campaniasEl = document.getElementById(prefix + '-campania');
+  const campanias = normalizeCampaniasForAgricultura(prefix, parseCampanias(campaniasEl?.value || ''), nivelAgricola);
   const accesoGanaderia = boolFromSelect(document.getElementById(prefix + '-acceso-ganaderia').value);
   const nivelGanaderia = accesoGanaderia ? document.getElementById(prefix + '-nivel-ganaderia').value : null;
   const accesoTambo = boolFromSelect(document.getElementById(prefix + '-acceso-tambo').value);
@@ -793,6 +804,23 @@ function setupUsersSection() {
         access.dataset.bound = 'true';
       }
     });
+    const campania = document.getElementById(prefix + '-campania');
+    const nivelAgricultura = document.getElementById(prefix + '-nivel-agricultura');
+    const enforceCampaignCount = () => {
+      normalizeCampaniasForAgricultura(
+        prefix,
+        parseCampanias(campania?.value || ''),
+        nivelAgricultura?.value || 'ESTANDAR'
+      );
+    };
+    if (campania && !campania.dataset.boundCampaignLimit) {
+      campania.addEventListener('blur', enforceCampaignCount);
+      campania.dataset.boundCampaignLimit = 'true';
+    }
+    if (nivelAgricultura && !nivelAgricultura.dataset.boundCampaignLimit) {
+      nivelAgricultura.addEventListener('change', enforceCampaignCount);
+      nivelAgricultura.dataset.boundCampaignLimit = 'true';
+    }
   });
 }
 
