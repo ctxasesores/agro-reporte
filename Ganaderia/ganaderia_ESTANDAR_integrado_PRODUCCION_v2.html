@@ -666,6 +666,23 @@ function writeSavedAnalisis(items){
   });
 }
 
+function getSavedAnalisisForCurrentClient(){
+  return readSavedAnalisis().filter(function(item){
+    return !currentClienteId || item.cliente_id === currentClienteId;
+  });
+}
+
+function wouldCreateSecondScenario(){
+  var saved = getSavedAnalisisForCurrentClient();
+  if(!saved.length) return false;
+  if(currentAnalisisId && saved.some(function(item){ return item.id === currentAnalisisId; })) return false;
+  return true;
+}
+
+function showSingleScenarioPopup(){
+  alert('Ganadería ESTANDAR permite guardar un solo escenario.\n\nPara crear escenarios adicionales necesitás Ganadería PRO. Podés editar el escenario existente o borrarlo desde "Escenarios guardados" para cargar uno nuevo.');
+}
+
 function getScenarioModuleKeyFromItem(item){
   if(item && item.outputs && item.outputs.modulo) return item.outputs.modulo;
   var acts = item && item.actividades ? item.actividades : {};
@@ -957,6 +974,14 @@ async function guardar(){
   if(camEl && !campania){ setStatus('Ingresá la campaña', 'err'); return; }
   if(!st.cria&&!st.recria&&!st.inv){ setStatus('Activá al menos una actividad', 'err'); return; }
 
+  setStatus('Verificando escenarios guardados...', '');
+  await syncAnalisisFromSupabase(true);
+  if(wouldCreateSecondScenario()){
+    showSingleScenarioPopup();
+    setStatus('Ganadería ESTANDAR admite un solo escenario. Editá o borrá el existente.', 'err');
+    return;
+  }
+
   setStatus('Guardando...', '');
   var saved = readSavedAnalisis();
   var existing = saved.find(function(item){ return item.id === currentAnalisisId; }) || null;
@@ -1069,7 +1094,7 @@ async function eliminarAnalisis(id, btn){
     var currentItems = readSavedAnalisis();
     var target = currentItems.find(function(item){ return item.id === id; }) || null;
     await deleteRemoteAnalisis(target);
-    if(currentAnalisisId === id){ currentAnalisisId = null; nuevoAnalisis(); }
+    if(currentAnalisisId === id){ currentAnalisisId = null; nuevoAnalisis(true); }
     await syncAnalisisFromSupabase(true);
     await cargarHistorial();
   }catch(e){
@@ -1077,7 +1102,12 @@ async function eliminarAnalisis(id, btn){
   }
 }
 
-function nuevoAnalisis(){
+function nuevoAnalisis(forceReset){
+  if(!forceReset && getSavedAnalisisForCurrentClient().length >= 1){
+    showSingleScenarioPopup();
+    setStatus('Ya existe un escenario guardado en Ganadería ESTANDAR.', 'err');
+    return;
+  }
   currentAnalisisId = null;
   ['cria','recria','inv'].forEach(function(m){
     var tog = document.getElementById('tog_'+m);
