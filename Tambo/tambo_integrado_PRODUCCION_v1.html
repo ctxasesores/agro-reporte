@@ -532,6 +532,7 @@ var currentAnalisisId = null;
 var scenarioSb = null;
 var scenarioSyncPromise = null;
 var savedAnalisisCache = [];
+var currentClienteTamboNivel = '';
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 var FORM_FIELDS = [
@@ -699,14 +700,28 @@ function setupContext(){
     var params = new URLSearchParams(location.search);
     var parentCliente = window.parent && window.parent.currentCliente ? window.parent.currentCliente : null;
     var parentUser = window.parent && window.parent.currentUser ? window.parent.currentUser : null;
-    REPORT_MODE = (params.get('mode') || 'ESTANDAR').toUpperCase();
+    setReportMode(params.get('mode') || 'ESTANDAR');
     currentClienteId = params.get('cliente_id') || (parentCliente && parentCliente.id) || '';
     currentClienteNombre = params.get('cliente_nombre') || (parentCliente && parentCliente.nombre_empresa) || 'Cliente';
     currentUserId = params.get('user_id') || (parentUser && parentUser.id) || 'anonimo';
+    currentClienteTamboNivel = parentCliente ? (parentCliente.tambo_nivel || parentCliente.tambo_dashboard || '') : '';
   }catch(e){
-    REPORT_MODE = 'ESTANDAR';
+    setReportMode('ESTANDAR');
   }
 
+  updateReportModeLabels();
+}
+
+function normalizeReportMode(mode){
+  return String(mode || 'ESTANDAR').toUpperCase() === 'PRO' ? 'PRO' : 'ESTANDAR';
+}
+
+function setReportMode(mode){
+  REPORT_MODE = normalizeReportMode(mode);
+  updateReportModeLabels();
+}
+
+function updateReportModeLabels(){
   var title = document.getElementById('report_cliente_nombre');
   var subtitle = document.getElementById('report_subtitle');
   var badge = document.getElementById('mode_badge');
@@ -715,6 +730,38 @@ function setupContext(){
     ? 'Dashboard operativo, economico y de eficiencia del tambo'
     : 'Dashboard base para leer litros, calidad, costos y margen';
   if(badge) badge.textContent = REPORT_MODE === 'PRO' ? 'Modo pro' : 'Modo estandar';
+}
+
+function isProLevel(value){
+  return String(value || '').toUpperCase() === 'PRO';
+}
+
+async function resolveReportModeEntitlement(){
+  var requestedMode = normalizeReportMode(REPORT_MODE);
+  var entitledLevel = currentClienteTamboNivel;
+
+  if(!entitledLevel){
+    try{
+      var client = initScenarioSupabase();
+      var user = await getScenarioSessionUser();
+      if(client && user && user.id){
+        var res = await client
+          .from('clientes')
+          .select('tambo_nivel,tambo_dashboard')
+          .eq('id', user.id)
+          .maybeSingle();
+        if(res.data) entitledLevel = res.data.tambo_nivel || res.data.tambo_dashboard || '';
+      }
+    }catch(e){
+      console.warn('No se pudo verificar el nivel de Tambo del cliente', e);
+    }
+  }
+
+  if(requestedMode === 'PRO' && !isProLevel(entitledLevel)){
+    setReportMode('ESTANDAR');
+    return;
+  }
+  setReportMode(requestedMode);
 }
 
 function applyPresetMap(map){
@@ -813,6 +860,27 @@ function writeSavedAnalisis(items){
   savedAnalisisCache = (items || []).map(function(item){
     return enrichSavedScenario(Object.assign({}, item));
   });
+}
+
+function isTamboPro(){
+  return String(REPORT_MODE || '').toUpperCase() === 'PRO';
+}
+
+function getSavedAnalisisForCurrentClient(){
+  return readSavedAnalisis().filter(function(item){
+    return !currentClienteId || item.cliente_id === currentClienteId;
+  });
+}
+
+function wouldCreateSecondScenario(){
+  var saved = getSavedAnalisisForCurrentClient();
+  if(!saved.length) return false;
+  if(currentAnalisisId && saved.some(function(item){ return item.id === currentAnalisisId; })) return false;
+  return true;
+}
+
+function showSingleScenarioPopup(){
+  alert('Tambo ESTANDAR permite guardar un solo escenario.\n\nPara crear escenarios adicionales necesitás Tambo PRO. Podés editar el escenario existente desde "Escenarios guardados" o borrarlo para cargar uno nuevo.');
 }
 
 function roundValue(value, decimals){
@@ -1039,6 +1107,15 @@ async function guardar(){
   if(!scenarioName){
     setStatus('Ingresá un nombre de escenario', 'err');
     return;
+  }
+  if(!isTamboPro()){
+    setStatus('Verificando escenarios guardados...', '');
+    await syncAnalisisFromSupabase(true);
+    if(wouldCreateSecondScenario()){
+      showSingleScenarioPopup();
+      setStatus('Tambo ESTANDAR admite un solo escenario. Editá o borrá el existente.', 'err');
+      return;
+    }
   }
   var saved = readSavedAnalisis();
   var existing = saved.find(function(item){ return item.id === currentAnalisisId; }) || null;
@@ -1493,6 +1570,8 @@ applyPresets();
 updateSystemUI();
 render();
 (async function bootstrapScenarioSync(){
+  await resolveReportModeEntitlement();
+  render();
   await syncAnalisisFromSupabase();
   consumePendingOpenRequest();
 })();
