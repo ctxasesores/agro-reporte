@@ -812,9 +812,44 @@ function getStorageKey(){
   return 'ctx_tambo_escenarios_' + REPORT_MODE + '_' + currentUserId;
 }
 
-function clearLegacyLocalAnalisis(){
+function readLocalAnalisis(){
   try{
-    localStorage.removeItem(getStorageKey());
+    var raw = localStorage.getItem(getStorageKey());
+    var parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  }catch(e){
+    console.warn('No se pudieron leer escenarios locales de Tambo', e);
+    return [];
+  }
+}
+
+function writeLocalAnalisis(items){
+  try{
+    localStorage.setItem(getStorageKey(), JSON.stringify(items || []));
+  }catch(e){
+    console.warn('No se pudieron guardar escenarios locales de Tambo', e);
+  }
+}
+
+function upsertLocalAnalisis(item){
+  var saved = readLocalAnalisis();
+  var idx = saved.findIndex(function(entry){ return entry.id === item.id; });
+  var next = Object.assign({}, item, { pending_sync: true });
+  if(idx >= 0) saved[idx] = next;
+  else saved.unshift(next);
+  writeLocalAnalisis(saved);
+  writeSavedAnalisis(mergeScenarioCollections(readSavedAnalisis(), saved));
+}
+
+function deleteLocalAnalisis(id){
+  writeLocalAnalisis(readLocalAnalisis().filter(function(item){ return item.id !== id; }));
+}
+
+function clearSyncedLocalAnalisis(){
+  try{
+    var pending = readLocalAnalisis().filter(function(item){ return item.pending_sync; });
+    if(pending.length) writeLocalAnalisis(pending);
+    else localStorage.removeItem(getStorageKey());
   }catch(e){}
 }
 
@@ -851,7 +886,7 @@ function mergeScenarioCollections(localItems, remoteItems){
 }
 
 function readSavedAnalisis(){
-  return (savedAnalisisCache || []).map(function(item){
+  return mergeScenarioCollections(readLocalAnalisis(), savedAnalisisCache || []).map(function(item){
     return enrichSavedScenario(Object.assign({}, item));
   });
 }
@@ -1008,9 +1043,10 @@ async function fetchRemoteAnalisis(){
 
 async function upsertRemoteAnalisis(item){
   var client = initScenarioSupabase();
-  if(!client || !currentClienteId) return null;
+  if(!client) throw new Error('Supabase no disponible');
+  if(!currentClienteId) throw new Error('Cliente no identificado');
   var user = await getScenarioSessionUser();
-  if(!user || !user.id) return null;
+  if(!user || !user.id) throw new Error('Sesion no disponible');
   var payload = buildRemoteScenarioPayload(item);
   payload.user_id = user.id;
   var remoteId = item.remote_id || '';
@@ -1088,7 +1124,7 @@ async function syncAnalisisFromSupabase(force){
     try{
       var remoteItems = await fetchRemoteAnalisis();
       writeSavedAnalisis(remoteItems);
-      clearLegacyLocalAnalisis();
+      clearSyncedLocalAnalisis();
       return readSavedAnalisis();
     }catch(error){
       console.warn('Tambo sin sincronización Supabase', error);
@@ -1135,12 +1171,21 @@ async function guardar(){
     var remoteId = await upsertRemoteAnalisis(payload);
     if(remoteId) payload.remote_id = remoteId;
     currentAnalisisId = payload.id;
-    await syncAnalisisFromSupabase(true);
+    deleteLocalAnalisis(payload.id);
+    try{
+      await syncAnalisisFromSupabase(true);
+    }catch(syncError){
+      console.warn('Escenario guardado, pero no se pudo refrescar el historial remoto', syncError);
+      writeSavedAnalisis(mergeScenarioCollections(readSavedAnalisis(), [payload]));
+    }
     document.getElementById('last_saved').textContent = 'Ult. guardado: ' + new Date(payload.updated_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setStatus('Escenario guardado correctamente', 'ok');
     setTimeout(function(){ setStatus('', ''); }, 2200);
   }catch(e){
-    setStatus('Error al guardar: ' + e.message, 'err');
+    upsertLocalAnalisis(payload);
+    currentAnalisisId = payload.id;
+    document.getElementById('last_saved').textContent = 'Guardado local: ' + new Date(payload.updated_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    setStatus('No se pudo conectar con Supabase. El escenario quedó guardado localmente; volvé a guardar cuando la conexión esté estable.', 'err');
   }
 }
 
@@ -1167,9 +1212,10 @@ async function cargarHistorial(){
   listEl.innerHTML = data.map(function(item){
     var fecha = new Date(item.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     var hora = new Date(item.updated_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    var syncText = item.pending_sync ? ' · pendiente de sincronizar' : '';
     return '<div class="hist-item"><div class="hist-info">'
       + '<div class="hist-name">' + item.nombre + '</div>'
-      + '<div class="hist-meta">' + (item.cliente_nombre || currentClienteNombre || 'Cliente') + ' · ' + fecha + ' ' + hora + ' · ' + (item.datos && item.datos.preset_cuenca ? item.datos.preset_cuenca.replaceAll('_',' ') : '') + '</div>'
+      + '<div class="hist-meta">' + (item.cliente_nombre || currentClienteNombre || 'Cliente') + ' · ' + fecha + ' ' + hora + ' · ' + (item.datos && item.datos.preset_cuenca ? item.datos.preset_cuenca.replaceAll('_',' ') : '') + syncText + '</div>'
       + '</div><div class="hist-actions">'
       + '<button class="btn btn-sm btn-primary" type="button" onclick="cargarAnalisis(\'' + item.id + '\')">Editar</button>'
       + '<button class="btn btn-sm btn-danger" type="button" onclick="eliminarAnalisis(\'' + item.id + '\')">Borrar</button>'
