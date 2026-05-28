@@ -1,4 +1,4 @@
-const CACHE = 'ctx-cartera-v4';
+const CACHE = 'ctx-cartera-v5-paneles-pro-docs';
 const ASSETS = [
   '/agro-reporte/',
   '/agro-reporte/index.html'

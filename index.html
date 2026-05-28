@@ -170,11 +170,51 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .dashboard-action-btn { pointer-events:auto; min-height:32px; padding:7px 12px; border-radius:8px; border:1px solid rgba(212,160,23,.24); background:rgba(8,20,34,.86); color:rgba(255,255,255,.78); font-size:11px; font-weight:700; letter-spacing:.2px; cursor:pointer; box-shadow:0 10px 24px rgba(0,0,0,.16); font-family:'DM Sans',sans-serif; transition:background .16s,border-color .16s,color .16s,transform .16s; }
 .dashboard-action-btn:hover { background:rgba(212,160,23,.14); border-color:rgba(212,160,23,.42); color:var(--oro-l); transform:translateY(-1px); }
 .dashboard-action-btn:disabled { opacity:.55; cursor:wait; transform:none; }
+.dashboard-action-btn.pro-upgrade { display:none; background:linear-gradient(135deg, rgba(212,160,23,.22), rgba(240,202,96,.09)); border-color:rgba(240,202,96,.5); color:var(--oro-l); text-transform:uppercase; }
+.dashboard-action-btn.docs { background:rgba(255,255,255,.045); border-color:rgba(255,255,255,.11); color:rgba(255,255,255,.68); }
+.dashboard-action-btn.docs:hover { color:white; border-color:rgba(255,255,255,.22); background:rgba(255,255,255,.075); }
 .embedded-dashboard { background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--negro-s); border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); }
 .dashboard-view.integrated-embed .page-body { padding:20px 28px 28px; }
 .dashboard-view.integrated-embed .embedded-dashboard { background:transparent; border:none; border-radius:0; box-shadow:none; overflow:visible; }
 .dashboard-view.integrated-embed .embedded-frame { min-height:calc(100vh - 120px); background:transparent; }
 .embedded-frame { width:100%; min-height:calc(100vh - 120px); border:0; background:var(--negro-b); display:block; }
+.pro-modal-overlay { display:none; position:fixed; inset:0; z-index:900; background:rgba(4,12,22,.78); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:22px; }
+.pro-modal-overlay.open { display:flex; }
+.pro-modal { width:min(980px, 96vw); max-height:88vh; overflow:auto; background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)), var(--negro); border:1px solid rgba(255,255,255,.12); border-radius:22px; box-shadow:0 24px 80px rgba(0,0,0,.45); }
+.pro-modal-head { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; padding:24px 26px 18px; border-bottom:1px solid rgba(255,255,255,.08); }
+.pro-modal-eyebrow { font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:var(--oro-l); font-weight:800; margin-bottom:8px; }
+.pro-modal-title { font-size:25px; line-height:1.12; color:white; font-weight:800; letter-spacing:-.45px; }
+.pro-modal-copy { margin-top:10px; max-width:700px; font-size:13px; line-height:1.65; color:rgba(255,255,255,.62); }
+.pro-modal-close { width:36px; height:36px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.045); color:rgba(255,255,255,.75); font-size:22px; line-height:1; cursor:pointer; flex-shrink:0; }
+.pro-modal-close:hover { color:white; background:rgba(255,255,255,.08); }
+.pro-modal-body { padding:22px 26px 26px; display:grid; gap:18px; }
+.pro-compare { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:14px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.025); }
+.pro-compare th, .pro-compare td { padding:14px 13px; border-bottom:1px solid rgba(255,255,255,.08); border-right:1px solid rgba(255,255,255,.08); vertical-align:middle; font-size:13px; line-height:1.35; color:rgba(255,255,255,.76); }
+.pro-compare th { background:rgba(255,255,255,.055); color:white; font-size:12px; text-transform:uppercase; letter-spacing:.8px; }
+.pro-compare tr:last-child td { border-bottom:none; }
+.pro-compare th:last-child, .pro-compare td:last-child { border-right:none; }
+.pro-compare td:first-child { color:white; font-weight:800; width:25%; }
+.pro-compare td:nth-child(3) { color:rgba(240,202,96,.94); }
+.pro-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.pro-price-card, .pro-steps-card, .docs-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:18px; }
+.pro-price-label { font-size:10px; color:rgba(255,255,255,.42); text-transform:uppercase; letter-spacing:1px; font-weight:800; margin-bottom:8px; }
+.pro-price { font-size:32px; color:white; font-weight:800; letter-spacing:-.4px; }
+.pro-price span { font-size:13px; color:rgba(255,255,255,.55); font-weight:600; }
+.pro-price-copy { font-size:12px; color:rgba(255,255,255,.58); line-height:1.55; margin:8px 0 14px; }
+.pro-cta { width:100%; min-height:42px; border:none; border-radius:12px; background:var(--oro); color:var(--negro); font-size:13px; font-weight:800; cursor:pointer; }
+.pro-cta.secondary { background:transparent; color:var(--oro-l); border:1px solid rgba(212,160,23,.34); }
+.pro-steps { display:grid; gap:10px; margin-top:2px; }
+.pro-step { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; color:rgba(255,255,255,.66); font-size:13px; line-height:1.5; }
+.pro-step-num { width:28px; height:28px; border-radius:50%; background:rgba(212,160,23,.14); color:var(--oro-l); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; border:1px solid rgba(212,160,23,.28); }
+.docs-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.docs-card h4 { color:white; font-size:15px; margin-bottom:8px; }
+.docs-card p, .docs-card li { color:rgba(255,255,255,.62); font-size:13px; line-height:1.55; }
+.docs-card ul { margin-left:18px; display:grid; gap:5px; }
+@media(max-width:860px) {
+  .dashboard-actions { justify-content:flex-start; flex-wrap:wrap; }
+  .pro-grid, .docs-grid { grid-template-columns:1fr; }
+  .pro-compare { display:block; overflow-x:auto; }
+}
 .account-shell { display:grid; gap:18px; }
 .account-hero { background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:22px 24px; }
 .account-eyebrow { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,.4); font-weight:700; margin-bottom:8px; }
@@ -569,6 +609,109 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   </div>
 </div>
 
+<div class="pro-modal-overlay" id="proPanelsOverlay" onclick="closeProPanelsModal(event)">
+  <div class="pro-modal" onclick="event.stopPropagation()">
+    <div class="pro-modal-head">
+      <div>
+        <div class="pro-modal-eyebrow">Paneles PRO</div>
+        <div class="pro-modal-title">Más campañas, más escenarios y más herramientas de gestión</div>
+        <div class="pro-modal-copy">La versión PRO está pensada para equipos que necesitan comparar alternativas, guardar más escenarios productivos y trabajar con operatoria agrícola avanzada sin perder la simpleza del panel actual.</div>
+      </div>
+      <button class="pro-modal-close" type="button" onclick="closeProPanelsModal()">×</button>
+    </div>
+    <div class="pro-modal-body">
+      <table class="pro-compare" aria-label="Comparativo versiones estándar y PRO">
+        <thead>
+          <tr><th>Módulo</th><th>Versión ESTANDAR</th><th>Versión PRO</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Agricultura / Campañas</td><td>Una campaña activa.</td><td>Múltiples campañas como pestañas.</td></tr>
+          <tr><td>Agricultura / Operaciones</td><td>No permite operaciones A Fijar, FIX/fijaciones ni operaciones con opciones.</td><td>Permite todas las operaciones, incluso con opciones.</td></tr>
+          <tr><td>Ganadería</td><td>Permite guardar un solo escenario.</td><td>Permite guardar múltiples escenarios y configurar escenarios productivos.</td></tr>
+          <tr><td>Tambo</td><td>Permite guardar un solo escenario.</td><td>Permite guardar múltiples escenarios y configurar escenarios productivos.</td></tr>
+        </tbody>
+      </table>
+      <div class="pro-grid">
+        <div class="pro-price-card">
+          <div class="pro-price-label">Plan mensual</div>
+          <div class="pro-price">USD 12 <span>/ mes</span></div>
+          <div class="pro-price-copy">Ideal para probar el set completo de paneles PRO sin compromiso anual.</div>
+          <button class="pro-cta" type="button" onclick="startProCheckout('mensual')">Solicitar plan mensual</button>
+        </div>
+        <div class="pro-price-card">
+          <div class="pro-price-label">Plan anual</div>
+          <div class="pro-price">USD 100 <span>/ año</span></div>
+          <div class="pro-price-copy">Mejor valor para clientes que ya usan los paneles como herramienta de gestión recurrente.</div>
+          <button class="pro-cta" type="button" onclick="startProCheckout('anual')">Solicitar plan anual</button>
+        </div>
+      </div>
+      <div class="pro-steps-card">
+        <div class="pro-price-label">Procedimiento de activación</div>
+        <div class="pro-steps">
+          <div class="pro-step"><div class="pro-step-num">1</div><div>Elegís plan mensual o anual desde este popup.</div></div>
+          <div class="pro-step"><div class="pro-step-num">2</div><div>CTX confirma el medio de pago o abre el link de pago si tu cuenta ya lo tiene cargado.</div></div>
+          <div class="pro-step"><div class="pro-step-num">3</div><div>Una vez acreditado el pago, administración cambia tu acceso a PRO.</div></div>
+          <div class="pro-step"><div class="pro-step-num">4</div><div>Cerrás sesión, volvés a ingresar y los paneles PRO quedan habilitados.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pro-modal-overlay" id="documentationOverlay" onclick="closeDocumentationModal(event)">
+  <div class="pro-modal" onclick="event.stopPropagation()">
+    <div class="pro-modal-head">
+      <div>
+        <div class="pro-modal-eyebrow">Documentación</div>
+        <div class="pro-modal-title">Guía rápida de uso de los paneles</div>
+        <div class="pro-modal-copy">Una referencia corta para operar los reportes sin salir del dashboard. Sirve para versiones ESTANDAR y PRO.</div>
+      </div>
+      <button class="pro-modal-close" type="button" onclick="closeDocumentationModal()">×</button>
+    </div>
+    <div class="pro-modal-body">
+      <div class="docs-grid">
+        <div class="docs-card">
+          <h4>Agricultura</h4>
+          <ul>
+            <li>Usá campañas para separar ciclos comerciales.</li>
+            <li>Cargá altas, bajas y modificaciones desde Operaciones.</li>
+            <li>En ESTANDAR no están habilitadas A Fijar, FIX ni opciones.</li>
+            <li>En PRO podés trabajar con múltiples campañas y operatoria completa.</li>
+          </ul>
+        </div>
+        <div class="docs-card">
+          <h4>Ganadería</h4>
+          <ul>
+            <li>Completá supuestos productivos y económicos del escenario.</li>
+            <li>Guardá el escenario para alimentar KPIs de unidad de negocio.</li>
+            <li>En ESTANDAR se guarda un escenario; en PRO se guardan múltiples.</li>
+          </ul>
+        </div>
+        <div class="docs-card">
+          <h4>Tambo</h4>
+          <ul>
+            <li>Configurá cuenca, sistema productivo y variables de eficiencia.</li>
+            <li>Guardá escenarios para comparar margen, sólidos y eficiencia.</li>
+            <li>En ESTANDAR se guarda un escenario; en PRO se guardan múltiples.</li>
+          </ul>
+        </div>
+        <div class="docs-card">
+          <h4>KPIs y exportación</h4>
+          <ul>
+            <li>El panel KPI toma los escenarios guardados de Ganadería y Tambo.</li>
+            <li>Usá Actualizar para recargar datos y escenarios recientes.</li>
+            <li>Usá Exportar PDF para imprimir o guardar el dashboard activo.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pro-steps-card">
+        <div class="pro-price-label">Recomendación operativa</div>
+        <div class="pro-modal-copy" style="margin:0">Después de cargar o modificar datos importantes, tocá Actualizar antes de exportar el PDF. Así evitás que el navegador use información anterior guardada en memoria.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- LOADING -->
 <div id="loadingScreen">
   <div class="loading-spinner"></div>
@@ -638,8 +781,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     </div>
 
     <div class="dashboard-actions" aria-label="Acciones del dashboard">
+      <button class="dashboard-action-btn docs" type="button" onclick="openDocumentationModal()">Documentación</button>
       <button class="dashboard-action-btn" type="button" id="btn-dashboard-refresh" onclick="refreshActiveDashboard()">↻ Actualizar</button>
       <button class="dashboard-action-btn" type="button" onclick="exportActiveDashboardPdf()">Exportar PDF</button>
+      <button class="dashboard-action-btn pro-upgrade" type="button" id="btn-dashboard-pro" onclick="openProPanelsModal()">Paneles PRO</button>
     </div>
     <div class="dashboard-stage">
     <div class="dashboard-view" id="view-agricultura">
@@ -1141,6 +1286,16 @@ function initSupabase() {
 }
 
 document.addEventListener('keydown', e => {
+  const proOpen = document.getElementById('proPanelsOverlay')?.classList.contains('open');
+  const docsOpen = document.getElementById('documentationOverlay')?.classList.contains('open');
+  if (e.key === 'Escape') {
+    closeProPanelsModal();
+    closeDocumentationModal();
+    closeForgotPasswordModal();
+    closeResetPasswordModal();
+    return;
+  }
+  if (proOpen || docsOpen) return;
   if (e.key !== 'Enter') return;
   if (document.getElementById('resetPasswordOverlay')?.classList.contains('open')) {
     saveNewPassword();
@@ -1991,12 +2146,84 @@ function switchDashboard(view, el) {
     const target = buildTamboSrc(modoTam);
     if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
   }
+  updateDashboardActionButtons();
   closeSidebar();
 }
 
 function getActiveDashboardName() {
   const active = document.querySelector('.dashboard-view.active');
   return active?.id?.replace('view-', '') || 'kpis';
+}
+
+function getActiveDashboardMode() {
+  const view = getActiveDashboardName();
+  const state = getClienteAccessState();
+  if (view === 'agricultura') return getDashboardMode('agricultura', state);
+  if (view === 'ganaderia') return getDashboardMode('ganaderia', state);
+  if (view === 'tambo') return getDashboardMode('tambo', state);
+  return '';
+}
+
+function getActiveDashboardLabel() {
+  const view = getActiveDashboardName();
+  if (view === 'agricultura') return 'Agricultura';
+  if (view === 'ganaderia') return 'Ganadería';
+  if (view === 'tambo') return 'Tambo';
+  if (view === 'kpis') return 'KPIs';
+  if (view === 'cuenta') return 'Cuenta';
+  return 'Panel';
+}
+
+function updateDashboardActionButtons() {
+  const proBtn = document.getElementById('btn-dashboard-pro');
+  if (!proBtn) return;
+  const view = getActiveDashboardName();
+  const mode = getActiveDashboardMode();
+  const isStandardPanel = ['agricultura', 'ganaderia', 'tambo'].includes(view) && mode === 'ESTANDAR';
+  proBtn.style.display = isStandardPanel ? 'inline-flex' : 'none';
+}
+
+function openProPanelsModal() {
+  const overlay = document.getElementById('proPanelsOverlay');
+  if (overlay) overlay.classList.add('open');
+}
+
+function closeProPanelsModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('proPanelsOverlay')?.classList.remove('open');
+}
+
+function openDocumentationModal() {
+  const overlay = document.getElementById('documentationOverlay');
+  if (overlay) overlay.classList.add('open');
+}
+
+function closeDocumentationModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('documentationOverlay')?.classList.remove('open');
+}
+
+function getProCheckoutUrl(plan) {
+  const cli = currentCliente || {};
+  const normalizedPlan = String(plan || '').toLowerCase();
+  if (normalizedPlan === 'anual') {
+    return cli.checkout_pro_anual_url || cli.link_pago_anual || cli.payment_url_anual || cli.checkout_url_anual || '';
+  }
+  return cli.checkout_pro_mensual_url || cli.link_pago_mensual || cli.payment_url_mensual || cli.checkout_url_mensual || '';
+}
+
+function startProCheckout(plan) {
+  const directUrl = getProCheckoutUrl(plan) || getClienteAccessState().paymentUrl;
+  if (directUrl) {
+    window.open(directUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  const panel = getActiveDashboardLabel();
+  const planText = String(plan || 'mensual').toLowerCase() === 'anual' ? 'anual de USD 100' : 'mensual de USD 12';
+  const cliente = currentCliente?.nombre_empresa || currentUser?.email || 'mi cuenta';
+  const subject = encodeURIComponent(`Solicitud upgrade PRO ${panel}`);
+  const body = encodeURIComponent(`Hola CTX,\n\nQuiero activar Paneles PRO para ${cliente}.\nPanel solicitado: ${panel}\nPlan elegido: ${planText}\n\nQuedo atento al link o instrucciones de pago.\n`);
+  window.open(`mailto:info@ctxasesores.com?subject=${subject}&body=${body}`, '_blank');
 }
 
 function reloadDashboardFrame(frameId) {
@@ -2068,15 +2295,11 @@ function renderAccessHub() {
   if (frameGan) frameGan.src = buildGanaderiaSrc(getDashboardMode('ganaderia', state));
   const frameTam = document.getElementById('frame-tambo');
   if (frameTam) frameTam.src = buildTamboSrc(getDashboardMode('tambo', state));
+  updateDashboardActionButtons();
 }
 
 function openUpgradeLink() {
-  const paymentUrl = getClienteAccessState().paymentUrl;
-  if (paymentUrl) {
-    window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-    return;
-  }
-  window.open('mailto:info@ctxasesores.com?subject=Upgrade%20premium%20CTX&body=Quiero%20activar%20el%20plan%20premium%20para%20mi%20cuenta.', '_blank');
+  openProPanelsModal();
 }
 
 const BUSINESS_UNIT_CONFIG = {
