@@ -62,6 +62,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .login-success { color:#8ee5c5; font-size:13px; margin-top:12px; text-align:center; display:none; }
 .login-link { margin-top:14px; font-size:13px; color:var(--oro-l); text-align:center; cursor:pointer; background:none; border:none; width:100%; }
 .login-link:hover { opacity:.85; }
+.terms-accept { display:flex !important; align-items:flex-start; gap:10px; margin:8px 0 14px !important; padding:11px 12px; border:1px solid rgba(255,255,255,.10); border-radius:12px; background:rgba(255,255,255,.04); text-transform:none !important; letter-spacing:normal !important; font-weight:400 !important; }
+.terms-accept input { width:auto !important; margin:3px 0 0 !important; accent-color:var(--oro); flex-shrink:0; }
+.terms-accept span { color:rgba(255,255,255,.66); font-size:12px; line-height:1.45; }
+.terms-link { color:var(--oro-l); background:none; border:none; padding:0; cursor:pointer; font:inherit; text-decoration:underline; text-underline-offset:2px; }
 .auth-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; padding:20px; }
 .auth-modal-overlay.open { display:flex; }
 .auth-modal { width:100%; max-width:380px; background:var(--negro); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:28px 24px; box-shadow:0 10px 40px rgba(0,0,0,.28); }
@@ -203,6 +207,9 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .pro-price-copy { font-size:12px; color:rgba(255,255,255,.58); line-height:1.55; margin:8px 0 14px; }
 .pro-cta { width:100%; min-height:42px; border:none; border-radius:12px; background:var(--oro); color:var(--negro); font-size:13px; font-weight:800; cursor:pointer; }
 .pro-cta.secondary { background:transparent; color:var(--oro-l); border:1px solid rgba(212,160,23,.34); }
+.pro-checkout-status { margin-top:0; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09); color:rgba(255,255,255,.68); font-size:13px; line-height:1.5; display:none; }
+.pro-checkout-status.ok { display:block; border-color:rgba(75,181,136,.35); color:#b8f3d5; background:rgba(75,181,136,.10); }
+.pro-checkout-status.err { display:block; border-color:rgba(248,113,113,.35); color:#fecaca; background:rgba(248,113,113,.10); }
 .pro-steps { display:grid; gap:10px; margin-top:2px; }
 .pro-step { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; color:rgba(255,255,255,.66); font-size:13px; line-height:1.5; }
 .pro-step-num { width:28px; height:28px; border-radius:50%; background:rgba(212,160,23,.14); color:var(--oro-l); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; border:1px solid rgba(212,160,23,.28); }
@@ -210,6 +217,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .docs-card h4 { color:white; font-size:15px; margin-bottom:8px; }
 .docs-card p, .docs-card li { color:rgba(255,255,255,.62); font-size:13px; line-height:1.55; }
 .docs-card ul { margin-left:18px; display:grid; gap:5px; }
+.terms-section { display:grid; gap:14px; }
+.terms-section h4 { color:white; font-size:15px; margin-bottom:6px; }
+.terms-section p, .terms-section li { color:rgba(255,255,255,.64); font-size:13px; line-height:1.62; }
+.terms-section ul { margin-left:18px; display:grid; gap:6px; }
 @media(max-width:860px) {
   .dashboard-actions { justify-content:flex-start; flex-wrap:wrap; }
   .pro-grid, .docs-grid { grid-template-columns:1fr; }
@@ -572,6 +583,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <input type="password" id="regPass" placeholder="mínimo 8 caracteres" autocomplete="new-password">
       <label>Campaña</label>
       <input type="text" id="regCampania" placeholder="25/26">
+      <label class="terms-accept">
+        <input type="checkbox" id="regTermsAccepted">
+        <span>Acepto los <button class="terms-link" type="button" onclick="event.preventDefault();event.stopPropagation();openTermsModal()">Términos y Condiciones</button> y entiendo que los paneles son simulaciones informativas, no recomendaciones de inversión ni promesas de resultado.</span>
+      </label>
       <button class="btn-primary" id="btnRegister" onclick="doRegister()">Crear cuenta</button>
     </div>
     <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
@@ -634,25 +649,27 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="pro-grid">
         <div class="pro-price-card">
           <div class="pro-price-label">Plan mensual</div>
-          <div class="pro-price">USD 12 <span>/ mes</span></div>
+          <div class="pro-price">USD 10 <span>/ mes</span></div>
           <div class="pro-price-copy">Ideal para probar el set completo de paneles PRO sin compromiso anual.</div>
-          <button class="pro-cta" type="button" onclick="startProCheckout('mensual')">Solicitar plan mensual</button>
+          <button class="pro-cta" type="button" onclick="startProCheckout('mensual')">Comprar plan mensual</button>
         </div>
         <div class="pro-price-card">
           <div class="pro-price-label">Plan anual</div>
           <div class="pro-price">USD 100 <span>/ año</span></div>
           <div class="pro-price-copy">Mejor valor para clientes que ya usan los paneles como herramienta de gestión recurrente.</div>
-          <button class="pro-cta" type="button" onclick="startProCheckout('anual')">Solicitar plan anual</button>
+          <button class="pro-cta" type="button" onclick="startProCheckout('anual')">Comprar plan anual</button>
         </div>
       </div>
+      <div class="pro-checkout-status" id="proCheckoutStatus"></div>
       <div class="pro-steps-card">
         <div class="pro-price-label">Procedimiento de activación</div>
         <div class="pro-steps">
           <div class="pro-step"><div class="pro-step-num">1</div><div>Elegís plan mensual o anual desde este popup.</div></div>
-          <div class="pro-step"><div class="pro-step-num">2</div><div>CTX confirma el medio de pago o abre el link de pago si tu cuenta ya lo tiene cargado.</div></div>
-          <div class="pro-step"><div class="pro-step-num">3</div><div>Una vez acreditado el pago, administración cambia tu acceso a PRO.</div></div>
+          <div class="pro-step"><div class="pro-step-num">2</div><div>Se abre Mercado Pago para completar el checkout en forma segura.</div></div>
+          <div class="pro-step"><div class="pro-step-num">3</div><div>Cuando el pago se acredita, el sistema activa PRO automáticamente.</div></div>
           <div class="pro-step"><div class="pro-step-num">4</div><div>Cerrás sesión, volvés a ingresar y los paneles PRO quedan habilitados.</div></div>
         </div>
+        <div class="pro-modal-copy" style="margin:14px 0 0">Al continuar con la compra, aceptás los <button class="terms-link" type="button" onclick="openTermsModal()">Términos y Condiciones</button> de uso de los paneles.</div>
       </div>
     </div>
   </div>
@@ -707,6 +724,51 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="pro-steps-card">
         <div class="pro-price-label">Recomendación operativa</div>
         <div class="pro-modal-copy" style="margin:0">Después de cargar o modificar datos importantes, tocá Actualizar antes de exportar el PDF. Así evitás que el navegador use información anterior guardada en memoria.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pro-modal-overlay" id="termsOverlay" onclick="closeTermsModal(event)">
+  <div class="pro-modal" onclick="event.stopPropagation()">
+    <div class="pro-modal-head">
+      <div>
+        <div class="pro-modal-eyebrow">Términos y condiciones</div>
+        <div class="pro-modal-title">Uso de los paneles CTX</div>
+        <div class="pro-modal-copy">Estos términos aplican al alta de la cuenta y al uso de las versiones ESTANDAR y PRO. La aceptación es necesaria antes de crear la cuenta.</div>
+      </div>
+      <button class="pro-modal-close" type="button" onclick="closeTermsModal()">×</button>
+    </div>
+    <div class="pro-modal-body">
+      <div class="terms-section">
+        <div class="docs-card">
+          <h4>1. Naturaleza informativa</h4>
+          <p>Los paneles CTX son herramientas de visualización, carga, simulación y seguimiento de información agropecuaria y financiera. La información mostrada tiene finalidad informativa y operativa.</p>
+        </div>
+        <div class="docs-card">
+          <h4>2. No constituyen asesoramiento de inversión</h4>
+          <p>Los reportes, precios, indicadores, escenarios, márgenes, tasas implícitas, curvas, KPIs y comparaciones no deben interpretarse como recomendaciones de compra, venta, cobertura, inversión, endeudamiento, financiación ni toma de posición en mercados.</p>
+        </div>
+        <div class="docs-card">
+          <h4>3. Simulaciones y supuestos</h4>
+          <p>Los escenarios pueden estar basados en supuestos, datos cargados por el usuario, precios de referencia o información de terceros. No representan garantías de resultado, escenarios reales obligatorios ni promesas de rentabilidad.</p>
+        </div>
+        <div class="docs-card">
+          <h4>4. Responsabilidad del usuario</h4>
+          <p>Las decisiones comerciales, productivas, financieras o de inversión son exclusiva responsabilidad del usuario. Antes de ejecutar una operación, el usuario debe validar la información con sus asesores, intermediarios, proveedores o fuentes oficiales.</p>
+        </div>
+        <div class="docs-card">
+          <h4>5. Datos y disponibilidad</h4>
+          <p>CTX procura mantener los paneles disponibles y actualizados, pero puede existir demora, error de carga, interrupción técnica o diferencia con fuentes externas. El usuario debe revisar la integridad de los datos antes de utilizarlos para decisiones relevantes.</p>
+        </div>
+        <div class="docs-card">
+          <h4>6. Versiones y pagos</h4>
+          <p>La versión ESTANDAR puede tener límites funcionales. La versión PRO habilita funciones adicionales sujetas a pago, activación de cuenta y disponibilidad técnica. Los precios vigentes son USD 10 mensuales o USD 100 anuales, salvo acuerdo comercial distinto.</p>
+        </div>
+      </div>
+      <div class="pro-steps-card">
+        <div class="pro-price-label">Aceptación</div>
+        <div class="pro-modal-copy" style="margin:0">Al crear una cuenta, el usuario declara haber leído y aceptado estos términos. La continuidad de uso del panel implica aceptación de sus actualizaciones razonables.</div>
       </div>
     </div>
   </div>
@@ -1250,6 +1312,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 const APP_URL = 'https://ctxasesores.github.io/agro-reporte/';
+const FUNCTIONS_URL = `${SUPA_URL}/functions/v1`;
+const TERMS_VERSION = '2026-05-29-v1';
 const COLORES_PROD = {'Soja':'#5b9ec9','Maiz':'#3d7aa8','Trigo':'#8bbedd','Girasol':'#2a5f84','Sorgo':'#1e4466','Cebada':'#a8cfe8'};
 const PRODUCTOS = ['Soja','Maiz','Trigo','Girasol','Sorgo','Cebada'];
 
@@ -1288,14 +1352,16 @@ function initSupabase() {
 document.addEventListener('keydown', e => {
   const proOpen = document.getElementById('proPanelsOverlay')?.classList.contains('open');
   const docsOpen = document.getElementById('documentationOverlay')?.classList.contains('open');
+  const termsOpen = document.getElementById('termsOverlay')?.classList.contains('open');
   if (e.key === 'Escape') {
     closeProPanelsModal();
     closeDocumentationModal();
+    closeTermsModal();
     closeForgotPasswordModal();
     closeResetPasswordModal();
     return;
   }
-  if (proOpen || docsOpen) return;
+  if (proOpen || docsOpen || termsOpen) return;
   if (e.key !== 'Enter') return;
   if (document.getElementById('resetPasswordOverlay')?.classList.contains('open')) {
     saveNewPassword();
@@ -1341,6 +1407,27 @@ function slugCodigo(nombre = '') {
     .slice(0, 14) || 'CLIENTE';
 }
 
+async function insertClienteProfile(payload) {
+  const optionalColumns = [
+    'terminos_aceptados',
+    'terminos_aceptados_at',
+    'terminos_version',
+    'plan_pago',
+    'estado_pago',
+    'premium_activo',
+    'acceso_premium'
+  ];
+  const firstAttempt = await sb.from('clientes').insert(payload);
+  if (!firstAttempt.error) return firstAttempt;
+
+  const missingOptional = optionalColumns.find(col => isMissingColumnError(firstAttempt.error, col));
+  if (!missingOptional) return firstAttempt;
+
+  const fallbackPayload = { ...payload };
+  optionalColumns.forEach(col => delete fallbackPayload[col]);
+  return sb.from('clientes').insert(fallbackPayload);
+}
+
 async function doLogin() {
   hideAuthMessages();
   const email = document.getElementById('loginEmail').value.trim();
@@ -1367,6 +1454,7 @@ async function doRegister() {
   const email     = document.getElementById('regEmail').value.trim();
   const pass      = document.getElementById('regPass').value.trim();
   const campania  = document.getElementById('regCampania').value.trim();
+  const acceptedTerms = document.getElementById('regTermsAccepted')?.checked;
   const actividad = 'Agricultura, Ganadería y Tambo';
   const btn       = document.getElementById('btnRegister');
   const errEl     = document.getElementById('loginError');
@@ -1378,6 +1466,11 @@ async function doRegister() {
   }
   if (pass.length < 8) {
     errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!acceptedTerms) {
+    errEl.textContent = 'Para crear la cuenta tenés que aceptar los Términos y Condiciones.';
     errEl.style.display = 'block';
     return;
   }
@@ -1415,9 +1508,16 @@ async function doRegister() {
         acceso_tambo: true,
         tambo_nivel: 'ESTANDAR',
         panel_tambo: true,
-        tambo_dashboard: 'ESTANDAR'
+        tambo_dashboard: 'ESTANDAR',
+        plan_pago: 'estandar',
+        estado_pago: 'pendiente',
+        premium_activo: false,
+        acceso_premium: false,
+        terminos_aceptados: true,
+        terminos_aceptados_at: new Date().toISOString(),
+        terminos_version: TERMS_VERSION
       };
-      const { error: insertError } = await sb.from('clientes').insert(payload);
+      const { error: insertError } = await insertClienteProfile(payload);
       if (insertError && !String(insertError.message || '').toLowerCase().includes('duplicate')) {
         console.warn('Registro cliente pendiente:', insertError.message);
         okEl.textContent = 'La cuenta fue creada, pero el perfil comercial quedó pendiente. Avísanos para terminar de habilitar accesos y planes.';
@@ -2184,6 +2284,7 @@ function updateDashboardActionButtons() {
 }
 
 function openProPanelsModal() {
+  setProCheckoutStatus('', '');
   const overlay = document.getElementById('proPanelsOverlay');
   if (overlay) overlay.classList.add('open');
 }
@@ -2203,6 +2304,15 @@ function closeDocumentationModal(event) {
   document.getElementById('documentationOverlay')?.classList.remove('open');
 }
 
+function openTermsModal() {
+  document.getElementById('termsOverlay')?.classList.add('open');
+}
+
+function closeTermsModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('termsOverlay')?.classList.remove('open');
+}
+
 function getProCheckoutUrl(plan) {
   const cli = currentCliente || {};
   const normalizedPlan = String(plan || '').toLowerCase();
@@ -2212,18 +2322,68 @@ function getProCheckoutUrl(plan) {
   return cli.checkout_pro_mensual_url || cli.link_pago_mensual || cli.payment_url_mensual || cli.checkout_url_mensual || '';
 }
 
-function startProCheckout(plan) {
+function setProCheckoutStatus(message, type = '') {
+  const el = document.getElementById('proCheckoutStatus');
+  if (!el) return;
+  el.textContent = message || '';
+  el.className = 'pro-checkout-status' + (type ? ' ' + type : '');
+}
+
+function getProPlanText(plan) {
+  return String(plan || 'mensual').toLowerCase() === 'anual'
+    ? 'anual de USD 100'
+    : 'mensual de USD 10';
+}
+
+function openProFallbackEmail(plan) {
+  const panel = getActiveDashboardLabel();
+  const planText = getProPlanText(plan);
+  const cliente = currentCliente?.nombre_empresa || currentUser?.email || 'mi cuenta';
+  const subject = encodeURIComponent(`Solicitud upgrade PRO ${panel}`);
+  const body = encodeURIComponent(`Hola CTX,\n\nQuiero activar Paneles PRO para ${cliente}.\nPanel solicitado: ${panel}\nPlan elegido: ${planText}\n\nNo pude iniciar el checkout automático desde el panel. Quedo atento al link o instrucciones de pago.\n`);
+  window.open(`mailto:info@ctxasesores.com?subject=${subject}&body=${body}`, '_blank');
+}
+
+async function startProCheckout(plan) {
+  const normalizedPlan = String(plan || 'mensual').toLowerCase() === 'anual' ? 'anual' : 'mensual';
   const directUrl = getProCheckoutUrl(plan) || getClienteAccessState().paymentUrl;
   if (directUrl) {
     window.open(directUrl, '_blank', 'noopener,noreferrer');
     return;
   }
-  const panel = getActiveDashboardLabel();
-  const planText = String(plan || 'mensual').toLowerCase() === 'anual' ? 'anual de USD 100' : 'mensual de USD 12';
-  const cliente = currentCliente?.nombre_empresa || currentUser?.email || 'mi cuenta';
-  const subject = encodeURIComponent(`Solicitud upgrade PRO ${panel}`);
-  const body = encodeURIComponent(`Hola CTX,\n\nQuiero activar Paneles PRO para ${cliente}.\nPanel solicitado: ${panel}\nPlan elegido: ${planText}\n\nQuedo atento al link o instrucciones de pago.\n`);
-  window.open(`mailto:info@ctxasesores.com?subject=${subject}&body=${body}`, '_blank');
+  initSupabase();
+  setProCheckoutStatus('Preparando checkout seguro...', 'ok');
+  try {
+    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw sessionError;
+    const token = sessionData?.session?.access_token;
+    if (!token) throw new Error('Necesitás iniciar sesión para comprar PRO.');
+
+    const response = await fetch(`${FUNCTIONS_URL}/crear-checkout-pro`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'apikey': SUPA_KEY
+      },
+      body: JSON.stringify({
+        plan: normalizedPlan,
+        panel: getActiveDashboardLabel(),
+        cliente_id: currentCliente?.id || currentUser?.id || null
+      })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error || 'No se pudo crear el checkout.');
+    }
+    const checkoutUrl = payload.init_point || payload.checkout_url || payload.url;
+    if (!checkoutUrl) throw new Error('Mercado Pago no devolvió un link de pago.');
+    window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+    setProCheckoutStatus('Abrimos Mercado Pago en una nueva ventana. Cuando el pago se acredite, PRO se activará automáticamente.', 'ok');
+  } catch (error) {
+    console.warn('Checkout PRO automático no disponible:', error);
+    setProCheckoutStatus(`No se pudo iniciar el pago automático: ${error.message || error}. Si persiste, tocá de nuevo o contactá a CTX.`, 'err');
+  }
 }
 
 function reloadDashboardFrame(frameId) {
