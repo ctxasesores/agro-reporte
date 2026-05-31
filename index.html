@@ -210,6 +210,9 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .pro-checkout-status { margin-top:0; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09); color:rgba(255,255,255,.68); font-size:13px; line-height:1.5; display:none; }
 .pro-checkout-status.ok { display:block; border-color:rgba(75,181,136,.35); color:#b8f3d5; background:rgba(75,181,136,.10); }
 .pro-checkout-status.err { display:block; border-color:rgba(248,113,113,.35); color:#fecaca; background:rgba(248,113,113,.10); }
+.pro-terms-accept { display:flex; align-items:flex-start; gap:10px; padding:13px 14px; border-radius:14px; border:1px solid rgba(212,160,23,.24); background:rgba(212,160,23,.08); }
+.pro-terms-accept input { margin-top:3px; accent-color:var(--oro); flex-shrink:0; }
+.pro-terms-accept span { color:rgba(255,255,255,.72); font-size:13px; line-height:1.5; }
 .pro-steps { display:grid; gap:10px; margin-top:2px; }
 .pro-step { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; color:rgba(255,255,255,.66); font-size:13px; line-height:1.5; }
 .pro-step-num { width:28px; height:28px; border-radius:50%; background:rgba(212,160,23,.14); color:var(--oro-l); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; border:1px solid rgba(212,160,23,.28); }
@@ -646,6 +649,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           <tr><td>Tambo</td><td>Permite guardar un solo escenario.</td><td>Permite guardar múltiples escenarios y configurar escenarios productivos.</td></tr>
         </tbody>
       </table>
+      <label class="pro-terms-accept">
+        <input type="checkbox" id="proTermsAccepted">
+        <span>Antes de continuar al pago, acepto los <button class="terms-link" type="button" onclick="event.preventDefault();event.stopPropagation();openTermsModal()">Términos y Condiciones</button> y entiendo que los paneles son simulaciones informativas, no recomendaciones de inversión ni escenarios garantizados.</span>
+      </label>
       <div class="pro-grid">
         <div class="pro-price-card">
           <div class="pro-price-label">Plan mensual</div>
@@ -2285,6 +2292,8 @@ function updateDashboardActionButtons() {
 
 function openProPanelsModal() {
   setProCheckoutStatus('', '');
+  const proTerms = document.getElementById('proTermsAccepted');
+  if (proTerms) proTerms.checked = false;
   const overlay = document.getElementById('proPanelsOverlay');
   if (overlay) overlay.classList.add('open');
 }
@@ -2347,6 +2356,11 @@ function openProFallbackEmail(plan) {
 async function startProCheckout(plan) {
   const normalizedPlan = String(plan || 'mensual').toLowerCase() === 'anual' ? 'anual' : 'mensual';
   const directUrl = getProCheckoutUrl(plan) || getClienteAccessState().paymentUrl;
+  const acceptedProTerms = document.getElementById('proTermsAccepted')?.checked;
+  if (!acceptedProTerms) {
+    setProCheckoutStatus('Antes de continuar al pago tenés que aceptar los Términos y Condiciones.', 'err');
+    return;
+  }
   if (directUrl) {
     window.open(directUrl, '_blank', 'noopener,noreferrer');
     return;
