@@ -2374,7 +2374,10 @@ async function startProCheckout(plan) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload.error || 'No se pudo crear el checkout.');
+      const errorText = typeof payload.error === 'string'
+        ? payload.error
+        : (payload.message || JSON.stringify(payload).slice(0, 300) || 'No se pudo crear el checkout.');
+      throw new Error(errorText);
     }
     const checkoutUrl = payload.init_point || payload.checkout_url || payload.url;
     if (!checkoutUrl) throw new Error('Mercado Pago no devolvió un link de pago.');
