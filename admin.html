@@ -1457,6 +1457,12 @@ async function cargarClientes() {
     const premium = pickFirst(c, ['premium_activo','acceso_premium'], false);
     const showLegacyPremium = premium && !hasPremiumPlan(c);
     const paymentUrl = pickFirst(c, ['payment_url','link_pago','checkout_url'], '');
+    const subscriptionStatus = pickFirst(c, ['subscription_status','suscripcion_estado'], '');
+    const periodicidad = pickFirst(c, ['pro_periodicidad','plan_periodicidad'], '');
+    const vencimiento = pickFirst(c, ['pro_vencimiento','premium_vencimiento'], '');
+    const subscriptionLine = subscriptionStatus
+      ? `Suscripción ${String(subscriptionStatus).replaceAll('_',' ')}${periodicidad ? ' · ' + periodicidad : ''}${vencimiento ? ' · vence ' + new Date(vencimiento).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : ''}`
+      : '';
     return `<tr>
       <td>
         <div class="mini-stack">
@@ -1478,6 +1484,7 @@ async function cargarClientes() {
             ${showLegacyPremium ? '<span class="chip gold">Premium</span>' : ''}
           </div>
           <div class="mini-muted">${paymentUrl ? 'Link de pago cargado' : 'Sin link de pago'}</div>
+          ${subscriptionLine ? `<div class="mini-muted">${subscriptionLine}</div>` : ''}
         </div>
       </td>
       <td><div class="chip-row">${chips}</div></td>
