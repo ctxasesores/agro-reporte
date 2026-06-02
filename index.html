@@ -657,13 +657,13 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <div class="pro-price-card">
           <div class="pro-price-label">Plan mensual</div>
           <div class="pro-price">USD 10 <span>/ mes</span></div>
-          <div class="pro-price-copy">Ideal para probar el set completo de paneles PRO sin compromiso anual.</div>
+          <div class="pro-price-copy">Ideal para probar el set completo de paneles PRO. Mercado Pago debita automáticamente todos los meses hasta que canceles la suscripción.</div>
           <button class="pro-cta" type="button" onclick="startProCheckout('mensual')">Comprar plan mensual</button>
         </div>
         <div class="pro-price-card">
           <div class="pro-price-label">Plan anual</div>
           <div class="pro-price">USD 100 <span>/ año</span></div>
-          <div class="pro-price-copy">Mejor valor para clientes que ya usan los paneles como herramienta de gestión recurrente.</div>
+          <div class="pro-price-copy">Mejor valor para clientes que ya usan los paneles como herramienta de gestión recurrente, con renovación anual automática.</div>
           <button class="pro-cta" type="button" onclick="startProCheckout('anual')">Comprar plan anual</button>
         </div>
       </div>
@@ -672,9 +672,9 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <div class="pro-price-label">Procedimiento de activación</div>
         <div class="pro-steps">
           <div class="pro-step"><div class="pro-step-num">1</div><div>Elegís plan mensual o anual desde este popup.</div></div>
-          <div class="pro-step"><div class="pro-step-num">2</div><div>Se abre Mercado Pago para completar el checkout en forma segura.</div></div>
-          <div class="pro-step"><div class="pro-step-num">3</div><div>Cuando el pago se acredita, el sistema activa PRO automáticamente.</div></div>
-          <div class="pro-step"><div class="pro-step-num">4</div><div>Cerrás sesión, volvés a ingresar y los paneles PRO quedan habilitados.</div></div>
+          <div class="pro-step"><div class="pro-step-num">2</div><div>Se abre Mercado Pago para completar la suscripción en forma segura.</div></div>
+          <div class="pro-step"><div class="pro-step-num">3</div><div>Cuando Mercado Pago autoriza la suscripción, el sistema activa PRO automáticamente.</div></div>
+          <div class="pro-step"><div class="pro-step-num">4</div><div>Desde Cuenta podés revisar el estado de la suscripción o pedir la cancelación.</div></div>
         </div>
         <div class="pro-modal-copy" style="margin:14px 0 0">Al continuar con la compra, aceptás los <button class="terms-link" type="button" onclick="openTermsModal()">Términos y Condiciones</button> de uso de los paneles.</div>
       </div>
@@ -1259,7 +1259,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           <div class="account-hero">
             <div class="account-eyebrow">Cuenta</div>
             <div class="account-title">Cuenta y accesos</div>
-            <div class="account-copy">Este espacio resume el plan vigente, el estado de pago y los dashboards habilitados para la cuenta. Los cambios comerciales se gestionan desde administración.</div>
+            <div class="account-copy">Este espacio resume el plan vigente, el estado de pago, la suscripción PRO y los dashboards habilitados para la cuenta.</div>
           </div>
           <div class="account-grid">
             <div class="account-side-stack">
@@ -1289,17 +1289,22 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
             </div>
             <div class="account-card">
               <div class="account-badge">Configuración</div>
-              <h3>Gestión comercial centralizada</h3>
-              <p>La configuración de plan, estado de pago y accesos se administra desde el panel de administración de CTX. Desde este espacio podés consultar el estado actual de tu cuenta y solicitar cambios.</p>
+              <h3>Gestión comercial y suscripción</h3>
+              <p>Desde este espacio podés consultar el estado actual de tu cuenta, abrir el pago pendiente si existiera y cancelar una suscripción PRO activa.</p>
               <div class="account-list">
                 <div class="account-list-row"><span>Plan vigente</span><strong id="cuenta-plan-readonly">—</strong></div>
                 <div class="account-list-row"><span>Estado de pago</span><strong id="cuenta-pago-readonly">—</strong></div>
+                <div class="account-list-row"><span>Modalidad PRO</span><strong id="cuenta-pro-periodicidad">—</strong></div>
+                <div class="account-list-row"><span>Estado suscripción</span><strong id="cuenta-subscription-status">—</strong></div>
+                <div class="account-list-row"><span>Acceso vigente hasta</span><strong id="cuenta-pro-vencimiento">—</strong></div>
+                <div class="account-list-row"><span>Link de pago</span><strong id="cuenta-payment-link">—</strong></div>
                 <div class="account-list-row"><span>Acceso agricultura</span><strong id="cuenta-agr-readonly">—</strong></div>
                 <div class="account-list-row"><span>Acceso ganadería</span><strong id="cuenta-gan-readonly">—</strong></div>
                 <div class="account-list-row"><span>Acceso tambo</span><strong id="cuenta-tam-readonly">—</strong></div>
               </div>
               <div class="account-actions">
-                <button class="portal-link secondary" type="button" onclick="openUpgradeLink()">Gestionar pago</button>
+                <button class="portal-link secondary" type="button" id="btn-account-upgrade" onclick="openUpgradeLink()">Gestionar pago / activar PRO</button>
+                <button class="portal-link secondary" type="button" id="btn-cancel-subscription" onclick="cancelProSubscription()" style="display:none">Cancelar suscripción PRO</button>
                 <button class="portal-link secondary" type="button" onclick="switchDashboard('agricultura')">Volver a agricultura</button>
                 <button class="portal-link secondary" type="button" onclick="switchDashboard('ganaderia')">Abrir ganadería</button>
               </div>
@@ -1757,13 +1762,21 @@ function getClienteAccessState() {
   const accesoPremium = boolField(cli.acceso_premium, cli.premium_activo) || normText(plan).includes('premium');
   const estadoPago = cli.estado_pago || cli.pago_estado || (accesoPremium ? 'activo' : 'pendiente');
   const paymentUrl = cli.payment_url || cli.link_pago || cli.checkout_url || '';
+  const subscriptionStatus = cli.subscription_status || cli.suscripcion_estado || '';
+  const subscriptionId = cli.mp_subscription_id || cli.mp_preapproval_id || '';
+  const proPeriodicity = cli.pro_periodicidad || cli.plan_periodicidad || '';
+  const proVencimiento = cli.pro_vencimiento || cli.pro_vence_at || cli.premium_vencimiento || '';
   return {
     plan,
     accesoAgricola,
     accesoGanaderia,
     accesoPremium,
     estadoPago,
-    paymentUrl
+    paymentUrl,
+    subscriptionStatus,
+    subscriptionId,
+    proPeriodicity,
+    proVencimiento
   };
 }
 
@@ -2157,12 +2170,33 @@ function fillCuentaControls(state, meta = {}) {
   };
   setText('cuenta-plan-readonly', state.plan || 'Standard');
   setText('cuenta-pago-readonly', String(state.estadoPago || 'pendiente').replace(/_/g, ' '));
+  setText('cuenta-pro-periodicidad', state.proPeriodicity ? String(state.proPeriodicity).replace(/_/g, ' ') : (state.accesoPremium ? 'PRO activo' : '—'));
+  setText('cuenta-subscription-status', state.subscriptionStatus ? String(state.subscriptionStatus).replace(/_/g, ' ') : (state.accesoPremium ? 'activo' : '—'));
+  setText('cuenta-pro-vencimiento', formatAccountDate(state.proVencimiento));
+  setText('cuenta-payment-link', state.paymentUrl ? 'Disponible' : '—');
   setText('cuenta-agr-readonly', state.accesoAgricola ? `Habilitado · ${modoAgr}` : 'Sin acceso');
   setText('cuenta-gan-readonly', state.accesoGanaderia ? `Habilitado · ${modoGan}` : 'Sin acceso');
   setText('cuenta-tam-readonly', tamboActivo ? `Habilitado · ${modoTam}` : 'Sin acceso');
+  const isProAccount = isProAccountState(state);
+  const upgradeBtn = document.getElementById('btn-account-upgrade');
+  if (upgradeBtn) upgradeBtn.style.display = isProAccount ? 'none' : 'inline-flex';
+  const cancelBtn = document.getElementById('btn-cancel-subscription');
+  if (cancelBtn) cancelBtn.style.display = state.subscriptionId && isProAccount ? 'inline-flex' : 'none';
   syncCuentaProduct('agricultura');
   syncCuentaProduct('ganaderia');
   syncCuentaProduct('tambo');
+}
+
+function formatAccountDate(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function isProAccountState(state = getClienteAccessState()) {
+  const status = normText(state.subscriptionStatus || state.estadoPago);
+  return !!state.accesoPremium || ['authorized', 'autorizada', 'activo', 'active', 'al dia', 'al_dia', 'bonificado'].includes(status);
 }
 
 function syncCuentaProduct(producto) {
@@ -2286,8 +2320,9 @@ function updateDashboardActionButtons() {
   if (!proBtn) return;
   const view = getActiveDashboardName();
   const mode = getActiveDashboardMode();
+  const isProAccount = isProAccountState(getClienteAccessState());
   const isStandardPanel = ['agricultura', 'ganaderia', 'tambo'].includes(view) && mode === 'ESTANDAR';
-  proBtn.style.display = isStandardPanel ? 'inline-flex' : 'none';
+  proBtn.style.display = isStandardPanel && !isProAccount ? 'inline-flex' : 'none';
 }
 
 function openProPanelsModal() {
@@ -2353,6 +2388,47 @@ function openProFallbackEmail(plan) {
   window.open(`mailto:info@ctxasesores.com?subject=${subject}&body=${body}`, '_blank');
 }
 
+async function cancelProSubscription() {
+  const state = getClienteAccessState();
+  if (!state.subscriptionId) {
+    setCuentaStatus('No encontramos una suscripción automática asociada a esta cuenta.', 'warn');
+    return;
+  }
+  const ok = confirm('¿Querés cancelar la suscripción PRO? El acceso puede mantenerse vigente hasta el fin del período ya abonado.');
+  if (!ok) return;
+  initSupabase();
+  setCuentaStatus('Solicitando cancelación en Mercado Pago...', 'warn');
+  try {
+    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw sessionError;
+    const token = sessionData?.session?.access_token;
+    if (!token) throw new Error('Necesitás iniciar sesión para cancelar la suscripción.');
+    const response = await fetch(`${FUNCTIONS_URL}/cancelar-suscripcion-pro`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'apikey': SUPA_KEY
+      },
+      body: JSON.stringify({ subscription_id: state.subscriptionId })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || 'No se pudo cancelar la suscripción.');
+    currentCliente = {
+      ...currentCliente,
+      subscription_status: payload.subscription_status || 'cancelled',
+      estado_pago: payload.estado_pago || 'pendiente',
+      subscription_cancel_requested_at: new Date().toISOString()
+    };
+    updateCuentaDashboard(getClienteAccessState());
+    updateDashboardActionButtons();
+    setCuentaStatus('La cancelación quedó solicitada. Si ya había un período abonado, el acceso puede mantenerse vigente hasta su vencimiento.', 'ok');
+  } catch (error) {
+    console.warn('No se pudo cancelar la suscripción:', error);
+    setCuentaStatus(`No se pudo cancelar la suscripción: ${error.message || error}`, 'err');
+  }
+}
+
 async function startProCheckout(plan) {
   const normalizedPlan = String(plan || 'mensual').toLowerCase() === 'anual' ? 'anual' : 'mensual';
   const directUrl = getProCheckoutUrl(plan) || getClienteAccessState().paymentUrl;
@@ -2396,7 +2472,7 @@ async function startProCheckout(plan) {
     const checkoutUrl = payload.init_point || payload.checkout_url || payload.url;
     if (!checkoutUrl) throw new Error('Mercado Pago no devolvió un link de pago.');
     window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
-    setProCheckoutStatus('Abrimos Mercado Pago en una nueva ventana. Cuando el pago se acredite, PRO se activará automáticamente.', 'ok');
+    setProCheckoutStatus('Abrimos Mercado Pago en una nueva ventana. Cuando la suscripción se autorice, PRO se activará automáticamente.', 'ok');
   } catch (error) {
     console.warn('Checkout PRO automático no disponible:', error);
     setProCheckoutStatus(`No se pudo iniciar el pago automático: ${error.message || error}. Si persiste, tocá de nuevo o contactá a CTX.`, 'err');
