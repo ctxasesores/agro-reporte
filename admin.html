@@ -1253,6 +1253,18 @@ async function limpiarHistoricos() {
 
 
 // ══ INTEGRACIÓN MATBA-ROFEX ══
+function limpiarErrorProveedor(error) {
+  const msg = String(error || '');
+  const lower = msg.toLowerCase();
+  if (lower.includes('csrf') || lower.includes('403 forbidden')) {
+    return 'A3/MATBA rechazó la conexión automática. Revisá que la función actualizar-precios esté actualizada y que las credenciales A3 estén vigentes.';
+  }
+  if (lower.includes('<!doctype') || lower.includes('<html')) {
+    return 'El proveedor devolvió una página web en lugar de datos. Probable cambio de endpoint o credenciales vencidas.';
+  }
+  return msg.slice(0, 320);
+}
+
 async function actualizarDesdeMatba() {
   const btn = document.getElementById('btn-matba');
   if (!btn) return;
@@ -1265,7 +1277,7 @@ async function actualizarDesdeMatba() {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) {
-      mostrarToast('pm-toast', 'Error: ' + (data.error || 'No se pudo conectar con A3 Mercados'), 'err');
+      mostrarToast('pm-toast', 'Error: ' + limpiarErrorProveedor(data.error || 'No se pudo conectar con A3 Mercados'), 'err');
     } else {
       const act = data.actualizados ?? (data.detalle ? data.detalle.filter(d => d.ok).length : 0);
       const msg = act > 0
@@ -1275,7 +1287,7 @@ async function actualizarDesdeMatba() {
       await cargarPrecios();
     }
   } catch(e) {
-    mostrarToast('pm-toast', 'Error de conexion: ' + e.message, 'err');
+    mostrarToast('pm-toast', 'Error de conexion: ' + limpiarErrorProveedor(e.message), 'err');
   } finally {
     btn.textContent = 'Actualizar desde MATBA-ROFEX';
     btn.disabled = false;
@@ -1311,10 +1323,10 @@ async function actualizarDesdeA3() {
       await cargarPrecios();
       await cargarUltimaActualizacion();
     } else {
-      mostrarToast('pm-toast', 'Error: ' + (data.error || 'Sin respuesta'), 'err');
+      mostrarToast('pm-toast', 'Error: ' + limpiarErrorProveedor(data.error || 'Sin respuesta'), 'err');
     }
   } catch(e) {
-    mostrarToast('pm-toast', 'Error de conexión: ' + e.message, 'err');
+    mostrarToast('pm-toast', 'Error de conexión: ' + limpiarErrorProveedor(e.message), 'err');
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<span>⟳</span> Actualizar desde MATBA-ROFEX'; }
   }
