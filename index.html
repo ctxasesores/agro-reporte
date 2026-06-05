@@ -213,6 +213,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .pro-terms-accept { display:flex; align-items:flex-start; gap:10px; padding:13px 14px; border-radius:14px; border:1px solid rgba(212,160,23,.24); background:rgba(212,160,23,.08); }
 .pro-terms-accept input { margin-top:3px; accent-color:var(--oro); flex-shrink:0; }
 .pro-terms-accept span { color:rgba(255,255,255,.72); font-size:13px; line-height:1.5; }
+.billing-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:18px; }
+.billing-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+.billing-field label { display:block; color:rgba(255,255,255,.48); font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; margin-bottom:7px; }
+.billing-field input,.billing-field select { width:100%; border:1px solid rgba(255,255,255,.12); border-radius:11px; background:rgba(8,20,34,.58); color:white; padding:11px 12px; font-size:13px; outline:none; font-family:'DM Sans',sans-serif; }
+.billing-field input:focus,.billing-field select:focus { border-color:rgba(240,202,96,.55); box-shadow:0 0 0 1px rgba(240,202,96,.16); }
+.billing-note { color:rgba(255,255,255,.54); font-size:12px; line-height:1.55; margin-top:10px; }
 .pro-steps { display:grid; gap:10px; margin-top:2px; }
 .pro-step { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; color:rgba(255,255,255,.66); font-size:13px; line-height:1.5; }
 .pro-step-num { width:28px; height:28px; border-radius:50%; background:rgba(212,160,23,.14); color:var(--oro-l); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; border:1px solid rgba(212,160,23,.28); }
@@ -226,7 +232,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .terms-section ul { margin-left:18px; display:grid; gap:6px; }
 @media(max-width:860px) {
   .dashboard-actions { justify-content:flex-start; flex-wrap:wrap; }
-  .pro-grid, .docs-grid { grid-template-columns:1fr; }
+  .pro-grid, .docs-grid, .billing-grid { grid-template-columns:1fr; }
   .pro-compare { display:block; overflow-x:auto; }
 }
 .account-shell { display:grid; gap:18px; }
@@ -653,6 +659,40 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <input type="checkbox" id="proTermsAccepted">
         <span>Antes de continuar al pago, acepto los <button class="terms-link" type="button" onclick="event.preventDefault();event.stopPropagation();openTermsModal()">Términos y Condiciones</button> y entiendo que los paneles son simulaciones informativas, no recomendaciones de inversión ni escenarios garantizados.</span>
       </label>
+      <div class="billing-card">
+        <div class="pro-price-label">Datos de facturación</div>
+        <div class="pro-modal-copy" style="margin:0">Estos datos se guardan para emitir la factura fiscal correspondiente a la suscripción PRO. La emisión fiscal se realiza desde ARCA o el facturador integrado.</div>
+        <div class="billing-grid">
+          <div class="billing-field">
+            <label>Razón social / nombre</label>
+            <input id="billingRazonSocial" type="text" placeholder="CTX Asesores S.A.">
+          </div>
+          <div class="billing-field">
+            <label>CUIT / DNI</label>
+            <input id="billingDocumento" type="text" placeholder="30-00000000-0">
+          </div>
+          <div class="billing-field">
+            <label>Condición IVA</label>
+            <select id="billingCondicionIva">
+              <option value="">Seleccionar</option>
+              <option value="Responsable Inscripto">Responsable Inscripto</option>
+              <option value="Monotributo">Monotributo</option>
+              <option value="Consumidor Final">Consumidor Final</option>
+              <option value="Exento">Exento</option>
+              <option value="Exterior">Exterior</option>
+            </select>
+          </div>
+          <div class="billing-field">
+            <label>Email factura</label>
+            <input id="billingEmail" type="email" placeholder="facturacion@empresa.com">
+          </div>
+          <div class="billing-field" style="grid-column:1/-1">
+            <label>Domicilio fiscal</label>
+            <input id="billingDomicilio" type="text" placeholder="Calle, número, localidad, provincia">
+          </div>
+        </div>
+        <div class="billing-note">Si algún dato fiscal cambia, corregilo antes de pagar. Esto evita tener que anular o refacturar luego.</div>
+      </div>
       <div class="pro-grid">
         <div class="pro-price-card">
           <div class="pro-price-label">Plan mensual</div>
@@ -2329,6 +2369,7 @@ function openProPanelsModal() {
   setProCheckoutStatus('', '');
   const proTerms = document.getElementById('proTermsAccepted');
   if (proTerms) proTerms.checked = false;
+  prefillBillingForm();
   const overlay = document.getElementById('proPanelsOverlay');
   if (overlay) overlay.classList.add('open');
 }
@@ -2377,6 +2418,45 @@ function getProPlanText(plan) {
   return String(plan || 'mensual').toLowerCase() === 'anual'
     ? 'anual de USD 100'
     : 'mensual de USD 10';
+}
+
+function cleanBillingDocument(value = '') {
+  return String(value || '').replace(/[^\d]/g, '');
+}
+
+function prefillBillingForm() {
+  const cli = currentCliente || {};
+  const setIfEmpty = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && !el.value && value) el.value = value;
+  };
+  setIfEmpty('billingRazonSocial', cli.facturacion_razon_social || cli.razon_social || cli.nombre_empresa || '');
+  setIfEmpty('billingDocumento', cli.facturacion_documento || cli.cuit || cli.dni || '');
+  setIfEmpty('billingEmail', cli.email_facturacion || cli.facturacion_email || cli.email || currentUser?.email || '');
+  setIfEmpty('billingDomicilio', cli.facturacion_domicilio || cli.domicilio_fiscal || cli.domicilio || '');
+  const iva = document.getElementById('billingCondicionIva');
+  if (iva && !iva.value && (cli.facturacion_condicion_iva || cli.condicion_iva)) {
+    iva.value = cli.facturacion_condicion_iva || cli.condicion_iva;
+  }
+}
+
+function getBillingData() {
+  return {
+    razon_social: document.getElementById('billingRazonSocial')?.value.trim() || '',
+    documento: document.getElementById('billingDocumento')?.value.trim() || '',
+    documento_limpio: cleanBillingDocument(document.getElementById('billingDocumento')?.value || ''),
+    condicion_iva: document.getElementById('billingCondicionIva')?.value || '',
+    email_facturacion: document.getElementById('billingEmail')?.value.trim() || '',
+    domicilio_fiscal: document.getElementById('billingDomicilio')?.value.trim() || ''
+  };
+}
+
+function validateBillingData(billing) {
+  if (!billing.razon_social) return 'Completá razón social o nombre para facturación.';
+  if (!billing.documento_limpio || billing.documento_limpio.length < 7) return 'Completá CUIT o DNI válido para facturación.';
+  if (!billing.condicion_iva) return 'Seleccioná la condición frente al IVA.';
+  if (!billing.email_facturacion || !billing.email_facturacion.includes('@')) return 'Completá un email válido para enviar la factura.';
+  return '';
 }
 
 function openProFallbackEmail(plan) {
@@ -2437,6 +2517,12 @@ async function startProCheckout(plan) {
     setProCheckoutStatus('Antes de continuar al pago tenés que aceptar los Términos y Condiciones.', 'err');
     return;
   }
+  const billing = getBillingData();
+  const billingError = validateBillingData(billing);
+  if (billingError) {
+    setProCheckoutStatus(billingError, 'err');
+    return;
+  }
   if (directUrl) {
     window.open(directUrl, '_blank', 'noopener,noreferrer');
     return;
@@ -2459,7 +2545,8 @@ async function startProCheckout(plan) {
       body: JSON.stringify({
         plan: normalizedPlan,
         panel: getActiveDashboardLabel(),
-        cliente_id: currentCliente?.id || currentUser?.id || null
+        cliente_id: currentCliente?.id || currentUser?.id || null,
+        billing
       })
     });
     const payload = await response.json().catch(() => ({}));
