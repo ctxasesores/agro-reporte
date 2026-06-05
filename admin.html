@@ -198,6 +198,7 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('todas',this)">≡ Todas las operaciones</a>
       <a class="nav-item" onclick="showSection('carteras',this)">◉ Carteras de clientes</a>
       <a class="nav-item" onclick="showSection('precios',this)">◎ Precios de mercado</a>
+      <a class="nav-item" onclick="showSection('suscripciones',this)">💳 Suscripciones PRO</a>
       <a class="nav-item" onclick="showSection('historicos',this)">📈 Serie histórica</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
@@ -460,6 +461,67 @@ tr:hover td { background:#f9faf6; }
               <thead><tr><th>Cliente</th><th>Actividad</th><th>Plan / Pago</th><th>Paneles</th><th>Alta</th><th>Estado</th><th>Acciones</th></tr></thead>
               <tbody id="tbody-clientes"><tr><td colspan="7" class="empty-state">Cargando...</td></tr></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUSCRIPCIONES PRO -->
+      <div class="section" id="sec-suscripciones">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div>
+              <h2>Valores de suscripción PRO</h2>
+              <div class="card-header-sub">Actualizá el equivalente en pesos que Mercado Pago usará para nuevas suscripciones automáticas</div>
+            </div>
+            <button class="btn-refresh" onclick="cargarPricingPro()">↻ Actualizar</button>
+          </div>
+          <div class="users-grid">
+            <div class="field-group">
+              <label class="field-label">Precio comercial mensual</label>
+              <input type="text" class="field-input" value="USD 15" disabled>
+              <div class="field-hint">Este valor se muestra al cliente en el panel.</div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Precio comercial anual</label>
+              <input type="text" class="field-input" value="USD 150" disabled>
+              <div class="field-hint">Este valor se muestra al cliente en el panel.</div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Monto mensual a cobrar (ARS)</label>
+              <input type="number" class="field-input" id="sp-monthly" placeholder="Ej: 21000" min="1" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Monto anual a cobrar (ARS)</label>
+              <input type="number" class="field-input" id="sp-annual" placeholder="Ej: 210000" min="1" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Moneda Mercado Pago</label>
+              <input type="text" class="field-input" id="sp-currency" value="ARS" disabled>
+              <div class="field-hint">Para suscripciones automáticas en Mercado Pago Argentina usamos ARS.</div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Fuente de tipo de cambio</label>
+              <input type="text" class="field-input" id="sp-fx-source" value="Banco Nación comprador">
+            </div>
+            <div class="field-group full-span">
+              <label class="field-label">Referencia aplicada</label>
+              <input type="text" class="field-input" id="sp-fx-reference" placeholder="Ej: BNA comprador mayo 2026 aplicado a altas/renovaciones de junio 2026">
+              <div class="field-hint">Aclaración incluida en términos: los importes se pesifican según Banco Nación comprador del mes anterior a la compra o renovación.</div>
+            </div>
+            <div class="full-span" style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--crema-d)">
+              <div>
+                <div class="mini-muted" id="sp-updated">Última actualización: —</div>
+                <div id="sp-toast" class="toast"></div>
+              </div>
+              <button class="btn-export" id="sp-btn" onclick="guardarPricingPro()" style="margin-left:auto">Guardar valores PRO</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Cómo se usa esta configuración</h2></div>
+          <div style="padding:20px;color:var(--gris);font-size:13px;line-height:1.55">
+            <p style="margin-bottom:10px">Estos valores afectan a nuevas suscripciones creadas desde el botón Paneles PRO. Las suscripciones ya creadas en Mercado Pago pueden conservar el monto que tenían al momento del alta.</p>
+            <p>No edites los secrets todos los meses salvo emergencia. Esta sección reemplaza ese trabajo operativo y deja el histórico de configuración en Supabase.</p>
           </div>
         </div>
       </div>
@@ -758,6 +820,90 @@ function getClienteComercialPayload(prefix) {
     payment_url: document.getElementById(prefix + '-payment-url').value.trim() || null
   };
 }
+
+function showPricingToast(message, type = 'ok') {
+  const el = document.getElementById('sp-toast');
+  if (!el) return;
+  el.textContent = message;
+  el.className = 'toast ' + type;
+}
+
+function formatAdminDate(value) {
+  if (!value) return '—';
+  try {
+    return new Date(value).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch (_) {
+    return value;
+  }
+}
+
+async function cargarPricingPro() {
+  initSupabase();
+  const updated = document.getElementById('sp-updated');
+  const { data, error } = await sb
+    .from('pro_pricing_config')
+    .select('*')
+    .eq('id', 'default')
+    .maybeSingle();
+
+  if (error) {
+    showPricingToast('No se pudieron cargar los valores PRO: ' + error.message, 'err');
+    return;
+  }
+
+  const cfg = data || {};
+  document.getElementById('sp-monthly').value = cfg.monthly_amount ?? '';
+  document.getElementById('sp-annual').value = cfg.annual_amount ?? '';
+  document.getElementById('sp-currency').value = cfg.currency_id || 'ARS';
+  document.getElementById('sp-fx-source').value = cfg.fx_source || 'Banco Nación comprador';
+  document.getElementById('sp-fx-reference').value = cfg.fx_reference || '';
+  if (updated) updated.textContent = 'Última actualización: ' + formatAdminDate(cfg.updated_at);
+  showPricingToast(data ? 'Valores cargados.' : 'Todavía no hay valores guardados. Cargá los importes ARS y guardá.', data ? 'ok' : 'err');
+}
+
+async function guardarPricingPro() {
+  initSupabase();
+  const monthly = Number(document.getElementById('sp-monthly').value);
+  const annual = Number(document.getElementById('sp-annual').value);
+  const fxSource = document.getElementById('sp-fx-source').value.trim() || 'Banco Nación comprador';
+  const fxReference = document.getElementById('sp-fx-reference').value.trim();
+  const btn = document.getElementById('sp-btn');
+
+  if (!Number.isFinite(monthly) || monthly <= 0 || !Number.isFinite(annual) || annual <= 0) {
+    showPricingToast('Cargá montos mensuales y anuales válidos en pesos.', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  const { data: userRes } = await sb.auth.getUser();
+  const payload = {
+    id: 'default',
+    currency_id: 'ARS',
+    monthly_amount: monthly,
+    annual_amount: annual,
+    usd_monthly: 15,
+    usd_annual: 150,
+    fx_source: fxSource,
+    fx_reference: fxReference,
+    updated_at: new Date().toISOString(),
+    updated_by: userRes?.user?.id || null,
+  };
+
+  const { error } = await sb
+    .from('pro_pricing_config')
+    .upsert(payload, { onConflict: 'id' });
+
+  btn.disabled = false;
+  btn.textContent = 'Guardar valores PRO';
+  if (error) {
+    showPricingToast('No se pudo guardar: ' + error.message, 'err');
+    return;
+  }
+
+  document.getElementById('sp-updated').textContent = 'Última actualización: ' + formatAdminDate(payload.updated_at);
+  showPricingToast('Valores PRO actualizados. Se aplicarán a nuevas suscripciones.', 'ok');
+}
 function syncClienteComercialForm(prefix) {
   [
     ['agricultura', prefix + '-acceso-agricultura', prefix + '-nivel-agricultura'],
@@ -925,6 +1071,7 @@ async function loadAll() {
     const id = activeSection.id;
     if (id === 'sec-usuarios')   cargarClientes();
     if (id === 'sec-precios')    cargarPrecios();
+    if (id === 'sec-suscripciones') cargarPricingPro();
     if (id === 'sec-historicos') cargarHistoricos();
   }
 }
@@ -1578,12 +1725,14 @@ function showSection(name, el) {
     todas:['Historial completo','Todas las operaciones con filtros'],
     carteras:['Carteras por cliente','Resumen de posiciones por cliente'],
     precios:['Precios de mercado','Actualizá los precios de referencia para el cálculo del reporte'],
+    suscripciones:['Suscripciones PRO','Actualizá el equivalente en pesos para nuevas suscripciones automáticas'],
     usuarios:['Gestión de usuarios','Creá y administrá los accesos de cada cliente']
   };
   const t = titles[name] || ['',''];
   document.getElementById('page-title').textContent = t[0];
   document.getElementById('page-sub').textContent   = t[1];
   if (name === 'precios')  { cargarPrecios(); cargarUltimaActualizacion(); }
+  if (name === 'suscripciones') cargarPricingPro();
   if (name === 'historicos') cargarHistoricos();
   if (name === 'usuarios') cargarClientes();
 }
