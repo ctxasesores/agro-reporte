@@ -1000,51 +1000,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 
 
       <!-- Gráfico de posiciones -->
-      <!-- ░░░ ASESOR CTX IA — Agricultura ░░░ -->
-      <div class="section" id="sec-asesor-ia" style="margin-bottom:28px">
-        <div class="section-title">Asesor CTX IA</div>
-        <div class="card" style="padding:0;overflow:hidden">
-          <div style="padding:14px 16px;border-bottom:0.5px solid var(--border,rgba(255,255,255,.08));display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:rgba(212,160,23,.14);color:var(--oro-l,#e8c45a);align-items:center;justify-content:center;font-size:16px">✦</span>
-            <div style="flex:1;min-width:180px">
-              <div style="font-size:13px;font-weight:600;color:var(--txt,#e8e0d4)">Análisis de palancas de rentabilidad</div>
-              <div style="font-size:11px;color:var(--gris,#9a9a9a)">Análisis informativo de escenarios — no es recomendación de inversión.</div>
-            </div>
-          </div>
-          <div id="asesor-chat" style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;max-height:520px;overflow-y:auto">
-            <div class="asesor-msg-ia" style="font-size:13px;line-height:1.55;color:var(--txt,#e8e0d4)">
-              Puedo analizar tu cartera de granos y señalar dónde hay palancas para mejorar el resultado: brecha de precio vs mercado, % comercializado vs pendiente, concentración y timing del flujo de fondos. Tocá <b>Analizar mi cartera</b> o escribime una consulta.
-            </div>
-          </div>
-          <div style="padding:0 16px 14px">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-              <button class="asesor-quick" onclick="asesorEnviar('Analizá mi cartera e indicá las principales palancas de rentabilidad.')">Analizar mi cartera</button>
-              <button class="asesor-quick" onclick="asesorEnviar('¿En qué productos tengo mayor brecha entre mi precio promedio y el precio de mercado actual?')">Brecha vs mercado</button>
-              <button class="asesor-quick" onclick="asesorEnviar('Revisá el timing de mi flujo de fondos: ¿hay meses con egresos sin ingresos que los cubran?')">Flujo de fondos</button>
-            </div>
-            <div style="display:flex;gap:8px;align-items:flex-end">
-              <textarea id="asesor-input" rows="1" placeholder="Escribí tu consulta…"
-                style="flex:1;resize:none;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px;outline:none;font-family:inherit"
-                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();asesorEnviar();}"></textarea>
-              <button id="asesor-send" onclick="asesorEnviar()"
-                style="height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--oro,#d4a017);color:#132d46;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0">Enviar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <style>
-        #sec-asesor-ia .asesor-quick{font-size:12px;font-weight:600;padding:6px 12px;border-radius:99px;border:0.5px solid var(--border2,rgba(255,255,255,.14));background:rgba(212,160,23,.08);color:var(--oro-l,#e8c45a);cursor:pointer;transition:background .15s}
-        #sec-asesor-ia .asesor-quick:hover{background:rgba(212,160,23,.16)}
-        #sec-asesor-ia .asesor-msg-user{align-self:flex-end;max-width:85%;background:var(--oro,#d4a017);color:#132d46;padding:9px 13px;border-radius:14px 14px 4px 14px;font-size:13px;line-height:1.5;font-weight:500}
-        #sec-asesor-ia .asesor-msg-ia{align-self:flex-start;max-width:92%;background:var(--negro-b,rgba(255,255,255,.03));border:0.5px solid var(--border,rgba(255,255,255,.08));padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:13px;line-height:1.6;color:var(--txt,#e8e0d4)}
-        #sec-asesor-ia .asesor-msg-ia b{color:var(--oro-l,#e8c45a)}
-        #sec-asesor-ia .asesor-typing{display:inline-flex;gap:4px}
-        #sec-asesor-ia .asesor-typing span{width:6px;height:6px;border-radius:50%;background:var(--gris,#9a9a9a);animation:asesorBlink 1.2s infinite}
-        #sec-asesor-ia .asesor-typing span:nth-child(2){animation-delay:.2s}
-        #sec-asesor-ia .asesor-typing span:nth-child(3){animation-delay:.4s}
-        @keyframes asesorBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
-      </style>
-
       <div class="section" id="sec-posiciones" style="margin-bottom:28px">
         <div class="section-title">Posiciones en el mercado</div>
         <div class="card">
@@ -1221,6 +1176,57 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
             </div>
           </div>
         </div>
+
+        <!-- Análisis CTX IA (acordeón) -->
+        <div style="margin-top:16px" id="sec-asesor-ia">
+          <div class="section-title" onclick="toggleAcc('acc-asesor','icon-asesor')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
+            <span>Análisis CTX IA</span>
+            <span id="icon-asesor" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
+          </div>
+          <div id="acc-asesor" style="display:none;margin-top:12px">
+            <div class="card" style="padding:0;overflow:hidden">
+              <div style="padding:14px 16px;border-bottom:0.5px solid var(--border,rgba(255,255,255,.08));display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:rgba(212,160,23,.14);color:var(--oro-l,#e8c45a);align-items:center;justify-content:center;font-size:16px">✦</span>
+                <div style="flex:1;min-width:180px">
+                  <div style="font-size:13px;font-weight:600;color:var(--txt,#e8e0d4)">Análisis de palancas de rentabilidad</div>
+                  <div style="font-size:11px;color:var(--gris,#9a9a9a)">Análisis informativo de escenarios — no es recomendación de inversión.</div>
+                </div>
+              </div>
+              <div id="asesor-chat" style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;max-height:520px;overflow-y:auto">
+                <div class="asesor-msg-ia" style="font-size:13px;line-height:1.55;color:var(--txt,#e8e0d4)">
+                  Puedo analizar tu cartera de granos y señalar dónde hay palancas para mejorar el resultado: brecha de precio vs mercado, % comercializado vs pendiente, concentración y timing del flujo de fondos. Tocá <b>Analizar mi cartera</b> o escribime una consulta.
+                </div>
+              </div>
+              <div style="padding:0 16px 14px">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                  <button class="asesor-quick" onclick="asesorEnviar('Analizá mi cartera e indicá las principales palancas de rentabilidad.')">Analizar mi cartera</button>
+                  <button class="asesor-quick" onclick="asesorEnviar('¿En qué productos tengo mayor brecha entre mi precio promedio y el precio de mercado actual?')">Brecha vs mercado</button>
+                  <button class="asesor-quick" onclick="asesorEnviar('Revisá el timing de mi flujo de fondos: ¿hay meses con egresos sin ingresos que los cubran?')">Flujo de fondos</button>
+                </div>
+                <div style="display:flex;gap:8px;align-items:flex-end">
+                  <textarea id="asesor-input" rows="1" placeholder="Escribí tu consulta…"
+                    style="flex:1;resize:none;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px;outline:none;font-family:inherit"
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();asesorEnviar();}"></textarea>
+                  <button id="asesor-send" onclick="asesorEnviar()"
+                    style="height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--oro,#d4a017);color:#132d46;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0">Enviar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <style>
+          #sec-asesor-ia .asesor-quick{font-size:12px;font-weight:600;padding:6px 12px;border-radius:99px;border:0.5px solid var(--border2,rgba(255,255,255,.14));background:rgba(212,160,23,.08);color:var(--oro-l,#e8c45a);cursor:pointer;transition:background .15s}
+          #sec-asesor-ia .asesor-quick:hover{background:rgba(212,160,23,.16)}
+          #sec-asesor-ia .asesor-msg-user{align-self:flex-end;max-width:85%;background:var(--oro,#d4a017);color:#132d46;padding:9px 13px;border-radius:14px 14px 4px 14px;font-size:13px;line-height:1.5;font-weight:500}
+          #sec-asesor-ia .asesor-msg-ia{align-self:flex-start;max-width:92%;background:var(--negro-b,rgba(255,255,255,.03));border:0.5px solid var(--border,rgba(255,255,255,.08));padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:13px;line-height:1.6;color:var(--txt,#e8e0d4)}
+          #sec-asesor-ia .asesor-msg-ia b{color:var(--oro-l,#e8c45a)}
+          #sec-asesor-ia .asesor-typing{display:inline-flex;gap:4px}
+          #sec-asesor-ia .asesor-typing span{width:6px;height:6px;border-radius:50%;background:var(--gris,#9a9a9a);animation:asesorBlink 1.2s infinite}
+          #sec-asesor-ia .asesor-typing span:nth-child(2){animation-delay:.2s}
+          #sec-asesor-ia .asesor-typing span:nth-child(3){animation-delay:.4s}
+          @keyframes asesorBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+        </style>
+
       </div>
 
 
