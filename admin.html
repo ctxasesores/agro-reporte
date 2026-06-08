@@ -840,25 +840,39 @@ function formatAdminDate(value) {
 async function cargarPricingPro() {
   initSupabase();
   const updated = document.getElementById('sp-updated');
-  const { data, error } = await sb
-    .from('pro_pricing_config')
-    .select('*')
-    .eq('id', 'default')
-    .maybeSingle();
-
-  if (error) {
-    showPricingToast('No se pudieron cargar los valores PRO: ' + error.message, 'err');
+  const { data: sessionData } = await sb.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) {
+    showPricingToast('La sesión de administrador no está activa. Cerrá sesión y volvé a ingresar.', 'err');
     return;
   }
 
-  const cfg = data || {};
+  let response;
+  let result;
+  try {
+    response = await fetch(FUNCTIONS_URL + '/actualizar-pricing-pro', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    result = await response.json().catch(() => ({}));
+  } catch (error) {
+    showPricingToast('No se pudo conectar con la función de actualización: ' + error.message, 'err');
+    return;
+  }
+
+  if (!response.ok || !result?.ok) {
+    showPricingToast('No se pudieron cargar los valores PRO: ' + (result?.error || 'error desconocido'), 'err');
+    return;
+  }
+
+  const cfg = result.pricing || {};
   document.getElementById('sp-monthly').value = cfg.monthly_amount ?? '';
   document.getElementById('sp-annual').value = cfg.annual_amount ?? '';
   document.getElementById('sp-currency').value = cfg.currency_id || 'ARS';
   document.getElementById('sp-fx-source').value = cfg.fx_source || 'Banco Nación comprador';
   document.getElementById('sp-fx-reference').value = cfg.fx_reference || '';
   if (updated) updated.textContent = 'Última actualización: ' + formatAdminDate(cfg.updated_at);
-  showPricingToast(data ? 'Valores cargados.' : 'Todavía no hay valores guardados. Cargá los importes ARS y guardá.', data ? 'ok' : 'err');
+  showPricingToast(result.pricing ? 'Valores cargados.' : 'Todavía no hay valores guardados. Cargá los importes ARS y guardá.', result.pricing ? 'ok' : 'err');
 }
 
 async function guardarPricingPro() {
@@ -876,32 +890,49 @@ async function guardarPricingPro() {
 
   btn.disabled = true;
   btn.textContent = 'Guardando...';
-  const { data: userRes } = await sb.auth.getUser();
-  const payload = {
-    id: 'default',
-    currency_id: 'ARS',
-    monthly_amount: monthly,
-    annual_amount: annual,
-    usd_monthly: 15,
-    usd_annual: 150,
-    fx_source: fxSource,
-    fx_reference: fxReference,
-    updated_at: new Date().toISOString(),
-    updated_by: userRes?.user?.id || null,
-  };
-
-  const { error } = await sb
-    .from('pro_pricing_config')
-    .upsert(payload, { onConflict: 'id' });
-
-  btn.disabled = false;
-  btn.textContent = 'Guardar valores PRO';
-  if (error) {
-    showPricingToast('No se pudo guardar: ' + error.message, 'err');
+  const { data: sessionData } = await sb.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) {
+    btn.disabled = false;
+    btn.textContent = 'Guardar valores PRO';
+    showPricingToast('La sesión de administrador no está activa. Cerrá sesión y volvé a ingresar.', 'err');
     return;
   }
 
-  document.getElementById('sp-updated').textContent = 'Última actualización: ' + formatAdminDate(payload.updated_at);
+  const payload = {
+    monthly_amount: monthly,
+    annual_amount: annual,
+    fx_source: fxSource,
+    fx_reference: fxReference,
+  };
+
+  let response;
+  let result;
+  try {
+    response = await fetch(FUNCTIONS_URL + '/actualizar-pricing-pro', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    result = await response.json().catch(() => ({}));
+  } catch (error) {
+    btn.disabled = false;
+    btn.textContent = 'Guardar valores PRO';
+    showPricingToast('No se pudo conectar con la función de actualización: ' + error.message, 'err');
+    return;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Guardar valores PRO';
+  if (!response.ok || !result?.ok) {
+    showPricingToast('No se pudo guardar: ' + (result?.error || 'error desconocido'), 'err');
+    return;
+  }
+
+  document.getElementById('sp-updated').textContent = 'Última actualización: ' + formatAdminDate(result.pricing?.updated_at);
   showPricingToast('Valores PRO actualizados. Se aplicarán a nuevas suscripciones.', 'ok');
 }
 function syncClienteComercialForm(prefix) {

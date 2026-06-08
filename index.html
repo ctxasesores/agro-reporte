@@ -696,13 +696,13 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="pro-grid">
         <div class="pro-price-card">
           <div class="pro-price-label">Plan mensual</div>
-          <div class="pro-price">USD 10 <span>/ mes</span></div>
+          <div class="pro-price">USD 15 <span>/ mes</span></div>
           <div class="pro-price-copy">Ideal para probar el set completo de paneles PRO. Mercado Pago debita automáticamente todos los meses hasta que canceles la suscripción.</div>
           <button class="pro-cta" type="button" onclick="startProCheckout('mensual')">Comprar plan mensual</button>
         </div>
         <div class="pro-price-card">
           <div class="pro-price-label">Plan anual</div>
-          <div class="pro-price">USD 100 <span>/ año</span></div>
+          <div class="pro-price">USD 150 <span>/ año</span></div>
           <div class="pro-price-copy">Mejor valor para clientes que ya usan los paneles como herramienta de gestión recurrente, con renovación anual automática.</div>
           <button class="pro-cta" type="button" onclick="startProCheckout('anual')">Comprar plan anual</button>
         </div>
@@ -810,7 +810,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         </div>
         <div class="docs-card">
           <h4>6. Versiones y pagos</h4>
-          <p>La versión ESTANDAR puede tener límites funcionales. La versión PRO habilita funciones adicionales sujetas a pago, activación de cuenta y disponibilidad técnica. Los precios vigentes son USD 10 mensuales o USD 100 anuales, salvo acuerdo comercial distinto.</p>
+          <p>La versión ESTANDAR puede tener límites funcionales. La versión PRO habilita funciones adicionales sujetas a pago, activación de cuenta y disponibilidad técnica. Los precios vigentes son USD 15 mensuales o USD 150 anuales, salvo acuerdo comercial distinto. Para suscripciones cobradas en pesos argentinos, los importes se pesifican de acuerdo con el tipo de cambio Banco Nación comprador del mes anterior a la compra o renovación.</p>
         </div>
       </div>
       <div class="pro-steps-card">
@@ -2416,8 +2416,8 @@ function setProCheckoutStatus(message, type = '') {
 
 function getProPlanText(plan) {
   return String(plan || 'mensual').toLowerCase() === 'anual'
-    ? 'anual de USD 100'
-    : 'mensual de USD 10';
+    ? 'anual de USD 150'
+    : 'mensual de USD 15';
 }
 
 function cleanBillingDocument(value = '') {
