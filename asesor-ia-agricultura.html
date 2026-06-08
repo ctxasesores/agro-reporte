@@ -1,0 +1,185 @@
+<!-- ============================================================
+     ASESOR CTX IA — Módulo para el panel de Agricultura
+     Pegar este bloque dentro de <div id="view-agricultura"> ...
+     idealmente arriba de "Posiciones en el mercado".
+     El <script> puede ir al final, junto al resto de tu JS.
+     ============================================================ -->
+
+<!-- ░░░ 1) BLOQUE HTML (va en el cuerpo del panel) ░░░ -->
+<div class="section" id="sec-asesor-ia" style="margin-bottom:28px">
+  <div class="section-title">Asesor CTX IA</div>
+  <div class="card" style="padding:0;overflow:hidden">
+
+    <!-- Encabezado / disclaimer -->
+    <div style="padding:14px 16px;border-bottom:0.5px solid var(--border,rgba(255,255,255,.08));display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:rgba(212,160,23,.14);color:var(--oro-l,#e8c45a);align-items:center;justify-content:center;font-size:16px">✦</span>
+      <div style="flex:1;min-width:180px">
+        <div style="font-size:13px;font-weight:600;color:var(--txt,#e8e0d4)">Análisis de palancas de rentabilidad</div>
+        <div style="font-size:11px;color:var(--gris,#9a9a9a)">Análisis informativo de escenarios — no es recomendación de inversión.</div>
+      </div>
+    </div>
+
+    <!-- Conversación -->
+    <div id="asesor-chat" style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;max-height:520px;overflow-y:auto">
+      <div class="asesor-msg-ia" style="font-size:13px;line-height:1.55;color:var(--txt,#e8e0d4)">
+        Puedo analizar tu cartera de granos y señalar dónde hay palancas para mejorar el resultado: brecha de precio vs mercado, % comercializado vs pendiente, concentración y timing del flujo de fondos. Tocá <b>Analizar mi cartera</b> o escribime una consulta.
+      </div>
+    </div>
+
+    <!-- Acciones rápidas + input -->
+    <div style="padding:0 16px 14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="asesor-quick" onclick="asesorEnviar('Analizá mi cartera e indicá las principales palancas de rentabilidad.')">Analizar mi cartera</button>
+        <button class="asesor-quick" onclick="asesorEnviar('¿En qué productos tengo mayor brecha entre mi precio promedio y el precio de mercado actual?')">Brecha vs mercado</button>
+        <button class="asesor-quick" onclick="asesorEnviar('Revisá el timing de mi flujo de fondos: ¿hay meses con egresos sin ingresos que los cubran?')">Flujo de fondos</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <textarea id="asesor-input" rows="1" placeholder="Escribí tu consulta…"
+          style="flex:1;resize:none;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px;outline:none;font-family:inherit"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();asesorEnviar();}"></textarea>
+        <button id="asesor-send" onclick="asesorEnviar()"
+          style="height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--oro,#d4a017);color:#132d46;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .asesor-quick{font-size:12px;font-weight:600;padding:6px 12px;border-radius:99px;border:0.5px solid var(--border2,rgba(255,255,255,.14));background:rgba(212,160,23,.08);color:var(--oro-l,#e8c45a);cursor:pointer;transition:background .15s}
+  .asesor-quick:hover{background:rgba(212,160,23,.16)}
+  .asesor-msg-user{align-self:flex-end;max-width:85%;background:var(--oro,#d4a017);color:#132d46;padding:9px 13px;border-radius:14px 14px 4px 14px;font-size:13px;line-height:1.5;font-weight:500}
+  .asesor-msg-ia{align-self:flex-start;max-width:92%;background:var(--negro-b,rgba(255,255,255,.03));border:0.5px solid var(--border,rgba(255,255,255,.08));padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:13px;line-height:1.6;color:var(--txt,#e8e0d4)}
+  .asesor-msg-ia b{color:var(--oro-l,#e8c45a)}
+  .asesor-typing{display:inline-flex;gap:4px}
+  .asesor-typing span{width:6px;height:6px;border-radius:50%;background:var(--gris,#9a9a9a);animation:asesorBlink 1.2s infinite}
+  .asesor-typing span:nth-child(2){animation-delay:.2s}
+  .asesor-typing span:nth-child(3){animation-delay:.4s}
+  @keyframes asesorBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+</style>
+
+
+<!-- ░░░ 2) SCRIPT (va junto al resto de tu JS) ░░░ -->
+<script>
+(function () {
+  // ── Config ──
+  // URL del proyecto Supabase (ctx-reporte). Si ya tenés SUPABASE_URL global, se usa esa.
+  const SB_URL = (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL)
+    ? SUPABASE_URL
+    : 'https://xilkjtmaruqqodnhwkbp.supabase.co';
+  // Anon key: si ya la tenés global (SUPABASE_ANON_KEY o supabaseKey), se reutiliza.
+  const SB_ANON = (typeof SUPABASE_ANON_KEY !== 'undefined' && SUPABASE_ANON_KEY)
+    ? SUPABASE_ANON_KEY
+    : (typeof supabaseKey !== 'undefined' ? supabaseKey : '');
+  const FN_URL = SB_URL.replace(/\/$/, '') + '/functions/v1/agente-agro';
+
+  // Gating: limita el asesor a cuentas PRO de agricultura.
+  const SOLO_PRO = true;
+
+  const historial = []; // [{role,content}]
+
+  // ── Arma el contexto numérico de la cartera desde tus globals existentes ──
+  function construirContexto() {
+    const ctx = { panel: 'agricultura' };
+    try {
+      if (typeof calcularCartera === 'function') {
+        const c = calcularCartera();
+        ctx.cartera = {
+          valor_total_usd: Math.round(c.cartera),
+          realizado_usd: Math.round(c.realizado),
+          pendiente_usd: Math.round(c.pendiente),
+        };
+      }
+      if (typeof calcularPorProducto === 'function') {
+        const m = calcularPorProducto();
+        ctx.por_producto = Object.entries(m)
+          .filter(([, v]) => v.longTn || v.shortTn || v.pMercado != null)
+          .map(([prod, v]) => ({
+            producto: prod,
+            tn_compradas: Math.round(v.longTn || 0),
+            tn_vendidas: Math.round(v.shortTn || 0),
+            precio_prom_compra: v.pCompra_den ? +(v.pCompra_num / v.pCompra_den).toFixed(2) : null,
+            precio_prom_venta: v.pVenta_den ? +(v.pVenta_num / v.pVenta_den).toFixed(2) : null,
+            precio_mercado: v.pMercado != null ? +Number(v.pMercado).toFixed(2) : null,
+          }));
+      }
+      if (typeof currentCliente !== 'undefined' && currentCliente) {
+        ctx.cliente = {
+          empresa: currentCliente.nombre_empresa,
+          campania: (typeof activeCampaign !== 'undefined' && activeCampaign) ? activeCampaign : currentCliente.campania,
+          nivel: currentCliente.agricultura_nivel || 'ESTANDAR',
+        };
+      }
+    } catch (e) { console.warn('contexto asesor:', e); }
+    return ctx;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  }
+  // Render mínimo: **negrita**, saltos de línea, viñetas "- "
+  function fmt(t) {
+    return esc(t)
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/^\s*[-•]\s+/gm, '• ')
+      .replace(/\n/g, '<br>');
+  }
+
+  function addMsg(role, html) {
+    const chat = document.getElementById('asesor-chat');
+    const div = document.createElement('div');
+    div.className = role === 'user' ? 'asesor-msg-user' : 'asesor-msg-ia';
+    div.innerHTML = html;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+
+  window.asesorEnviar = async function (textoFijo) {
+    const input = document.getElementById('asesor-input');
+    const mensaje = (textoFijo != null ? textoFijo : input.value).trim();
+    if (!mensaje) return;
+
+    if (SOLO_PRO && typeof currentCliente !== 'undefined' &&
+        currentCliente && currentCliente.agricultura_nivel !== 'PRO') {
+      addMsg('ia', 'El Asesor IA está disponible para cuentas <b>PRO</b>. Consultá con CTX para habilitarlo.');
+      return;
+    }
+
+    if (textoFijo == null) input.value = '';
+    addMsg('user', esc(mensaje));
+    historial.push({ role: 'user', content: mensaje });
+
+    const sendBtn = document.getElementById('asesor-send');
+    sendBtn.disabled = true;
+    const typing = addMsg('ia', '<span class="asesor-typing"><span></span><span></span><span></span></span>');
+
+    try {
+      const resp = await fetch(FN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
+        },
+        body: JSON.stringify({
+          panel: 'agricultura',
+          mensaje,
+          contexto: construirContexto(),
+          historial: historial.slice(0, -1), // sin el turno actual (ya va en mensaje)
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) {
+        typing.innerHTML = 'Hubo un problema al generar el análisis. ' +
+          (data.error ? esc(data.error) : '') + ' Probá de nuevo en un momento.';
+        return;
+      }
+      typing.innerHTML = fmt(data.texto || 'Sin respuesta.');
+      historial.push({ role: 'assistant', content: data.texto || '' });
+    } catch (e) {
+      typing.innerHTML = 'No pude conectar con el asesor. Revisá tu conexión e intentá de nuevo.';
+    } finally {
+      sendBtn.disabled = false;
+    }
+  };
+})();
+</script>
