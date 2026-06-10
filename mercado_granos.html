@@ -585,17 +585,25 @@ function setupContext() {
 
 function isPRO() {
   if (!currentCliente) return false;
-  var nivel = String(currentCliente.agricultura_nivel || '').toUpperCase();
-  return nivel === 'PRO';
+  // Acceso PRO si tiene nivel PRO en cualquier panel
+  var niveles = [
+    currentCliente.agricultura_nivel,
+    currentCliente.ganaderia_nivel,
+    currentCliente.tambo_nivel
+  ];
+  return niveles.some(function(n) { return String(n || '').toUpperCase() === 'PRO'; });
 }
 
 function checkAccess() {
-  // En desarrollo / sin padre, mostrar el chat directamente
   var gate = document.getElementById('agente-pro-gate');
   var chat = document.getElementById('agente-chat-wrap');
-  if (gate && chat) {
+  if (!gate || !chat) return;
+  if (isPRO()) {
     gate.style.display = 'none';
     chat.style.display = 'block';
+  } else {
+    gate.style.display = 'block';
+    chat.style.display = 'none';
   }
 }
 
@@ -613,6 +621,15 @@ function switchTab(btn, tabId) {
     var el = document.getElementById(id);
     if (el) el.style.display = id === tabId ? 'block' : 'none';
   });
+  // Re-evaluar acceso PRO al abrir el tab del agente
+  if (tabId === 'tab-agente') {
+    // Refrescar contexto del padre por si aún no estaba disponible al cargar
+    try {
+      if (window.parent?.currentCliente) currentCliente = window.parent.currentCliente;
+      if (window.parent?.currentUser)    currentUser    = window.parent.currentUser;
+    } catch(e) {}
+    checkAccess();
+  }
 }
 
 // ── ACCORDIONS ──────────────────────────────────────────────
@@ -626,51 +643,9 @@ function toggleAcc(id, iconId) {
 }
 
 // ── CHAT ────────────────────────────────────────────────────
+// El system prompt vive centralizado en la Edge Function agente-agro (dominio: 'mercado').
+// No se envía desde el cliente — más seguro y mantenible.
 var chatHistory = [];
-
-var SYSTEM_PROMPT = `Sos el Asesor CTX de Mercado de Granos para productores agropecuarios argentinos.
-
-Tu análisis sigue una arquitectura de 5 capas encadenadas:
-1. Fundamentos estructurales (USDA WASDE mensual)
-2. Oferta/demanda dinámica (Crop Progress, Export Sales, cosechas)
-3. Balance stock/consumo → precio Chicago + estacionalidad
-4. Régimen especulativo/financiero (CFTC CoT, petróleo, VIX)
-5. Mercado local Argentina + macro (basis FOB, tipo de cambio, retenciones, MATba)
-
-DETECTOR DE RÉGIMEN ESPECULATIVO (crítico):
-Antes de emitir señales de precio, evaluá si el mercado está en régimen FUNDAMENTAL o ESPECULATIVO.
-Señales de régimen especulativo: volatilidad petróleo >3% diario, CFTC CoT en extremos, movimientos de fondos ligados a geopolítica.
-Cuando el régimen es ESPECULATIVO: comunicalo explícitamente y ajustá la certeza de tus recomendaciones.
-"En este contexto especulativo, los fundamentos están temporariamente oscurecidos. La correlación histórica soja-petróleo indica un precio teórico de ~$500 pero el mercado opera a $430 por flujos especulativos."
-
-CONTEXTO ACTUAL (Junio 2026):
-- Soja Chicago: ~430 USD/t (correlación petróleo implica ~500)
-- Régimen: especulativo activo, fondos ligados a volatilidad Ormuz/petróleo
-- USDA mayo: stocks/consumo 26/27 menores que 25/26 en soja, maíz y trigo → alcista estructural
-- Cosecha sudamericana récord de Brasil → presión estacional sobre precios
-- Basis FOB aceite soja: en descuento (cosecha) → se corregirá al salir de cosecha
-- Trigo: demanda Asia muy activa (China, Vietnam, Bangladesh, Indonesia)
-- CFTC CoT: fondos net short en complejo oleaginoso
-
-ESTACIONALIDAD (insight clave):
-Al salir de cosecha sudamericana, el descuento FOB se corrige fuertemente.
-Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha → timing accionable para el productor.
-
-PERFIL DEL PRODUCTOR:
-Siempre preguntá o considerá: urgencia financiera (¿necesita vender esta semana o puede esperar?), tipo de tenencia (campo propio vs. arrendado), % de producción sin precio cerrado, herramientas disponibles (venta directa / put / forward).
-La misma señal de mercado genera recomendaciones muy distintas según el perfil.
-
-RESTRICCIONES IMPORTANTES:
-- No das asesoramiento financiero de inversión ni recomendaciones de compra/venta de instrumentos derivados.
-- Tus análisis son simulaciones informativas para ayudar al productor a entender el contexto, no instrucciones de inversión.
-- Siempre terminá aclarando que la decisión final corresponde al productor junto a su asesor.
-- Si el usuario pregunta por precios exactos en tiempo real, indicá que no tenés acceso a datos en tiempo real y sugerí consultar MATba-ROFEX o Bolsa de Cereales.
-
-ESTILO DE RESPUESTA:
-- Directo, sin rodeos, como un analista del sector que habla con un cliente.
-- Usá terminología específica del sector: DJVE, ROE, puts, posición disponible/deferred, basis, stocks/consumo.
-- Estructurá la respuesta: contexto → señal → implicancia para el productor.
-- Máximo 3-4 párrafos por respuesta, salvo que el usuario pida análisis detallado.`;
 
 function appendMsg(role, text, isThinking) {
   var wrap = document.getElementById('chat-messages');
@@ -723,7 +698,6 @@ async function sendMessage() {
       body: JSON.stringify({
         dominio: 'mercado',
         messages: chatHistory,
-        system_override: SYSTEM_PROMPT,
         cliente: currentCliente ? {
           nombre: currentCliente.nombre_empresa,
           nivel: currentCliente.agricultura_nivel
@@ -732,9 +706,9 @@ async function sendMessage() {
     });
 
     var data = await res.json();
-    var reply = data?.content?.[0]?.text
-      || data?.reply
-      || data?.text
+    // La Edge Function devuelve { texto, content, usage, model }
+    var reply = data?.texto
+      || data?.content?.[0]?.text
       || 'No pude generar una respuesta en este momento.';
 
     thinkBubble.classList.remove('msg-thinking');
