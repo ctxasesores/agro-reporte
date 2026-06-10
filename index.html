@@ -1348,11 +1348,205 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       </div>
     </div>
 
-    <div class="dashboard-view integrated-embed" id="view-mercado">
+    <div class="dashboard-view" id="view-mercado">
       <div class="page-body">
-        <div class="embedded-dashboard">
-          <iframe class="embedded-frame" id="frame-mercado" src="mercado_granos.html" title="Mercado de Granos"></iframe>
+
+        <!-- ── HERO ── -->
+        <div style="background:linear-gradient(135deg,var(--negro-m),var(--negro-s));border:0.5px solid rgba(255,255,255,.12);border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--oro-l);margin-bottom:3px">Análisis de mercado</div>
+            <div style="font-size:20px;font-weight:700;color:var(--texto)">Mercado de Granos</div>
+            <div style="font-size:12px;color:var(--gris);margin-top:2px">Soja · Maíz · Trigo · Cebada — fundamentos internacionales y mercado local</div>
+          </div>
+          <div id="mercado-regime-badge" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(212,160,23,.18);border:1px solid rgba(212,160,23,.35);color:var(--oro-l)">
+            <span style="width:7px;height:7px;border-radius:50%;background:var(--oro-l);animation:asesorBlink 2s infinite"></span>
+            Régimen especulativo
+          </div>
         </div>
+
+        <!-- ── TABS ── -->
+        <div style="display:flex;gap:3px;background:var(--negro-s);padding:4px;border-radius:8px;margin-bottom:18px;width:fit-content" id="mercado-tab-bar">
+          <button class="mercado-tab active" onclick="mercadoSwitchTab(this,'mercado-tab-panorama')">Panorama</button>
+          <button class="mercado-tab" onclick="mercadoSwitchTab(this,'mercado-tab-variables')">Variables</button>
+          <button class="mercado-tab" onclick="mercadoSwitchTab(this,'mercado-tab-framework')">Framework</button>
+          <button class="mercado-tab" onclick="mercadoSwitchTab(this,'mercado-tab-agente')">Asesor IA 🌾</button>
+        </div>
+        <style>
+          .mercado-tab{padding:7px 15px;border-radius:5px;font-size:12px;font-weight:600;color:var(--gris);cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;white-space:nowrap}
+          .mercado-tab.active{background:var(--negro-m);color:var(--texto)}
+          .mercado-tab:hover:not(.active){color:var(--texto)}
+          .mercado-sig-table{width:100%;border-collapse:collapse;font-size:12px}
+          .mercado-sig-table th{padding:7px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);border-bottom:0.5px solid rgba(255,255,255,.07)}
+          .mercado-sig-table td{padding:8px 10px;border-bottom:0.5px solid rgba(255,255,255,.04);vertical-align:middle}
+          .mercado-sig-table tr:last-child td{border-bottom:none}
+          .mercado-sig-table tr:hover td{background:rgba(255,255,255,.02)}
+          .m-pill-bull{display:inline-block;background:rgba(30,153,112,.18);color:#2ab88a;border-radius:4px;font-size:10px;font-weight:700;padding:2px 7px;white-space:nowrap}
+          .m-pill-bear{display:inline-block;background:rgba(217,81,44,.18);color:#f0856a;border-radius:4px;font-size:10px;font-weight:700;padding:2px 7px;white-space:nowrap}
+          .m-pill-watch{display:inline-block;background:rgba(212,160,23,.18);color:var(--oro-l);border-radius:4px;font-size:10px;font-weight:700;padding:2px 7px;white-space:nowrap}
+          .m-pill-neutral{display:inline-block;background:rgba(255,255,255,.06);color:var(--gris);border-radius:4px;font-size:10px;font-weight:600;padding:2px 7px;white-space:nowrap}
+          .mercado-card{background:var(--negro-s);border:0.5px solid rgba(255,255,255,.08);border-radius:10px;margin-bottom:12px;overflow:hidden}
+          .mercado-card-hdr{display:flex;align-items:center;padding:13px 16px;cursor:pointer;user-select:none;gap:10px}
+          .mercado-card-hdr:hover{background:rgba(255,255,255,.03)}
+          .mercado-card-body{padding:0 16px 14px}
+          .mercado-layer-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--oro);background:rgba(212,160,23,.1);border:1px solid rgba(212,160,23,.2);border-radius:4px;padding:2px 7px;margin-right:8px;flex-shrink:0}
+          .mercado-vtag{display:inline-block;background:var(--negro-m);border:1px solid rgba(255,255,255,.08);border-radius:4px;font-size:11px;padding:3px 8px;color:var(--gris);margin:3px 3px 3px 0}
+          .mercado-vtag.key{border-color:rgba(212,160,23,.3);color:var(--oro-l)}
+          .mercado-insight{font-size:12px;color:var(--gris);line-height:1.6;padding:10px 0 2px;border-top:0.5px solid rgba(255,255,255,.07);margin-top:8px}
+          .mercado-insight strong{color:var(--oro-l)}
+          .mercado-quick{font-size:12px;font-weight:600;padding:6px 12px;border-radius:99px;border:0.5px solid rgba(255,255,255,.14);background:rgba(212,160,23,.08);color:var(--oro-l);cursor:pointer;transition:background .15s;font-family:inherit}
+          .mercado-quick:hover{background:rgba(212,160,23,.16)}
+          .mercado-msg-user{align-self:flex-end;max-width:85%;background:var(--oro);color:#132d46;padding:9px 13px;border-radius:14px 14px 4px 14px;font-size:13px;line-height:1.5;font-weight:500}
+          .mercado-msg-ia{align-self:flex-start;max-width:92%;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:13px;line-height:1.6;color:var(--texto)}
+          .mercado-msg-ia b{color:var(--oro-l)}
+          .mercado-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+          @media(max-width:860px){.mercado-grid-2{grid-template-columns:1fr}}
+        </style>
+
+        <!-- ══ TAB: PANORAMA ══ -->
+        <div id="mercado-tab-panorama">
+          <!-- KPIs -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="mercado-kpis-row">
+            <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Soja Chicago</div>
+              <div style="font-size:22px;font-weight:700;color:var(--oro-l)">~430</div>
+              <div style="font-size:10px;color:var(--gris);margin-top:2px">USD/t · correlación petróleo implica ~500</div>
+            </div>
+            <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Régimen actual</div>
+              <div style="font-size:14px;font-weight:700;color:#7fc4f8;padding-top:4px">Especulativo</div>
+              <div style="font-size:10px;color:var(--gris);margin-top:2px">Fundamentos oscurecidos</div>
+            </div>
+            <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Fundamentos 26/27</div>
+              <div style="font-size:22px;font-weight:700;color:#2ab88a">Alcistas</div>
+              <div style="font-size:10px;color:var(--gris);margin-top:2px">Stocks/consumo menores que 25/26</div>
+            </div>
+            <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Tu cartera</div>
+              <div style="font-size:22px;font-weight:700;color:var(--oro-l)" id="mercado-kpi-cartera">—</div>
+              <div style="font-size:10px;color:var(--gris);margin-top:2px" id="mercado-kpi-pendiente">Cargando...</div>
+            </div>
+          </div>
+          <div class="mercado-grid-2">
+            <!-- Señales -->
+            <div class="mercado-card">
+              <div class="mercado-card-hdr" onclick="mercadoToggle('m-senales','m-icon-sen')">
+                <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Señales actuales por cultivo</div><div style="font-size:11px;color:var(--gris);margin-top:1px">Basadas en fundamentals disponibles</div></div>
+                <span id="m-icon-sen" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span>
+              </div>
+              <div id="m-senales" class="mercado-card-body">
+                <table class="mercado-sig-table">
+                  <thead><tr><th>Variable</th><th>Cultivo</th><th>Señal</th></tr></thead>
+                  <tbody>
+                    <tr><td>Stocks/consumo 26/27</td><td>Soja · Maíz · Trigo</td><td><span class="m-pill-bull">ALCISTA</span></td></tr>
+                    <tr><td>Condición cultivos USA</td><td>Soja · Maíz</td><td><span class="m-pill-watch">MONITOREAR</span></td></tr>
+                    <tr><td>Cosecha Brasil</td><td>Soja</td><td><span class="m-pill-bear">RÉCORD</span></td></tr>
+                    <tr><td>Fondos CFTC CoT</td><td>Complejo oleaginoso</td><td><span class="m-pill-bear">NET SHORT</span></td></tr>
+                    <tr><td>Correlación soja–petróleo</td><td>Soja</td><td><span class="m-pill-watch">DESCALIB.</span></td></tr>
+                    <tr><td>Basis FOB vs. Chicago</td><td>Aceite soja</td><td><span class="m-pill-watch">DESCUENTO</span></td></tr>
+                    <tr><td>Demanda Asia trigo AR</td><td>Trigo</td><td><span class="m-pill-bull">FUERTE</span></td></tr>
+                    <tr><td>Logística río Paraná</td><td>Maíz</td><td><span class="m-pill-bear">ALERTA</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Insights -->
+            <div class="mercado-card">
+              <div class="mercado-card-hdr" onclick="mercadoToggle('m-insights','m-icon-ins')">
+                <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Insights clave</div><div style="font-size:11px;color:var(--gris);margin-top:1px">Diego de la Puente · Canal Rural · AZ Group</div></div>
+                <span id="m-icon-ins" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span>
+              </div>
+              <div id="m-insights" class="mercado-card-body" style="display:flex;flex-direction:column;gap:9px">
+                <div style="border-left:3px solid var(--oro-l);padding:9px 12px;background:rgba(212,160,23,.05);border-radius:0 6px 6px 0"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:4px">⚠ Régimen especulativo activo</div><div style="font-size:12px;line-height:1.6;color:var(--texto)">Fondos operan con base en petróleo. Movimientos de 3–6% diarios en WTI arrastran granos independientemente de los fundamentals. Correlación histórica implica precio teórico ~$500 vs. $430 actual.</div></div>
+                <div style="border-left:3px solid #2ab88a;padding:9px 12px;background:rgba(30,153,112,.05);border-radius:0 6px 6px 0"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ab88a;margin-bottom:4px">↑ Fundamentos estructurales alcistas</div><div style="font-size:12px;line-height:1.6;color:var(--texto)">USDA mayo: relaciones stock/consumo para 26/27 menores que 25/26 en soja, maíz y trigo. Precios al productor USA proyectados al alza.</div></div>
+                <div style="border-left:3px solid var(--gris);padding:9px 12px;background:rgba(127,168,196,.05);border-radius:0 6px 6px 0"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);margin-bottom:4px">📍 Oportunidad estacional</div><div style="font-size:12px;line-height:1.6;color:var(--texto)">Al salir de cosecha sudamericana el descuento FOB se corrige fuertemente. Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha. Variable accionable para timing de ventas.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ TAB: VARIABLES ══ -->
+        <div id="mercado-tab-variables" style="display:none">
+          <div class="mercado-grid-2">
+            <div>
+              <div class="mercado-card">
+                <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l1','mv-i1')"><span class="mercado-layer-num">01</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Fundamentos estructurales</div><div style="font-size:11px;color:var(--gris)">USDA WASDE mensual · largo plazo</div></div><span id="mv-i1" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div>
+                <div id="mv-l1" class="mercado-card-body"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Balance stock/consumo mundial</td><td>USDA WASDE</td><td><span class="m-pill-bull">ALCISTA</span></td></tr><tr><td>Relación stocks/consumo 26/27</td><td>USDA</td><td><span class="m-pill-bull">ALCISTA</span></td></tr><tr><td>Precios productor USA proyectados</td><td>USDA</td><td><span class="m-pill-bull">ALCISTA</span></td></tr><tr><td>Área sembrada hemisferios</td><td>USDA/CONAB</td><td><span class="m-pill-neutral">NEUTRO</span></td></tr><tr><td>Costo fertilizantes nitrogenados</td><td>CME</td><td><span class="m-pill-bull">A LA BAJA</span></td></tr></tbody></table></div>
+              </div>
+              <div class="mercado-card">
+                <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l2','mv-i2')"><span class="mercado-layer-num">02</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Oferta dinámica</div><div style="font-size:11px;color:var(--gris)">Crop Progress · cosechas · clima</div></div><span id="mv-i2" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div>
+                <div id="mv-l2" class="mercado-card-body" style="display:none"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Condición B+E% semanal soja USA</td><td>USDA Crop Progress</td><td><span class="m-pill-watch">WATCH</span></td></tr><tr><td>Condición B+E% maíz USA</td><td>USDA Crop Progress</td><td><span class="m-pill-watch">WATCH</span></td></tr><tr><td>Trigo primavera USA</td><td>USDA/WQC</td><td><span class="m-pill-bull">SOPORTE</span></td></tr><tr><td>Cosecha Brasil</td><td>CONAB</td><td><span class="m-pill-bear">RÉCORD</span></td></tr><tr><td>Bajante río Paraná</td><td>INA/Prefectura</td><td><span class="m-pill-bear">ALERTA</span></td></tr></tbody></table></div>
+              </div>
+              <div class="mercado-card">
+                <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l3','mv-i3')"><span class="mercado-layer-num">03</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Demanda dinámica</div><div style="font-size:11px;color:var(--gris)">China · Export Sales · DJVE</div></div><span id="mv-i3" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div>
+                <div id="mv-l3" class="mercado-card-body" style="display:none"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Compras semanales China (soja)</td><td>USDA Export Sales</td><td><span class="m-pill-neutral">DÉBIL</span></td></tr><tr><td>DJVE Argentina</td><td>MAGyP</td><td><span class="m-pill-bull">ACTIVO</span></td></tr><tr><td>Demanda Asia trigo AR</td><td>INDEC</td><td><span class="m-pill-bull">FUERTE</span></td></tr><tr><td>Demanda biocombustibles</td><td>EPA/política</td><td><span class="m-pill-watch">WATCH</span></td></tr></tbody></table></div>
+              </div>
+            </div>
+            <div>
+              <div class="mercado-card" style="border-color:rgba(212,160,23,.2)">
+                <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l4','mv-i4')"><span class="mercado-layer-num">04</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Flujo especulativo / financiero ★</div><div style="font-size:11px;color:var(--gris)">La capa que oscurece los fundamentals</div></div><span id="mv-i4" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div>
+                <div id="mv-l4" class="mercado-card-body"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Posición neta fondos (CFTC CoT)</td><td>CFTC semanal</td><td><span class="m-pill-bear">NET SHORT</span></td></tr><tr><td>Petróleo WTI/Brent</td><td>CME/ICE</td><td><span class="m-pill-watch">VOLÁTIL</span></td></tr><tr><td>Correlación soja–petróleo</td><td>CME/cálculo</td><td><span class="m-pill-watch">DESCALIB.</span></td></tr><tr><td>VIX (apetito de riesgo)</td><td>CBOE</td><td><span class="m-pill-bear">ELEVADO</span></td></tr><tr><td>Variables geopolíticas (Ormuz)</td><td>News APIs</td><td><span class="m-pill-watch">ACTIVO</span></td></tr></tbody></table></div>
+              </div>
+              <div class="mercado-card">
+                <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l5','mv-i5')"><span class="mercado-layer-num">05</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Mercado local Argentina + macro</div><div style="font-size:11px;color:var(--gris)">Basis FOB · tipo de cambio · política</div></div><span id="mv-i5" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div>
+                <div id="mv-l5" class="mercado-card-body"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Precios MATba disponible/deferred</td><td>MATba-ROFEX</td><td><span class="m-pill-neutral">—</span></td></tr><tr><td>Basis FOB vs. Chicago</td><td>Rosario/AZ Group</td><td><span class="m-pill-watch">DESCUENTO</span></td></tr><tr><td>Tipo de cambio oficial/MEP/CCL</td><td>BCRA/Ambito</td><td><span class="m-pill-watch">WATCH</span></td></tr><tr><td>Política retenciones / ROE</td><td>Boletín Oficial</td><td><span class="m-pill-watch">WATCH</span></td></tr></tbody></table></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ TAB: FRAMEWORK ══ -->
+        <div id="mercado-tab-framework" style="display:none">
+          <div style="background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.2);border-radius:10px;padding:14px 16px;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:7px">★ Regla del detector de régimen</div>
+            <div style="font-size:13px;line-height:1.7;color:var(--texto)">Si <strong style="color:var(--oro-l)">volatilidad petróleo &gt;3% diario</strong> + <strong style="color:var(--oro-l)">CFTC CoT en extremos</strong> → régimen <strong style="color:var(--oro-l)">ESPECULATIVO</strong> activo. El agente reduce su certeza y lo comunica explícitamente antes de dar señales.</div>
+          </div>
+          <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l1','mfw-i1')"><span class="mercado-layer-num">01</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Oferta global estructural</div><div style="font-size:11px;color:var(--gris)">Largo plazo — USDA WASDE mensual</div></div><span id="mfw-i1" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div><div id="mfw-l1" class="mercado-card-body"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">stocks/consumo mundial</span><span class="mercado-vtag key">WASDE proyecciones 26/27</span><span class="mercado-vtag">área sembrada</span><span class="mercado-vtag">precios productor USA</span><span class="mercado-vtag">costo fertilizantes</span></div><div class="mercado-insight">Insight: <strong>USDA mayo 2026 — stocks/consumo 26/27 menores que 25/26 en Soja, Maíz y Trigo → fundamento estructural alcista confirmado.</strong></div></div></div>
+          <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l2','mfw-i2')"><span class="mercado-layer-num">02</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Demanda global</div><div style="font-size:11px;color:var(--gris)">China · biocombustibles · uso industrial</div></div><span id="mfw-i2" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l2" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">compras semanales China</span><span class="mercado-vtag key">USDA Export Sales semanal</span><span class="mercado-vtag">márgenes molienda China</span><span class="mercado-vtag">política biocombustibles EPA</span><span class="mercado-vtag">DJVE Argentina</span></div><div class="mercado-insight">AZ Group N°106: <strong>Ajustados márgenes en China provocaron desaceleración de compras. Ventas semanales USA por debajo de lo esperado → debilidad en demanda de corto plazo.</strong></div></div></div>
+          <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l3','mfw-i3')"><span class="mercado-layer-num">03</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Balance stock/demanda → precio Chicago</div><div style="font-size:11px;color:var(--gris)">Síntesis de capas 1+2 + estacionalidad</div></div><span id="mfw-i3" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l3" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">relación stock/consumo actual</span><span class="mercado-vtag key">comparación vs. campaña anterior</span><span class="mercado-vtag">período crítico cultivos</span></div><div class="mercado-insight"><strong>Al salir de cosecha sudamericana el descuento FOB se corrige fuertemente. Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha.</strong> Timing crítico para recomendaciones.</div></div></div>
+          <div class="mercado-card" style="border-color:rgba(212,160,23,.2)"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l4','mfw-i4')"><span class="mercado-layer-num">04</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Régimen especulativo / financiero ★</div><div style="font-size:11px;color:var(--gris)">Aporte central: Diego de la Puente</div></div><span id="mfw-i4" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l4" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">posición neta CFTC CoT</span><span class="mercado-vtag key">correlación soja–petróleo</span><span class="mercado-vtag key">volatilidad petróleo diaria</span><span class="mercado-vtag">VIX</span><span class="mercado-vtag">tasas Fed / DXY</span><span class="mercado-vtag">eventos geopolíticos binarios</span></div><div class="mercado-insight"><strong>"No hay nada desde los fundamentals que pueda justificar las bajas que hemos visto."</strong> — Diego de la Puente. Los fondos salen de todos los activos cuando la volatilidad del petróleo explota, generando movimientos artificiales en granos.</div></div></div>
+          <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l5','mfw-i5')"><span class="mercado-layer-num">05</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Mercado local + macro Argentina</div><div style="font-size:11px;color:var(--gris)">Recomendación final condicionada al perfil del productor</div></div><span id="mfw-i5" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l5" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">basis FOB vs. Chicago</span><span class="mercado-vtag key">tipo de cambio / brecha</span><span class="mercado-vtag">retención productor</span><span class="mercado-vtag">política retenciones ROE</span><span class="mercado-vtag">MATba posiciones futuras</span></div><div class="mercado-insight">Perfil del productor que condiciona la estrategia: <strong>urgencia financiera · tenencia propia vs. arrendada · % producción sin precio · herramienta disponible</strong></div></div></div>
+        </div>
+
+        <!-- ══ TAB: ASESOR IA ══ -->
+        <div id="mercado-tab-agente" style="display:none">
+          <!-- Gate PRO -->
+          <div id="mercado-pro-gate" style="display:none;text-align:center;padding:40px 24px;background:var(--negro-s);border:0.5px solid rgba(255,255,255,.08);border-radius:10px">
+            <div style="font-size:36px;margin-bottom:12px">🌾</div>
+            <div style="font-size:17px;font-weight:600;color:var(--texto);margin-bottom:8px">Asesor de Mercado de Granos</div>
+            <div style="font-size:13px;color:var(--gris);line-height:1.6;margin-bottom:18px">El análisis de mercado con IA está disponible en el plan PRO.<br>Incluye análisis cruzado con tu cartera, detección de régimen especulativo y recomendaciones personalizadas.</div>
+            <button onclick="openUpgradeLink()" style="background:var(--oro);color:#000;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Activar PRO</button>
+          </div>
+          <!-- Chat PRO -->
+          <div id="mercado-chat-wrap">
+            <div class="mercado-card">
+              <div class="mercado-card-hdr" style="cursor:default">
+                <span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:rgba(212,160,23,.14);color:var(--oro-l);align-items:center;justify-content:center;font-size:16px;flex-shrink:0">✦</span>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Asesor CTX IA — Mercado de Granos</div><div style="font-size:11px;color:var(--gris)">Análisis cruzado con tu cartera · Régimen de mercado · Estrategia de cobertura</div></div>
+                <div id="mercado-regime-chat-badge" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(212,160,23,.18);border:1px solid rgba(212,160,23,.35);color:var(--oro-l)"><span style="width:6px;height:6px;border-radius:50%;background:var(--oro-l);animation:asesorBlink 2s infinite"></span>Especulativo</div>
+              </div>
+              <div style="padding:0 16px 14px">
+                <!-- Preguntas rápidas -->
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
+                  <button class="mercado-quick" onclick="mercadoAsesorEnviar('¿Cómo está el mercado hoy y qué implica para mi cartera?')">¿Cómo está el mercado hoy?</button>
+                  <button class="mercado-quick" onclick="mercadoAsesorEnviar('Cruzá el contexto de mercado con mi cartera actual y decime dónde tengo mayor exposición.')">Cruzar mercado con mi cartera</button>
+                  <button class="mercado-quick" onclick="mercadoAsesorEnviar('¿Conviene vender el pendiente de soja ahora o esperar a salir de cosecha?')">Timing de ventas</button>
+                  <button class="mercado-quick" onclick="mercadoAsesorEnviar('Explicame el régimen especulativo actual y qué señales debo monitorear.')">Régimen especulativo</button>
+                </div>
+                <!-- Chat -->
+                <div id="mercado-asesor-chat" style="display:flex;flex-direction:column;gap:10px;max-height:460px;overflow-y:auto;padding:4px 0 8px">
+                  <div class="mercado-msg-ia">Hola. Soy el Asesor CTX de Mercado de Granos. Tengo acceso a tu cartera actual y al contexto de mercado — puedo cruzar ambos para darte análisis concretos sobre timing de ventas, exposición por producto y cómo el régimen de mercado afecta tu posición específica.<br><br>¿Sobre qué querés empezar?</div>
+                </div>
+                <!-- Input -->
+                <div style="display:flex;gap:8px;align-items:flex-end;margin-top:10px">
+                  <textarea id="mercado-asesor-input" rows="1" placeholder="Consultá sobre mercado, tu cartera, timing de ventas…" style="flex:1;resize:none;padding:10px 12px;border-radius:10px;border:0.5px solid rgba(255,255,255,.14);background:var(--negro-s);color:var(--texto);font-size:13px;outline:none;font-family:inherit" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();mercadoAsesorEnviar();}"></textarea>
+                  <button id="mercado-asesor-send" onclick="mercadoAsesorEnviar()" style="height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--oro);color:#132d46;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0;font-family:inherit">Enviar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -2336,16 +2530,6 @@ function buildGanaderiaSrc(mode) {
   return qs.toString() ? `${base}?${qs.toString()}` : base;
 }
 
-function buildMercadoSrc() {
-  const base = 'mercado_granos.html';
-  const qs = new URLSearchParams();
-  if (currentCliente?.id) qs.set('cliente_id', currentCliente.id);
-  if (currentCliente?.nombre_empresa) qs.set('cliente_nombre', currentCliente.nombre_empresa);
-  if (currentUser?.id) qs.set('user_id', currentUser.id);
-  const qStr = qs.toString();
-  return qStr ? `${base}?${qStr}` : base;
-}
-
 function buildTamboSrc(mode) {
   const clienteId = currentCliente?.id || '';
   const clienteNombre = currentCliente?.nombre_empresa || '';
@@ -2401,9 +2585,7 @@ function switchDashboard(view, el) {
     if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
   }
   if (view === 'mercado') {
-    const frame = document.getElementById('frame-mercado');
-    const target = buildMercadoSrc();
-    if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
+    // Panel nativo — no requiere iframe
   }
   updateDashboardActionButtons();
   closeSidebar();
@@ -5474,6 +5656,207 @@ window.addEventListener('load', async () => {
       if (sendBtn) sendBtn.disabled = false;
     }
   };
+})();
+</script>
+
+<!-- ░░░ ASESOR CTX IA — lógica (Mercado de Granos) ░░░ -->
+<script>
+(function () {
+  const FN_URL = (typeof FUNCTIONS_URL !== 'undefined' && FUNCTIONS_URL)
+    ? FUNCTIONS_URL.replace(/\/$/, '') + '/agente-agro'
+    : 'https://xilkjtmaruqqodnhwkbp.supabase.co/functions/v1/agente-agro';
+  const SB_ANON = (typeof SUPA_KEY !== 'undefined') ? SUPA_KEY : '';
+
+  const historialMercado = [];
+
+  // ── PRO check: cualquier panel PRO da acceso ──────────────
+  function esMercadoPro() {
+    if (typeof currentCliente === 'undefined' || !currentCliente) return false;
+    return ['agricultura_nivel','ganaderia_nivel','tambo_nivel'].some(
+      k => String(currentCliente[k] || '').toUpperCase() === 'PRO'
+    );
+  }
+
+  // ── Contexto rico: cartera + mercado ─────────────────────
+  function construirContextoMercado() {
+    const ctx = { dominio: 'mercado' };
+    try {
+      // Cartera del cliente (mismo cálculo que Agricultura)
+      if (typeof calcularCartera === 'function') {
+        const c = calcularCartera();
+        ctx.cartera = {
+          valor_total_usd: Math.round(c.cartera),
+          realizado_usd:   Math.round(c.realizado),
+          pendiente_usd:   Math.round(c.pendiente),
+        };
+      }
+      if (typeof calcularPorProducto === 'function') {
+        const m = calcularPorProducto();
+        ctx.por_producto = Object.entries(m)
+          .filter(([, v]) => v.longTn || v.shortTn || v.pMercado != null)
+          .map(([prod, v]) => ({
+            producto: prod,
+            tn_compradas:       Math.round(v.longTn  || 0),
+            tn_vendidas:        Math.round(v.shortTn || 0),
+            precio_prom_compra: v.pCompra_den ? +(v.pCompra_num / v.pCompra_den).toFixed(2) : null,
+            precio_prom_venta:  v.pVenta_den  ? +(v.pVenta_num  / v.pVenta_den).toFixed(2)  : null,
+            precio_mercado:     v.pMercado != null ? +Number(v.pMercado).toFixed(2) : null,
+          }));
+      }
+      if (typeof currentCliente !== 'undefined' && currentCliente) {
+        ctx.cliente = {
+          empresa:   currentCliente.nombre_empresa,
+          campania:  (typeof activeCampaign !== 'undefined' && activeCampaign) || currentCliente.campania,
+          nivel_agr: currentCliente.agricultura_nivel || 'ESTANDAR',
+        };
+      }
+    } catch (e) { console.warn('[mercado ctx]', e); }
+    return ctx;
+  }
+
+  // ── Helpers de UI ─────────────────────────────────────────
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]));
+  }
+  function fmt(t) {
+    return esc(t)
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/^\s*[-•]\s+/gm, '• ')
+      .replace(/\n/g, '<br>');
+  }
+  function addMsgMercado(role, html) {
+    const chat = document.getElementById('mercado-asesor-chat');
+    if (!chat) return null;
+    const div = document.createElement('div');
+    div.className = role === 'user' ? 'mercado-msg-user' : 'mercado-msg-ia';
+    div.innerHTML = html;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+
+  // ── Actualizar KPI de cartera en Panorama ─────────────────
+  function actualizarKpiCartera() {
+    try {
+      if (typeof calcularCartera !== 'function') return;
+      const c = calcularCartera();
+      const kpiEl  = document.getElementById('mercado-kpi-cartera');
+      const pendEl = document.getElementById('mercado-kpi-pendiente');
+      const fmt2   = v => v >= 1000 ? 'USD ' + Math.round(v/1000) + 'k' : 'USD ' + Math.round(v);
+      if (kpiEl)  kpiEl.textContent  = fmt2(c.cartera);
+      if (pendEl) pendEl.textContent = 'Pendiente: ' + fmt2(c.pendiente);
+    } catch(e) {}
+  }
+
+  // ── Evaluar acceso al abrir el tab Asesor IA ──────────────
+  function evaluarAccesoMercado() {
+    const gate = document.getElementById('mercado-pro-gate');
+    const chat = document.getElementById('mercado-chat-wrap');
+    if (!gate || !chat) return;
+    if (esMercadoPro()) {
+      gate.style.display = 'none';
+      chat.style.display = 'block';
+    } else {
+      gate.style.display = 'block';
+      chat.style.display = 'none';
+    }
+  }
+
+  // ── Tab switcher ──────────────────────────────────────────
+  window.mercadoSwitchTab = function(btn, tabId) {
+    document.querySelectorAll('.mercado-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ['mercado-tab-panorama','mercado-tab-variables','mercado-tab-framework','mercado-tab-agente']
+      .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = id === tabId ? 'block' : 'none';
+      });
+    if (tabId === 'mercado-tab-agente') evaluarAccesoMercado();
+    if (tabId === 'mercado-tab-panorama') actualizarKpiCartera();
+  };
+
+  // ── Accordion helper ──────────────────────────────────────
+  window.mercadoToggle = function(id, iconId) {
+    const el   = document.getElementById(id);
+    const icon = document.getElementById(iconId);
+    if (!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : 'block';
+    if (icon) icon.style.transform = open ? '' : 'rotate(180deg)';
+  };
+
+  // ── Enviar mensaje al agente ──────────────────────────────
+  window.mercadoAsesorEnviar = async function(textoFijo) {
+    const input   = document.getElementById('mercado-asesor-input');
+    const sendBtn = document.getElementById('mercado-asesor-send');
+    const mensaje = (textoFijo != null ? textoFijo : (input ? input.value : '')).trim();
+    if (!mensaje) return;
+
+    if (!esMercadoPro()) {
+      addMsgMercado('ia', 'El Asesor de Mercado está disponible para cuentas <b>PRO</b>. Consultá con CTX para habilitarlo.');
+      return;
+    }
+
+    if (textoFijo == null && input) input.value = '';
+    addMsgMercado('user', esc(mensaje));
+    historialMercado.push({ role: 'user', content: mensaje });
+
+    if (sendBtn) sendBtn.disabled = true;
+    const typing = addMsgMercado('ia', '<span class="asesor-typing"><span></span><span></span><span></span></span>');
+
+    const ctx = construirContextoMercado();
+    // Inyectamos el contexto de cartera en el primer mensaje de cada sesión
+    const mensajeConCtx = historialMercado.length === 1
+      ? `CONTEXTO DE MI CARTERA (usá estos datos para el análisis):\n${JSON.stringify(ctx, null, 2)}\n\nMi consulta: ${mensaje}`
+      : mensaje;
+
+    // Reconstruir historial con contexto en primer turno
+    const mensajesApi = historialMercado.slice(0, -1).map((m, i) =>
+      i === 0 && m.role === 'user'
+        ? { role: 'user', content: `CONTEXTO DE MI CARTERA:\n${JSON.stringify(ctx, null, 2)}\n\n${m.content}` }
+        : m
+    );
+    mensajesApi.push({ role: 'user', content: mensajeConCtx });
+
+    try {
+      const resp = await fetch(FN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
+        },
+        body: JSON.stringify({
+          dominio: 'mercado',
+          messages: mensajesApi,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) {
+        if (typing) typing.innerHTML = 'Hubo un problema al generar el análisis. ' +
+          (data.error ? esc(data.error) : '') + ' Probá de nuevo en un momento.';
+        return;
+      }
+      const respText = data.texto || data.content?.[0]?.text || 'Sin respuesta.';
+      if (typing) typing.innerHTML = fmt(respText);
+      historialMercado.push({ role: 'assistant', content: respText });
+    } catch (e) {
+      if (typing) typing.innerHTML = 'No pude conectar con el asesor. Revisá tu conexión e intentá de nuevo.';
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
+  };
+
+  // ── Actualizar KPI cuando se navega a view-mercado ────────
+  const origSwitch = window.switchDashboard;
+  if (typeof origSwitch === 'function') {
+    window.switchDashboard = function(view, el) {
+      origSwitch(view, el);
+      if (view === 'mercado') {
+        setTimeout(actualizarKpiCartera, 100);
+      }
+    };
+  }
+
 })();
 </script>
 
