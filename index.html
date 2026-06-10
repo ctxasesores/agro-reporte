@@ -861,6 +861,10 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <span class="nav-icon">◎</span>
         <span class="nav-label"><span class="nav-main">Tambo</span><span class="nav-sub" id="nav-tambo-sub">Sin acceso</span></span>
       </a>
+      <a class="nav-item" id="nav-mercado" onclick="switchDashboard('mercado',this)" title="Mercado de Granos">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label"><span class="nav-main">Mercado</span><span class="nav-sub" id="nav-mercado-sub">Granos · Análisis IA</span></span>
+      </a>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
@@ -1340,6 +1344,14 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div class="page-body">
         <div class="embedded-dashboard">
           <iframe class="embedded-frame" id="frame-tambo" src="Tambo/tambo_integrado_PRODUCCION_v1.html?mode=ESTANDAR" title="Dashboard Tambo"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-view integrated-embed" id="view-mercado">
+      <div class="page-body">
+        <div class="embedded-dashboard">
+          <iframe class="embedded-frame" id="frame-mercado" src="mercado_granos.html" title="Mercado de Granos"></iframe>
         </div>
       </div>
     </div>
@@ -2324,6 +2336,16 @@ function buildGanaderiaSrc(mode) {
   return qs.toString() ? `${base}?${qs.toString()}` : base;
 }
 
+function buildMercadoSrc() {
+  const base = 'mercado_granos.html';
+  const qs = new URLSearchParams();
+  if (currentCliente?.id) qs.set('cliente_id', currentCliente.id);
+  if (currentCliente?.nombre_empresa) qs.set('cliente_nombre', currentCliente.nombre_empresa);
+  if (currentUser?.id) qs.set('user_id', currentUser.id);
+  const qStr = qs.toString();
+  return qStr ? `${base}?${qStr}` : base;
+}
+
 function buildTamboSrc(mode) {
   const clienteId = currentCliente?.id || '';
   const clienteNombre = currentCliente?.nombre_empresa || '';
@@ -2378,6 +2400,11 @@ function switchDashboard(view, el) {
     const target = buildTamboSrc(modoTam);
     if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
   }
+  if (view === 'mercado') {
+    const frame = document.getElementById('frame-mercado');
+    const target = buildMercadoSrc();
+    if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
+  }
   updateDashboardActionButtons();
   closeSidebar();
 }
@@ -2401,6 +2428,7 @@ function getActiveDashboardLabel() {
   if (view === 'agricultura') return 'Agricultura';
   if (view === 'ganaderia') return 'Ganadería';
   if (view === 'tambo') return 'Tambo';
+  if (view === 'mercado') return 'Mercado de Granos';
   if (view === 'kpis') return 'KPIs';
   if (view === 'cuenta') return 'Cuenta';
   return 'Panel';

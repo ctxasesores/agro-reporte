@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTX — Mercado de Granos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --negro:    #132d46;
+  --negro-m:  #1e3f5c;
+  --negro-s:  #1a3349;
+  --negro-b:  #0d2035;
+  --oro:      #d4a017;
+  --oro-l:    #f0ca60;
+  --oro-d:    #a87c0e;
+  --verde:    #1e9970;
+  --verde-l:  #2ab88a;
+  --rojo:     #d9512c;
+  --gris:     #7fa8c4;
+  --gris-l:   #4e718a;
+  --texto:    #dce8f5;
+  --bg:       var(--negro-b);
+  --bg2:      var(--negro-s);
+  --bg3:      var(--negro-m);
+  --border:   rgba(255,255,255,.08);
+  --border2:  rgba(255,255,255,.15);
+  --txt:      var(--texto);
+  --txt2:     var(--gris);
+  --shadow:   0 2px 16px rgba(0,0,0,.4);
+  --r:10px; --r-sm:6px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45;color:var(--txt);background:var(--negro-b);min-height:100vh}
+
+/* ── LAYOUT ── */
+.wrap{max-width:none;padding:20px 24px 40px}
+@media(max-width:760px){.wrap{padding:12px 14px 32px}}
+
+/* ── HERO ── */
+.report-hero{background:linear-gradient(135deg,var(--negro-m),var(--negro-s));border:0.5px solid var(--border2);border-radius:var(--r);padding:20px 24px;margin-bottom:20px}
+.report-topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.report-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--oro-l);margin-bottom:4px}
+.report-title{font-size:22px;font-weight:700;color:var(--txt);letter-spacing:-.3px}
+.report-subtitle{font-size:12px;color:var(--txt2);margin-top:3px}
+.report-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* ── REGIME BADGE ── */
+.regime-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.regime-fund{background:rgba(30,153,112,.2);border:1px solid rgba(30,153,112,.4);color:var(--verde-l)}
+.regime-spec{background:rgba(212,160,23,.2);border:1px solid rgba(212,160,23,.4);color:var(--oro-l)}
+.regime-dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite}
+.regime-fund .regime-dot{background:var(--verde-l)}
+.regime-spec .regime-dot{background:var(--oro-l)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── TABS ── */
+.tab-bar{display:flex;gap:3px;background:var(--bg2);padding:4px;border-radius:8px;margin-bottom:20px;width:fit-content}
+.tab-btn{padding:7px 16px;border-radius:5px;font-size:12px;font-weight:600;color:var(--txt2);cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;white-space:nowrap}
+.tab-btn.active{background:var(--negro-m);color:var(--txt)}
+.tab-btn:hover:not(.active){color:var(--txt)}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;user-select:none}
+.card-hdr:hover{background:rgba(255,255,255,.03)}
+.card-title{font-size:13px;font-weight:600;color:var(--txt)}
+.card-sub{font-size:11px;color:var(--txt2);margin-top:2px}
+.card-body{padding:0 18px 16px}
+.acc-icon{color:var(--txt2);font-size:12px;transition:transform .2s;flex-shrink:0}
+
+/* ── LAYER CARDS ── */
+.layer-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--oro);background:rgba(212,160,23,.12);border:1px solid rgba(212,160,23,.2);border-radius:4px;padding:2px 7px;margin-right:10px;flex-shrink:0}
+.layer-info{flex:1}
+.layer-insight{font-size:12px;color:var(--txt2);line-height:1.6;padding:12px 0 4px;border-top:0.5px solid var(--border);margin-top:8px}
+.layer-insight strong{color:var(--oro-l)}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;padding-top:10px}
+.vtag{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:4px;font-size:11px;padding:3px 8px;color:var(--txt2)}
+.vtag.key{border-color:rgba(212,160,23,.35);color:var(--oro-l)}
+
+/* ── SIGNAL TABLE ── */
+.sig-table{width:100%;border-collapse:collapse;font-size:12px}
+.sig-table th{padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt2);border-bottom:0.5px solid var(--border);white-space:nowrap}
+.sig-table td{padding:9px 12px;border-bottom:0.5px solid rgba(255,255,255,.04);vertical-align:middle}
+.sig-table tr:last-child td{border-bottom:none}
+.sig-table tr:hover td{background:rgba(255,255,255,.02)}
+.pill-bull{display:inline-block;background:rgba(30,153,112,.18);color:var(--verde-l);border-radius:4px;font-size:10px;font-weight:700;padding:2px 7px;white-space:nowrap}
+.pill-bear{display:inline-block;background:rgba(217,81,44,.18);color:#f0856a;border-radius:4px;font-size:10px;font-weight:700;padding:2px 7px;white-space:nowrap}
+.pill-watch{display:inline-block;background:rgba(212,160,23,.18);color:var(--oro-l);border-radius:4px;font-size:10px;font-weight:700;padding:2px 7px;white-space:nowrap}
+.pill-neutral{display:inline-block;background:var(--bg3);color:var(--txt2);border-radius:4px;font-size:10px;font-weight:600;padding:2px 7px;white-space:nowrap}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* ── KPI BOXES ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:900px){.kpi-row{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--negro-b);border-radius:var(--r-sm);padding:12px 14px;border:1px solid var(--border)}
+.kpi-lbl{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.kpi-v{font-size:22px;font-weight:700;line-height:1.1}
+.kpi-sub{font-size:10px;color:var(--txt2);margin-top:3px}
+.kpi-v.oro{color:var(--oro-l)}
+.kpi-v.verde{color:var(--verde-l)}
+.kpi-v.rojo{color:#f0856a}
+.kpi-v.azul{color:#7fc4f8}
+
+/* ── AGENTE IA ── */
+#acc-agente{display:none}
+.chat-wrap{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding:4px 0 8px}
+.chat-wrap::-webkit-scrollbar{width:4px}
+.chat-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.msg-user .msg-avatar{background:rgba(212,160,23,.2);color:var(--oro-l)}
+.msg-agent .msg-avatar{background:rgba(30,153,112,.2);color:var(--verde-l)}
+.msg-bubble{background:var(--bg3);border-radius:8px;padding:10px 13px;font-size:13px;line-height:1.6;color:var(--txt);max-width:90%;border:0.5px solid var(--border)}
+.msg-user .msg-bubble{background:rgba(212,160,23,.08);border-color:rgba(212,160,23,.15)}
+.msg-agent .msg-bubble{background:rgba(30,153,112,.07);border-color:rgba(30,153,112,.15)}
+.msg-thinking{color:var(--txt2);font-style:italic;font-size:12px}
+.chat-input-row{display:flex;gap:8px;margin-top:10px}
+.chat-input{flex:1;padding:10px 14px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;resize:none;min-height:42px;max-height:100px}
+.chat-input:focus{border-color:var(--oro)}
+.chat-input::placeholder{color:var(--txt2)}
+.btn-send{padding:10px 18px;background:var(--oro);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;transition:opacity .15s}
+.btn-send:hover{opacity:.85}
+.btn-send:disabled{opacity:.4;cursor:default}
+
+/* ── CONTEXT CHIPS ── */
+.context-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.ctx-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.ctx-chip:hover{border-color:var(--oro);color:var(--oro-l)}
+.ctx-chip.active{background:rgba(212,160,23,.1);border-color:rgba(212,160,23,.3);color:var(--oro-l)}
+
+/* ── QUICK ACTIONS ── */
+.quick-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.quick-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--txt2);cursor:pointer;font-family:inherit;transition:all .15s;text-align:left}
+.quick-btn:hover{border-color:var(--oro);color:var(--oro-l)}
+
+/* ── PRO GATE ── */
+.pro-gate{text-align:center;padding:40px 24px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r)}
+.pro-gate-icon{font-size:36px;margin-bottom:12px}
+.pro-gate-title{font-size:17px;font-weight:600;color:var(--txt);margin-bottom:8px}
+.pro-gate-copy{font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:18px}
+.btn-upgrade{background:var(--oro);color:#000;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-upgrade:hover{opacity:.85}
+
+/* ── DIVIDER ── */
+.divider{border:none;border-top:0.5px solid var(--border);margin:16px 0}
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt2);margin-bottom:10px}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ── HERO ── -->
+  <div class="report-hero">
+    <div class="report-topbar">
+      <div>
+        <div class="report-eyebrow">Análisis de mercado</div>
+        <div class="report-title">Mercado de Granos</div>
+        <div class="report-subtitle">Soja · Maíz · Trigo · Cebada — mercado internacional y local Argentina</div>
+      </div>
+      <div class="report-actions">
+        <div class="regime-badge regime-spec" id="regime-badge">
+          <span class="regime-dot"></span>
+          <span id="regime-label">Régimen especulativo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TABS ── -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(this,'tab-overview')">Panorama</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-variables')">Variables</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-framework')">Framework</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-agente')">Asesor IA 🌾</button>
+  </div>
+
+  <!-- ══════════ TAB: PANORAMA ══════════ -->
+  <div id="tab-overview">
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-lbl">Soja Chicago</div>
+        <div class="kpi-v oro">~430</div>
+        <div class="kpi-sub">USD/t · correl. petróleo implica ~500</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Régimen actual</div>
+        <div class="kpi-v azul" style="font-size:15px;padding-top:4px">Especulativo</div>
+        <div class="kpi-sub">Fundamentos oscurecidos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Fundamentos 26/27</div>
+        <div class="kpi-v verde">Alcistas</div>
+        <div class="kpi-sub">Stocks/consumo menores que 25/26</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Estacionalidad</div>
+        <div class="kpi-v" style="font-size:15px;padding-top:4px;color:var(--oro-l)">En cosecha</div>
+        <div class="kpi-sub">Basis FOB en descuento</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Señales por cultivo -->
+      <div>
+        <div class="card">
+          <div class="card-hdr" onclick="toggleAcc('acc-senales','icon-senales')">
+            <div><div class="card-title">Señales actuales por cultivo</div><div class="card-sub">Basadas en fundamentos disponibles</div></div>
+            <span class="acc-icon" id="icon-senales" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div id="acc-senales" class="card-body">
+            <table class="sig-table">
+              <thead><tr><th>Variable</th><th>Cultivo</th><th>Fuente</th><th>Señal</th></tr></thead>
+              <tbody>
+                <tr><td>Stocks/consumo 26/27</td><td>Soja · Maíz · Trigo</td><td>USDA WASDE</td><td><span class="pill-bull">ALCISTA</span></td></tr>
+                <tr><td>Condición cultivos USA</td><td>Soja · Maíz</td><td>USDA Crop Progress</td><td><span class="pill-watch">MONITOREAR</span></td></tr>
+                <tr><td>Cosecha Brasil</td><td>Soja</td><td>CONAB</td><td><span class="pill-bear">RÉCORD</span></td></tr>
+                <tr><td>Posición fondos CFTC</td><td>Complejo oleaginoso</td><td>CFTC CoT</td><td><span class="pill-bear">NET SHORT</span></td></tr>
+                <tr><td>Correlación soja–petróleo</td><td>Soja</td><td>CME/cálculo</td><td><span class="pill-watch">DESCALIB.</span></td></tr>
+                <tr><td>Basis FOB vs. Chicago</td><td>Aceite soja</td><td>Rosario/AZ</td><td><span class="pill-watch">DESCUENTO</span></td></tr>
+                <tr><td>Demanda Asia trigo AR</td><td>Trigo</td><td>INDEC/MAGyP</td><td><span class="pill-bull">FUERTE</span></td></tr>
+                <tr><td>Trigo primavera USA</td><td>Trigo</td><td>USDA/WQC</td><td><span class="pill-bull">SOPORTE</span></td></tr>
+                <tr><td>Logística río Paraná</td><td>Maíz</td><td>INA/Puertos</td><td><span class="pill-bear">ALERTA</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insights clave -->
+      <div>
+        <div class="card">
+          <div class="card-hdr" onclick="toggleAcc('acc-insights','icon-insights')">
+            <div><div class="card-title">Insights clave</div><div class="card-sub">Diego de la Puente · Canal Rural · AZ Group</div></div>
+            <span class="acc-icon" id="icon-insights" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div id="acc-insights" class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px">
+
+              <div style="border-left:3px solid var(--oro-l);padding:10px 14px;background:rgba(212,160,23,.05);border-radius:0 6px 6px 0">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:5px">⚠ Régimen especulativo activo</div>
+                <div style="font-size:12px;line-height:1.6;color:var(--txt)">Fondos de inversión operan con base en petróleo. Movimientos diarios de 3–6% en WTI arrastran granos independientemente de fundamentals. Correlación histórica soja–petróleo indica precio teórico ~$500 vs. $430 actual.</div>
+              </div>
+
+              <div style="border-left:3px solid var(--verde-l);padding:10px 14px;background:rgba(30,153,112,.05);border-radius:0 6px 6px 0">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--verde-l);margin-bottom:5px">↑ Fundamentos estructurales alcistas</div>
+                <div style="font-size:12px;line-height:1.6;color:var(--txt)">USDA mayo: relaciones stock/consumo para 26/27 menores que 25/26 en soja, maíz y trigo. Precios al productor USA proyectados al alza. Visión optimista para 2026 vs. 2025.</div>
+              </div>
+
+              <div style="border-left:3px solid var(--gris);padding:10px 14px;background:rgba(127,168,196,.05);border-radius:0 6px 6px 0">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);margin-bottom:5px">📍 Oportunidad estacional</div>
+                <div style="font-size:12px;line-height:1.6;color:var(--txt)">Al salir de cosecha sudamericana, el descuento FOB se corrige fuertemente. Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha. Variable accionable para timing de ventas.</div>
+              </div>
+
+              <div style="border-left:3px solid #f0856a;padding:10px 14px;background:rgba(217,81,44,.05);border-radius:0 6px 6px 0">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#f0856a;margin-bottom:5px">↓ Variable crítica: timing</div>
+                <div style="font-size:12px;line-height:1.6;color:var(--txt)">La recomendación depende del horizonte del productor. Necesita vender esta semana vs. puede esperar hasta fin de año son escenarios completamente distintos. El timing es la variable más importante en este contexto.</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: VARIABLES ══════════ -->
+  <div id="tab-variables" style="display:none">
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-hdr" onclick="toggleAcc('acc-v1','icon-v1')">
+            <div class="layer-num">01</div>
+            <div class="layer-info"><div class="card-title">Fundamentos estructurales</div><div class="card-sub">USDA WASDE mensual · largo plazo</div></div>
+            <span class="acc-icon" id="icon-v1" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div id="acc-v1" class="card-body">
+            <table class="sig-table">
+              <thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead>
+              <tbody>
+                <tr><td>Balance stock/consumo mundial</td><td>USDA WASDE</td><td><span class="pill-bull">ALCISTA</span></td></tr>
+                <tr><td>Relación stocks/consumo 26/27</td><td>USDA</td><td><span class="pill-bull">ALCISTA</span></td></tr>
+                <tr><td>Precios al productor USA proyectados</td><td>USDA</td><td><span class="pill-bull">ALCISTA</span></td></tr>
+                <tr><td>Área sembrada por país/hemisferio</td><td>USDA/CONAB</td><td><span class="pill-neutral">NEUTRO</span></td></tr>
+                <tr><td>Costo fertilizantes nitrogenados</td><td>CME</td><td><span class="pill-bull">BAJA</span></td></tr>
+                <tr><td>Acuerdo Mercosur–UE</td><td>Geopolítica</td><td><span class="pill-watch">WATCH</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr" onclick="toggleAcc('acc-v2','icon-v2')">
+            <div class="layer-num">02</div>
+            <div class="layer-info"><div class="card-title">Oferta dinámica</div><div class="card-sub">USDA Crop Progress semanal</div></div>
+            <span class="acc-icon" id="icon-v2">▼</span>
+          </div>
+          <div id="acc-v2" class="card-body" style="display:none">
+            <table class="sig-table">
+              <thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead>
+              <tbody>
+                <tr><td>Condición B+E% semanal soja USA</td><td>USDA Crop Progress</td><td><span class="pill-watch">WATCH</span></td></tr>
+                <tr><td>Condición B+E% maíz USA</td><td>USDA Crop Progress</td><td><span class="pill-watch">WATCH</span></td></tr>
+                <tr><td>Condición B+E% trigo primavera USA</td><td>USDA/WQC</td><td><span class="pill-bull">SOPORTE</span></td></tr>
+                <tr><td>Avance cosecha Brasil</td><td>CONAB</td><td><span class="pill-bear">RÉCORD</span></td></tr>
+                <tr><td>Avance cosecha Argentina</td><td>BCBA</td><td><span class="pill-neutral">NORMAL</span></td></tr>
+                <tr><td>Clima zonas críticas</td><td>NOAA/INTA</td><td><span class="pill-watch">WATCH</span></td></tr>
+                <tr><td>Bajante río Paraná</td><td>INA/Prefectura</td><td><span class="pill-bear">ALERTA</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr" onclick="toggleAcc('acc-v3','icon-v3')">
+            <div class="layer-num">03</div>
+            <div class="layer-info"><div class="card-title">Demanda dinámica</div><div class="card-sub">China · USDA Export Sales · DJVE</div></div>
+            <span class="acc-icon" id="icon-v3">▼</span>
+          </div>
+          <div id="acc-v3" class="card-body" style="display:none">
+            <table class="sig-table">
+              <thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead>
+              <tbody>
+                <tr><td>Compras semanales China (soja)</td><td>USDA Export Sales</td><td><span class="pill-neutral">DÉBIL</span></td></tr>
+                <tr><td>Ventas exportación semanal USA</td><td>USDA Export Sales</td><td><span class="pill-neutral">NEUTRO</span></td></tr>
+                <tr><td>Demanda biocombustibles</td><td>EPA/política</td><td><span class="pill-watch">WATCH</span></td></tr>
+                <tr><td>Compras exportación AR (DJVE)</td><td>MAGyP</td><td><span class="pill-bull">ACTIVO</span></td></tr>
+                <tr><td>Demanda Asia trigo AR (China, Vietnam, Bangladesh)</td><td>INDEC</td><td><span class="pill-bull">FUERTE</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="border-color:rgba(212,160,23,.25)">
+          <div class="card-hdr" onclick="toggleAcc('acc-v4','icon-v4')">
+            <div class="layer-num">04</div>
+            <div class="layer-info"><div class="card-title">Flujo especulativo / financiero ★</div><div class="card-sub">La capa que oscurece los fundamentos</div></div>
+            <span class="acc-icon" id="icon-v4" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div id="acc-v4" class="card-body">
+            <div style="font-size:12px;color:var(--txt2);margin-bottom:12px;line-height:1.6">Cuando esta capa está activa, el agente ajusta su certeza y advierte que los fundamentos están temporariamente oscurecidos por flujos especulativos ligados al petróleo.</div>
+            <table class="sig-table">
+              <thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead>
+              <tbody>
+                <tr><td>Posición neta fondos (CFTC CoT)</td><td>CFTC semanal</td><td><span class="pill-bear">NET SHORT</span></td></tr>
+                <tr><td>Precio petróleo WTI/Brent</td><td>CME/ICE</td><td><span class="pill-watch">VOLÁTIL</span></td></tr>
+                <tr><td>Correlación soja–petróleo</td><td>CME/cálculo</td><td><span class="pill-watch">DESCALIB.</span></td></tr>
+                <tr><td>Volatilidad implícita (VIX)</td><td>CBOE</td><td><span class="pill-bear">ELEVADO</span></td></tr>
+                <tr><td>Tasas USA / Fed policy</td><td>Fed/Bloomberg</td><td><span class="pill-watch">WATCH</span></td></tr>
+                <tr><td>DXY (índice dólar)</td><td>ICE</td><td><span class="pill-neutral">NEUTRO</span></td></tr>
+                <tr><td>Variables geopolíticas binarias</td><td>News APIs</td><td><span class="pill-watch">ACTIVO</span></td></tr>
+                <tr><td>Estrecho Ormuz — status</td><td>Reuters/AP</td><td><span class="pill-watch">WATCH</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr" onclick="toggleAcc('acc-v5','icon-v5')">
+            <div class="layer-num">05</div>
+            <div class="layer-info"><div class="card-title">Mercado local Argentina + macro</div><div class="card-sub">Basis FOB · tipo de cambio · política</div></div>
+            <span class="acc-icon" id="icon-v5" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div id="acc-v5" class="card-body">
+            <table class="sig-table">
+              <thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead>
+              <tbody>
+                <tr><td>Precios MATba disponible/deferred</td><td>MATba-ROFEX</td><td><span class="pill-neutral">—</span></td></tr>
+                <tr><td>% producción con precio cerrado</td><td>BCBA/encuesta</td><td><span class="pill-neutral">—</span></td></tr>
+                <tr><td>Basis FOB vs. Chicago</td><td>Rosario/AZ Group</td><td><span class="pill-watch">DESCUENTO</span></td></tr>
+                <tr><td>Retención productor (oferta latente)</td><td>MAGyP</td><td><span class="pill-neutral">—</span></td></tr>
+                <tr><td>Tipo de cambio oficial/MEP/CCL</td><td>BCRA/Ambito</td><td><span class="pill-watch">WATCH</span></td></tr>
+                <tr><td>Política retenciones / ROE</td><td>Boletín Oficial</td><td><span class="pill-watch">WATCH</span></td></tr>
+                <tr><td>Dólar soja / incentivos especiales</td><td>Mecon</td><td><span class="pill-neutral">—</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: FRAMEWORK ══════════ -->
+  <div id="tab-framework" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-hdr" style="cursor:default">
+        <div><div class="card-title">Flujo de análisis encadenado</div><div class="card-sub">5 capas → detector de régimen → perfil del productor → estrategia</div></div>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0">
+          <div style="background:var(--bg3);border:1px solid rgba(127,168,196,.3);border-radius:7px;padding:8px 14px;font-size:12px;text-align:center;min-width:90px"><div style="color:var(--gris);font-size:10px;margin-bottom:3px">USDA · CME</div>Fuentes</div>
+          <div style="color:var(--txt2)">→</div>
+          <div style="background:var(--bg3);border:1px solid rgba(212,160,23,.3);border-radius:7px;padding:8px 14px;font-size:12px;text-align:center;min-width:90px"><div style="color:var(--oro);font-size:10px;margin-bottom:3px">CFTC · WTI</div>Detector régimen</div>
+          <div style="color:var(--txt2)">→</div>
+          <div style="background:var(--bg3);border:1px solid rgba(212,160,23,.3);border-radius:7px;padding:8px 14px;font-size:12px;text-align:center;min-width:90px"><div style="color:var(--oro);font-size:10px;margin-bottom:3px">Capas 1→5</div>Análisis</div>
+          <div style="color:var(--txt2)">→</div>
+          <div style="background:var(--bg3);border:1px solid rgba(127,168,196,.3);border-radius:7px;padding:8px 14px;font-size:12px;text-align:center;min-width:90px"><div style="color:var(--gris);font-size:10px;margin-bottom:3px">Urgencia · Vol.</div>Perfil productor</div>
+          <div style="color:var(--txt2)">→</div>
+          <div style="background:var(--bg3);border:1px solid rgba(30,153,112,.3);border-radius:7px;padding:8px 14px;font-size:12px;text-align:center;min-width:90px"><div style="color:var(--verde-l);font-size:10px;margin-bottom:3px">Puts · Fwd · Venta</div>Estrategia</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regla detectora -->
+    <div style="background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.2);border-radius:var(--r);padding:14px 18px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:7px">★ Regla del detector de régimen</div>
+      <div style="font-size:13px;line-height:1.7;color:var(--txt)">
+        Si <strong style="color:var(--oro-l)">volatilidad petróleo &gt;3% diario</strong> + <strong style="color:var(--oro-l)">CFTC CoT en extremos</strong> → declarar régimen <strong style="color:var(--oro-l)">ESPECULATIVO</strong> y bajar la certeza de las señales de fundamentals. El agente comunica explícitamente esta limitación antes de emitir recomendaciones.
+      </div>
+    </div>
+
+    <!-- Capas expandibles -->
+    <div class="card">
+      <div class="card-hdr" onclick="toggleAcc('fw-l1','fw-icon-1')">
+        <div class="layer-num">01</div>
+        <div class="layer-info"><div class="card-title">Oferta global estructural</div><div class="card-sub">Largo plazo — USDA WASDE mensual</div></div>
+        <span class="acc-icon" id="fw-icon-1" style="transform:rotate(180deg)">▼</span>
+      </div>
+      <div id="fw-l1" class="card-body">
+        <div class="tag-row">
+          <span class="vtag key">stocks/consumo mundial</span><span class="vtag key">WASDE proyecciones 26/27</span>
+          <span class="vtag">área sembrada</span><span class="vtag">precios productor USA</span>
+          <span class="vtag">costo fertilizantes</span><span class="vtag">producción Brasil récord</span>
+        </div>
+        <div class="layer-insight">Insight corpus: <strong>USDA mayo indica stocks/consumo 26/27 menores que 25/26 en soja, maíz y trigo → fundamento alcista estructural confirmado.</strong> "En términos reales estamos en precios comparativamente bajos, deberíamos estar niveles de precios más altos." — Diego de la Puente</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr" onclick="toggleAcc('fw-l2','fw-icon-2')">
+        <div class="layer-num">02</div>
+        <div class="layer-info"><div class="card-title">Demanda global</div><div class="card-sub">China · biocombustibles · uso industrial</div></div>
+        <span class="acc-icon" id="fw-icon-2">▼</span>
+      </div>
+      <div id="fw-l2" class="card-body" style="display:none">
+        <div class="tag-row">
+          <span class="vtag key">compras semanales China</span><span class="vtag key">USDA Export Sales semanal</span>
+          <span class="vtag">márgenes molienda China</span><span class="vtag">política biocombustibles EPA</span>
+          <span class="vtag">DJVE Argentina</span>
+        </div>
+        <div class="layer-insight">Insight AZ Group N°106: <strong>Márgenes de molienda en China provocaron desaceleración de compras hacia Brasil. Ventas semanales USA por debajo de lo esperado → debilidad en demanda de corto plazo.</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr" onclick="toggleAcc('fw-l3','fw-icon-3')">
+        <div class="layer-num">03</div>
+        <div class="layer-info"><div class="card-title">Balance stock/demanda → precio Chicago</div><div class="card-sub">Síntesis de capas 1+2 + estacionalidad</div></div>
+        <span class="acc-icon" id="fw-icon-3">▼</span>
+      </div>
+      <div id="fw-l3" class="card-body" style="display:none">
+        <div class="tag-row">
+          <span class="vtag key">relación stock/consumo actual</span><span class="vtag key">comparación vs. campaña anterior</span>
+          <span class="vtag">período crítico cultivos</span><span class="vtag">volatilidad implícita opciones</span>
+        </div>
+        <div class="layer-insight">Insight corpus: <strong>Al salir de cosecha sudamericana, el descuento FOB se corrige fuertemente. Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha.</strong> Timing crítico para recomendaciones al productor.</div>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(212,160,23,.2)">
+      <div class="card-hdr" onclick="toggleAcc('fw-l4','fw-icon-4')">
+        <div class="layer-num">04</div>
+        <div class="layer-info"><div class="card-title">Régimen especulativo / financiero ★</div><div class="card-sub">La capa que oscurece los fundamentos — aporte central Diego de la Puente</div></div>
+        <span class="acc-icon" id="fw-icon-4">▼</span>
+      </div>
+      <div id="fw-l4" class="card-body" style="display:none">
+        <div class="tag-row">
+          <span class="vtag key">posición neta CFTC CoT</span><span class="vtag key">correlación soja–petróleo</span>
+          <span class="vtag key">volatilidad petróleo diaria</span><span class="vtag">VIX</span>
+          <span class="vtag">tasas Fed</span><span class="vtag">DXY</span><span class="vtag">eventos geopolíticos binarios</span>
+        </div>
+        <div class="layer-insight"><strong>"No hay nada desde el punto de vista de los fundamentos que pueda justificar las bajas que hemos visto."</strong> — Diego de la Puente. Los grandes fondos salen de todos los activos cuando la volatilidad del petróleo explota y van directamente al petróleo, generando movimientos artificiales en granos.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr" onclick="toggleAcc('fw-l5','fw-icon-5')">
+        <div class="layer-num">05</div>
+        <div class="layer-info"><div class="card-title">Mercado local + macro Argentina</div><div class="card-sub">Recomendación final condicionada al perfil del productor</div></div>
+        <span class="acc-icon" id="fw-icon-5">▼</span>
+      </div>
+      <div id="fw-l5" class="card-body" style="display:none">
+        <div class="tag-row">
+          <span class="vtag key">basis FOB vs. Chicago</span><span class="vtag key">tipo de cambio / brecha</span>
+          <span class="vtag">retención productor</span><span class="vtag">política retenciones ROE</span>
+          <span class="vtag">MATba posiciones futuras</span><span class="vtag">logística Paraná</span>
+        </div>
+        <div class="layer-insight">Dimensiones del perfil productor que condicionan la estrategia: <strong>urgencia financiera · tenencia propia vs. arrendada · % producción sin precio · herramienta disponible (venta directa / put / forward)</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: AGENTE IA ══════════ -->
+  <div id="tab-agente" style="display:none">
+    <div id="agente-pro-gate" style="display:none">
+      <div class="pro-gate">
+        <div class="pro-gate-icon">🌾</div>
+        <div class="pro-gate-title">Asesor de Mercado de Granos</div>
+        <div class="pro-gate-copy">El análisis de mercado con IA está disponible en el plan PRO.<br>Incluye análisis de fundamentals, detección de régimen especulativo y recomendaciones de cobertura personalizadas.</div>
+        <button class="btn-upgrade" onclick="solicitarUpgrade()">Activar PRO</button>
+      </div>
+    </div>
+
+    <div id="agente-chat-wrap">
+      <!-- Contexto activo -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr" style="cursor:default">
+          <div><div class="card-title">Asesor CTX IA — Mercado de Granos</div><div class="card-sub">Análisis de fundamentals · Detección de régimen · Estrategia de cobertura</div></div>
+          <div class="regime-badge regime-spec" style="font-size:10px;padding:3px 9px">
+            <span class="regime-dot"></span><span>Especulativo</span>
+          </div>
+        </div>
+        <div class="card-body" style="padding-top:0">
+
+          <!-- Preguntas rápidas -->
+          <div class="section-label" style="margin-bottom:7px">Preguntas frecuentes</div>
+          <div class="quick-row">
+            <button class="quick-btn" onclick="sendQuick(this)">¿Cómo está el mercado hoy?</button>
+            <button class="quick-btn" onclick="sendQuick(this)">¿Conviene vender soja ahora o esperar?</button>
+            <button class="quick-btn" onclick="sendQuick(this)">¿Qué está pasando con el maíz?</button>
+            <button class="quick-btn" onclick="sendQuick(this)">¿Cuál es la señal del trigo para la próxima campaña?</button>
+            <button class="quick-btn" onclick="sendQuick(this)">Explicame el régimen especulativo actual</button>
+            <button class="quick-btn" onclick="sendQuick(this)">¿Qué impacto tiene el petróleo en los granos?</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Chat -->
+          <div class="chat-wrap" id="chat-messages">
+            <div class="msg msg-agent">
+              <div class="msg-avatar">🌾</div>
+              <div class="msg-bubble">Hola. Soy el Asesor CTX de Mercado de Granos. Puedo ayudarte a analizar la situación actual del mercado, entender qué variables están moviendo los precios, y pensar estrategias de cobertura adaptadas a tu perfil y horizonte.<br><br>¿Sobre qué cultivo o situación querés empezar?</div>
+            </div>
+          </div>
+
+          <div class="chat-input-row">
+            <textarea class="chat-input" id="chat-input" placeholder="Preguntá sobre soja, maíz, trigo, cobertura, régimen de mercado..." rows="1" onkeydown="handleKey(event)"></textarea>
+            <button class="btn-send" id="btn-send" onclick="sendMessage()">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const SUPA_URL    = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
+const SUPA_KEY    = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const FUNCTIONS_URL = `${SUPA_URL}/functions/v1`;
+
+// ── CONTEXTO CLIENTE ────────────────────────────────────────
+var currentCliente = null;
+var currentUser    = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  setupContext();
+  checkAccess();
+});
+
+function setupContext() {
+  try {
+    var parentCliente = window.parent?.currentCliente || null;
+    var parentUser    = window.parent?.currentUser    || null;
+    currentCliente = parentCliente;
+    currentUser    = parentUser;
+  } catch(e) {}
+}
+
+function isPRO() {
+  if (!currentCliente) return false;
+  var nivel = String(currentCliente.agricultura_nivel || '').toUpperCase();
+  return nivel === 'PRO';
+}
+
+function checkAccess() {
+  // En desarrollo / sin padre, mostrar el chat directamente
+  var gate = document.getElementById('agente-pro-gate');
+  var chat = document.getElementById('agente-chat-wrap');
+  if (gate && chat) {
+    gate.style.display = 'none';
+    chat.style.display = 'block';
+  }
+}
+
+function solicitarUpgrade() {
+  if (window.parent && window.parent.openUpgradeLink) {
+    window.parent.openUpgradeLink();
+  }
+}
+
+// ── TABS ────────────────────────────────────────────────────
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['tab-overview','tab-variables','tab-framework','tab-agente'].forEach(id => {
+    var el = document.getElementById(id);
+    if (el) el.style.display = id === tabId ? 'block' : 'none';
+  });
+}
+
+// ── ACCORDIONS ──────────────────────────────────────────────
+function toggleAcc(id, iconId) {
+  var el   = document.getElementById(id);
+  var icon = document.getElementById(iconId);
+  if (!el) return;
+  var isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (icon) icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+// ── CHAT ────────────────────────────────────────────────────
+var chatHistory = [];
+
+var SYSTEM_PROMPT = `Sos el Asesor CTX de Mercado de Granos para productores agropecuarios argentinos.
+
+Tu análisis sigue una arquitectura de 5 capas encadenadas:
+1. Fundamentos estructurales (USDA WASDE mensual)
+2. Oferta/demanda dinámica (Crop Progress, Export Sales, cosechas)
+3. Balance stock/consumo → precio Chicago + estacionalidad
+4. Régimen especulativo/financiero (CFTC CoT, petróleo, VIX)
+5. Mercado local Argentina + macro (basis FOB, tipo de cambio, retenciones, MATba)
+
+DETECTOR DE RÉGIMEN ESPECULATIVO (crítico):
+Antes de emitir señales de precio, evaluá si el mercado está en régimen FUNDAMENTAL o ESPECULATIVO.
+Señales de régimen especulativo: volatilidad petróleo >3% diario, CFTC CoT en extremos, movimientos de fondos ligados a geopolítica.
+Cuando el régimen es ESPECULATIVO: comunicalo explícitamente y ajustá la certeza de tus recomendaciones.
+"En este contexto especulativo, los fundamentos están temporariamente oscurecidos. La correlación histórica soja-petróleo indica un precio teórico de ~$500 pero el mercado opera a $430 por flujos especulativos."
+
+CONTEXTO ACTUAL (Junio 2026):
+- Soja Chicago: ~430 USD/t (correlación petróleo implica ~500)
+- Régimen: especulativo activo, fondos ligados a volatilidad Ormuz/petróleo
+- USDA mayo: stocks/consumo 26/27 menores que 25/26 en soja, maíz y trigo → alcista estructural
+- Cosecha sudamericana récord de Brasil → presión estacional sobre precios
+- Basis FOB aceite soja: en descuento (cosecha) → se corregirá al salir de cosecha
+- Trigo: demanda Asia muy activa (China, Vietnam, Bangladesh, Indonesia)
+- CFTC CoT: fondos net short en complejo oleaginoso
+
+ESTACIONALIDAD (insight clave):
+Al salir de cosecha sudamericana, el descuento FOB se corrige fuertemente.
+Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha → timing accionable para el productor.
+
+PERFIL DEL PRODUCTOR:
+Siempre preguntá o considerá: urgencia financiera (¿necesita vender esta semana o puede esperar?), tipo de tenencia (campo propio vs. arrendado), % de producción sin precio cerrado, herramientas disponibles (venta directa / put / forward).
+La misma señal de mercado genera recomendaciones muy distintas según el perfil.
+
+RESTRICCIONES IMPORTANTES:
+- No das asesoramiento financiero de inversión ni recomendaciones de compra/venta de instrumentos derivados.
+- Tus análisis son simulaciones informativas para ayudar al productor a entender el contexto, no instrucciones de inversión.
+- Siempre terminá aclarando que la decisión final corresponde al productor junto a su asesor.
+- Si el usuario pregunta por precios exactos en tiempo real, indicá que no tenés acceso a datos en tiempo real y sugerí consultar MATba-ROFEX o Bolsa de Cereales.
+
+ESTILO DE RESPUESTA:
+- Directo, sin rodeos, como un analista del sector que habla con un cliente.
+- Usá terminología específica del sector: DJVE, ROE, puts, posición disponible/deferred, basis, stocks/consumo.
+- Estructurá la respuesta: contexto → señal → implicancia para el productor.
+- Máximo 3-4 párrafos por respuesta, salvo que el usuario pida análisis detallado.`;
+
+function appendMsg(role, text, isThinking) {
+  var wrap = document.getElementById('chat-messages');
+  if (!wrap) return;
+  var div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'msg-user' : 'msg-agent');
+  var avatar = document.createElement('div');
+  avatar.className = 'msg-avatar';
+  avatar.textContent = role === 'user' ? 'Vos' : '🌾';
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble' + (isThinking ? ' msg-thinking' : '');
+  bubble.innerHTML = text.replace(/\n/g, '<br>');
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return bubble;
+}
+
+function sendQuick(btn) {
+  var input = document.getElementById('chat-input');
+  if (input) { input.value = btn.textContent; sendMessage(); }
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+async function sendMessage() {
+  var input  = document.getElementById('chat-input');
+  var sendBtn = document.getElementById('btn-send');
+  var text   = (input?.value || '').trim();
+  if (!text) return;
+
+  input.value = '';
+  sendBtn.disabled = true;
+  appendMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
+
+  var thinkBubble = appendMsg('agent', 'Analizando...', true);
+
+  try {
+    var res = await fetch(`${FUNCTIONS_URL}/agente-agro`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPA_KEY}`,
+        'apikey': SUPA_KEY
+      },
+      body: JSON.stringify({
+        dominio: 'mercado',
+        messages: chatHistory,
+        system_override: SYSTEM_PROMPT,
+        cliente: currentCliente ? {
+          nombre: currentCliente.nombre_empresa,
+          nivel: currentCliente.agricultura_nivel
+        } : null
+      })
+    });
+
+    var data = await res.json();
+    var reply = data?.content?.[0]?.text
+      || data?.reply
+      || data?.text
+      || 'No pude generar una respuesta en este momento.';
+
+    thinkBubble.classList.remove('msg-thinking');
+    thinkBubble.innerHTML = reply.replace(/\n/g, '<br>');
+    chatHistory.push({ role: 'assistant', content: reply });
+
+  } catch(e) {
+    thinkBubble.classList.remove('msg-thinking');
+    thinkBubble.textContent = 'Error al conectar con el agente. Verificá tu conexión e intentá nuevamente.';
+  }
+
+  sendBtn.disabled = false;
+  var wrap = document.getElementById('chat-messages');
+  if (wrap) wrap.scrollTop = wrap.scrollHeight;
+}
+</script>
+</body>
+</html>
