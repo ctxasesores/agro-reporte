@@ -1721,25 +1721,33 @@ async function saveComercialEdit() {
 
 async function eliminarCliente(id, nombre, codigo) {
   if (!confirm(`¿Eliminar al cliente "${nombre}" (${codigo}) y TODAS sus operaciones?\n\nEsta acción no se puede deshacer.`)) return;
-  setLoading(20);
+  setLoading(15);
+  try {
+    const { data: fnData, error: fnError } = await sb.functions.invoke('eliminar-usuario', {
+      body: { user_id: id }
+    });
+    if (fnError || fnData?.error) {
+      const msg = fnData?.error || fnError?.message || 'No se pudo eliminar el usuario de autenticacion.';
+      alert('No se elimino el cliente.\n\nPrimero hay que borrar el usuario de Auth, pero Supabase respondio:\n' + msg);
+      setLoading(100);
+      return;
+    }
+  } catch (e) {
+    alert('No se elimino el cliente.\n\nNo pude conectar con la funcion eliminar-usuario: ' + (e?.message || e));
+    setLoading(100);
+    return;
+  }
+
+  setLoading(45);
   const { error: errOps } = await sb.from('operaciones')
     .delete()
     .eq('cliente_codigo', codigo);
   if (errOps) { alert('Error al borrar operaciones: ' + errOps.message); setLoading(100); return; }
-  setLoading(55);
+  setLoading(75);
   const { error: errCli } = await sb.from('clientes')
     .delete()
     .eq('id', id);
   if (errCli) { alert('Error al borrar cliente: ' + errCli.message); setLoading(100); return; }
-  setLoading(80);
-  try {
-    const { error: fnError } = await sb.functions.invoke('eliminar-usuario', {
-      body: { user_id: id }
-    });
-    if (fnError) console.warn('Auth delete warning:', fnError.message);
-  } catch (e) {
-    console.warn('Edge function error:', e.message);
-  }
   setLoading(100);
   await loadAll();
   alert(`✓ Cliente "${nombre}" eliminado completamente.`);
