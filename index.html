@@ -3491,7 +3491,20 @@ window.addEventListener('storage', function(event) {
 });
 
 window.addEventListener('focus', function() {
-  if (currentUser && currentCliente) renderBusinessUnits();
+  // Solo re-renderizar si el usuario volvió desde otra pestaña/ventana del navegador,
+  // no cuando hace click dentro de la misma página (ej: chat del agente)
+  if (currentUser && currentCliente && document.visibilityState === 'visible' && _focusFromExternal) {
+    renderBusinessUnits();
+  }
+  _focusFromExternal = false;
+});
+
+// Detectar cuándo la pestaña estuvo oculta (navegó a otra pestaña/ventana)
+var _focusFromExternal = false;
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden') {
+    _focusFromExternal = true;
+  }
 });
 
 // ── PRECIOS MAP ──
