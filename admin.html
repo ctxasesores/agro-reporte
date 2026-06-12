@@ -200,6 +200,8 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('precios',this)">◎ Precios de mercado</a>
       <a class="nav-item" onclick="showSection('suscripciones',this)">💳 Suscripciones PRO</a>
       <a class="nav-item" onclick="showSection('historicos',this)">📈 Serie histórica</a>
+      <a class="nav-item" onclick="showSection('pipeline',this)">🌐 Pipeline externo</a>
+      <a class="nav-item" onclick="showSection('bcra',this)">🏦 BCRA / Dólar</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
     <div class="sidebar-footer">
@@ -622,7 +624,38 @@ tr:hover td { background:#f9faf6; }
   </div>
 </div>
 
-<!-- MODAL EDITAR OPERACIÓN -->
+    <!-- ══ SECCIÓN: PIPELINE EXTERNO ══ -->
+    <div class="section" id="sec-pipeline">
+      <h2>🌐 Pipeline de datos externos</h2>
+      <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:18px">Fuentes que alimentan el contexto del Asesor IA. Podés ejecutar cualquiera manualmente o ver el estado de la última ejecución.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px" id="pipeline-cards">
+        <!-- Se renderizan dinámicamente -->
+        <div style="color:rgba(255,255,255,.4);font-size:13px;padding:12px">Cargando estado...</div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="btn" onclick="runPipeline('usda_crop_progress')">▶ USDA Crop Progress</button>
+        <button class="btn" onclick="runPipeline('bcr_comentario')">▶ BCR Comentario</button>
+        <button class="btn" onclick="runPipeline('bolsacer')">▶ Bolsacer ER</button>
+        <button class="btn" onclick="runPipeline('cftc_cot')">▶ CFTC CoT</button>
+        <button class="btn" onclick="runPipeline('usda_fas_psd')">▶ USDA FAS PSD</button>
+      </div>
+      <div id="pipeline-status" style="font-size:13px;color:rgba(255,255,255,.6);min-height:20px"></div>
+      <pre id="pipeline-result" style="font-size:11px;background:rgba(0,0,0,.3);padding:12px;border-radius:6px;max-height:240px;overflow-y:auto;display:none;white-space:pre-wrap;color:rgba(255,255,255,.7);margin-top:10px"></pre>
+    </div>
+
+    <!-- ══ SECCIÓN: BCRA / DÓLAR ══ -->
+    <div class="section" id="sec-bcra">
+      <h2>🏦 BCRA y tipo de cambio</h2>
+      <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:18px">Actualiza las variables macroeconómicas del dashboard BCRA: inflación, reservas, tasas, CER, UVA y tipos de cambio.</p>
+
+      <button class="btn" id="btn-bcra" onclick="actualizarBCRA()">↻ Actualizar BCRA ahora</button>
+      <div id="bcra-status" style="margin-top:14px;font-size:13px;color:rgba(255,255,255,.6);min-height:20px"></div>
+      <pre id="bcra-result" style="font-size:11px;background:rgba(0,0,0,.3);padding:12px;border-radius:6px;max-height:300px;overflow-y:auto;display:none;white-space:pre-wrap;color:rgba(255,255,255,.7);margin-top:10px"></pre>
+    </div>
+
+
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Editar operación</h3>
@@ -1104,6 +1137,8 @@ async function loadAll() {
     if (id === 'sec-precios')    cargarPrecios();
     if (id === 'sec-suscripciones') cargarPricingPro();
     if (id === 'sec-historicos') cargarHistoricos();
+    if (id === 'sec-pipeline')   cargarEstadoPipeline();
+    if (id === 'sec-bcra')       { /* sin carga automática */ }
   }
 }
 
@@ -1810,6 +1845,104 @@ function mostrarToast(id, msg, type) {
   el.className = 'toast ' + type;
   setTimeout(() => { el.className = 'toast'; }, 6000);
 }
+  // ══ PIPELINE EXTERNO ══════════════════════════════════════
+  async function cargarEstadoPipeline() {
+    const container = document.getElementById('pipeline-cards');
+    if (!container) return;
+    container.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:13px;padding:12px">Cargando...</div>';
+    try {
+      const { data, error } = await sb
+        .from('agente_contexto_mercado')
+        .select('fuente,titulo,nivel,fecha_dato,updated_at,activo,resumen')
+        .eq('activo', true)
+        .order('nivel')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+
+      const LABELS = {
+        usda_crop_progress:  { icon:'🌽', label:'USDA Crop Progress',  schedule:'Lunes 22hs UTC' },
+        usda_fas_psd:        { icon:'🌍', label:'USDA FAS PSD',         schedule:'Día 12 del mes' },
+        bcr_comentario_diario:{ icon:'🏛️', label:'BCR Comentario',      schedule:'L-V 21:30 UTC' },
+        bolsacer_entre_rios: { icon:'📋', label:'Bolsacer Entre Ríos',  schedule:'Jueves 19hs UTC' },
+        cftc_cot_semanal:    { icon:'📊', label:'CFTC CoT',             schedule:'Viernes 23:30 UTC' },
+      };
+
+      if (!data?.length) {
+        container.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:13px;padding:12px">Sin datos aún. Ejecutá una fuente manualmente.</div>';
+        return;
+      }
+
+      container.innerHTML = data.map(row => {
+        const meta  = LABELS[row.fuente] || { icon:'📄', label: row.fuente, schedule:'—' };
+        const fecha = row.fecha_dato || '—';
+        const upd   = row.updated_at ? new Date(row.updated_at).toLocaleString('es-AR') : '—';
+        const preview = (row.resumen || '').slice(0, 140).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const msAgo = row.updated_at ? Date.now() - new Date(row.updated_at).getTime() : Infinity;
+        const fresh = msAgo < 8 * 86400000; // < 8 días
+        return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:18px">${meta.icon}</span>
+            <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.85)">${meta.label}</span>
+            <span style="margin-left:auto;font-size:10px;padding:2px 7px;border-radius:10px;background:${fresh?'rgba(30,153,112,.25)':'rgba(217,81,44,.2)'};color:${fresh?'#2ab88a':'#f0856a'}">${fresh?'✓ fresco':'⚠ viejo'}</span>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px">Dato: ${fecha} · Actualizado: ${upd}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);line-height:1.5">${preview}…</div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      container.innerHTML = `<div style="color:#f0856a;font-size:13px;padding:12px">Error: ${e.message}</div>`;
+    }
+  }
+
+  async function runPipeline(fuente) {
+    const statusEl = document.getElementById('pipeline-status');
+    const resultEl = document.getElementById('pipeline-result');
+    if (statusEl) statusEl.textContent = `⏳ Ejecutando ${fuente}...`;
+    if (resultEl) resultEl.style.display = 'none';
+    try {
+      const res = await fetch(FUNCTIONS_URL + '/ctx-data-pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY },
+        body: JSON.stringify({ fuente }),
+      });
+      const data = await res.json();
+      if (statusEl) statusEl.textContent = data.ok ? `✓ ${fuente} ejecutado correctamente` : `✗ Error en ${fuente}`;
+      if (resultEl) { resultEl.textContent = JSON.stringify(data, null, 2); resultEl.style.display = 'block'; }
+      // Recargar estado
+      setTimeout(cargarEstadoPipeline, 1500);
+    } catch(e) {
+      if (statusEl) statusEl.textContent = `✗ Error de red: ${e.message}`;
+    }
+  }
+
+  // ══ BCRA / DÓLAR ══════════════════════════════════════════
+  async function actualizarBCRA() {
+    const btn      = document.getElementById('btn-bcra');
+    const statusEl = document.getElementById('bcra-status');
+    const resultEl = document.getElementById('bcra-result');
+    if (btn) { btn.disabled = true; btn.textContent = '↻ Actualizando...'; }
+    if (statusEl) statusEl.textContent = '⏳ Conectando con BCRA y DolarApi...';
+    if (resultEl) resultEl.style.display = 'none';
+    try {
+      const res = await fetch(FUNCTIONS_URL + '/actualizar-bcra', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      const actualizadas = data.actualizadas ?? '?';
+      const pendientes   = data.pendientes_manuales?.length ? ` · Pendientes manuales: ${data.pendientes_manuales.join(', ')}` : '';
+      if (statusEl) statusEl.textContent = data.ok
+        ? `✓ ${actualizadas} series actualizadas${pendientes}`
+        : `✗ Error: ${data.error || 'desconocido'}`;
+      if (resultEl) { resultEl.textContent = JSON.stringify(data, null, 2); resultEl.style.display = 'block'; }
+    } catch(e) {
+      if (statusEl) statusEl.textContent = `✗ Error de red: ${e.message}`;
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '↻ Actualizar BCRA ahora'; }
+    }
+  }
+
 </script>
 </body>
 </html>
