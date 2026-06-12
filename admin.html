@@ -627,11 +627,11 @@ tr:hover td { background:#f9faf6; }
     <!-- ══ SECCIÓN: PIPELINE EXTERNO ══ -->
     <div class="section" id="sec-pipeline">
       <h2>🌐 Pipeline de datos externos</h2>
-      <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:18px">Fuentes que alimentan el contexto del Asesor IA. Podés ejecutar cualquiera manualmente o ver el estado de la última ejecución.</p>
+      <p style="color:var(--gris);font-size:13px;margin-bottom:18px">Fuentes que alimentan el contexto del Asesor IA. Podés ejecutar cualquiera manualmente o ver el estado de la última ejecución.</p>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px" id="pipeline-cards">
         <!-- Se renderizan dinámicamente -->
-        <div style="color:rgba(255,255,255,.4);font-size:13px;padding:12px">Cargando estado...</div>
+        <div style="color:var(--gris);font-size:13px;padding:12px">Cargando estado...</div>
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
@@ -641,18 +641,18 @@ tr:hover td { background:#f9faf6; }
         <button class="btn" onclick="runPipeline('cftc_cot')">▶ CFTC CoT</button>
         <button class="btn" onclick="runPipeline('usda_fas_psd')">▶ USDA FAS PSD</button>
       </div>
-      <div id="pipeline-status" style="font-size:13px;color:rgba(255,255,255,.6);min-height:20px"></div>
-      <pre id="pipeline-result" style="font-size:11px;background:rgba(0,0,0,.3);padding:12px;border-radius:6px;max-height:240px;overflow-y:auto;display:none;white-space:pre-wrap;color:rgba(255,255,255,.7);margin-top:10px"></pre>
+      <div id="pipeline-status" style="font-size:13px;color:var(--gris);min-height:20px"></div>
+      <pre id="pipeline-result" style="font-size:11px;background:var(--crema-d);border:1px solid var(--crema-dd);padding:12px;border-radius:6px;max-height:240px;overflow-y:auto;display:none;white-space:pre-wrap;color:var(--texto);margin-top:10px"></pre>
     </div>
 
     <!-- ══ SECCIÓN: BCRA / DÓLAR ══ -->
     <div class="section" id="sec-bcra">
       <h2>🏦 BCRA y tipo de cambio</h2>
-      <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:18px">Actualiza las variables macroeconómicas del dashboard BCRA: inflación, reservas, tasas, CER, UVA y tipos de cambio.</p>
+      <p style="color:var(--gris);font-size:13px;margin-bottom:18px">Actualiza las variables macroeconómicas del dashboard BCRA: inflación, reservas, tasas, CER, UVA y tipos de cambio.</p>
 
       <button class="btn" id="btn-bcra" onclick="actualizarBCRA()">↻ Actualizar BCRA ahora</button>
-      <div id="bcra-status" style="margin-top:14px;font-size:13px;color:rgba(255,255,255,.6);min-height:20px"></div>
-      <pre id="bcra-result" style="font-size:11px;background:rgba(0,0,0,.3);padding:12px;border-radius:6px;max-height:300px;overflow-y:auto;display:none;white-space:pre-wrap;color:rgba(255,255,255,.7);margin-top:10px"></pre>
+      <div id="bcra-status" style="margin-top:14px;font-size:13px;color:var(--gris);min-height:20px"></div>
+      <pre id="bcra-result" style="font-size:11px;background:var(--crema-d);border:1px solid var(--crema-dd);padding:12px;border-radius:6px;max-height:300px;overflow-y:auto;display:none;white-space:pre-wrap;color:var(--texto);margin-top:10px"></pre>
     </div>
 
 
@@ -1853,7 +1853,7 @@ function mostrarToast(id, msg, type) {
   async function cargarEstadoPipeline() {
     const container = document.getElementById('pipeline-cards');
     if (!container) return;
-    container.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:13px;padding:12px">Cargando...</div>';
+    container.innerHTML = '<div style="color:var(--gris);font-size:13px;padding:12px">Cargando...</div>';
     try {
       const { data, error } = await sb
         .from('agente_contexto_mercado')
@@ -1872,7 +1872,7 @@ function mostrarToast(id, msg, type) {
       };
 
       if (!data?.length) {
-        container.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:13px;padding:12px">Sin datos aún. Ejecutá una fuente manualmente.</div>';
+        container.innerHTML = '<div style="color:var(--gris);font-size:13px;padding:12px">Sin datos aún. Ejecutá una fuente manualmente.</div>';
         return;
       }
 
@@ -1883,14 +1883,14 @@ function mostrarToast(id, msg, type) {
         const preview = (row.resumen || '').slice(0, 140).replace(/</g,'&lt;').replace(/>/g,'&gt;');
         const msAgo = row.updated_at ? Date.now() - new Date(row.updated_at).getTime() : Infinity;
         const fresh = msAgo < 8 * 86400000; // < 8 días
-        return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:14px">
+        return `<div style="background:var(--crema);border:1px solid var(--crema-dd);border-radius:8px;padding:14px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <span style="font-size:18px">${meta.icon}</span>
-            <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.85)">${meta.label}</span>
-            <span style="margin-left:auto;font-size:10px;padding:2px 7px;border-radius:10px;background:${fresh?'rgba(30,153,112,.25)':'rgba(217,81,44,.2)'};color:${fresh?'#2ab88a':'#f0856a'}">${fresh?'✓ fresco':'⚠ viejo'}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--texto)">${meta.label}</span>
+            <span style="margin-left:auto;font-size:10px;padding:2px 7px;border-radius:10px;background:${fresh?'rgba(30,153,112,.15)':'rgba(217,81,44,.12)'};color:${fresh?'#1a7a5e':'#b83c2a'}">${fresh?'✓ fresco':'⚠ viejo'}</span>
           </div>
-          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px">Dato: ${fecha} · Actualizado: ${upd}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.5);line-height:1.5">${preview}…</div>
+          <div style="font-size:11px;color:var(--gris);margin-bottom:6px">Dato: ${fecha} · Actualizado: ${upd}</div>
+          <div style="font-size:11px;color:var(--gris-l);line-height:1.5">${preview}…</div>
         </div>`;
       }).join('');
     } catch(e) {
