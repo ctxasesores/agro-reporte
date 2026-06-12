@@ -105,6 +105,9 @@ tr:hover td { background:#f9faf6; }
 .btn-refresh  { padding:9px 14px; background:transparent; border:1px solid var(--crema-d); color:var(--gris); border-radius:8px; font-size:13px; cursor:pointer; transition:all .2s; }
 .btn-refresh:hover { border-color:var(--oro-d); color:var(--oro-d); }
 .btn-danger   { padding:9px 18px; background:var(--rojo); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+.btn { padding:9px 16px; background:var(--blanco); color:var(--texto); border:1px solid var(--crema-d); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .18s; }
+.btn:hover { border-color:var(--oro-d); color:var(--oro-d); box-shadow:0 4px 14px rgba(28,26,24,.06); }
+.btn:disabled { opacity:.55; cursor:not-allowed; box-shadow:none; }
 
 /* FORM FIELDS */
 .field-group { display:flex; flex-direction:column; gap:5px; }
@@ -118,6 +121,27 @@ tr:hover td { background:#f9faf6; }
 /* SECTIONS */
 .section { margin-bottom:28px; display:none; }
 .section.active { display:block; }
+
+/* ADMIN TOOLS: PIPELINE / BCRA */
+.tool-section-title { font-size:22px; font-weight:700; color:var(--texto); letter-spacing:-.4px; margin-bottom:6px; }
+.tool-section-sub { color:var(--gris); font-size:13px; line-height:1.5; margin-bottom:18px; max-width:900px; }
+.tool-panel { background:var(--blanco); border:1px solid var(--crema-d); border-radius:var(--radio); box-shadow:var(--sombra); padding:18px; margin-bottom:18px; }
+.tool-actions { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.tool-status { font-size:13px; color:var(--gris); min-height:20px; margin-top:12px; }
+.tool-result { font-size:11px; background:var(--crema); border:1px solid var(--crema-dd); padding:12px; border-radius:8px; max-height:300px; overflow:auto; display:none; white-space:pre-wrap; color:var(--texto); margin-top:10px; }
+.tool-empty, .tool-error { font-size:13px; padding:14px; border-radius:8px; border:1px solid var(--crema-d); background:var(--blanco); }
+.tool-empty { color:var(--gris); }
+.tool-error { color:var(--rojo); background:#fff7f5; border-color:#f3c6bc; }
+.pipeline-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; margin-bottom:20px; }
+.pipeline-card { background:var(--blanco); border:1px solid var(--crema-d); border-radius:var(--radio); box-shadow:var(--sombra); padding:16px; min-height:118px; }
+.pipeline-card-head { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+.pipeline-card-icon { font-size:19px; line-height:1; }
+.pipeline-card-title { font-size:14px; font-weight:700; color:var(--texto); }
+.pipeline-fresh { margin-left:auto; font-size:10px; padding:3px 8px; border-radius:999px; font-weight:700; white-space:nowrap; }
+.pipeline-fresh.ok { background:rgba(46,125,82,.13); color:var(--verde); }
+.pipeline-fresh.warn { background:rgba(192,57,27,.12); color:var(--rojo); }
+.pipeline-card-meta { font-size:11px; color:var(--gris); margin-bottom:7px; line-height:1.4; }
+.pipeline-card-preview { font-size:12px; color:var(--gris-l); line-height:1.5; }
 
 /* MODAL */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(16,23,41,.6); z-index:500; align-items:center; justify-content:center; padding:20px; }
@@ -620,40 +644,42 @@ tr:hover td { background:#f9faf6; }
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
-
     <!-- ══ SECCIÓN: PIPELINE EXTERNO ══ -->
     <div class="section" id="sec-pipeline">
-      <h2>🌐 Pipeline de datos externos</h2>
-      <p style="color:var(--gris);font-size:13px;margin-bottom:18px">Fuentes que alimentan el contexto del Asesor IA. Podés ejecutar cualquiera manualmente o ver el estado de la última ejecución.</p>
+      <h2 class="tool-section-title">🌐 Pipeline de datos externos</h2>
+      <p class="tool-section-sub">Fuentes que alimentan el contexto del Asesor IA. Podés ejecutar cualquiera manualmente o ver el estado de la última ejecución.</p>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px" id="pipeline-cards">
+      <div class="pipeline-grid" id="pipeline-cards">
         <!-- Se renderizan dinámicamente -->
-        <div style="color:var(--gris);font-size:13px;padding:12px">Cargando estado...</div>
+        <div class="tool-empty">Cargando estado...</div>
       </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <div class="tool-actions">
         <button class="btn" onclick="runPipeline('usda_crop_progress')">▶ USDA Crop Progress</button>
         <button class="btn" onclick="runPipeline('bcr_comentario')">▶ BCR Comentario</button>
         <button class="btn" onclick="runPipeline('bolsacer')">▶ Bolsacer ER</button>
         <button class="btn" onclick="runPipeline('cftc_cot')">▶ CFTC CoT</button>
         <button class="btn" onclick="runPipeline('usda_fas_psd')">▶ USDA FAS PSD</button>
       </div>
-      <div id="pipeline-status" style="font-size:13px;color:var(--gris);min-height:20px"></div>
-      <pre id="pipeline-result" style="font-size:11px;background:var(--crema-d);border:1px solid var(--crema-dd);padding:12px;border-radius:6px;max-height:240px;overflow-y:auto;display:none;white-space:pre-wrap;color:var(--texto);margin-top:10px"></pre>
+      <div id="pipeline-status" class="tool-status"></div>
+      <pre id="pipeline-result" class="tool-result"></pre>
     </div>
 
     <!-- ══ SECCIÓN: BCRA / DÓLAR ══ -->
     <div class="section" id="sec-bcra">
-      <h2>🏦 BCRA y tipo de cambio</h2>
-      <p style="color:var(--gris);font-size:13px;margin-bottom:18px">Actualiza las variables macroeconómicas del dashboard BCRA: inflación, reservas, tasas, CER, UVA y tipos de cambio.</p>
+      <h2 class="tool-section-title">🏦 BCRA y tipo de cambio</h2>
+      <p class="tool-section-sub">Actualiza las variables macroeconómicas del dashboard BCRA: inflación, reservas, tasas, CER, UVA y tipos de cambio.</p>
 
-      <button class="btn" id="btn-bcra" onclick="actualizarBCRA()">↻ Actualizar BCRA ahora</button>
-      <div id="bcra-status" style="margin-top:14px;font-size:13px;color:var(--gris);min-height:20px"></div>
-      <pre id="bcra-result" style="font-size:11px;background:var(--crema-d);border:1px solid var(--crema-dd);padding:12px;border-radius:6px;max-height:300px;overflow-y:auto;display:none;white-space:pre-wrap;color:var(--texto);margin-top:10px"></pre>
+      <div class="tool-panel">
+        <button class="btn" id="btn-bcra" onclick="actualizarBCRA()">↻ Actualizar BCRA ahora</button>
+        <div id="bcra-status" class="tool-status"></div>
+        <pre id="bcra-result" class="tool-result"></pre>
+      </div>
     </div>
+
+    </div>
+  </div>
+</div>
 
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
@@ -1853,7 +1879,7 @@ function mostrarToast(id, msg, type) {
   async function cargarEstadoPipeline() {
     const container = document.getElementById('pipeline-cards');
     if (!container) return;
-    container.innerHTML = '<div style="color:var(--gris);font-size:13px;padding:12px">Cargando...</div>';
+    container.innerHTML = '<div class="tool-empty">Cargando...</div>';
     try {
       const { data, error } = await sb
         .from('agente_contexto_mercado')
@@ -1872,7 +1898,7 @@ function mostrarToast(id, msg, type) {
       };
 
       if (!data?.length) {
-        container.innerHTML = '<div style="color:var(--gris);font-size:13px;padding:12px">Sin datos aún. Ejecutá una fuente manualmente.</div>';
+        container.innerHTML = '<div class="tool-empty">Sin datos aún. Ejecutá una fuente manualmente.</div>';
         return;
       }
 
@@ -1883,18 +1909,18 @@ function mostrarToast(id, msg, type) {
         const preview = (row.resumen || '').slice(0, 140).replace(/</g,'&lt;').replace(/>/g,'&gt;');
         const msAgo = row.updated_at ? Date.now() - new Date(row.updated_at).getTime() : Infinity;
         const fresh = msAgo < 8 * 86400000; // < 8 días
-        return `<div style="background:var(--crema);border:1px solid var(--crema-dd);border-radius:8px;padding:14px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:18px">${meta.icon}</span>
-            <span style="font-size:13px;font-weight:600;color:var(--texto)">${meta.label}</span>
-            <span style="margin-left:auto;font-size:10px;padding:2px 7px;border-radius:10px;background:${fresh?'rgba(30,153,112,.15)':'rgba(217,81,44,.12)'};color:${fresh?'#1a7a5e':'#b83c2a'}">${fresh?'✓ fresco':'⚠ viejo'}</span>
+        return `<div class="pipeline-card">
+          <div class="pipeline-card-head">
+            <span class="pipeline-card-icon">${meta.icon}</span>
+            <span class="pipeline-card-title">${meta.label}</span>
+            <span class="pipeline-fresh ${fresh ? 'ok' : 'warn'}">${fresh ? '✓ fresco' : '⚠ viejo'}</span>
           </div>
-          <div style="font-size:11px;color:var(--gris);margin-bottom:6px">Dato: ${fecha} · Actualizado: ${upd}</div>
-          <div style="font-size:11px;color:var(--gris-l);line-height:1.5">${preview}…</div>
+          <div class="pipeline-card-meta">Dato: ${fecha} · Actualizado: ${upd}</div>
+          <div class="pipeline-card-preview">${preview}…</div>
         </div>`;
       }).join('');
     } catch(e) {
-      container.innerHTML = `<div style="color:#f0856a;font-size:13px;padding:12px">Error: ${e.message}</div>`;
+      container.innerHTML = `<div class="tool-error">Error: ${e.message}</div>`;
     }
   }
 
