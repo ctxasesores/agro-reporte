@@ -1795,20 +1795,24 @@ function showSection(name, el) {
   document.getElementById('sec-' + name).classList.add('active');
   if(el) el.classList.add('active');
   const titles = {
-    pendientes:['Últimas operaciones','Registro de operaciones recientes de todos los clientes'],
-    todas:['Historial completo','Todas las operaciones con filtros'],
-    carteras:['Carteras por cliente','Resumen de posiciones por cliente'],
-    precios:['Precios de mercado','Actualizá los precios de referencia para el cálculo del reporte'],
+    pendientes:   ['Últimas operaciones','Registro de operaciones recientes de todos los clientes'],
+    todas:        ['Historial completo','Todas las operaciones con filtros'],
+    carteras:     ['Carteras por cliente','Resumen de posiciones por cliente'],
+    precios:      ['Precios de mercado','Actualizá los precios de referencia para el cálculo del reporte'],
     suscripciones:['Suscripciones PRO','Actualizá el equivalente en pesos para nuevas suscripciones automáticas'],
-    usuarios:['Gestión de usuarios','Creá y administrá los accesos de cada cliente']
+    historicos:   ['Serie histórica','Historial de precios MATba por producto y posición'],
+    pipeline:     ['Pipeline externo','Fuentes de datos que alimentan el contexto del Asesor IA'],
+    bcra:         ['BCRA / Dólar','Actualizá variables macroeconómicas y tipos de cambio'],
+    usuarios:     ['Gestión de usuarios','Creá y administrá los accesos de cada cliente'],
   };
   const t = titles[name] || ['',''];
   document.getElementById('page-title').textContent = t[0];
   document.getElementById('page-sub').textContent   = t[1];
-  if (name === 'precios')  { cargarPrecios(); cargarUltimaActualizacion(); }
+  if (name === 'precios')       { cargarPrecios(); cargarUltimaActualizacion(); }
   if (name === 'suscripciones') cargarPricingPro();
-  if (name === 'historicos') cargarHistoricos();
-  if (name === 'usuarios') cargarClientes();
+  if (name === 'historicos')    cargarHistoricos();
+  if (name === 'usuarios')      cargarClientes();
+  if (name === 'pipeline')      cargarEstadoPipeline();
 }
 
 // EXPORT
