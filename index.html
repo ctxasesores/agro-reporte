@@ -2425,6 +2425,13 @@ function updateSidebarProducts(state) {
     navTambo.classList.toggle('is-disabled', !tamboActivo);
     navTambo.style.opacity = tamboActivo ? '' : '.55';
   }
+  // Mercado: siempre visible, sub-label indica si tiene IA
+  const navMercadoSub = document.getElementById('nav-mercado-sub');
+  if (navMercadoSub) {
+    const esPro = ['agricultura_nivel','ganaderia_nivel','tambo_nivel']
+      .some(k => String(currentCliente?.[k] || '').toUpperCase() === 'PRO');
+    navMercadoSub.textContent = esPro ? 'Granos · Asesor IA PRO' : 'Granos · Análisis IA';
+  }
 }
 
 function updateCuentaDashboard(state) {
@@ -2585,7 +2592,7 @@ function switchDashboard(view, el) {
     if (frame && frame.src !== new URL(target, window.location.href).href) frame.src = target;
   }
   if (view === 'mercado') {
-    // Panel nativo — no requiere iframe
+    // Panel nativo — sin iframe. KPI y memoria se actualizan via switchDashboard override en el bloque de agente mercado
   }
   updateDashboardActionButtons();
   closeSidebar();
@@ -2623,7 +2630,8 @@ function updateDashboardActionButtons() {
   const mode = getActiveDashboardMode();
   const isProAccount = isProAccountState(getClienteAccessState());
   const isStandardPanel = ['agricultura', 'ganaderia', 'tambo'].includes(view) && mode === 'ESTANDAR';
-  proBtn.style.display = isStandardPanel && !isProAccount ? 'inline-flex' : 'none';
+  // El panel Mercado tiene su propio gate interno — no mostrar el botón PRO global
+  proBtn.style.display = isStandardPanel && !isProAccount && view !== 'mercado' ? 'inline-flex' : 'none';
 }
 
 function openProPanelsModal() {
@@ -2855,6 +2863,10 @@ async function refreshActiveDashboard() {
       reloadDashboardFrame('frame-ganaderia');
     } else if (view === 'tambo') {
       reloadDashboardFrame('frame-tambo');
+    } else if (view === 'mercado') {
+      // Panel nativo — recargar precios y KPI de cartera
+      if (typeof actualizarKpiCartera === 'function') actualizarKpiCartera();
+      if (typeof cargarMemoriaMercado === 'function') cargarMemoriaMercado();
     } else {
       await refreshData();
       renderAccessHub();
