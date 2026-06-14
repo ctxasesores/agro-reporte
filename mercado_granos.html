@@ -123,6 +123,14 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica
 .msg-user .msg-bubble{background:rgba(212,160,23,.08);border-color:rgba(212,160,23,.15)}
 .msg-agent .msg-bubble{background:rgba(30,153,112,.07);border-color:rgba(30,153,112,.15)}
 .msg-thinking{color:var(--txt2);font-style:italic;font-size:12px}
+.msg-bubble h4,.msg-bubble h5{font-size:12px;font-weight:700;color:var(--oro-l);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 4px}
+.msg-bubble h4:first-child,.msg-bubble h5:first-child{margin-top:0}
+.msg-bubble strong{color:var(--txt);font-weight:700}
+.msg-bubble hr{border:none;border-top:0.5px solid var(--border2);margin:10px 0}
+.msg-bubble ul,.msg-bubble ol{margin:4px 0 4px 18px;padding:0}
+.msg-bubble li{margin-bottom:2px}
+.msg-bubble p{margin:0 0 8px}
+.msg-bubble p:last-child{margin-bottom:0}
 .chat-input-row{display:flex;gap:8px;margin-top:10px}
 .chat-input{flex:1;padding:10px 14px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;resize:none;min-height:42px;max-height:100px}
 .chat-input:focus{border-color:var(--oro)}
@@ -244,32 +252,12 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica
       <div>
         <div class="card">
           <div class="card-hdr" onclick="toggleAcc('acc-insights','icon-insights')">
-            <div><div class="card-title">Insights clave</div><div class="card-sub">Diego de la Puente · Canal Rural · AZ Group</div></div>
+            <div><div class="card-title">Insights clave</div><div class="card-sub" id="insights-sub">Generando a partir del contexto de mercado…</div></div>
             <span class="acc-icon" id="icon-insights" style="transform:rotate(180deg)">▼</span>
           </div>
           <div id="acc-insights" class="card-body">
-            <div style="display:flex;flex-direction:column;gap:10px">
-
-              <div style="border-left:3px solid var(--oro-l);padding:10px 14px;background:rgba(212,160,23,.05);border-radius:0 6px 6px 0">
-                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:5px">⚠ Régimen especulativo activo</div>
-                <div style="font-size:12px;line-height:1.6;color:var(--txt)">Fondos de inversión operan con base en petróleo. Movimientos diarios de 3–6% en WTI arrastran granos independientemente de fundamentals. Correlación histórica soja–petróleo indica precio teórico ~$500 vs. $430 actual.</div>
-              </div>
-
-              <div style="border-left:3px solid var(--verde-l);padding:10px 14px;background:rgba(30,153,112,.05);border-radius:0 6px 6px 0">
-                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--verde-l);margin-bottom:5px">↑ Fundamentos estructurales alcistas</div>
-                <div style="font-size:12px;line-height:1.6;color:var(--txt)">USDA mayo: relaciones stock/consumo para 26/27 menores que 25/26 en soja, maíz y trigo. Precios al productor USA proyectados al alza. Visión optimista para 2026 vs. 2025.</div>
-              </div>
-
-              <div style="border-left:3px solid var(--gris);padding:10px 14px;background:rgba(127,168,196,.05);border-radius:0 6px 6px 0">
-                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);margin-bottom:5px">📍 Oportunidad estacional</div>
-                <div style="font-size:12px;line-height:1.6;color:var(--txt)">Al salir de cosecha sudamericana, el descuento FOB se corrige fuertemente. Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha. Variable accionable para timing de ventas.</div>
-              </div>
-
-              <div style="border-left:3px solid #f0856a;padding:10px 14px;background:rgba(217,81,44,.05);border-radius:0 6px 6px 0">
-                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#f0856a;margin-bottom:5px">↓ Variable crítica: timing</div>
-                <div style="font-size:12px;line-height:1.6;color:var(--txt)">La recomendación depende del horizonte del productor. Necesita vender esta semana vs. puede esperar hasta fin de año son escenarios completamente distintos. El timing es la variable más importante en este contexto.</div>
-              </div>
-
+            <div style="display:flex;flex-direction:column;gap:10px" id="insights-container">
+              <div style="font-size:12px;color:var(--txt2);padding:8px 0">Cargando insights…</div>
             </div>
           </div>
         </div>
@@ -572,6 +560,7 @@ var currentUser    = null;
 document.addEventListener('DOMContentLoaded', function() {
   setupContext();
   checkAccess();
+  cargarInsightsMercado();
 });
 
 function setupContext() {
@@ -642,10 +631,141 @@ function toggleAcc(id, iconId) {
   if (icon) icon.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
+// ── INSIGHTS CLAVE (dinámico) ───────────────────────────────
+// Reemplaza el contenido estático anterior. Llama al dominio
+// 'insights_mercado' de agente-agro, que lee TODAS las fuentes
+// activas de agente_contexto_mercado, compara sus fechas entre
+// sí y devuelve 3-4 insights priorizados con atribución real.
+var INSIGHT_STYLES = {
+  especulativo: { borde: 'var(--oro-l)',  fondo: 'rgba(212,160,23,.05)',  icono: '⚠' },
+  alcista:      { borde: 'var(--verde-l)', fondo: 'rgba(30,153,112,.05)', icono: '↑' },
+  bajista:      { borde: '#f0856a',        fondo: 'rgba(217,81,44,.05)',  icono: '↓' },
+  regional:     { borde: 'var(--gris)',    fondo: 'rgba(127,168,196,.05)', icono: '📍' },
+  neutral:      { borde: 'var(--gris)',    fondo: 'rgba(127,168,196,.05)', icono: '•' },
+};
+
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderInsightCard(insight) {
+  var style = INSIGHT_STYLES[insight.tipo] || INSIGHT_STYLES.neutral;
+  var atribucion = [insight.fuente, insight.fecha].filter(Boolean).join(' · ');
+  return '<div style="border-left:3px solid ' + style.borde + ';padding:10px 14px;background:' + style.fondo + ';border-radius:0 6px 6px 0">'
+    + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:' + style.borde + ';margin-bottom:5px">'
+    + style.icono + ' ' + escapeHtml(insight.titulo) + '</div>'
+    + '<div style="font-size:12px;line-height:1.6;color:var(--txt)">' + escapeHtml(insight.texto) + '</div>'
+    + (atribucion ? '<div style="font-size:10px;color:var(--txt2);margin-top:6px">' + escapeHtml(atribucion) + '</div>' : '')
+    + '</div>';
+}
+
+async function cargarInsightsMercado() {
+  var container = document.getElementById('insights-container');
+  var sub       = document.getElementById('insights-sub');
+  if (!container) return;
+
+  try {
+    var res = await fetch(`${FUNCTIONS_URL}/agente-agro`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPA_KEY}`,
+        'apikey': SUPA_KEY
+      },
+      body: JSON.stringify({ dominio: 'insights_mercado' })
+    });
+    var data = await res.json();
+    var insights = Array.isArray(data?.insights) ? data.insights : [];
+
+    if (!insights.length) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--txt2);padding:8px 0">Sin insights disponibles por el momento.</div>';
+      if (sub) sub.textContent = 'Sin datos frescos de las fuentes de mercado';
+      return;
+    }
+
+    container.innerHTML = insights.map(renderInsightCard).join('');
+
+    if (sub) {
+      // Atribución dinámica: lista única de fuentes usadas, ordenadas como vinieron
+      var fuentes = [];
+      insights.forEach(function(i) {
+        if (i.fuente && fuentes.indexOf(i.fuente) === -1) fuentes.push(i.fuente);
+      });
+      sub.textContent = fuentes.length ? fuentes.join(' · ') : 'Generado a partir del contexto de mercado';
+    }
+  } catch (e) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--txt2);padding:8px 0">No se pudieron cargar los insights en este momento.</div>';
+    if (sub) sub.textContent = '';
+  }
+}
+
 // ── CHAT ────────────────────────────────────────────────────
 // El system prompt vive centralizado en la Edge Function agente-agro (dominio: 'mercado').
 // No se envía desde el cliente — más seguro y mantenible.
 var chatHistory = [];
+
+// Renderer markdown ligero — cubre lo que genera el agente: headers (#, ##, ###),
+// negrita (**texto**), líneas horizontales (---), listas (- / 1.) y párrafos.
+// Sin dependencias externas. Escapa HTML antes de aplicar las reglas para evitar
+// inyección desde el texto del modelo.
+function mdToHtml(md) {
+  var esc = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  var lines = esc.split('\n');
+  var html = [];
+  var listBuffer = [];
+  var listType = null;
+
+  function flushList() {
+    if (!listBuffer.length) return;
+    var tag = listType === 'ol' ? 'ol' : 'ul';
+    html.push('<' + tag + '>' + listBuffer.map(function(li) { return '<li>' + li + '</li>'; }).join('') + '</' + tag + '>');
+    listBuffer = [];
+    listType = null;
+  }
+
+  function inline(text) {
+    return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  lines.forEach(function(raw) {
+    var line = raw.trim();
+
+    if (!line) { flushList(); return; }
+
+    if (/^---+$/.test(line)) { flushList(); html.push('<hr>'); return; }
+
+    var h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      flushList();
+      var tag = h[1].length <= 3 ? 'h4' : 'h5';
+      html.push('<' + tag + '>' + inline(h[2]) + '</' + tag + '>');
+      return;
+    }
+
+    var ol = line.match(/^\d+[\.\)]\s+(.*)$/);
+    if (ol) {
+      if (listType !== 'ol') flushList();
+      listType = 'ol';
+      listBuffer.push(inline(ol[1]));
+      return;
+    }
+
+    var ul = line.match(/^[-*]\s+(.*)$/);
+    if (ul) {
+      if (listType !== 'ul') flushList();
+      listType = 'ul';
+      listBuffer.push(inline(ul[1]));
+      return;
+    }
+
+    flushList();
+    html.push('<p>' + inline(line) + '</p>');
+  });
+  flushList();
+
+  return html.join('');
+}
 
 function appendMsg(role, text, isThinking) {
   var wrap = document.getElementById('chat-messages');
@@ -657,7 +777,11 @@ function appendMsg(role, text, isThinking) {
   avatar.textContent = role === 'user' ? 'Vos' : '🌾';
   var bubble = document.createElement('div');
   bubble.className = 'msg-bubble' + (isThinking ? ' msg-thinking' : '');
-  bubble.innerHTML = text.replace(/\n/g, '<br>');
+  // El mensaje del usuario es texto plano (escapado + <br>); las respuestas del
+  // agente pueden venir con markdown y se procesan con mdToHtml en sendMessage.
+  bubble.innerHTML = role === 'user'
+    ? text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+    : text.replace(/\n/g, '<br>');
   div.appendChild(avatar);
   div.appendChild(bubble);
   wrap.appendChild(div);
@@ -712,7 +836,7 @@ async function sendMessage() {
       || 'No pude generar una respuesta en este momento.';
 
     thinkBubble.classList.remove('msg-thinking');
-    thinkBubble.innerHTML = reply.replace(/\n/g, '<br>');
+    thinkBubble.innerHTML = mdToHtml(reply);
     chatHistory.push({ role: 'assistant', content: reply });
 
   } catch(e) {

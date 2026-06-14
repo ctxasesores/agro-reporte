@@ -1453,13 +1453,11 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
             <!-- Insights -->
             <div class="mercado-card">
               <div class="mercado-card-hdr" onclick="mercadoToggle('m-insights','m-icon-ins')">
-                <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Insights clave</div><div style="font-size:11px;color:var(--gris);margin-top:1px">Diego de la Puente · Canal Rural · AZ Group</div></div>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Insights clave</div><div id="m-insights-sub" style="font-size:11px;color:var(--gris);margin-top:1px">Generando a partir del contexto de mercado…</div></div>
                 <span id="m-icon-ins" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span>
               </div>
               <div id="m-insights" class="mercado-card-body" style="display:flex;flex-direction:column;gap:9px">
-                <div style="border-left:3px solid var(--oro-l);padding:9px 12px;background:rgba(212,160,23,.05);border-radius:0 6px 6px 0"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:4px">⚠ Régimen especulativo activo</div><div style="font-size:12px;line-height:1.6;color:var(--texto)">Fondos operan con base en petróleo. Movimientos de 3–6% diarios en WTI arrastran granos independientemente de los fundamentals. Correlación histórica implica precio teórico ~$500 vs. $430 actual.</div></div>
-                <div style="border-left:3px solid #2ab88a;padding:9px 12px;background:rgba(30,153,112,.05);border-radius:0 6px 6px 0"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2ab88a;margin-bottom:4px">↑ Fundamentos estructurales alcistas</div><div style="font-size:12px;line-height:1.6;color:var(--texto)">USDA mayo: relaciones stock/consumo para 26/27 menores que 25/26 en soja, maíz y trigo. Precios al productor USA proyectados al alza.</div></div>
-                <div style="border-left:3px solid var(--gris);padding:9px 12px;background:rgba(127,168,196,.05);border-radius:0 6px 6px 0"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);margin-bottom:4px">📍 Oportunidad estacional</div><div style="font-size:12px;line-height:1.6;color:var(--texto)">Al salir de cosecha sudamericana el descuento FOB se corrige fuertemente. Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha. Variable accionable para timing de ventas.</div></div>
+                <div style="font-size:12px;color:var(--gris);padding:8px 0">Cargando insights…</div>
               </div>
             </div>
           </div>
@@ -5885,6 +5883,7 @@ window.addEventListener('load', async () => {
       if (view === 'mercado') {
         setTimeout(actualizarKpiCartera, 100);
         setTimeout(cargarMemoriaMercado, 200);
+        setTimeout(cargarInsightsMercadoIndex, 50);
       }
     };
   }
@@ -5939,6 +5938,75 @@ window.addEventListener('load', async () => {
         }),
       }).catch(e => console.warn('[curador]', e));
     } catch(e) {}
+  }
+
+  // ── Insights clave (dinámico) ─────────────────────────────
+  // Mismo dominio insights_mercado que usa mercado_granos.html, adaptado a
+  // las variables CSS y los ids del bloque "Mercado Framework" de index.html
+  // (var(--texto) en vez de var(--txt), contenedor #m-insights / #m-insights-sub).
+  const INSIGHT_STYLES_IDX = {
+    especulativo: { borde: 'var(--oro-l)', fondo: 'rgba(212,160,23,.05)',  icono: '⚠' },
+    alcista:      { borde: '#2ab88a',      fondo: 'rgba(30,153,112,.05)', icono: '↑' },
+    bajista:      { borde: '#f0856a',      fondo: 'rgba(217,81,44,.05)',  icono: '↓' },
+    regional:     { borde: 'var(--gris)',  fondo: 'rgba(127,168,196,.05)', icono: '📍' },
+    neutral:      { borde: 'var(--gris)',  fondo: 'rgba(127,168,196,.05)', icono: '•' },
+  };
+
+  function escapeHtmlIdx(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderInsightCardIdx(insight) {
+    const style = INSIGHT_STYLES_IDX[insight.tipo] || INSIGHT_STYLES_IDX.neutral;
+    const atribucion = [insight.fuente, insight.fecha].filter(Boolean).join(' · ');
+    return '<div style="border-left:3px solid ' + style.borde + ';padding:9px 12px;background:' + style.fondo + ';border-radius:0 6px 6px 0">'
+      + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:' + style.borde + ';margin-bottom:4px">'
+      + style.icono + ' ' + escapeHtmlIdx(insight.titulo) + '</div>'
+      + '<div style="font-size:12px;line-height:1.6;color:var(--texto)">' + escapeHtmlIdx(insight.texto) + '</div>'
+      + (atribucion ? '<div style="font-size:10px;color:var(--gris);margin-top:6px">' + escapeHtmlIdx(atribucion) + '</div>' : '')
+      + '</div>';
+  }
+
+  let _insightsMercadoCargados = false;
+  async function cargarInsightsMercadoIndex() {
+    const container = document.getElementById('m-insights');
+    const sub       = document.getElementById('m-insights-sub');
+    if (!container) return;
+    if (_insightsMercadoCargados) return; // evitar refetch en cada cambio de tab
+    _insightsMercadoCargados = true;
+
+    try {
+      const res = await fetch(FN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
+        },
+        body: JSON.stringify({ dominio: 'insights_mercado' }),
+      });
+      const data = await res.json();
+      const insights = Array.isArray(data?.insights) ? data.insights : [];
+
+      if (!insights.length) {
+        container.innerHTML = '<div style="font-size:12px;color:var(--gris);padding:8px 0">Sin insights disponibles por el momento.</div>';
+        if (sub) sub.textContent = 'Sin datos frescos de las fuentes de mercado';
+        return;
+      }
+
+      container.innerHTML = insights.map(renderInsightCardIdx).join('');
+
+      if (sub) {
+        const fuentes = [];
+        insights.forEach(i => { if (i.fuente && !fuentes.includes(i.fuente)) fuentes.push(i.fuente); });
+        sub.textContent = fuentes.length ? fuentes.join(' · ') : 'Generado a partir del contexto de mercado';
+      }
+    } catch (e) {
+      _insightsMercadoCargados = false; // permitir reintento si falló
+      container.innerHTML = '<div style="font-size:12px;color:var(--gris);padding:8px 0">No se pudieron cargar los insights en este momento.</div>';
+      if (sub) sub.textContent = '';
+      console.warn('[insights mercado]', e);
+    }
   }
 
   // Curar también al cerrar/recargar la página
