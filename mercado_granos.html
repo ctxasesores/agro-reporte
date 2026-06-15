@@ -824,6 +824,7 @@ async function sendMessage() {
         messages: chatHistory,
         cliente: currentCliente ? {
           nombre: currentCliente.nombre_empresa,
+          codigo: currentCliente.codigo,
           nivel: currentCliente.agricultura_nivel
         } : null
       })
