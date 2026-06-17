@@ -226,6 +226,7 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('historicos',this)">📈 Serie histórica</a>
       <a class="nav-item" onclick="showSection('pipeline',this)">🌐 Pipeline externo</a>
       <a class="nav-item" onclick="showSection('bcra',this)">🏦 BCRA / Dólar</a>
+      <a class="nav-item" onclick="showSection('campanias',this)">🌾 Campañas</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
     <div class="sidebar-footer">
@@ -674,6 +675,35 @@ tr:hover td { background:#f9faf6; }
         <button class="btn" id="btn-bcra" onclick="actualizarBCRA()">↻ Actualizar BCRA ahora</button>
         <div id="bcra-status" class="tool-status"></div>
         <pre id="bcra-result" class="tool-result"></pre>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN: CAMPAÑAS ══ -->
+    <div class="section" id="sec-campanias">
+      <h2 class="tool-section-title">🌾 Campañas</h2>
+      <p class="tool-section-sub">La campaña activa filtra qué vencimientos de futuros ve el cliente en el panel de Mercado y en el Asesor IA. Excluir un vencimiento aplica a todos sus mercados (ROS/MIN/BA) a la vez. Esto no afecta qué se sincroniza desde A3 — solo qué se muestra.</p>
+
+      <div class="tool-panel">
+        <label class="modal-label" style="display:block;margin-bottom:6px">Campaña activa</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <select class="modal-select" id="campania-select" style="min-width:220px" onchange="cargarGrillaExclusiones()"></select>
+          <button class="btn" onclick="activarCampaniaSeleccionada()">✓ Marcar como activa</button>
+          <span id="campania-activa-badge" style="font-size:12px;color:var(--gris)"></span>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+          <input type="text" class="modal-input" id="nueva-campania-codigo" placeholder="ej: 27/28" style="max-width:160px">
+          <button class="btn" onclick="crearCampania()">+ Nueva campaña</button>
+        </div>
+        <div id="campania-status" class="tool-status"></div>
+      </div>
+
+      <div class="tool-panel" style="margin-top:16px">
+        <h3 style="font-size:14px;margin:0 0 4px">Vencimientos excluidos para esta campaña</h3>
+        <p class="field-hint" style="margin:0 0 14px">Tildado = se EXCLUYE (no se muestra al cliente para esta campaña). Sin tildar = visible (si además está vigente en el tiempo).</p>
+        <div id="campania-grilla">
+          <div class="tool-empty">Elegí una campaña arriba para ver sus posiciones.</div>
+        </div>
       </div>
     </div>
 
@@ -1829,6 +1859,7 @@ function showSection(name, el) {
     historicos:   ['Serie histórica','Historial de precios MATba por producto y posición'],
     pipeline:     ['Pipeline externo','Fuentes de datos que alimentan el contexto del Asesor IA'],
     bcra:         ['BCRA / Dólar','Actualizá variables macroeconómicas y tipos de cambio'],
+    campanias:    ['Campañas','Elegí la campaña activa y los vencimientos que se muestran al cliente'],
     usuarios:     ['Gestión de usuarios','Creá y administrá los accesos de cada cliente'],
   };
   const t = titles[name] || ['',''];
@@ -1839,6 +1870,7 @@ function showSection(name, el) {
   if (name === 'historicos')    cargarHistoricos();
   if (name === 'usuarios')      cargarClientes();
   if (name === 'pipeline')      cargarEstadoPipeline();
+  if (name === 'campanias')     cargarCampanias();
 }
 
 // EXPORT
@@ -1942,6 +1974,144 @@ function mostrarToast(id, msg, type) {
       setTimeout(cargarEstadoPipeline, 1500);
     } catch(e) {
       if (statusEl) statusEl.textContent = `✗ Error de red: ${e.message}`;
+    }
+  }
+
+  // ══ CAMPAÑAS ═══════════════════════════════════════════════
+  // Estado en memoria de esta vista: lista de campañas y el universo
+  // de producto+vencimiento disponible (de a3_precios), para no
+  // refetchear el universo cada vez que se cambia de campaña.
+  let _campaniasCache = [];
+  let _universoCache  = null;
+
+  async function gestionCampanias(payload) {
+    const res = await fetch(FUNCTIONS_URL + '/agente-agro', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY },
+      body: JSON.stringify({ dominio: 'gestion_campanias', ...payload }),
+    });
+    return res.json();
+  }
+
+  async function cargarCampanias() {
+    const select = document.getElementById('campania-select');
+    const badge  = document.getElementById('campania-activa-badge');
+    if (!select) return;
+    select.innerHTML = '<option>Cargando...</option>';
+    try {
+      const data = await gestionCampanias({ accion: 'listar' });
+      _campaniasCache = data.campanias || [];
+      if (!_campaniasCache.length) {
+        select.innerHTML = '<option value="">Sin campañas creadas</option>';
+        if (badge) badge.textContent = '';
+        return;
+      }
+      select.innerHTML = _campaniasCache.map(c =>
+        `<option value="${c.id}">${c.codigo}${c.activa ? ' (activa)' : ''}</option>`
+      ).join('');
+      const activa = _campaniasCache.find(c => c.activa);
+      if (activa) { select.value = activa.id; if (badge) badge.textContent = `Activa actualmente: ${activa.codigo}`; }
+      await cargarGrillaExclusiones();
+    } catch (e) {
+      select.innerHTML = '<option value="">Error al cargar</option>';
+    }
+  }
+
+  async function activarCampaniaSeleccionada() {
+    const select   = document.getElementById('campania-select');
+    const statusEl = document.getElementById('campania-status');
+    if (!select?.value) return;
+    if (statusEl) statusEl.textContent = '⏳ Activando...';
+    try {
+      const data = await gestionCampanias({ accion: 'activar', campania_id: select.value });
+      if (statusEl) statusEl.textContent = data.ok ? '✓ Campaña activada' : '✗ Error al activar';
+      await cargarCampanias();
+    } catch (e) {
+      if (statusEl) statusEl.textContent = `✗ Error: ${e.message}`;
+    }
+  }
+
+  async function crearCampania() {
+    const input    = document.getElementById('nueva-campania-codigo');
+    const statusEl = document.getElementById('campania-status');
+    const codigo   = input?.value?.trim();
+    if (!codigo) return;
+    if (statusEl) statusEl.textContent = '⏳ Creando...';
+    try {
+      const data = await gestionCampanias({ accion: 'crear', codigo, nombre: `Campaña ${codigo}` });
+      if (statusEl) statusEl.textContent = data.ok ? `✓ Campaña ${codigo} creada` : '✗ Error al crear';
+      if (input) input.value = '';
+      await cargarCampanias();
+    } catch (e) {
+      if (statusEl) statusEl.textContent = `✗ Error: ${e.message}`;
+    }
+  }
+
+  async function cargarGrillaExclusiones() {
+    const select    = document.getElementById('campania-select');
+    const container = document.getElementById('campania-grilla');
+    if (!select?.value || !container) {
+      if (container) container.innerHTML = '<div class="tool-empty">Elegí una campaña arriba para ver sus posiciones.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="tool-empty">Cargando...</div>';
+    try {
+      const [universoData, exclusionesData] = await Promise.all([
+        _universoCache ? Promise.resolve({ ok:true, universo:_universoCache }) : gestionCampanias({ accion: 'universo_posiciones' }),
+        gestionCampanias({ accion: 'listar_exclusiones', campania_id: select.value }),
+      ]);
+      _universoCache = universoData.universo || [];
+      const excluidos = new Set((exclusionesData.exclusiones || []).map(e => `${e.producto}|${e.vencimiento}`));
+
+      if (!_universoCache.length) {
+        container.innerHTML = '<div class="tool-empty">Sin posiciones sincronizadas todavía (revisá actualizar-a3).</div>';
+        return;
+      }
+
+      const porProducto = {};
+      for (const u of _universoCache) {
+        if (!porProducto[u.producto]) porProducto[u.producto] = [];
+        porProducto[u.producto].push(u.vencimiento);
+      }
+
+      const fmtVenc = (v) => {
+        const m = v.match(/^(\d{1,2})_(\d{4})$/);
+        if (!m) return v;
+        const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        return `${meses[Number(m[1])]}-${m[2]}`;
+      };
+
+      container.innerHTML = Object.entries(porProducto).map(([producto, vencs]) => `
+        <div style="margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">${producto}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${vencs.sort().map(v => {
+              const clave = `${producto}|${v}`;
+              const excl = excluidos.has(clave);
+              return `<label style="display:flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:${excl ? 'rgba(217,81,44,.07)' : 'var(--crema-d)'};cursor:pointer">
+                <input type="checkbox" ${excl ? 'checked' : ''} onchange="toggleExclusion('${producto}','${v}',this.checked)">
+                ${fmtVenc(v)}
+              </label>`;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      container.innerHTML = `<div class="tool-error">Error: ${e.message}</div>`;
+    }
+  }
+
+  async function toggleExclusion(producto, vencimiento, excluir) {
+    const select = document.getElementById('campania-select');
+    if (!select?.value) return;
+    try {
+      await gestionCampanias({
+        accion: excluir ? 'excluir' : 'permitir',
+        campania_id: select.value, producto, vencimiento,
+      });
+    } catch (e) {
+      mostrarToast('campania-status', `Error: ${e.message}`, 'error');
+      await cargarGrillaExclusiones(); // revertir visualmente si falló
     }
   }
 
