@@ -405,6 +405,11 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .ops-table-wrap { overflow-x:auto; }
 .ops-table { width:100%; border-collapse:collapse; font-size:12px; white-space:nowrap; }
 .ops-table th { padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:700; border-bottom:1px solid var(--crema-dd); }
+.ops-table th.sortable { cursor:pointer; user-select:none; transition:color .15s, background .15s; }
+.ops-table th.sortable:hover { color:var(--oro-l); background:rgba(212,160,23,.06); }
+.ops-table th.sortable.active { color:var(--oro-l); }
+.ops-sort-ind { display:inline-block; min-width:9px; margin-left:4px; font-size:9px; color:rgba(212,160,23,.75); vertical-align:1px; }
+.ops-sort-ind.inactive { color:var(--gris); opacity:.4; }
 .ops-table td { padding:10px 12px; border-bottom:1px solid var(--crema-dd); color:var(--texto); }
 .ops-table tr:last-child td { border-bottom:none; }
 .ops-table tr:hover td { background:var(--crema-d); }
@@ -1085,9 +1090,18 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           <table class="ops-table">
             <thead>
               <tr>
-                <th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th>
-                <th>Volumen</th><th>Precio op.</th><th>P. mercado</th>
-                <th>Vencimiento</th><th>Resultado</th><th>Tags</th><th>Estado</th><th>Comentarios</th>
+                <th class="sortable" data-ops-sort="fecha" onclick="setOpsSort('fecha')">Fecha <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="producto" onclick="setOpsSort('producto')">Producto <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="tipo" onclick="setOpsSort('tipo')">Tipo <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="lado" onclick="setOpsSort('lado')">Lado <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="volumen" onclick="setOpsSort('volumen')">Volumen <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="precio" onclick="setOpsSort('precio')">Precio op. <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="mercado" onclick="setOpsSort('mercado')">P. mercado <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="vencimiento" onclick="setOpsSort('vencimiento')">Vencimiento <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="resultado" onclick="setOpsSort('resultado')">Resultado <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="tags" onclick="setOpsSort('tags')">Tags <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="estado" onclick="setOpsSort('estado')">Estado <span class="ops-sort-ind"></span></th>
+                <th class="sortable" data-ops-sort="observaciones" onclick="setOpsSort('observaciones')">Comentarios <span class="ops-sort-ind"></span></th>
               </tr>
             </thead>
             <tbody id="d-ops-body"></tbody>
@@ -1633,6 +1647,8 @@ let precios = {};  // key: "Producto_mes_año" o "Producto_CONT"
 let pieChart = null;
 let activeSection = 'resumen';
 let filterProd = 'todos';
+let opsSort = { field:'fecha', dir:'desc' };
+let opsGuardadasSort = { field:'fecha', dir:'desc' };
 let tagsDisponibles = [];   // ['DFL','AGR',...] — tags del cliente
 let activeTagFilter = [];   // tags seleccionados para filtrar (intersección Y)
 let currentAuthMode = 'login';
@@ -4228,6 +4244,70 @@ function sunburstBack() {
   if (!items || !items.length) return;
   _drawDonut(container, items, newLevel, newChain, true);
 }
+
+function setOpsSort(field) {
+  if (opsSort.field === field) {
+    opsSort.dir = opsSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    opsSort = { field, dir:'asc' };
+  }
+  renderOps();
+}
+
+function renderOpsSortIndicators() {
+  document.querySelectorAll('[data-ops-sort]').forEach(th => {
+    const active = opsSort.field === th.dataset.opsSort;
+    th.classList.toggle('active', active);
+    const ind = th.querySelector('.ops-sort-ind');
+    if (ind) {
+      ind.textContent = active ? (opsSort.dir === 'asc' ? '▲' : '▼') : '⇅';
+      ind.classList.toggle('inactive', !active);
+    }
+  });
+}
+
+function parseOpsSortDate(value) {
+  if (!value) return null;
+  const str = String(value);
+  // Acepta tanto 'YYYY-MM-DD' como un ISO completo
+  const d = new Date(str.length <= 10 ? str + 'T00:00:00' : str);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+function getOpsSortValue(row, field) {
+  const op = row.op;
+  if (field === 'fecha') return parseOpsSortDate(op.fecha);
+  if (field === 'vencimiento') return parseOpsSortDate(op.vencimiento);
+  if (field === 'volumen') return Number(op.volumen || 0);
+  if (field === 'precio') return op.precio === null || op.precio === undefined || op.precio === '' ? null : Number(op.precio);
+  if (field === 'mercado') return row.pM === null || row.pM === undefined ? null : Number(row.pM);
+  if (field === 'resultado') return row.res === null || row.res === undefined ? null : Number(row.res);
+  if (field === 'tags') return (op.tags || []).join(' ').toLowerCase();
+  if (field === 'observaciones') return (op.observaciones || '').toLowerCase();
+  return String(op[field] || '').toLowerCase();
+}
+
+function sortOpsRows(rows) {
+  if (!opsSort.field) return rows;
+  const dir = opsSort.dir === 'desc' ? -1 : 1;
+  return [...rows].sort((a, b) => {
+    const va = getOpsSortValue(a, opsSort.field);
+    const vb = getOpsSortValue(b, opsSort.field);
+    const aEmpty = va === null || va === undefined || va === '';
+    const bEmpty = vb === null || vb === undefined || vb === '';
+    if (aEmpty && bEmpty) return a.idx - b.idx;
+    if (aEmpty) return 1;
+    if (bEmpty) return -1;
+    let cmp = 0;
+    if (typeof va === 'number' && typeof vb === 'number') {
+      cmp = va - vb;
+    } else {
+      cmp = String(va).localeCompare(String(vb), 'es', { numeric:true, sensitivity:'base' });
+    }
+    return cmp === 0 ? a.idx - b.idx : cmp * dir;
+  });
+}
+
 function renderOps() {
   const filtered = getFilteredOps();
   const ops = filterProd === 'todos' ? filtered : filtered.filter(o => o.producto === filterProd);
@@ -4236,15 +4316,21 @@ function renderOps() {
   document.getElementById('d-filters').innerHTML = prods.map(p =>
     `<button class="filter-btn ${filterProd===p?'active':''}" onclick="setFilter('${p}')">${p==='todos'?'Todos':p}</button>`
   ).join('');
+  renderOpsSortIndicators();
 
   const tbody = document.getElementById('d-ops-body');
   if (!ops.length) { tbody.innerHTML=`<tr><td colspan="12" class="empty-state">Sin operaciones confirmadas en la campaña ${activeCampaign || getLegacyCampaign()}</td></tr>`; return; }
 
-  tbody.innerHTML = ops.map((op,i) => {
+  const rows = sortOpsRows(ops.map((op, idx) => {
     const pM  = getPrecioMercado(op.producto, op.vencimiento);
     const L   = calcularL(op, pM);
     const pEf = getPrecioEfectivo(op, pM);
     const res = getResultadoFinanciero(op, L, pM);
+    return { op, idx, pM, L, pEf, res };
+  }));
+
+  tbody.innerHTML = rows.map(row => {
+    const {op, pM, L, res} = row;
     const fVto = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
     const fOp  = op.fecha ? new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
     const ladoClass = op.lado==='Compra'?'pill-compra':'pill-venta';
@@ -4376,18 +4462,58 @@ async function guardarOperacion() {
 
 async function cargarOpsGuardadas() {
   if (!sb||!currentCliente) return;
-  const data = await cargarOpsGuardadasConCache();
+  await cargarOpsGuardadasConCache();
+  renderOpsGuardadas();
+}
+
+function setOpsGuardadasSort(field) {
+  if (opsGuardadasSort.field === field) {
+    opsGuardadasSort.dir = opsGuardadasSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    opsGuardadasSort = { field, dir:'asc' };
+  }
+  renderOpsGuardadas();
+}
+
+// Reusa getOpsSortValue (los items son {op, idx}). Solo se ordena por
+// columnas presentes en esta tabla (fecha/producto/tipo/lado/volumen/
+// precio/vencimiento), así que nunca toca pM/res.
+function sortOpsGuardadasRows(items) {
+  if (!opsGuardadasSort.field) return items;
+  const dir = opsGuardadasSort.dir === 'desc' ? -1 : 1;
+  return [...items].sort((a, b) => {
+    const va = getOpsSortValue(a, opsGuardadasSort.field);
+    const vb = getOpsSortValue(b, opsGuardadasSort.field);
+    const aEmpty = va === null || va === undefined || va === '';
+    const bEmpty = vb === null || vb === undefined || vb === '';
+    if (aEmpty && bEmpty) return a.idx - b.idx;
+    if (aEmpty) return 1;
+    if (bEmpty) return -1;
+    const cmp = (typeof va === 'number' && typeof vb === 'number')
+      ? va - vb
+      : String(va).localeCompare(String(vb), 'es', { numeric:true, sensitivity:'base' });
+    return cmp === 0 ? a.idx - b.idx : cmp * dir;
+  });
+}
+
+function renderOpsGuardadas() {
   const wrap = document.getElementById('ops-guardadas-wrap');
   if (!wrap) return;
-  if (!data||!data.length) {
+  const data = opsCache || [];
+  if (!data.length) {
     wrap.innerHTML='<div class="card empty-state">Todavía no hay operaciones cargadas.</div>';
     return;
   }
-  const rows = data
+  // idx = posición en opsCache (la usan Editar/Eliminar) — se preserva al ordenar.
+  const items = data
     .map((op, idx) => ({op, idx}))
     .filter(item => getOperationCampaign(item.op) === activeCampaign)
-    .filter(item => isAgriculturaPro() || !isProOnlyOperationType(item.op?.tipo))
-    .map(({op, idx}) => {
+    .filter(item => isAgriculturaPro() || !isProOnlyOperationType(item.op?.tipo));
+  if (!items.length) {
+    wrap.innerHTML=`<div class="card empty-state">Todavía no hay operaciones cargadas en la campaña ${activeCampaign}.</div>`;
+    return;
+  }
+  const rows = sortOpsGuardadasRows(items).map(({op, idx}) => {
     const fOp  = new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     const fVto = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'});
     const lc   = op.lado==='Compra'?'pill-compra':'pill-venta';
@@ -4404,12 +4530,15 @@ async function cargarOpsGuardadas() {
       +'<td style="white-space:nowrap">'+btnEditar+btnElim+'</td>'
       +'</tr>';
   }).join('');
-  if (!rows) {
-    wrap.innerHTML=`<div class="card empty-state">Todavía no hay operaciones cargadas en la campaña ${activeCampaign}.</div>`;
-    return;
-  }
+  const cols = [['fecha','Fecha'],['producto','Producto'],['tipo','Tipo'],['lado','Lado'],['volumen','Volumen'],['precio','Precio'],['vencimiento','Vto.']];
+  const thHtml = cols.map(([f,label]) => {
+    const active = opsGuardadasSort.field === f;
+    const ind = active ? (opsGuardadasSort.dir==='asc'?'▲':'▼') : '⇅';
+    return '<th class="sortable'+(active?' active':'')+'" onclick="setOpsGuardadasSort(\''+f+'\')">'+label
+      +' <span class="ops-sort-ind'+(active?'':' inactive')+'">'+ind+'</span></th>';
+  }).join('') + '<th>Acciones</th>';
   wrap.innerHTML = '<div class="card ops-table-wrap"><table class="ops-table">'
-    +'<thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio</th><th>Vto.</th><th>Acciones</th></tr></thead>'
+    +'<thead><tr>'+thHtml+'</tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div>';
 }
 
@@ -6019,4 +6148,3 @@ window.addEventListener('load', async () => {
 
 })();
 </script>
-
