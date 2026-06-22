@@ -291,6 +291,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .section { margin-bottom:28px; }
 .section-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 .section-title::after { content:''; flex:1; height:1px; background:var(--crema-dd); }
+.kpi-filter-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:-2px 0 12px; }
+.kpi-filter-note { font-size:11px; line-height:1.45; color:var(--gris); }
+.kpi-filter-control { display:flex; align-items:center; gap:8px; }
+.kpi-filter-control label { font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--gris); }
+.kpi-filter-select { min-width:170px; padding:7px 12px; border-radius:20px; border:1px solid var(--crema-dd); background:var(--crema-d); font-size:12px; color:var(--texto); cursor:pointer; font-family:'DM Sans',sans-serif; outline:none; }
+.kpi-filter-select:focus { border-color:var(--oro); box-shadow:0 0 0 1px rgba(212,160,23,.12); }
 .business-dashboard-card { padding:18px; display:grid; gap:16px; }
 .business-dashboard-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; }
 .business-dashboard-title { font-size:18px; font-weight:700; color:white; margin-bottom:6px; letter-spacing:-.2px; }
@@ -1063,7 +1069,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
                 <tr>
                   <th rowspan="2" style="text-align:left;min-width:80px">Producto</th>
                   <th colspan="3">En Dólares Totales</th>
-                  <th colspan="2">En Toneladas</th>
+                  <th colspan="3">En Toneladas</th>
                   <th>P. prom.<br>Compra</th>
                   <th>P. prom.<br>Venta</th>
                   <th>P.<br>Mercado</th>
@@ -1072,7 +1078,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
                 </tr>
                 <tr>
                   <th>Long</th><th>Short</th><th>Neto</th>
-                  <th>Long</th><th>Short</th>
+                  <th>Long</th><th>Short</th><th>Neto</th>
                   <th></th><th></th><th></th><th></th><th></th>
                 </tr>
               </thead>
@@ -1303,7 +1309,16 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     <div class="dashboard-view active" id="view-kpis">
       <div class="page-body">
         <div class="section" id="sec-kpis-detalle-producto">
-          <div class="section-title">Detalle por producto</div>
+          <div class="section-title" id="kpi-detail-title">Detalle por producto · Todas las campañas</div>
+          <div class="kpi-filter-row">
+            <div class="kpi-filter-note" id="kpi-campaign-note">Vista consolidada de todas las campañas.</div>
+            <div class="kpi-filter-control">
+              <label for="kpi-campaign-select">Campaña</label>
+              <select id="kpi-campaign-select" class="kpi-filter-select" onchange="setKpiCampaignFilter(this.value)">
+                <option value="todas">Todas las campañas</option>
+              </select>
+            </div>
+          </div>
           <div class="card">
             <div class="scroll-hint">← Deslizá para ver todas las columnas →</div>
             <div class="comp-table-scroll">
@@ -1312,7 +1327,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
                   <tr>
                     <th rowspan="2" style="text-align:left;min-width:80px">Producto</th>
                     <th colspan="3">En Dólares Totales</th>
-                    <th colspan="2">En Toneladas</th>
+                    <th colspan="3">En Toneladas</th>
                     <th>P. prom.<br>Compra</th>
                     <th>P. prom.<br>Venta</th>
                     <th>P.<br>Mercado</th>
@@ -1321,7 +1336,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
                   </tr>
                   <tr>
                     <th>Long</th><th>Short</th><th>Neto</th>
-                    <th>Long</th><th>Short</th>
+                    <th>Long</th><th>Short</th><th>Neto</th>
                     <th></th><th></th><th></th><th></th><th></th>
                   </tr>
                 </thead>
@@ -1649,6 +1664,7 @@ let activeSection = 'resumen';
 let filterProd = 'todos';
 let opsSort = { field:'fecha', dir:'desc' };
 let opsGuardadasSort = { field:'fecha', dir:'desc' };
+let kpiCampaignFilter = 'todas';
 let tagsDisponibles = [];   // ['DFL','AGR',...] — tags del cliente
 let activeTagFilter = [];   // tags seleccionados para filtrar (intersección Y)
 let currentAuthMode = 'login';
@@ -3623,11 +3639,21 @@ function isExpiredMonthYear(mes, anio) {
 }
 
 // ── TAG FILTER ──
-function getFilteredOps() {
-  const campaignOps = getCampaignOps();
-  if (!activeTagFilter.length) return campaignOps;
+function getFilteredOps(options = {}) {
+  const allCampaigns = !!options.allCampaigns;
+  const requestedCampaign = normalizeCampaign(options.campaign);
+  let scopedOps;
+  if (requestedCampaign && requestedCampaign !== 'todas') {
+    scopedOps = allOps.filter(op => getOperationCampaign(op) === requestedCampaign);
+  } else {
+    scopedOps = allCampaigns ? allOps : getCampaignOps();
+  }
+  if (!isAgriculturaPro()) {
+    scopedOps = scopedOps.filter(op => !isProOnlyOperationType(op?.tipo));
+  }
+  if (!activeTagFilter.length) return scopedOps;
   // Intersección Y: op must have ALL active tags
-  return campaignOps.filter(op => {
+  return scopedOps.filter(op => {
     const opTags = op.tags || [];
     return activeTagFilter.every(t => opTags.includes(t));
   });
@@ -3689,11 +3715,11 @@ function getResultadoFinanciero(op, L, pMercado) {
   return (pMercado - pRef) * op.volumen * L;
 }
 
-function calcularCartera() {
+function calcularCartera(options = {}) {
   let valorLong = 0, valorShort = 0;
   let resFinLong = 0, resFinShort = 0;
 
-  getFilteredOps().forEach(op => {
+  getFilteredOps(options).forEach(op => {
     const pM = getPrecioMercado(op.producto, op.vencimiento);
     const L  = calcularL(op, pM);
     if (L === 0) return;
@@ -3710,7 +3736,7 @@ function calcularCartera() {
   return { cartera, realizado, pendiente: cartera - realizado };
 }
 
-function calcularPorProducto() {
+function calcularPorProducto(options = {}) {
   const map = {};
   PRODUCTOS.forEach(p => {
     map[p] = { longVal:0, shortVal:0, longTn:0, shortTn:0,
@@ -3718,7 +3744,7 @@ function calcularPorProducto() {
                pMercado:null };
   });
 
-  getFilteredOps().forEach(op => {
+  getFilteredOps(options).forEach(op => {
     const pM = getPrecioMercado(op.producto, op.vencimiento);
     const L  = calcularL(op, pM);
     const m  = map[op.producto];
@@ -3931,8 +3957,9 @@ function renderTasas() {
 function renderComposicion() {
   const map = calcularPorProducto();
   const labels=[], vals=[], colors=[];
-  const rowsHTML = PRODUCTOS.map(prod => {
-    const m = map[prod];
+
+  const buildRowsHTML = (sourceMap, collectChart = false) => PRODUCTOS.map(prod => {
+    const m = sourceMap[prod];
     if (!m.longTn && !m.shortTn) return '';
     const neto    = m.longVal - m.shortVal;
     const netoTn  = m.longTn - m.shortTn;
@@ -3942,7 +3969,9 @@ function renderComposicion() {
     const pos     = netoTn > 0 ? 'Long' : netoTn < 0 ? 'Short' : 'Neutro';
     const posClass= netoTn > 0 ? 'pos-long' : netoTn < 0 ? 'pos-short' : 'pos-neutro';
     const color   = COLORES_PROD[prod] || '#888';
-    labels.push(prod); vals.push(Math.abs(neto)); colors.push(color);
+    if (collectChart) {
+      labels.push(prod); vals.push(Math.abs(neto)); colors.push(color);
+    }
     return `<tr>
       <td><span class="prod-dot" style="background:${color}"></span>${prod}</td>
       <td>${fmtUSD(m.longVal)}</td>
@@ -3950,6 +3979,7 @@ function renderComposicion() {
       <td class="${neto>=0?'neto-pos':'neto-neg'}">${fmtUSD(neto)}</td>
       <td>${fmtTn(m.longTn)}</td>
       <td>${fmtTn(m.shortTn)}</td>
+      <td class="${netoTn>=0?'neto-pos':'neto-neg'}">${fmtTn(netoTn)}</td>
       <td>${pCompra?fmtPrecio(pCompra):'—'}</td>
       <td>${pVenta?fmtPrecio(pVenta):'—'}</td>
       <td>${m.pMercado?fmtPrecio(m.pMercado):'—'}</td>
@@ -3958,13 +3988,54 @@ function renderComposicion() {
     </tr>`;
   }).join('');
 
-  ['d-comp-body', 'kpi-comp-body'].forEach(id => {
-    const tbody = document.getElementById(id);
-    if (tbody) tbody.innerHTML = rowsHTML;
-  });
+  const emptyProductRows = '<tr><td colspan="12" class="empty-state">Sin operaciones para el alcance seleccionado</td></tr>';
+  const rowsHTML = buildRowsHTML(map, true);
+  renderKpiCampaignFilter();
+  const kpiOptions = kpiCampaignFilter === 'todas'
+    ? { allCampaigns:true }
+    : { campaign:kpiCampaignFilter };
+  const kpiRowsHTML = buildRowsHTML(calcularPorProducto(kpiOptions), false) || emptyProductRows;
+
+  const compBody = document.getElementById('d-comp-body');
+  if (compBody) compBody.innerHTML = rowsHTML;
+
+  const kpiBody = document.getElementById('kpi-comp-body');
+  if (kpiBody) kpiBody.innerHTML = kpiRowsHTML;
 
   // Sunburst
   renderSunburst();
+}
+
+function setKpiCampaignFilter(value) {
+  const next = normalizeCampaign(value);
+  kpiCampaignFilter = next && next !== 'todas' ? next : 'todas';
+  renderComposicion();
+}
+
+function renderKpiCampaignFilter() {
+  const select = document.getElementById('kpi-campaign-select');
+  const note = document.getElementById('kpi-campaign-note');
+  const title = document.getElementById('kpi-detail-title');
+  if (!select && !note && !title) return;
+
+  refreshCampaignState(activeCampaign);
+  if (kpiCampaignFilter !== 'todas' && !campaignTabs.includes(kpiCampaignFilter)) {
+    kpiCampaignFilter = 'todas';
+  }
+
+  if (select) {
+    select.innerHTML = '<option value="todas">Todas las campañas</option>' +
+      campaignTabs.map(c => `<option value="${escapeHtmlAttr(c)}">${escapeHtml(c)}</option>`).join('');
+    select.value = kpiCampaignFilter;
+  }
+
+  const label = kpiCampaignFilter === 'todas' ? 'Todas las campañas' : `Campaña ${kpiCampaignFilter}`;
+  if (title) title.textContent = `Detalle por producto · ${label}`;
+  if (note) {
+    note.textContent = kpiCampaignFilter === 'todas'
+      ? 'Vista consolidada de todas las campañas.'
+      : `Vista limitada a la campaña ${kpiCampaignFilter}.`;
+  }
 }
 
 function calcDelta(longTn, shortTn) {
@@ -4714,6 +4785,14 @@ function fmtUSD(n) {
 }
 function fmtTn(n) { return n?Number(n).toLocaleString('es-AR'):'0'; }
 function fmtPrecio(n) { return n?'$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'; }
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
+function escapeHtmlAttr(value) {
+  return escapeHtml(value);
+}
 
 
 // ══ SISTEMA DE TAGS ══
