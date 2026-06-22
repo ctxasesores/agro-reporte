@@ -3825,7 +3825,10 @@ function renderTasas() {
   });
 
   const prods = Object.keys(byProd).sort();
-  if (!_tasasProd || !prods.includes(_tasasProd)) _tasasProd = prods[0];
+  // Default: mostrar Soja al entrar (si está disponible); si no, el primero.
+  if (!_tasasProd || !prods.includes(_tasasProd)) {
+    _tasasProd = prods.find(p => p.toLowerCase() === 'soja') || prods[0];
+  }
 
   // Render tabs
   tabsEl.innerHTML = prods.map(p =>
