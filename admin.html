@@ -1614,8 +1614,24 @@ async function cargarUltimaActualizacion() {
   } catch(e) {}
 }
 
+// ── Normalización y vigencia de precios (CTX) ──
+// producto sin tilde, para no volver a duplicar Maiz/Maíz.
+const sinTilde = s => s ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : s;
+// Un precio por vencimiento (es_continuo=false) está "vencido" si su mes ya
+// pasó. Los vencidos NO se borran: son la referencia congelada que el reporte
+// usa para valuar derivados vencidos no entregados. Solo se ocultan del panel.
+function esPmVencido(p) {
+  if (p.es_continuo) return false;
+  const m = String(p.vencimiento || '').match(/^(\d{1,2})_(\d{4})$/);
+  if (!m) return false;
+  const venc = new Date(Number(m[2]), Number(m[1]) - 1, 1);
+  const hoy = new Date();
+  return venc < new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+}
+let _verVencidosPM = false;
+
 async function guardarPrecio() {
-  const producto    = document.getElementById('pm-producto').value;
+  const producto    = sinTilde(document.getElementById('pm-producto').value);
   const vencimiento = document.getElementById('pm-vencimiento').value;
   const precio      = parseFloat(document.getElementById('pm-precio').value);
   const esContinuo  = document.getElementById('pm-continuo').value === 'true';
@@ -1643,18 +1659,38 @@ async function cargarPrecios() {
   const tbody = document.getElementById('tbody-precios');
   if (!tbody) return;
   if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin precios cargados aún.</td></tr>'; return; }
-  tbody.innerHTML = data.map(p => {
+
+  const vencidos = data.filter(esPmVencido);
+  const visibles = _verVencidosPM ? data : data.filter(p => !esPmVencido(p));
+
+  const fila = p => {
     const fecha = new Date(p.updated_at || p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-    const pid = p.id;
-    return `<tr>
+    const vencido = esPmVencido(p);
+    // Los vencidos no muestran "Eliminar": desactivarlos rompería la
+    // valuación del resultado financiero de derivados vencidos no entregados.
+    const accion = vencido
+      ? '<span style="color:var(--gris);font-size:11px" title="Se conserva como referencia congelada de valuación">ref. congelada</span>'
+      : `<button class="btn-sm btn-rechazar" onclick="eliminarPrecio('${p.id}')">Eliminar</button>`;
+    return `<tr${vencido ? ' style="opacity:.55"' : ''}>
       <td style="font-weight:600">${p.producto}</td>
       <td style="font-family:monospace;font-size:12px">${p.vencimiento}</td>
       <td style="font-weight:700">$${Number(p.precio).toFixed(2)} USD/tn</td>
       <td>${p.es_continuo ? '<span class="badge-conf">Sí</span>' : '<span style="color:var(--gris);font-size:12px">No</span>'}</td>
       <td style="color:var(--gris);font-size:12px">${fecha}</td>
-      <td><button class="btn-sm btn-rechazar" onclick="eliminarPrecio('${pid}')">Eliminar</button></td>
+      <td>${accion}</td>
     </tr>`;
-  }).join('');
+  };
+
+  let html = visibles.map(fila).join('');
+  if (vencidos.length) {
+    html += `<tr><td colspan="6" style="text-align:center;padding:10px;color:var(--gris);font-size:12px">
+      ${_verVencidosPM
+        ? vencidos.length + ' vencido(s) — se conservan como referencia congelada de valuación, no se borran'
+        : vencidos.length + ' vencido(s) ocultos'}
+      <a href="#" onclick="_verVencidosPM=!_verVencidosPM;cargarPrecios();return false;" style="margin-left:8px;color:var(--oro,#b8860b);font-weight:600">${_verVencidosPM ? 'Ocultar' : 'Mostrar'}</a>
+    </td></tr>`;
+  }
+  tbody.innerHTML = html;
 }
 
 async function eliminarPrecio(id) {
