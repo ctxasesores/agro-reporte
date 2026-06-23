@@ -3660,59 +3660,136 @@ function getFilteredOps(options = {}) {
 }
 
 // ── MOTOR DE CÁLCULO ──
-// Determina el signo L (Long=+1, Short=-1) y si la operación cuenta
-function calcularL(op, pMercado) {
-  const tipo = op.tipo;
-  const lado = op.lado;
-  const pEj  = op.precio_ejercicio || 0;
+const DERIVADOS_ENTREGABLES = ['Futuro','Call','Put'];
 
-  // PAF: ignorada
+function isDerivadoEntregable(tipo) {
+  return DERIVADOS_ENTREGABLES.includes(tipo);
+}
+
+function isOperacionEntregada(op) {
+  return op?.entregado === true || op?.entregado === 1 || op?.entregado === 'true' || op?.entregado === '1';
+}
+
+function isOperacionVencida(op, refDate = new Date()) {
+  if (!op?.vencimiento) return false;
+  const d = new Date(op.vencimiento + 'T23:59:59');
+  const ref = refDate instanceof Date ? refDate : new Date(String(refDate) + 'T23:59:59');
+  return !Number.isNaN(d.getTime()) && !Number.isNaN(ref.getTime()) && d < ref;
+}
+
+function isEntregaEfectiva(op, refDate = new Date()) {
+  return isOperacionEntregada(op) && isDerivadoEntregable(op?.tipo) && isOperacionVencida(op, refDate);
+}
+
+function getSignoBase(op) {
+  return op?.lado === 'Compra' ? 1 : -1;
+}
+
+function getSignoOpcion(op) {
+  if (op?.tipo === 'Put') return op?.lado === 'Compra' ? -1 : 1;
+  return op?.lado === 'Compra' ? 1 : -1;
+}
+
+function isOpcionEjercible(op, pMercado) {
+  if (!['Call','Put'].includes(op?.tipo)) return false;
+  const pEj = Number(op.precio_ejercicio) || 0;
+  if (pMercado === null || !pEj) return false;
+  return op.tipo === 'Put' ? pMercado <= pEj : pMercado >= pEj;
+}
+
+function getPrecioEntregaDerivado(op) {
+  if (!isDerivadoEntregable(op?.tipo)) return null;
+  const pOp = Number(op.precio) || 0;
+  const pEj = Number(op.precio_ejercicio) || 0;
+  if (op.tipo === 'Futuro') return pOp || null;
+  if (!pEj) return null;
+  // Al entregar una opción, el precio físico netea la prima: compra resta, venta suma.
+  return op.lado === 'Compra' ? (pEj - pOp) : (pEj + pOp);
+}
+
+function getEstadoDerivado(op) {
+  if (!isDerivadoEntregable(op?.tipo)) return '';
+  if (isEntregaEfectiva(op)) return 'entregado';
+  if (isOperacionVencida(op)) return 'vencido';
+  return 'vigente';
+}
+
+// Determina el signo L (Long=+1, Short=-1) para delta/precios promedio.
+function calcularL(op, pMercado, refDate = new Date()) {
+  const tipo = op.tipo;
+
   if (tipo === 'PAF') return 0;
 
-  // Opciones
-  if (tipo === 'Call') {
-    const ejercible = pMercado !== null && pMercado >= pEj;
-    if (!ejercible) return 0;
-    return lado === 'Compra' ? 1 : -1;
-  }
-  if (tipo === 'Put') {
-    const ejercible = pMercado !== null && pMercado <= pEj;
-    if (!ejercible) return 0;
-    // Compra PUT = SHORT (-1), Venta PUT = LONG (+1)
-    return lado === 'Compra' ? -1 : 1;
+  if (isEntregaEfectiva(op, refDate)) {
+    return tipo === 'Futuro' ? getSignoBase(op) : getSignoOpcion(op);
   }
 
-  // Todos los demás
-  return lado === 'Compra' ? 1 : -1;
+  // Los derivados vencidos no modifican delta ni precios promedio salvo que se marquen entregados.
+  if (isDerivadoEntregable(tipo) && isOperacionVencida(op, refDate)) return 0;
+
+  if (tipo === 'Call') return isOpcionEjercible(op, pMercado) ? getSignoOpcion(op) : 0;
+  if (tipo === 'Put')  return isOpcionEjercible(op, pMercado) ? getSignoOpcion(op) : 0;
+
+  return getSignoBase(op);
+}
+
+// Precio de mercado "congelado" del vencimiento: contrato EXACTO de
+// precios_mercado (deja de actualizarse al vencer = último conocido).
+// Si no existe el contrato exacto, cae al más cercano.
+function getPrecioCongelado(op) {
+  const prod = normalizeStr(op.producto);
+  let vm = parseVencimientoMercado(op.vencimiento);
+  if (!vm && op.vencimiento) {
+    const d = new Date(op.vencimiento + 'T00:00:00');
+    if (!isNaN(d.getTime())) vm = { mes: d.getMonth() + 1, anio: d.getFullYear() };
+  }
+  if (vm) {
+    const exactKey = prod + '_' + vm.mes + '_' + vm.anio;
+    if (exactKey in precios) return precios[exactKey];
+  }
+  return getPrecioMasCercano(prod);
+}
+
+// Precio para valuar el resultado financiero: congelado si ya venció
+// (último precio conocido del contrato), de mercado actual si vigente.
+function getPrecioValuacionFin(op, pMercado, refDate = new Date()) {
+  return isOperacionVencida(op, refDate) ? getPrecioCongelado(op) : pMercado;
+}
+
+function calcularLFinanciero(op, pMercado, refDate = new Date()) {
+  const tipo = op.tipo;
+  if (!isDerivadoEntregable(tipo) || isEntregaEfectiva(op, refDate)) return 0;
+  if (tipo === 'Futuro') return getSignoBase(op);
+  // Ejercibilidad evaluada al precio de valuación (congelado si venció).
+  const pEval = getPrecioValuacionFin(op, pMercado, refDate);
+  return isOpcionEjercible(op, pEval) ? getSignoOpcion(op) : 0;
 }
 
 // Determina el precio efectivo para la valuación
-function getPrecioEfectivo(op, pMercado) {
+function getPrecioEfectivo(op, pMercado, refDate = new Date()) {
   const tipo = op.tipo;
-  // Plan de Siembra y Stock: precio de mercado
+  if (isEntregaEfectiva(op, refDate)) return getPrecioEntregaDerivado(op);
   if (['Plan de Siembra','Stock'].includes(tipo)) return pMercado;
-  // Opciones ejercibles: precio de ejercicio (strike)
   if (tipo === 'Put' || tipo === 'Call') {
     const pEj = op.precio_ejercicio || 0;
-    const ejercible = tipo === 'Put'
-      ? (pMercado !== null && pMercado <= pEj)
-      : (pMercado !== null && pMercado >= pEj);
-    if (ejercible && pEj > 0) return pEj;
+    if (isOpcionEjercible(op, pMercado) && pEj > 0) return pEj;
   }
-  // Resto: precio operado
   return op.precio || 0;
 }
 
-// Calcula resultado financiero (solo Futuros y opciones ejercibles)
-function getResultadoFinanciero(op, L, pMercado) {
+// Calcula resultado financiero. Vigente = mark-to-market; vencido no
+// entregado = CONGELADO al último precio del contrato; entregado = 0.
+function getResultadoFinanciero(op, L, pMercado, refDate = new Date()) {
   const tipo = op.tipo;
-  const esFinanciero = tipo === 'Futuro' || tipo === 'Call' || tipo === 'Put';
-  if (!esFinanciero || L === 0 || pMercado === null) return 0;
-  // Options: use strike price not prima
+  if (!isDerivadoEntregable(tipo)) return 0;
+  const lFin = calcularLFinanciero(op, pMercado, refDate);
+  if (lFin === 0) return 0;
   const pRef = (tipo === 'Call' || tipo === 'Put')
     ? (op.precio_ejercicio || 0)
     : (op.precio || 0);
-  return (pMercado - pRef) * op.volumen * L;
+  const pVal = getPrecioValuacionFin(op, pMercado, refDate);
+  if (pVal === null) return 0;
+  return (pVal - pRef) * op.volumen * lFin;
 }
 
 function calcularCartera(options = {}) {
@@ -3722,13 +3799,18 @@ function calcularCartera(options = {}) {
   getFilteredOps(options).forEach(op => {
     const pM = getPrecioMercado(op.producto, op.vencimiento);
     const L  = calcularL(op, pM);
+    const resFin = getResultadoFinanciero(op, L, pM);
+    const lFin = calcularLFinanciero(op, pM);
+    if (resFin) {
+      if (lFin > 0) resFinLong += resFin;
+      else          resFinShort += resFin;
+    }
     if (L === 0) return;
     const pEf = getPrecioEfectivo(op, pM);
     if (pEf === null) return;
     const val = pEf * op.volumen;
-    const resFin = getResultadoFinanciero(op, L, pM);
-    if (L > 0) { valorLong  += val; resFinLong  += resFin; }
-    else       { valorShort += val; resFinShort += resFin; }
+    if (L > 0) valorLong  += val;
+    else       valorShort += val;
   });
 
   const cartera   = valorLong  + resFinLong;
@@ -3741,27 +3823,47 @@ function calcularPorProducto(options = {}) {
   PRODUCTOS.forEach(p => {
     map[p] = { longVal:0, shortVal:0, longTn:0, shortTn:0,
                pCompra_num:0, pCompra_den:0, pVenta_num:0, pVenta_den:0,
+               resFinLong:0, resFinShort:0,            // congelados (vencido no entregado)
+               pCompra_num_adj:0, pVenta_num_adj:0,    // numeradores con congelado foldeado
                pMercado:null };
   });
 
   getFilteredOps(options).forEach(op => {
-    const pM = getPrecioMercado(op.producto, op.vencimiento);
-    const L  = calcularL(op, pM);
     const m  = map[op.producto];
     if (!m) return;
+    const pM = getPrecioMercado(op.producto, op.vencimiento);
     if (m.pMercado === null && pM !== null) m.pMercado = pM;
-    if (L === 0) return;
-    const pEf = getPrecioEfectivo(op, pM);
-    if (pEf === null) return;
-    const vol = op.volumen;
-    const val = pEf * vol;
-    if (L > 0) {
-      m.longVal += val; m.longTn += vol;
-      m.pCompra_num += pEf * vol; m.pCompra_den += vol;
-    } else {
-      m.shortVal += val; m.shortTn += vol;
-      m.pVenta_num += pEf * vol; m.pVenta_den += vol;
+    const L  = calcularL(op, pM);
+    if (L !== 0) {
+      const pEf = getPrecioEfectivo(op, pM);
+      if (pEf === null) return;
+      const vol = op.volumen;
+      const val = pEf * vol;
+      if (L > 0) {
+        m.longVal += val; m.longTn += vol;
+        m.pCompra_num += val; m.pCompra_den += vol;
+      } else {
+        m.shortVal += val; m.shortTn += vol;
+        m.pVenta_num += val; m.pVenta_den += vol;
+      }
+    } else if (isDerivadoEntregable(op.tipo) && isOperacionVencida(op) && !isEntregaEfectiva(op)) {
+      // Vencido NO entregado: fuera del delta; su resultado congelado se folda al precio.
+      const resFin = getResultadoFinanciero(op, 0, pM);
+      if (resFin !== 0) {
+        if (calcularLFinanciero(op, pM) > 0) m.resFinLong  += resFin;
+        else                                 m.resFinShort += resFin;
+      }
     }
+  });
+
+  // Fold (opción B): un resultado + mejora el precio efectivo del lado.
+  //   long:  pCompra_aj = (Σprecio·tn − resCongeladoLong)/tn  (menor costo = mejor)
+  //   short: pVenta_aj  = (Σprecio·tn + resCongeladoShort)/tn (mayor venta = mejor)
+  // Si no hay toneladas de ese lado, el congelado queda solo en los KPIs.
+  PRODUCTOS.forEach(p => {
+    const m = map[p];
+    m.pCompra_num_adj = m.pCompra_num - (m.pCompra_den > 0 ? m.resFinLong  : 0);
+    m.pVenta_num_adj  = m.pVenta_num  + (m.pVenta_den  > 0 ? m.resFinShort : 0);
   });
   return map;
 }
@@ -3967,8 +4069,8 @@ function renderComposicion() {
     const neto    = m.longVal - m.shortVal;
     const netoTn  = m.longTn - m.shortTn;
     const delta   = calcDelta(m.longTn, m.shortTn);
-    const pCompra = m.pCompra_den ? m.pCompra_num/m.pCompra_den : null;
-    const pVenta  = m.pVenta_den  ? m.pVenta_num/m.pVenta_den   : null;
+    const pCompra = m.pCompra_den ? m.pCompra_num_adj/m.pCompra_den : null;
+    const pVenta  = m.pVenta_den  ? m.pVenta_num_adj/m.pVenta_den   : null;
     const pos     = netoTn > 0 ? 'Long' : netoTn < 0 ? 'Short' : 'Neutro';
     const posClass= netoTn > 0 ? 'pos-long' : netoTn < 0 ? 'pos-short' : 'pos-neutro';
     const color   = COLORES_PROD[prod] || '#888';
@@ -4408,7 +4510,13 @@ function renderOps() {
     const fVto = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
     const fOp  = op.fecha ? new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
     const ladoClass = op.lado==='Compra'?'pill-compra':'pill-venta';
-    const ignorada  = L===0;
+    const ignorada  = L===0 && !res;
+    const estadoDer = getEstadoDerivado(op);
+    const estadoHtml = estadoDer === 'entregado'
+      ? '<span class="badge-conf">Entregado</span>'
+      : estadoDer === 'vencido'
+        ? '<span class="badge-pend">Vencido</span>'
+        : `<span class="${op.estado==='confirmada'?'badge-conf':'badge-pend'}">${op.estado==='confirmada'?'Confirmada':'Pendiente'}</span>`;
     return `<tr style="${ignorada?'opacity:.45':''}">
       <td style="color:var(--gris-l);font-size:12px">${fOp}</td>
       <td style="font-weight:600">${op.producto}</td>
@@ -4420,7 +4528,7 @@ function renderOps() {
       <td>${fVto}</td>
       <td class="${res>0?'resultado-pos':res<0?'resultado-neg':''}">${res?fmtUSD(res):'—'}</td>
       <td>${(op.tags||[]).map(t=>`<span class="tag-pill tag-op">${t}</span>`).join(' ')||'—'}</td>
-      <td><span class="${op.estado==='confirmada'?'badge-conf':'badge-pend'}">${op.estado==='confirmada'?'Confirmada':'Pendiente'}</span></td>
+      <td>${estadoHtml}</td>
       <td style="font-size:11px;color:var(--gris);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${op.observaciones||''}">${op.observaciones||'—'}</td>
     </tr>`;
   }).join('');
@@ -4447,6 +4555,7 @@ function onEditTipoChange() {
     if (tipoEl) tipoEl.value = '';
     showAgricultureProOnlyPopup(tipo);
   }
+  syncEditEntregaControl();
 }
 
 function resetForm() {
@@ -4549,6 +4658,41 @@ function setOpsGuardadasSort(field) {
   renderOpsGuardadas();
 }
 
+function renderEntregaAction(idx, op) {
+  if (!isDerivadoEntregable(op?.tipo)) return '<span style="color:var(--gris);font-size:11px">—</span>';
+  if (!isOperacionVencida(op)) return '<span class="badge-pend">Vigente</span>';
+  if (isOperacionEntregada(op)) {
+    return '<button onclick="toggleEntregaOp('+idx+',false)" style="padding:4px 9px;border-radius:999px;border:1px solid rgba(30,153,112,.35);background:rgba(30,153,112,.13);color:var(--verde-l);font-size:11px;font-weight:700;cursor:pointer">Entregado</button>';
+  }
+  return '<button onclick="toggleEntregaOp('+idx+',true)" style="padding:4px 9px;border-radius:999px;border:1px solid rgba(212,160,23,.45);background:rgba(212,160,23,.13);color:var(--oro-l);font-size:11px;font-weight:700;cursor:pointer">Marcar entrega</button>';
+}
+
+async function toggleEntregaOp(idx, entregado) {
+  const op = opsCache[parseInt(idx)];
+  if (!op || !isDerivadoEntregable(op.tipo) || !isOperacionVencida(op)) return;
+  if (entregado) {
+    const precioEntrega = getPrecioEntregaDerivado({...op, entregado:true});
+    const msg = 'Marcar como ENTREGADO computa esta operación como una operación a precio'
+      + (precioEntrega ? ' de '+fmtPrecio(precioEntrega)+'/tn' : '')
+      + ' y deja de contar su resultado financiero separado. ¿Continuar?';
+    if (!confirm(msg)) return;
+  }
+  const {error} = await updateOperacionWithCampaign({
+    entregado: !!entregado,
+    updated_at: new Date().toISOString()
+  }, op.id);
+  if (error) {
+    const extra = isMissingColumnError(error, 'entregado')
+      ? '\n\nAntes ejecutá en Supabase: ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS entregado boolean NOT NULL DEFAULT false;'
+      : '';
+    alert('Error al actualizar entrega: ' + error.message + extra);
+    return;
+  }
+  await refreshData();
+  await cargarOpsGuardadas();
+  renderFlujo();
+}
+
 // Reusa getOpsSortValue (los items son {op, idx}). Solo se ordena por
 // columnas presentes en esta tabla (fecha/producto/tipo/lado/volumen/
 // precio/vencimiento), así que nunca toca pM/res.
@@ -4589,10 +4733,11 @@ function renderOpsGuardadas() {
   }
   const rows = sortOpsGuardadasRows(items).map(({op, idx}) => {
     const fOp  = new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-    const fVto = new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'});
+    const fVto = op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
     const lc   = op.lado==='Compra'?'pill-compra':'pill-venta';
     const btnEditar = '<button onclick="abrirEditarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:var(--crema-d);color:var(--texto);font-size:11px;cursor:pointer;margin-right:4px">✎ Editar</button>';
     const btnElim   = '<button onclick="eliminarOp('+idx+')" style="padding:4px 10px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;font-size:11px;cursor:pointer">✕</button>';
+    const entrega   = renderEntregaAction(idx, op);
     return '<tr>'
       +'<td style="color:var(--gris);font-size:12px">'+fOp+'</td>'
       +'<td style="font-weight:600">'+op.producto+'</td>'
@@ -4601,6 +4746,7 @@ function renderOpsGuardadas() {
       +'<td>'+Number(op.volumen).toLocaleString('es-AR')+' tn</td>'
       +'<td style="font-weight:600;color:var(--verde)">'+(op.precio>0?'$'+Number(op.precio).toFixed(1)+'/tn':'—')+'</td>'
       +'<td>'+fVto+'</td>'
+      +'<td>'+entrega+'</td>'
       +'<td style="white-space:nowrap">'+btnEditar+btnElim+'</td>'
       +'</tr>';
   }).join('');
@@ -4610,7 +4756,7 @@ function renderOpsGuardadas() {
     const ind = active ? (opsGuardadasSort.dir==='asc'?'▲':'▼') : '⇅';
     return '<th class="sortable'+(active?' active':'')+'" onclick="setOpsGuardadasSort(\''+f+'\')">'+label
       +' <span class="ops-sort-ind'+(active?'':' inactive')+'">'+ind+'</span></th>';
-  }).join('') + '<th>Acciones</th>';
+  }).join('') + '<th>Entrega</th><th>Acciones</th>';
   wrap.innerHTML = '<div class="card ops-table-wrap"><table class="ops-table">'
     +'<thead><tr>'+thHtml+'</tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div>';
@@ -4624,6 +4770,38 @@ async function cargarOpsGuardadasConCache() {
   // Ensure tags field is always an array
   opsCache = (data || []).map(op => ({...op, tags: Array.isArray(op.tags) ? op.tags : (op.tags ? [op.tags] : ['DFL'])}));
   return opsCache;
+}
+
+function getEditOperacionDraft() {
+  return {
+    tipo: document.getElementById('eop-tipo')?.value || '',
+    lado: document.getElementById('eop-lado')?.value || '',
+    vencimiento: document.getElementById('eop-vencimiento')?.value || '',
+    precio: parseFloat(document.getElementById('eop-precio')?.value) || 0,
+    precio_ejercicio: parseFloat(document.getElementById('eop-ejercicio')?.value) || 0,
+    entregado: document.getElementById('eop-entregado')?.checked || false
+  };
+}
+
+function syncEditEntregaControl(op = getEditOperacionDraft()) {
+  const grp = document.getElementById('grp-eop-entregado');
+  const chk = document.getElementById('eop-entregado');
+  const preview = document.getElementById('eop-entrega-preview');
+  if (!grp || !chk) return;
+  const visible = isDerivadoEntregable(op.tipo) && isOperacionVencida(op);
+  grp.style.display = visible ? 'block' : 'none';
+  if (!visible) {
+    chk.checked = false;
+    if (preview) preview.textContent = '';
+    return;
+  }
+  chk.checked = isOperacionEntregada(op);
+  if (preview) {
+    const precioEntrega = getPrecioEntregaDerivado({...op, entregado:true});
+    preview.textContent = precioEntrega
+      ? 'Al entregarse computa como operación a precio de '+fmtPrecio(precioEntrega)+'/tn y elimina el resultado financiero separado.'
+      : 'Al entregarse elimina el resultado financiero separado y computa como operación a precio.';
+  }
 }
 
 function abrirEditarOp(idx) {
@@ -4644,6 +4822,7 @@ function abrirEditarOp(idx) {
   document.getElementById('eop-vencimiento').value = op.vencimiento;
   document.getElementById('eop-ejercicio').value   = op.precio_ejercicio || '';
   document.getElementById('eop-obs').value         = op.observaciones || '';
+  syncEditEntregaControl(op);
   // Get tags: try allOps first (has normalized data), fallback to opsCache
   const opFull = allOps.find(o => String(o.id) === String(op.id));
   const opTags = (opFull ? opFull.tags : op.tags) || ['DFL'];
@@ -4692,7 +4871,7 @@ async function guardarEditOp() {
   }
   
   const editTags = Array.from(document.querySelectorAll('#eop-tags-selector .tag-selector-item.selected')).map(el => el.dataset.tag);
-  const {error} = await updateOperacionWithCampaign({
+  const payload = {
     producto:         producto,
     tipo:             tipo,
     lado:             lado,
@@ -4705,8 +4884,16 @@ async function guardarEditOp() {
     tags:             editTags.length ? editTags : ['DFL'],
     campania:         activeCampaign || getLegacyCampaign(),
     updated_at:       new Date().toISOString()
-  }, id);
-  if (error) { alert('Error al guardar: ' + error.message); return; }
+  };
+  payload.entregado = !!document.getElementById('eop-entregado')?.checked;
+  const {error} = await updateOperacionWithCampaign(payload, id);
+  if (error) {
+    const extra = isMissingColumnError(error, 'entregado')
+      ? '\n\nAntes ejecutá en Supabase: ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS entregado boolean NOT NULL DEFAULT false;'
+      : '';
+    alert('Error al guardar: ' + error.message + extra);
+    return;
+  }
   cerrarEditarOp();
   await refreshData();
   await cargarOpsGuardadas();
@@ -5120,15 +5307,18 @@ function renderPosicionesChart() {
     const pM = getPrecioMercado(op.producto, op.vencimiento);
     const L  = calcularL(op, pM);
     if (L === 0) return; // PAF o no ejercible
-    // For options: show strike price on Y axis
-    const esOpcion = op.tipo === 'Call' || op.tipo === 'Put';
-    const yPrecio = esOpcion
+    const entregado = isEntregaEfectiva(op);
+    // For active options: show strike price. Delivered options behave as physical price ops.
+    const esOpcion = (op.tipo === 'Call' || op.tipo === 'Put') && !entregado;
+    const yPrecio = entregado
+      ? getPrecioEfectivo(op, pM)
+      : esOpcion
       ? (op.precio_ejercicio || op.precio)
       : (getPrecioEfectivo(op, pM) || op.precio);
     if (!yPrecio || !op.fecha) return;
     const punto = { x: op.fecha, y: yPrecio, r: toRadius(op.volumen), op };
     if (esOpcion) bubbleOpcEj.push(punto);
-    else if (op.lado === 'Compra') bubbleCompra.push(punto);
+    else if (L > 0) bubbleCompra.push(punto);
     else bubbleVenta.push(punto);
   });
 
@@ -5561,16 +5751,17 @@ function renderEvolucion() {
     opsActivas.forEach(op => {
       const pM = getPrecioHist(op.producto, op.vencimiento, fecha);
       if (pM === null) return;
-      const tipo = op.tipo;
-      let pEf = op.precio || 0;
-      if (['Plan de Siembra','Stock'].includes(tipo)) pEf = pM;
-      else if (tipo === 'Put' || tipo === 'Call') {
-        const pEj = op.precio_ejercicio || 0;
-        const ej  = tipo === 'Put' ? pM <= pEj : pM >= pEj;
-        if (ej && pEj > 0) pEf = pEj;
+      const refDate = new Date(fecha + 'T23:59:59');
+      const L = calcularL(op, pM, refDate);
+      const resFin = getResultadoFinanciero(op, L, pM, refDate);
+      const lFin = calcularLFinanciero(op, pM, refDate);
+      if (resFin) {
+        if (lFin > 0) pendiente += resFin;
+        else          realizado += resFin;
       }
-      const L = calcularL(op, pM);
       if (L === 0) return;
+      const pEf = getPrecioEfectivo(op, pM, refDate);
+      if (pEf === null) return;
       const val = pEf * Number(op.volumen);
       if (L > 0) pendiente += val;
       else       realizado += val;
@@ -5682,7 +5873,7 @@ function renderEvolucion() {
       </div>
       <div class="form-group">
         <label class="form-label">Lado</label>
-        <select class="form-select" id="eop-lado">
+        <select class="form-select" id="eop-lado" onchange="syncEditEntregaControl()">
           <option>Compra</option><option>Venta</option>
         </select>
       </div>
@@ -5696,15 +5887,15 @@ function renderEvolucion() {
       </div>
       <div class="form-group">
         <label class="form-label">Precio (USD/tn)</label>
-        <input type="number" class="form-input" id="eop-precio" min="0" step="0.1">
+        <input type="number" class="form-input" id="eop-precio" min="0" step="0.1" oninput="syncEditEntregaControl()">
       </div>
       <div class="form-group">
         <label class="form-label">Vencimiento</label>
-        <input type="date" class="form-input" id="eop-vencimiento">
+        <input type="date" class="form-input" id="eop-vencimiento" onchange="syncEditEntregaControl()">
       </div>
       <div class="form-group">
         <label class="form-label">P. Ejercicio</label>
-        <input type="number" class="form-input" id="eop-ejercicio" min="0" step="0.1">
+        <input type="number" class="form-input" id="eop-ejercicio" min="0" step="0.1" oninput="syncEditEntregaControl()">
       </div>
       <div class="form-group full">
         <label class="form-label">Observaciones</label>
@@ -5713,6 +5904,14 @@ function renderEvolucion() {
       <div class="form-group full" style="grid-column:1/-1">
         <label class="form-label">Tags</label>
         <div id="eop-tags-selector" class="tag-selector-grid"></div>
+      </div>
+      <div class="form-group full" id="grp-eop-entregado" style="grid-column:1/-1;display:none">
+        <label class="form-label">Entrega</label>
+        <label style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--crema-dd);border-radius:10px;background:rgba(212,160,23,.08);color:var(--texto);font-size:12px;cursor:pointer">
+          <input type="checkbox" id="eop-entregado" onchange="syncEditEntregaControl()" style="accent-color:var(--oro)">
+          Marcar instrumento vencido como ENTREGADO
+        </label>
+        <div id="eop-entrega-preview" style="font-size:11px;color:var(--gris-l);margin-top:6px;line-height:1.35"></div>
       </div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
@@ -5808,8 +6007,8 @@ window.addEventListener('load', async () => {
             producto: prod,
             tn_compradas: Math.round(v.longTn || 0),
             tn_vendidas: Math.round(v.shortTn || 0),
-            precio_prom_compra: v.pCompra_den ? +(v.pCompra_num / v.pCompra_den).toFixed(2) : null,
-            precio_prom_venta: v.pVenta_den ? +(v.pVenta_num / v.pVenta_den).toFixed(2) : null,
+            precio_prom_compra: v.pCompra_den ? +(v.pCompra_num_adj / v.pCompra_den).toFixed(2) : null,
+            precio_prom_venta: v.pVenta_den ? +(v.pVenta_num_adj / v.pVenta_den).toFixed(2) : null,
             precio_mercado: v.pMercado != null ? +Number(v.pMercado).toFixed(2) : null,
           }));
       }
@@ -5933,8 +6132,8 @@ window.addEventListener('load', async () => {
             producto: prod,
             tn_compradas:       Math.round(v.longTn  || 0),
             tn_vendidas:        Math.round(v.shortTn || 0),
-            precio_prom_compra: v.pCompra_den ? +(v.pCompra_num / v.pCompra_den).toFixed(2) : null,
-            precio_prom_venta:  v.pVenta_den  ? +(v.pVenta_num  / v.pVenta_den).toFixed(2)  : null,
+            precio_prom_compra: v.pCompra_den ? +(v.pCompra_num_adj / v.pCompra_den).toFixed(2) : null,
+            precio_prom_venta:  v.pVenta_den  ? +(v.pVenta_num_adj  / v.pVenta_den).toFixed(2)  : null,
             precio_mercado:     v.pMercado != null ? +Number(v.pMercado).toFixed(2) : null,
           }));
       }
