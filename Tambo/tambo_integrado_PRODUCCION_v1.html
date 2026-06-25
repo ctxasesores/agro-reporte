@@ -171,6 +171,13 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 .modal{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012)), var(--negro-s);border-radius:var(--r);padding:1.4rem;width:100%;max-width:620px;max-height:82vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:.5px solid var(--border)}
 .modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:1rem}
 .modal-title{font-size:15px;font-weight:700}
+.help-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.help-card{background:rgba(255,255,255,.035);border:.5px solid var(--border);border-radius:var(--r-sm);padding:12px}
+.help-card h4{font-size:13px;margin-bottom:6px;color:var(--texto)}
+.help-card p,.help-card li{font-size:12px;line-height:1.45;color:var(--gris)}
+.help-card ul{margin-left:16px;display:grid;gap:4px}
+.help-note{margin-top:10px;padding:10px 12px;border-radius:var(--r-sm);background:rgba(212,160,23,.08);border:.5px solid rgba(212,160,23,.24);color:var(--oro-l);font-size:12px;line-height:1.45}
+@media(max-width:760px){.help-grid{grid-template-columns:1fr}}
 .hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--border);gap:10px}
 .hist-item:last-child{border-bottom:none}
 .hist-info{flex:1;min-width:0}
@@ -240,6 +247,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
           </div>
           <div class="save-row">
             <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
+            <button class="btn" type="button" onclick="abrirAyuda()">Ayuda</button>
             <button class="btn" type="button" onclick="applyPresets()">Aplicar presets</button>
             <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
             <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
@@ -523,6 +531,45 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
   </div>
 </div>
 
+<div class="modal-bg" id="modal_help" onclick="cerrarAyuda(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Guía rápida tambo</div>
+        <div style="font-size:12px;color:var(--gris);margin-top:3px">Configurá el sistema, guardá escenarios y compará margen, sólidos y eficiencia.</div>
+      </div>
+      <button class="btn btn-sm" type="button" onclick="cerrarAyuda()">Cerrar</button>
+    </div>
+    <div class="help-grid">
+      <div class="help-card">
+        <h4>Primer uso</h4>
+        <ul>
+          <li>Elegí cuenca y sistema productivo para cargar referencias iniciales.</li>
+          <li>Ajustá litros, sólidos, carga y costos a la realidad del caso.</li>
+          <li>Aplicá presets solo como punto de partida, no como valor final.</li>
+        </ul>
+      </div>
+      <div class="help-card">
+        <h4>Escenarios</h4>
+        <ul>
+          <li>Guardá un escenario base antes de hacer variantes.</li>
+          <li>Usá nombres descriptivos para comparar precio, eficiencia o costos.</li>
+          <li>El historial permite recuperar escenarios guardados.</li>
+        </ul>
+      </div>
+      <div class="help-card">
+        <h4>KPIs principales</h4>
+        <p>El análisis prioriza margen, costo por litro, sólidos, litros por vaca y eficiencia del sistema. Revisá esas métricas antes de exportar.</p>
+      </div>
+      <div class="help-card">
+        <h4>Buenas prácticas</h4>
+        <p>Después de guardar cambios importantes, tocá Actualizar en el dashboard principal para que KPIs y PDF usen el último escenario.</p>
+      </div>
+    </div>
+    <div class="help-note">Tip: separá escenarios por hipótesis concreta, por ejemplo precio leche, dieta, sólidos o eficiencia reproductiva. Así las comparaciones son más limpias.</div>
+  </div>
+</div>
+
 <script>
 var REPORT_MODE = 'ESTANDAR';
 var currentClienteId = '';
@@ -632,6 +679,17 @@ function toggleAcc(id, iconId){
   var isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : '';
   if(icon) icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function abrirAyuda(){
+  var modal = document.getElementById('modal_help');
+  if(modal) modal.classList.add('open');
+}
+
+function cerrarAyuda(ev){
+  if(ev && ev.target !== ev.currentTarget) return;
+  var modal = document.getElementById('modal_help');
+  if(modal) modal.classList.remove('open');
 }
 
 function syncCuencaToBase(){
