@@ -68,6 +68,7 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica
   .bar-wrap{gap:6px}
   .bar{min-height:16px}
   .modal{padding:1.1rem}
+  .help-grid{grid-template-columns:1fr}
 }
 
 /* ── HEADER REPORTE ── */
@@ -222,6 +223,12 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 .modal{background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--bg2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);border:0.5px solid var(--border)}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.help-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.help-card{background:rgba(255,255,255,.035);border:0.5px solid var(--border);border-radius:var(--r-sm);padding:12px}
+.help-card h4{font-size:13px;margin-bottom:6px;color:var(--txt)}
+.help-card p,.help-card li{font-size:12px;line-height:1.45;color:var(--txt2)}
+.help-card ul{margin-left:16px;display:grid;gap:4px}
+.help-note{margin-top:10px;padding:10px 12px;border-radius:var(--r-sm);background:rgba(212,160,23,.08);border:0.5px solid rgba(212,160,23,.24);color:var(--oro-l);font-size:12px;line-height:1.45}
 .hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);gap:10px}
 .hist-item:last-child{border-bottom:none}
 .hist-info{flex:1;min-width:0}
@@ -252,6 +259,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
         <input type="text" id="campania" placeholder="Escenario base 25/26">
         <input type="hidden" id="sel_cliente">
       </div>
+      <button class="btn" type="button" onclick="abrirAyuda()">Ayuda</button>
       <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
       <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
       <button class="btn btn-icon" type="button" onclick="nuevoAnalisis()" title="Nuevo escenario">＋</button>
@@ -477,6 +485,41 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
   </div>
 </div>
 
+<div class="modal-bg" id="modal_help" onclick="if(event.target===this)cerrarAyuda()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Guía rápida ganadera ESTÁNDAR</div>
+        <div style="font-size:12px;color:var(--txt2);margin-top:-8px">Carga un caso base, guardalo y usalo como escenario ganadero del cliente.</div>
+      </div>
+      <button class="btn btn-sm btn-icon" onclick="cerrarAyuda()">✕</button>
+    </div>
+    <div class="help-grid">
+      <div class="help-card">
+        <h4>Primer uso</h4>
+        <ul>
+          <li>Completá Datos generales antes de activar actividades.</li>
+          <li>Activá solo las actividades que forman parte del caso.</li>
+          <li>Revisá precios, costos y parámetros físicos antes de guardar.</li>
+        </ul>
+      </div>
+      <div class="help-card">
+        <h4>Escenario activo</h4>
+        <p>En ESTÁNDAR se conserva un escenario principal. Si querés reemplazarlo, editá el existente o borrá el guardado desde Escenarios guardados.</p>
+      </div>
+      <div class="help-card">
+        <h4>Lectura del reporte</h4>
+        <p>El reporte resume margen bruto, sensibilidad y flujo de fondos de las actividades activadas. Las secciones colapsables ayudan a revisar el caso sin perder contexto.</p>
+      </div>
+      <div class="help-card">
+        <h4>Buenas prácticas</h4>
+        <p>Guardá después de cambios importantes y tocá Actualizar en el dashboard principal antes de exportar PDF o revisar KPIs consolidados.</p>
+      </div>
+    </div>
+    <div class="help-note">Tip: usá ESTÁNDAR para un caso representativo. Si necesitás comparar muchas alternativas por cliente, conviene pasar a PRO.</div>
+  </div>
+</div>
+
 <script>
 const REPORT_MODE = 'ESTANDAR';
 
@@ -487,6 +530,16 @@ function toggleAcc(id, iconId) {
   var isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
   if (icon) icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function abrirAyuda() {
+  var modal = document.getElementById('modal_help');
+  if (modal) modal.classList.add('open');
+}
+
+function cerrarAyuda() {
+  var modal = document.getElementById('modal_help');
+  if (modal) modal.classList.remove('open');
 }
 
 // ── ESTADO ──────────────────────────────────────────────────
