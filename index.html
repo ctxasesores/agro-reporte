@@ -226,13 +226,44 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .docs-card h4 { color:white; font-size:15px; margin-bottom:8px; }
 .docs-card p, .docs-card li { color:rgba(255,255,255,.62); font-size:13px; line-height:1.55; }
 .docs-card ul { margin-left:18px; display:grid; gap:5px; }
+.training-section { display:grid; gap:14px; }
+.training-head { display:flex; justify-content:space-between; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+.training-title { color:white; font-size:19px; font-weight:800; letter-spacing:-.2px; }
+.training-copy { color:rgba(255,255,255,.58); font-size:13px; line-height:1.55; max-width:680px; }
+.training-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.training-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:15px; display:grid; gap:9px; }
+.training-card h4 { color:white; font-size:14px; line-height:1.25; }
+.training-card p, .training-card li { color:rgba(255,255,255,.62); font-size:12px; line-height:1.5; }
+.training-card ul { margin-left:17px; display:grid; gap:4px; }
+.training-meta { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.training-tag { display:inline-flex; align-items:center; min-height:22px; padding:3px 8px; border-radius:999px; border:1px solid rgba(212,160,23,.30); background:rgba(212,160,23,.08); color:var(--oro-l); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.55px; }
+.training-tag.muted { border-color:rgba(255,255,255,.12); background:rgba(255,255,255,.045); color:rgba(255,255,255,.62); }
+.tutorial-flow { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.tutorial-panel { background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:16px; }
+.tutorial-panel h4 { color:white; font-size:15px; margin-bottom:10px; }
+.tutorial-panel .pro-steps { gap:8px; }
+.tutorial-panel .pro-step { font-size:12.5px; }
+.training-details { display:grid; gap:10px; }
+.training-detail { background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.09); border-radius:16px; overflow:hidden; }
+.training-detail summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:15px 16px; color:white; font-size:14px; font-weight:800; }
+.training-detail summary::-webkit-details-marker { display:none; }
+.training-detail summary::after { content:'+'; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--oro-l); border:1px solid rgba(212,160,23,.30); background:rgba(212,160,23,.08); flex-shrink:0; }
+.training-detail[open] summary::after { content:'−'; }
+.training-detail-body { border-top:1px solid rgba(255,255,255,.08); padding:15px 16px 16px; display:grid; gap:13px; }
+.training-columns { display:grid; grid-template-columns:1.1fr .9fr; gap:12px; }
+.training-block { background:rgba(8,20,34,.38); border:1px solid rgba(255,255,255,.07); border-radius:13px; padding:13px; }
+.training-block h5 { color:white; font-size:12px; text-transform:uppercase; letter-spacing:.7px; margin-bottom:8px; }
+.training-block p,.training-block li { color:rgba(255,255,255,.62); font-size:12px; line-height:1.55; }
+.training-block ul { margin-left:17px; display:grid; gap:5px; }
+.training-result { padding:12px 13px; border-radius:13px; background:rgba(30,153,112,.10); border:1px solid rgba(30,153,112,.24); color:#b8f3d5; font-size:12px; line-height:1.55; }
+.docs-callout { padding:14px 16px; border-radius:16px; background:rgba(212,160,23,.08); border:1px solid rgba(212,160,23,.24); color:rgba(255,255,255,.70); font-size:13px; line-height:1.58; }
 .terms-section { display:grid; gap:14px; }
 .terms-section h4 { color:white; font-size:15px; margin-bottom:6px; }
 .terms-section p, .terms-section li { color:rgba(255,255,255,.64); font-size:13px; line-height:1.62; }
 .terms-section ul { margin-left:18px; display:grid; gap:6px; }
 @media(max-width:860px) {
   .dashboard-actions { justify-content:flex-start; flex-wrap:wrap; }
-  .pro-grid, .docs-grid, .billing-grid { grid-template-columns:1fr; }
+  .pro-grid, .docs-grid, .billing-grid, .training-grid, .tutorial-flow, .training-columns { grid-template-columns:1fr; }
   .pro-compare { display:block; overflow-x:auto; }
 }
 .account-shell { display:grid; gap:18px; }
@@ -738,8 +769,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     <div class="pro-modal-head">
       <div>
         <div class="pro-modal-eyebrow">Documentación</div>
-        <div class="pro-modal-title">Guía rápida de uso de los paneles</div>
-        <div class="pro-modal-copy">Una referencia operativa para cargar datos, guardar escenarios, revisar KPIs y exportar reportes sin salir del dashboard. Sirve para versiones ESTANDAR y PRO.</div>
+        <div class="pro-modal-title">Guía, capacitación y tutoriales</div>
+        <div class="pro-modal-copy">Una referencia operativa para aprender el flujo completo: cargar datos, guardar escenarios, interpretar KPIs y exportar reportes sin salir del dashboard. Sirve para versiones ESTANDAR y PRO.</div>
       </div>
       <button class="pro-modal-close" type="button" onclick="closeDocumentationModal()">×</button>
     </div>
@@ -794,6 +825,191 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           <div class="pro-step"><div class="pro-step-num">5</div><div>Revisá KPIs, composición, flujo o sensibilidad antes de exportar PDF.</div></div>
         </div>
       </div>
+      <div class="training-section">
+        <div class="training-head">
+          <div>
+            <div class="pro-price-label">Capacitación y tutoriales</div>
+            <div class="training-title">Recorridos recomendados</div>
+          </div>
+          <div class="training-copy">Elegí el recorrido según lo que necesitás aprender. La idea es avanzar desde lectura del panel hasta carga, control y exportación.</div>
+        </div>
+        <div class="training-grid">
+          <div class="training-card">
+            <div class="training-meta"><span class="training-tag">Inicial</span><span class="training-tag muted">10 min</span></div>
+            <h4>1. Lectura general del dashboard</h4>
+            <p>Para usuarios nuevos que quieren entender qué muestra cada bloque antes de cargar datos.</p>
+            <ul>
+              <li>Identificar cliente y actividad activa.</li>
+              <li>Reconocer KPIs, composición y evolución.</li>
+              <li>Usar Actualizar antes de revisar datos recientes.</li>
+            </ul>
+          </div>
+          <div class="training-card">
+            <div class="training-meta"><span class="training-tag">Operativo</span><span class="training-tag muted">15 min</span></div>
+            <h4>2. Carga y control de datos</h4>
+            <p>Para quien administra operaciones agrícolas o escenarios productivos.</p>
+            <ul>
+              <li>Cargar operaciones o supuestos.</li>
+              <li>Guardar escenarios.</li>
+              <li>Validar que el dato impacte en KPIs y reportes.</li>
+            </ul>
+          </div>
+          <div class="training-card">
+            <div class="training-meta"><span class="training-tag">Análisis</span><span class="training-tag muted">20 min</span></div>
+            <h4>3. Interpretación para decisiones</h4>
+            <p>Para transformar la información cargada en lectura comercial y financiera.</p>
+            <ul>
+              <li>Leer exposición long, short y neta.</li>
+              <li>Interpretar flujo de fondos y sensibilidad.</li>
+              <li>Comparar escenarios antes de exportar.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="training-details">
+          <details class="training-detail" open>
+            <summary>Recorrido 1 · Lectura general del dashboard</summary>
+            <div class="training-detail-body">
+              <div class="training-columns">
+                <div class="training-block">
+                  <h5>Objetivo</h5>
+                  <p>Que el usuario entienda dónde está parado antes de cargar o modificar datos: cliente activo, actividad activa, versión del panel, KPIs principales y estado de actualización.</p>
+                </div>
+                <div class="training-block">
+                  <h5>Antes de empezar</h5>
+                  <ul>
+                    <li>Confirmar que el cliente del menú lateral sea el correcto.</li>
+                    <li>Verificar si el panel activo es Agricultura, Ganadería o Tambo.</li>
+                    <li>Tocar Actualizar si el panel estuvo abierto durante mucho tiempo.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="training-block">
+                <h5>Práctica guiada</h5>
+                <ul>
+                  <li>Leé el bloque superior y ubicá nombre del cliente, actividad y plan asignado.</li>
+                  <li>Identificá el KPI principal: valor de cartera en Agricultura, margen o escenario en Ganadería/Tambo.</li>
+                  <li>Entrá a Composición o Vista de actividad para entender de dónde surge el resultado.</li>
+                  <li>Revisá si hay botones MACRO, Documentación, Actualizar o Exportar PDF disponibles.</li>
+                  <li>Terminá leyendo el panel sin hacer cambios: el objetivo es reconocer la estructura antes de operar.</li>
+                </ul>
+              </div>
+              <div class="training-result"><strong>Resultado esperado:</strong> el usuario puede explicar qué cliente está viendo, qué actividad está activa, qué dato principal resume el panel y qué sección debería revisar para profundizar.</div>
+            </div>
+          </details>
+          <details class="training-detail">
+            <summary>Recorrido 2 · Carga y control de datos</summary>
+            <div class="training-detail-body">
+              <div class="training-columns">
+                <div class="training-block">
+                  <h5>Objetivo</h5>
+                  <p>Que el usuario aprenda a cargar información y comprobar que impactó correctamente en los reportes, sin depender de una revisión externa.</p>
+                </div>
+                <div class="training-block">
+                  <h5>Regla de oro</h5>
+                  <p>Guardar no alcanza: después de cargar o editar datos importantes, hay que tocar Actualizar y revisar el impacto en KPIs, detalle y gráficos.</p>
+                </div>
+              </div>
+              <div class="training-block">
+                <h5>Práctica guiada</h5>
+                <ul>
+                  <li>En Agricultura, cargá una operación con producto, campaña, posición, tipo, toneladas, precio, fecha y tags.</li>
+                  <li>Usá el listado de Operaciones para ordenar por fecha, producto o tipo y revisar que la carga sea consistente.</li>
+                  <li>En Ganadería o Tambo, completá supuestos físicos y económicos, luego guardá el escenario con un nombre reconocible.</li>
+                  <li>Tocá Actualizar y verificá que el dato aparezca en KPIs, Detalle por producto, Flujo de fondos o escenarios guardados.</li>
+                  <li>Si algo no aparece, revisá primero cliente, campaña, tags, escenario activo y estado de habilitación del panel.</li>
+                </ul>
+              </div>
+              <div class="training-result"><strong>Resultado esperado:</strong> el usuario puede cargar un dato, encontrarlo nuevamente, detectar errores de carga y confirmar que el panel recalculó con la información correcta.</div>
+            </div>
+          </details>
+          <details class="training-detail">
+            <summary>Recorrido 3 · Interpretación para decisiones</summary>
+            <div class="training-detail-body">
+              <div class="training-columns">
+                <div class="training-block">
+                  <h5>Objetivo</h5>
+                  <p>Que el usuario transforme los datos en una lectura de exposición, resultado, riesgo y oportunidad comercial.</p>
+                </div>
+                <div class="training-block">
+                  <h5>Preguntas guía</h5>
+                  <ul>
+                    <li>¿Qué parte del resultado ya está capturada?</li>
+                    <li>¿Qué exposición queda pendiente?</li>
+                    <li>¿Dónde está concentrado el riesgo?</li>
+                    <li>¿Qué cambia si muevo precio, tasa, kilos, litros o costos?</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="training-block">
+                <h5>Práctica guiada</h5>
+                <ul>
+                  <li>En Agricultura, compará Long, Short y Neto en dólares y toneladas para entender exposición por producto.</li>
+                  <li>Revisá Tasas implícitas para detectar vencimientos con tasas altas, bajas o negativas.</li>
+                  <li>Usá Composición para navegar producto, realizado/pendiente y tipo de operación.</li>
+                  <li>En Ganadería/Tambo, revisá margen, sensibilidad y flujo para separar problema de precio, costo o eficiencia.</li>
+                  <li>Antes de exportar, armá una conclusión corta: posición actual, riesgo principal y próxima decisión sugerida.</li>
+                </ul>
+              </div>
+              <div class="training-result"><strong>Resultado esperado:</strong> el usuario puede leer el panel como una herramienta de decisión, no solo como un resumen de datos cargados.</div>
+            </div>
+          </details>
+        </div>
+      </div>
+      <div class="tutorial-flow">
+        <div class="tutorial-panel">
+          <h4>Tutorial operativo: Agricultura</h4>
+          <div class="pro-steps">
+            <div class="pro-step"><div class="pro-step-num">1</div><div>Seleccioná la campaña que querés analizar o dejá todas si buscás una visión consolidada.</div></div>
+            <div class="pro-step"><div class="pro-step-num">2</div><div>Cargá la operación indicando producto, posición, tipo, toneladas, precio, fecha y tags obligatorios.</div></div>
+            <div class="pro-step"><div class="pro-step-num">3</div><div>Usá el listado de Operaciones para ordenar por fecha, producto, tipo o estado y revisar inconsistencias.</div></div>
+            <div class="pro-step"><div class="pro-step-num">4</div><div>Revisá Detalle por producto para comparar dólares y toneladas long, short y netas.</div></div>
+            <div class="pro-step"><div class="pro-step-num">5</div><div>Validá Tasas implícitas, Composición y Flujo de fondos antes de exportar.</div></div>
+          </div>
+        </div>
+        <div class="tutorial-panel">
+          <h4>Tutorial operativo: Ganadería y Tambo</h4>
+          <div class="pro-steps">
+            <div class="pro-step"><div class="pro-step-num">1</div><div>Completá datos generales y seleccioná el sistema productivo o actividades que correspondan.</div></div>
+            <div class="pro-step"><div class="pro-step-num">2</div><div>Revisá supuestos físicos: kilos, litros, superficie, carga, duración, eficiencia y mermas.</div></div>
+            <div class="pro-step"><div class="pro-step-num">3</div><div>Revisá supuestos económicos: precios, costos, alimentación, sanidad, estructura y personal.</div></div>
+            <div class="pro-step"><div class="pro-step-num">4</div><div>Guardá el escenario con un nombre claro y recuperable desde Escenarios guardados.</div></div>
+            <div class="pro-step"><div class="pro-step-num">5</div><div>Volvé al dashboard, tocá Actualizar y confirmá que los KPIs reflejen el escenario guardado.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="training-grid">
+        <div class="training-card">
+          <div class="training-meta"><span class="training-tag">Cliente</span></div>
+          <h4>Qué mirar primero</h4>
+          <ul>
+            <li>Valor total de cartera o margen del escenario.</li>
+            <li>Exposición pendiente.</li>
+            <li>Flujo de fondos o calendario productivo.</li>
+            <li>Alertas, datos faltantes o supuestos fuera de rango.</li>
+          </ul>
+        </div>
+        <div class="training-card">
+          <div class="training-meta"><span class="training-tag">Asesor</span></div>
+          <h4>Qué validar antes de presentar</h4>
+          <ul>
+            <li>Que el cliente y panel activo sean correctos.</li>
+            <li>Que las operaciones tengan campaña, tags y tipo correctos.</li>
+            <li>Que escenarios productivos estén guardados.</li>
+            <li>Que el PDF salga después de Actualizar.</li>
+          </ul>
+        </div>
+        <div class="training-card">
+          <div class="training-meta"><span class="training-tag">PRO</span></div>
+          <h4>Funciones avanzadas</h4>
+          <ul>
+            <li>Múltiples campañas y escenarios.</li>
+            <li>Opciones, FIX y A Fijar en agricultura.</li>
+            <li>Comparación de sensibilidad y flujo.</li>
+            <li>Lectura macro desde el botón MACRO.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="docs-callout"><strong>Secuencia recomendada de capacitación:</strong> primero lectura general del dashboard, después carga de datos, luego interpretación económica y finalmente exportación. Si algo no coincide, revisar primero datos guardados, campaña/escenario activo y botón Actualizar.</div>
       <div class="docs-grid">
         <div class="docs-card">
           <h4>Conceptos clave</h4>
