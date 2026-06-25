@@ -739,7 +739,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
       <div>
         <div class="pro-modal-eyebrow">Documentación</div>
         <div class="pro-modal-title">Guía rápida de uso de los paneles</div>
-        <div class="pro-modal-copy">Una referencia corta para operar los reportes sin salir del dashboard. Sirve para versiones ESTANDAR y PRO.</div>
+        <div class="pro-modal-copy">Una referencia operativa para cargar datos, guardar escenarios, revisar KPIs y exportar reportes sin salir del dashboard. Sirve para versiones ESTANDAR y PRO.</div>
       </div>
       <button class="pro-modal-close" type="button" onclick="closeDocumentationModal()">×</button>
     </div>
@@ -748,10 +748,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         <div class="docs-card">
           <h4>Agricultura</h4>
           <ul>
-            <li>Usá campañas para separar ciclos comerciales.</li>
+            <li>Usá campañas para separar ciclos comerciales y evitar mezclar posiciones de años distintos.</li>
             <li>Cargá altas, bajas y modificaciones desde Operaciones.</li>
             <li>En ESTANDAR no están habilitadas A Fijar, FIX ni opciones.</li>
-            <li>En PRO podés trabajar con múltiples campañas y operatoria completa.</li>
+            <li>En PRO podés trabajar con múltiples campañas, opciones y operatoria completa.</li>
+            <li>En Tasas implícitas comparás precios disponibles y futuros en tasa directa o TNA.</li>
+            <li>En Composición navegás cartera por producto, estado y tipo de operación.</li>
           </ul>
         </div>
         <div class="docs-card">
@@ -760,6 +762,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
             <li>Completá supuestos productivos y económicos del escenario.</li>
             <li>Guardá el escenario para alimentar KPIs de unidad de negocio.</li>
             <li>En ESTANDAR se guarda un escenario; en PRO se guardan múltiples.</li>
+            <li>Revisá margen, punto de equilibrio, sensibilidad y flujo antes de exportar.</li>
           </ul>
         </div>
         <div class="docs-card">
@@ -768,14 +771,67 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
             <li>Configurá cuenca, sistema productivo y variables de eficiencia.</li>
             <li>Guardá escenarios para comparar margen, sólidos y eficiencia.</li>
             <li>En ESTANDAR se guarda un escenario; en PRO se guardan múltiples.</li>
+            <li>Usá eficiencia y sólidos para separar mejoras productivas de mejoras por precio.</li>
           </ul>
         </div>
         <div class="docs-card">
           <h4>KPIs y exportación</h4>
           <ul>
-            <li>El panel KPI toma los escenarios guardados de Ganadería y Tambo.</li>
+            <li>El panel KPI toma operaciones agrícolas y escenarios guardados de Ganadería y Tambo.</li>
             <li>Usá Actualizar para recargar datos y escenarios recientes.</li>
             <li>Usá Exportar PDF para imprimir o guardar el dashboard activo.</li>
+            <li>Antes de exportar, verificá cliente, panel, campaña o escenario activo.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pro-steps-card">
+        <div class="pro-price-label">Tutorial rápido: primer uso</div>
+        <div class="pro-steps">
+          <div class="pro-step"><div class="pro-step-num">1</div><div>Ingresá y verificá que el cliente del menú lateral sea el correcto.</div></div>
+          <div class="pro-step"><div class="pro-step-num">2</div><div>Elegí Agricultura, Ganadería o Tambo según el dato que querés revisar o cargar.</div></div>
+          <div class="pro-step"><div class="pro-step-num">3</div><div>Cargá operaciones o completá supuestos productivos y económicos.</div></div>
+          <div class="pro-step"><div class="pro-step-num">4</div><div>Guardá la operación o escenario y tocá Actualizar para recalcular el panel.</div></div>
+          <div class="pro-step"><div class="pro-step-num">5</div><div>Revisá KPIs, composición, flujo o sensibilidad antes de exportar PDF.</div></div>
+        </div>
+      </div>
+      <div class="docs-grid">
+        <div class="docs-card">
+          <h4>Conceptos clave</h4>
+          <ul>
+            <li><strong>Long</strong>: posición comprada o exposición pendiente de capturar.</li>
+            <li><strong>Short</strong>: posición vendida o resultado ya capturado.</li>
+            <li><strong>Neto</strong>: diferencia entre long y short.</li>
+            <li><strong>Delta</strong>: exposición neta relativa de la posición.</li>
+            <li><strong>Resultado financiero</strong>: resultado generado por futuros u opciones.</li>
+          </ul>
+        </div>
+        <div class="docs-card">
+          <h4>Derivados agrícolas</h4>
+          <ul>
+            <li>Futuros y opciones vigentes pueden modificar delta y precios promedio.</li>
+            <li>Opciones ejercibles se comportan como futuros mientras están vigentes.</li>
+            <li>Al vencer, futuros y opciones dejan de modificar delta salvo que se marquen como Entregado.</li>
+            <li>Entregado convierte el derivado vencido en una operación física a precio.</li>
+          </ul>
+        </div>
+        <div class="docs-card">
+          <h4>Preguntas frecuentes</h4>
+          <ul>
+            <li>Si no ves datos, verificá que existan operaciones o escenarios guardados.</li>
+            <li>Si el PDF sale viejo, tocá Actualizar y exportá nuevamente.</li>
+            <li>Si una función no aparece en ESTANDAR, puede ser una función PRO.</li>
+            <li>Si falta una actividad en KPIs, revisá si está habilitada para el cliente.</li>
+          </ul>
+        </div>
+        <div class="docs-card">
+          <h4>Checklist antes de exportar</h4>
+          <ul>
+            <li>Cliente correcto.</li>
+            <li>Panel correcto.</li>
+            <li>Campaña o escenario correcto.</li>
+            <li>Datos guardados.</li>
+            <li>Actualizar ejecutado.</li>
+            <li>KPIs revisados.</li>
           </ul>
         </div>
       </div>
