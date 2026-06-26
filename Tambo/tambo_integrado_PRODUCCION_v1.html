@@ -512,6 +512,55 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
       </div>
     </div>
   </div>
+<div id="gas_card" class="card" style="display:none;margin-top:16px">
+  <div class="gas-head">
+    <span class="gas-ic">✦</span>
+    <div>
+      <div class="gas-title">Asesor de rentabilidad</div>
+      <div class="gas-sub">Análisis informativo del escenario lechero — no es recomendación de inversión.</div>
+    </div>
+  </div>
+  <div id="gas_locked" class="gas-locked" style="display:none">
+    El Asesor de rentabilidad está disponible para cuentas <b>PRO</b>. Consultá con CTX para habilitarlo.
+  </div>
+  <div id="gas_body" style="display:none">
+    <div id="gas_chat" class="gas-chat">
+      <div class="gas-msg-ia">Pedime <b>sugerencias de rentabilidad</b> sobre este escenario: te marco 2 a 4 palancas concretas según el margen por litro, la producción, los costos y la eficiencia. Después podés repreguntar lo que quieras.</div>
+    </div>
+    <div class="gas-actions">
+      <button id="gas_run" class="gas-run" type="button" onclick="gasPedirSugerencias()">Pedir sugerencias de rentabilidad</button>
+    </div>
+    <div class="gas-input-row">
+      <textarea id="gas_input" rows="1" placeholder="Repreguntá sobre una palanca…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();gasEnviar();}"></textarea>
+      <button id="gas_send" class="gas-send" type="button" onclick="gasEnviar()">Enviar</button>
+    </div>
+  </div>
+</div>
+<style>
+  #gas_card .gas-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .gas-ic{display:inline-flex;width:30px;height:30px;border-radius:8px;background:rgba(212,160,23,.14);color:var(--oro-l);align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .gas-title{font-size:14px;font-weight:700;color:var(--texto)}
+  .gas-sub{font-size:11px;color:var(--gris)}
+  .gas-locked{font-size:13px;line-height:1.55;color:var(--texto);background:rgba(255,255,255,.03);border:.5px solid var(--border);border-radius:10px;padding:14px}
+  .gas-locked b{color:var(--oro-l)}
+  .gas-chat{display:flex;flex-direction:column;gap:12px;max-height:520px;overflow-y:auto;margin-bottom:12px}
+  .gas-msg-user{align-self:flex-end;max-width:85%;background:var(--oro);color:#132d46;padding:9px 13px;border-radius:14px 14px 4px 14px;font-size:13px;line-height:1.5;font-weight:600}
+  .gas-msg-ia{align-self:flex-start;max-width:94%;background:rgba(255,255,255,.03);border:.5px solid var(--border);padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:13px;line-height:1.6;color:var(--texto)}
+  .gas-msg-ia b{color:var(--oro-l)}
+  .gas-actions{margin-bottom:10px}
+  .gas-run{width:100%;padding:11px 16px;border:none;border-radius:10px;background:var(--oro);color:#132d46;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s}
+  .gas-run:hover{background:var(--oro-l)}
+  .gas-run:disabled{opacity:.5;cursor:not-allowed}
+  .gas-input-row{display:flex;gap:8px;align-items:flex-end}
+  #gas_input{flex:1;resize:none;padding:10px 12px;border-radius:10px;border:.5px solid var(--border2);background:var(--negro-b);color:var(--texto);font-size:13px;outline:none;font-family:inherit;max-height:120px}
+  .gas-send{height:40px;padding:0 16px;border:none;border-radius:10px;background:var(--negro-m);color:var(--texto);font-weight:600;font-size:13px;cursor:pointer;flex-shrink:0;font-family:inherit}
+  .gas-send:disabled{opacity:.5;cursor:not-allowed}
+  .gas-typing{display:inline-flex;gap:4px}
+  .gas-typing span{width:6px;height:6px;border-radius:50%;background:var(--gris);animation:gasBlink 1.2s infinite}
+  .gas-typing span:nth-child(2){animation-delay:.2s}
+  .gas-typing span:nth-child(3){animation-delay:.4s}
+  @keyframes gasBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+</style>
 </div>
 
 <div class="modal-bg" id="modal_hist" onclick="cerrarHistorial(event)">
@@ -580,6 +629,7 @@ var scenarioSb = null;
 var scenarioSyncPromise = null;
 var savedAnalisisCache = [];
 var currentClienteTamboNivel = '';
+var currentClienteCodigo = '';
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 var FORM_FIELDS = [
@@ -763,6 +813,7 @@ function setupContext(){
     currentClienteNombre = params.get('cliente_nombre') || (parentCliente && parentCliente.nombre_empresa) || 'Cliente';
     currentUserId = params.get('user_id') || (parentUser && parentUser.id) || 'anonimo';
     currentClienteTamboNivel = parentCliente ? (parentCliente.tambo_nivel || parentCliente.tambo_dashboard || '') : '';
+    currentClienteCodigo = params.get('cliente_codigo') || (parentCliente && parentCliente.codigo) || '';
   }catch(e){
     setReportMode('ESTANDAR');
   }
@@ -1414,6 +1465,7 @@ function render(){
   renderBenchmarks(base);
   renderActions(base);
   renderSummary(base);
+  if(typeof gasReveal==='function') gasReveal();
 }
 
 function renderTop(base){
@@ -1632,6 +1684,125 @@ render();
   render();
   await syncAnalisisFromSupabase();
   consumePendingOpenRequest();
+})();
+</script>
+<script>
+/* ── Asesor de rentabilidad (Tambo PRO) ───────────────────── */
+(function(){
+  var FN_URL = SUPA_URL.replace(/\/$/,'') + '/functions/v1/agente-agro';
+  var gasHist = [];
+  var gasBusy = false;
+
+  function gasEsPro(){ return (typeof isTamboPro==='function') ? isTamboPro() : (String(REPORT_MODE||'').toUpperCase()==='PRO'); }
+  function gasNivel(){ return gasEsPro() ? 'PRO' : (String(currentClienteTamboNivel||'ESTANDAR').toUpperCase()); }
+
+  function gasConstruirContexto(){
+    return {
+      actividades: { leche: true },
+      datos: (typeof serializeForm==='function') ? serializeForm() : {},
+      outputs: (typeof buildSavedOutputs==='function') ? buildSavedOutputs() : {}
+    };
+  }
+
+  function gasEsc(s){ return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  function gasFmt(t){
+    return gasEsc(t)
+      .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+      .replace(/^\s*[-•]\s+/gm,'• ')
+      .replace(/\n/g,'<br>');
+  }
+  function gasAdd(role, html){
+    var chat = document.getElementById('gas_chat');
+    var div = document.createElement('div');
+    div.className = role==='user' ? 'gas-msg-user' : 'gas-msg-ia';
+    div.innerHTML = html;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+
+  // Tambo: la tarjeta es exclusiva del modo PRO (un mismo archivo sirve ESTANDAR/PRO).
+  window.gasReveal = function(){
+    var card = document.getElementById('gas_card');
+    if(!card) return;
+    if(!gasEsPro()){ card.style.display='none'; return; }
+    card.style.display='block';
+    document.getElementById('gas_locked').style.display='none';
+    document.getElementById('gas_body').style.display='block';
+  };
+  window.gasHide = function(){
+    var card = document.getElementById('gas_card');
+    if(card) card.style.display='none';
+  };
+
+  async function gasEnviarImpl(textoFijo){
+    if(gasBusy) return;
+    var input = document.getElementById('gas_input');
+    var mensaje = (textoFijo != null ? textoFijo : (input ? input.value : '')).trim();
+    if(!mensaje) return;
+    if(!gasEsPro()){
+      gasAdd('ia','El Asesor de rentabilidad está disponible para cuentas <b>PRO</b>.');
+      return;
+    }
+    if(textoFijo == null && input) input.value='';
+    gasAdd('user', gasEsc(mensaje));
+    gasHist.push({ role:'user', content: mensaje });
+
+    gasBusy = true;
+    var runBtn = document.getElementById('gas_run');
+    var sendBtn = document.getElementById('gas_send');
+    if(runBtn) runBtn.disabled = true;
+    if(sendBtn) sendBtn.disabled = true;
+    var typing = gasAdd('ia','<span class="gas-typing"><span></span><span></span><span></span></span>');
+
+    try{
+      var resp = await fetch(FN_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'apikey': SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY },
+        body: JSON.stringify({
+          dominio: 'tambo',
+          cliente_id: currentClienteId,
+          cliente: { codigo: currentClienteCodigo, nivel: gasNivel() },
+          contexto_escenario: gasConstruirContexto(),
+          messages: gasHist.slice()
+        })
+      });
+      var data = {};
+      try { data = await resp.json(); } catch(e){}
+      if(resp.status === 403 && data && data.code === 'SOLO_PRO'){
+        typing.innerHTML = 'El Asesor de rentabilidad está disponible para cuentas <b>PRO</b>.';
+        gasHist.pop();
+        return;
+      }
+      if(!resp.ok || !data || data.error || !data.texto){
+        typing.innerHTML = 'Hubo un problema al generar el análisis'+(data && data.error ? ': '+gasEsc(String(data.error)) : '')+'. Probá de nuevo en un momento.';
+        gasHist.pop();
+        return;
+      }
+      typing.innerHTML = gasFmt(data.texto);
+      gasHist.push({ role:'assistant', content: data.texto });
+    } catch(e){
+      typing.innerHTML = 'No pude conectar con el asesor. Revisá la conexión e intentá de nuevo.';
+      gasHist.pop();
+    } finally {
+      gasBusy = false;
+      if(runBtn) runBtn.disabled = false;
+      if(sendBtn) sendBtn.disabled = false;
+    }
+  }
+
+  window.gasPedirSugerencias = function(){
+    if(gasBusy) return;
+    gasHist = [];
+    var chat = document.getElementById('gas_chat');
+    if(chat) chat.innerHTML = '';
+    gasEnviarImpl('Analizá este escenario lechero e indicá las principales palancas de rentabilidad, ordenadas por impacto sobre el margen por litro.');
+  };
+  window.gasEnviar = function(){ gasEnviarImpl(); };
+
+  // Revelar al cargar (render() ya corrió en el init). Idempotente con el hook de render().
+  if(document.readyState !== 'loading') window.gasReveal();
+  else document.addEventListener('DOMContentLoaded', window.gasReveal);
 })();
 </script>
 </body>
