@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CTX Cartera">
 <meta name="theme-color" content="#1c1a18">
-<link rel="manifest" href="/agro-reporte-dev/manifest.json">
-<link rel="apple-touch-icon" href="/agro-reporte-dev/icon-192.svg">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Context | Reporte de Cartera</title>
 <!-- v20260401015516 -->
@@ -1921,8 +1921,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
-const SUPA_KEY = 'sb_publishable_qnfGf09-oB30e9rHNf9iig_Y99Ozsxl';
-const APP_URL = 'https://santialta1977.github.io/agro-reporte-dev/';
+const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
+const APP_URL = 'https://ctxasesores.github.io/';
 const FUNCTIONS_URL = `${SUPA_URL}/functions/v1`;
 const TERMS_VERSION = '2026-05-29-v1';
 const COLORES_PROD = {'Soja':'#5b9ec9','Maiz':'#3d7aa8','Trigo':'#8bbedd','Girasol':'#2a5f84','Sorgo':'#1e4466','Cebada':'#a8cfe8'};
@@ -6200,7 +6200,7 @@ function renderEvolucion() {
 function getMacroDashboardSrc(){
   const fileName = 'dashboard_bcra_v28_1_5_DEV.html?embed=1';
   if (location.protocol === 'file:') return fileName;
-  return `${location.origin}/agro-reporte-dev/${fileName}`;
+  return `${location.origin}/${fileName}`;
 }
 
 function abrirMacroModal(){
@@ -6221,7 +6221,7 @@ function cerrarMacroModal(ev){
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/agro-reporte-dev/sw.js')
+    navigator.serviceWorker.register('/sw.js')
       .then(r => console.log('SW registrado:', r.scope))
       .catch(e => console.log('SW error:', e));
   });
