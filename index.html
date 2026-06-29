@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CTX Cartera">
 <meta name="theme-color" content="#1c1a18">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.svg">
+<link rel="manifest" href="/agro-reporte/manifest.json">
+<link rel="apple-touch-icon" href="/agro-reporte/icon-192.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Context | Reporte de Cartera</title>
 <!-- v20260401015516 -->
@@ -1639,7 +1639,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     <div class="dashboard-view integrated-embed" id="view-ganaderia">
       <div class="page-body">
         <div class="embedded-dashboard">
-          <iframe class="embedded-frame" id="frame-ganaderia" src="Ganaderia/ganaderia_ESTANDAR_integrado_dev_v4.html" title="Dashboard Ganadería"></iframe>
+          <iframe class="embedded-frame" id="frame-ganaderia" src="Ganaderia/ganaderia_ESTANDAR_integrado_PRODUCCION_v2.html" title="Dashboard Ganadería"></iframe>
         </div>
       </div>
     </div>
@@ -1647,7 +1647,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     <div class="dashboard-view integrated-embed" id="view-tambo">
       <div class="page-body">
         <div class="embedded-dashboard">
-          <iframe class="embedded-frame" id="frame-tambo" src="Tambo/tambo_integrado_dev_v1.html?mode=ESTANDAR" title="Dashboard Tambo"></iframe>
+          <iframe class="embedded-frame" id="frame-tambo" src="Tambo/tambo_integrado_PRODUCCION_v1.html?mode=ESTANDAR" title="Dashboard Tambo"></iframe>
         </div>
       </div>
     </div>
@@ -1922,7 +1922,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
-const APP_URL = 'https://ctxasesores.github.io/';
+const APP_URL = 'https://ctxasesores.github.io/agro-reporte/';
 const FUNCTIONS_URL = `${SUPA_URL}/functions/v1`;
 const TERMS_VERSION = '2026-05-29-v1';
 const COLORES_PROD = {'Soja':'#5b9ec9','Maiz':'#3d7aa8','Trigo':'#8bbedd','Girasol':'#2a5f84','Sorgo':'#1e4466','Cebada':'#a8cfe8'};
@@ -2833,8 +2833,8 @@ function buildGanaderiaSrc(mode) {
   const clienteNombre = currentCliente?.nombre_empresa || '';
   const userId = currentUser?.id || '';
   const base = mode === 'PRO'
-      ? 'Ganaderia/ganaderia_PRO_integrado_dev_v5.html'
-    : 'Ganaderia/ganaderia_ESTANDAR_integrado_dev_v4.html';
+      ? 'Ganaderia/ganaderia_PRO_integrado_PRODUCCION_v2.html'
+    : 'Ganaderia/ganaderia_ESTANDAR_integrado_PRODUCCION_v2.html';
   const qs = new URLSearchParams();
   if (clienteId) qs.set('cliente_id', clienteId);
   if (clienteNombre) qs.set('cliente_nombre', clienteNombre);
@@ -2846,7 +2846,7 @@ function buildTamboSrc(mode) {
   const clienteId = currentCliente?.id || '';
   const clienteNombre = currentCliente?.nombre_empresa || '';
   const userId = currentUser?.id || '';
-  const base = 'Tambo/tambo_integrado_dev_v1.html';
+  const base = 'Tambo/tambo_integrado_PRODUCCION_v1.html';
   const qs = new URLSearchParams();
   qs.set('mode', (mode || 'ESTANDAR').toUpperCase());
   if (clienteId) qs.set('cliente_id', clienteId);
@@ -6198,9 +6198,9 @@ function renderEvolucion() {
 
 <script>
 function getMacroDashboardSrc(){
-  const fileName = 'dashboard_bcra_v28_1_5_DEV.html?embed=1';
+  const fileName = 'dashboard_bcra_v28_1_5 PROD.html?embed=1';
   if (location.protocol === 'file:') return fileName;
-  return `${location.origin}/${fileName}`;
+  return `${location.origin}/agro-reporte/${fileName}`;
 }
 
 function abrirMacroModal(){
@@ -6221,7 +6221,7 @@ function cerrarMacroModal(ev){
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('/agro-reporte/sw.js')
       .then(r => console.log('SW registrado:', r.scope))
       .catch(e => console.log('SW error:', e));
   });
