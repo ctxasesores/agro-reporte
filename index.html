@@ -572,6 +572,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 
 /* ── SCROLL HINT ── */
 .scroll-hint { font-size:11px; color:var(--gris-l); padding:8px 16px 0; display:none; }
+#sunburst-container svg { max-width:100%; height:auto; }
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px) {
@@ -588,6 +589,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   .scroll-hint { display:block; }
   .form-grid { grid-template-columns:1fr; padding:14px; }
   .form-group.full { grid-column:auto; }
+  .kpis { grid-template-columns:1fr; }
+  .hero { padding:18px 16px 16px; }
 }
 @media print {
   .sidebar,.sidebar-overlay,.topbar-mobile,.dashboard-actions,.btn-collapse,.btn-logout { display:none !important; }
@@ -1281,7 +1284,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
               <span id="sunburst-breadcrumb" style="font-size:11px;color:var(--gris)">Cartera total</span>
               <button id="sunburst-back" onclick="sunburstBack()" style="visibility:hidden;height:22px;padding:0 12px;border-radius:7px;border:1px solid var(--oro);background:rgba(212,160,23,.10);color:var(--oro-l);font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.1px;line-height:20px">↩ Volver</button>
             </div>
-            <div id="sunburst-container" style="width:380px;height:280px;flex-shrink:0;margin:0 auto"></div>
+            <div id="sunburst-container" style="width:100%;max-width:380px;height:280px;flex-shrink:0;margin:0 auto"></div>
           </div>
         </div>
       </div>
@@ -4542,6 +4545,7 @@ function _drawDonut(container, items, level, parentChain, animate) {
     const svg = d3.select(container).append('svg')
       .attr('width',  SB_W)
       .attr('height', SB_H)
+      .attr('viewBox', `0 0 ${SB_W} ${SB_H}`)
       .style('display','block');
 
     // ── Donut group centred ──
