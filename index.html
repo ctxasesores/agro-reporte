@@ -602,6 +602,71 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   body { background:white !important; }
   .hero,.card,.business-dashboard-card,.embedded-dashboard,.account-card,.account-hero { box-shadow:none !important; }
 }
+
+/* ═══════════ APP MÓVIL — AGRICULTURA (<=768px) ═══════════ */
+#mob-app{display:none}
+@media (max-width:768px){
+  #view-agricultura.mob-on > *:not(#mob-app){display:none!important}
+  #view-agricultura.mob-on #mob-app{display:block}
+  body.mob-active .dashboard-actions{display:none}
+  body.mob-active .dashboard-stage{padding:0}
+}
+#mob-app{--mgold:#d4a017;--mgold-l:#e8c45a;--mline:rgba(255,255,255,.09);--mgris:#a3b2c1;--mgris-d:#8296a8;
+  --mcard:rgba(255,255,255,.055);color:#e8e0d4;padding:0 4px 40px}
+.mob-bar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:10px 4px;
+  background:var(--navy,#0f2740);border-bottom:1px solid var(--mline)}
+.mob-bar .iso{width:30px;height:30px;display:block}
+.mob-bar .sp{flex:1}
+.mob-ico{width:40px;height:40px;border-radius:11px;border:1px solid var(--mline);background:rgba(255,255,255,.04);
+  color:#e8e0d4;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mob-ico.on{background:var(--mgold);color:#0f2740;border-color:var(--mgold)}
+.mob-screen{display:none}
+.mob-screen.on{display:block}
+.mob-who{font-size:16px;font-weight:500;color:#fff;line-height:1.3;margin-top:12px}
+.mob-titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 18px}
+.mob-title{font-size:30px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1.15}
+.mob-crumb{font-weight:500;color:var(--mgris)}
+.mob-volver{border:1px solid var(--mgold);background:rgba(212,160,23,.08);color:var(--mgold-l);font-size:15px;
+  font-weight:600;padding:9px 18px;border-radius:12px;cursor:pointer;white-space:nowrap}
+#mob-donut{width:100%;max-width:320px;margin:8px auto 6px}
+#mob-donut svg{width:100%;height:auto;display:block}
+#mob-donut .seg{cursor:pointer}
+#mob-legend{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px;margin:14px 2px 0}
+.mob-lgi{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+.mob-sw{width:15px;height:15px;border-radius:4px;flex-shrink:0;margin-top:2px}
+.mob-lgi .n{font-size:16px;font-weight:600;color:#fff;line-height:1.2}
+.mob-lgi .p{font-size:14px;color:var(--mgris)}
+.mob-hint{font-size:13px;color:var(--mgris-d);margin-top:20px;text-align:center;line-height:1.5}
+.mob-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+.mob-kc{background:var(--mcard);border:1px solid var(--mline);border-radius:16px;padding:16px}
+.mob-kc .lab{font-size:12px;letter-spacing:.7px;text-transform:uppercase;color:var(--mgris);font-weight:700}
+.mob-kc .val{font-size:22px;font-weight:700;color:#fff;margin-top:8px;line-height:1.15}
+.mob-kc .sub{font-size:13px;color:var(--mgris-d);margin-top:6px}
+.mob-lsn{background:var(--mcard);border:1px solid var(--mline);border-radius:16px;padding:16px;margin-top:12px;
+  display:flex;align-items:center;gap:14px}
+.mob-lsn-cols{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px 8px;text-align:center}
+.mob-lsn-cols .h{font-size:13px;color:var(--mgold-l);font-weight:700}
+.mob-lsn-cols .tn{font-size:18px;color:#fff;font-weight:600}
+.mob-lsn-cols .pr{font-size:15px;color:var(--mgris)}
+.mob-badge{background:rgba(30,153,112,.18);color:#7fe3b6;font-size:14px;font-weight:700;padding:10px 16px;border-radius:11px}
+.mob-sect{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--mgris);
+  margin:26px 0 6px;display:flex;align-items:center;gap:10px}
+.mob-sect::after{content:'';flex:1;height:1px;background:var(--mline)}
+.mob-shint{font-size:13px;color:var(--mgris-d);margin:6px 2px 8px}
+.mob-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.mob-ops{border-collapse:collapse;font-size:14px;white-space:nowrap;min-width:960px}
+.mob-ops th{padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--mgris);font-weight:700;border-bottom:1px solid var(--mline)}
+.mob-ops td{padding:12px;border-bottom:1px solid var(--mline)}
+.mob-empty{padding:26px;text-align:center;color:var(--mgris-d);font-size:14px;border:1px dashed var(--mline);border-radius:14px}
+.mob-ov{position:fixed;inset:0;z-index:2000;background:rgba(6,15,26,.6);display:none}
+.mob-ov.on{display:block}
+.mob-pop{position:absolute;top:64px;right:14px;display:flex;flex-direction:column;gap:12px}
+.mob-pop button{background:rgba(15,39,64,.97);border:1.5px solid #fff;color:#fff;font-size:16px;
+  padding:14px 24px;border-radius:26px;cursor:pointer}
+.mob-sheet{position:absolute;inset:0;overflow-y:auto;background:var(--navy,#0f2740);padding:16px 18px 40px}
+.mob-sheet-h{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.mob-sheet-h .t{font-size:22px;font-weight:700;color:#fff}
 </style>
 </head>
 <body>
@@ -1188,6 +1253,62 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     </div>
     <div class="dashboard-stage">
     <div class="dashboard-view" id="view-agricultura">
+    <div id="mob-app">
+      <div class="mob-bar">
+        <svg class="iso" viewBox="0 0 422.54 425.2" aria-label="CTX"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#fcfcfc" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+        <div class="sp"></div>
+        <button class="mob-ico" id="mob-ai-ico" onclick="mobOpenAI()" aria-label="Asesor IA">&#10022;</button>
+        <button class="mob-ico" onclick="mobOpenMenu()" aria-label="Agregar">+</button>
+      </div>
+      <section class="mob-screen on" id="mob-s-cartera">
+        <div class="mob-who" id="mob-who">—</div>
+        <div class="mob-titlerow">
+          <div class="mob-title" id="mob-title">Cartera</div>
+          <button class="mob-volver" id="mob-back" style="display:none" onclick="mobBack()">Volver</button>
+        </div>
+        <div id="mob-donut"></div>
+        <div id="mob-legend"></div>
+        <div class="mob-cards">
+          <div class="mob-kc"><div class="lab">Realizado</div><div class="val" id="mob-real">—</div><div class="sub">Resultado capturado</div></div>
+          <div class="mob-kc"><div class="lab">Pendiente</div><div class="val" id="mob-pend">—</div><div class="sub">A realizar</div></div>
+        </div>
+        <div id="mob-lsn-box" style="display:none">
+          <div class="mob-lsn"><div class="mob-lsn-cols" id="mob-lsn-cols"></div><div class="mob-badge" id="mob-lsn-badge">Long</div></div>
+        </div>
+        <div id="mob-ops-box" style="display:none">
+          <div class="mob-sect" id="mob-ops-title">Operaciones</div>
+          <div class="mob-shint">&#8592; deslizá para ver todas las columnas &#8594;</div>
+          <div class="mob-scroll">
+            <table class="mob-ops"><thead><tr>
+              <th>Fecha</th><th>Producto</th><th>Tipo</th><th>Lado</th><th>Volumen</th><th>Precio op.</th>
+              <th>P. mercado</th><th>Vencimiento</th><th>Resultado</th><th>Tags</th><th>Estado</th><th>Acciones</th>
+            </tr></thead><tbody id="mob-ops-body"></tbody></table>
+          </div>
+        </div>
+        <div class="mob-hint" id="mob-hint">Tocá un producto en la dona para filtrar</div>
+      </section>
+      <div class="mob-ov" id="mob-ov-menu" onclick="mobCloseMenu()">
+        <div class="mob-pop" onclick="event.stopPropagation()">
+          <button onclick="mobSheet('camp')">Gestionar campañas</button>
+          <button onclick="mobCloseMenu();abrirGestionTags()">Gestionar TAGS</button>
+          <button onclick="mobSheet('nueva')">Nueva operación</button>
+        </div>
+      </div>
+      <div class="mob-ov" id="mob-ov-sheet">
+        <div class="mob-sheet">
+          <div class="mob-sheet-h"><button class="mob-volver" onclick="mobCloseSheet()">Volver</button>
+            <div class="t" id="mob-sheet-t">—</div></div>
+          <div id="mob-sheet-body"></div>
+        </div>
+      </div>
+      <div class="mob-ov" id="mob-ov-ai">
+        <div class="mob-sheet">
+          <div class="mob-sheet-h"><button class="mob-volver" onclick="mobCloseAI()">Volver</button>
+            <div class="t">Análisis CTX IA</div></div>
+          <div id="mob-ai-body"></div>
+        </div>
+      </div>
+    </div>
     <div class="hero" id="sec-resumen">
       <div class="hero-eyebrow">Reporte de cartera</div>
       <div class="hero-nombre" id="d-nombre">—</div>
@@ -4147,6 +4268,7 @@ function calcularPorProducto(options = {}) {
 
 // ── RENDER ALL ──
 function renderAll() {
+  try { if (window.mobRender) window.mobRender(); } catch(e){}
   // Sidebar info
   document.getElementById('s-nombre').textContent = currentCliente.nombre_empresa;
   document.getElementById('d-nombre').textContent = currentCliente.nombre_empresa;
@@ -6970,4 +7092,221 @@ window.addEventListener('load', async () => {
   });
 
 })();
+</script>
+
+<script>
+
+/* ═══════════════ APP MÓVIL — AGRICULTURA ═══════════════
+   Reusa las funciones reales del panel: buildLevel0/1/2, getFilteredOps,
+   calcularL, getPrecioMercado, getPrecioEfectivo, abrirEditarOp, eliminarOp.
+   Regla: LONG = Pendiente = delta>0 · SHORT = Realizado = delta<0
+   (se filtra por SIGNO DE DELTA, no por lado: una venta de PUT queda en LONG) */
+(function(){
+  const MOB_BP = 768;
+  let mob = {level:0, prod:null, slot:null, tipo:null};
+
+  const isMob = () => window.innerWidth <= MOB_BP;
+  const usd = v => v>=1e6 ? (v/1e6).toFixed(2)+'M' : Math.round(v/1e3)+'k';
+  const usdFull = v => 'USD ' + (Math.abs(v)>=1e6 ? (v/1e6).toFixed(2)+'M' : Math.round(v/1e3)+'k');
+  const esc = t => String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  function segColor(item, level, i){
+    try { return sbItemColor(item, level, i); } catch(e){ return '#5b9ec9'; }
+  }
+
+  /* ── Dona con arcos precisos (mismo criterio que el reporte) ── */
+  function arcPath(cx,cy,rOut,rIn,a0,a1){
+    const p=(r,a)=>[cx+r*Math.cos(a), cy+r*Math.sin(a)];
+    if(a1-a0 >= 2*Math.PI-1e-6){
+      return `M${cx-rOut},${cy}A${rOut},${rOut} 0 1 1 ${cx+rOut},${cy}A${rOut},${rOut} 0 1 1 ${cx-rOut},${cy}Z`
+           + `M${cx-rIn},${cy}A${rIn},${rIn} 0 1 0 ${cx+rIn},${cy}A${rIn},${rIn} 0 1 0 ${cx-rIn},${cy}Z`;
+    }
+    const big=(a1-a0)>Math.PI?1:0;
+    const [x0,y0]=p(rOut,a0),[x1,y1]=p(rOut,a1),[x2,y2]=p(rIn,a1),[x3,y3]=p(rIn,a0);
+    return `M${x0},${y0}A${rOut},${rOut} 0 ${big} 1 ${x1},${y1}L${x2},${y2}A${rIn},${rIn} 0 ${big} 0 ${x3},${y3}Z`;
+  }
+
+  function drawDonut(items, level, centerVal, centerLab, onTap, activeName){
+    const cx=100,cy=100,rOut=88,rIn=60,pad=0.018;
+    const tot=items.reduce((s,i)=>s+i.value,0)||1;
+    let a=-Math.PI/2, arcs='';
+    items.forEach((it,i)=>{
+      const sweep=(it.value/tot)*2*Math.PI, solo=items.length===1;
+      const a0=a+(solo?0:pad/2), a1=a+sweep-(solo?0:pad/2);
+      const dim = activeName && activeName!==it.name ? ' opacity=".4"' : '';
+      arcs+=`<path class="seg" data-i="${i}"${dim} fill-rule="evenodd" d="${arcPath(cx,cy,rOut,rIn,a0,Math.max(a1,a0+0.001))}" fill="${segColor(it,level,i)}"/>`;
+      a+=sweep;
+    });
+    const d=document.getElementById('mob-donut');
+    d.innerHTML=`<svg viewBox="0 0 200 200">${arcs}
+      <text x="100" y="98" text-anchor="middle" fill="#e8c45a" font-size="30" font-weight="700">${centerVal}</text>
+      <text x="100" y="116" text-anchor="middle" fill="#a3b2c1" font-size="8.5" letter-spacing="1.2">USD · ${centerLab}</text></svg>`;
+    d.querySelectorAll('.seg').forEach(el=>el.onclick=()=>onTap(items[+el.dataset.i]));
+
+    document.getElementById('mob-legend').innerHTML = items.map((it,i)=>
+      `<div class="mob-lgi" data-i="${i}"><span class="mob-sw" style="background:${segColor(it,level,i)}"></span>
+        <div><div class="n">${esc(it.name)}</div><div class="p">${(it.value/tot*100).toFixed(1)}%</div></div></div>`).join('');
+    document.getElementById('mob-legend').querySelectorAll('.mob-lgi').forEach(el=>el.onclick=()=>onTap(items[+el.dataset.i]));
+  }
+
+  /* ── Operaciones (mismos criterios que el panel) ── */
+  function opsFiltradas(){
+    let rows = getFilteredOps().map(op=>{
+      const pM = getPrecioMercado(op.producto, op.vencimiento);
+      const L  = calcularL(op, pM);
+      return {op, pM, L};
+    }).filter(r => r.L !== 0);
+    if(mob.prod) rows = rows.filter(r=>r.op.producto===mob.prod);          // 1) producto
+    if(mob.slot) rows = rows.filter(r=> mob.slot==='Pendiente' ? r.L>0 : r.L<0); // 2) delta
+    if(mob.tipo) rows = rows.filter(r=>(r.op.tipo||'Otro')===mob.tipo);    // 3) tipo
+    return rows;
+  }
+
+  function idxEnCache(op){
+    try { return (opsCache||[]).findIndex(o=>o.id===op.id); } catch(e){ return -1; }
+  }
+
+  function renderOps(){
+    const rows = opsFiltradas();
+    document.getElementById('mob-ops-title').textContent =
+      ['Operaciones',mob.prod,mob.slot,mob.tipo].filter(Boolean).join(' · ');
+    const b=document.getElementById('mob-ops-body');
+    if(!rows.length){ b.innerHTML='<tr><td colspan="12" style="padding:0"><div class="mob-empty">Sin operaciones para este filtro</div></td></tr>'; return; }
+    b.innerHTML = rows.map(({op,pM,L})=>{
+      const idx = idxEnCache(op);
+      const fOp = op.fecha ? new Date(op.fecha+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+      const fVto= op.vencimiento ? new Date(op.vencimiento+'T00:00:00').toLocaleDateString('es-AR',{month:'short',year:'numeric'}) : '—';
+      const tags=(op.tags||[]).map(t=>`<span style="display:inline-block;padding:3px 9px;border-radius:20px;border:1px solid rgba(212,160,23,.4);color:#e8c45a;font-size:11px;font-weight:700;margin-right:4px">${esc(t)}</span>`).join('');
+      const ladoC = op.lado==='Compra' ? 'background:rgba(30,153,112,.16);color:#7fe3b6' : 'background:rgba(212,160,23,.14);color:#e8c45a';
+      const acc = idx>=0
+        ? `<button onclick="abrirEditarOp(${idx})" style="padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.09);background:transparent;color:#e8e0d4;font-size:13px;cursor:pointer">✎ Editar</button>
+           <button onclick="eliminarOp(${idx})" style="padding:7px 12px;border-radius:8px;border:none;background:rgba(217,81,44,.15);color:#f0a58f;font-size:14px;cursor:pointer;margin-left:6px">✕</button>`
+        : '—';
+      return `<tr>
+        <td style="color:#a3b2c1">${fOp}</td><td>${esc(op.producto)}</td><td>${esc(op.tipo||'—')}</td>
+        <td><span style="display:inline-block;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:600;${ladoC}">${esc(op.lado||'—')}</span></td>
+        <td>${op.volumen!=null?Number(op.volumen).toLocaleString('es-AR'):'—'}</td>
+        <td>${op.precio?'$'+Number(op.precio).toFixed(2):'—'}</td>
+        <td>${pM?'$'+Number(pM).toFixed(2):'—'}</td>
+        <td>${fVto}</td>
+        <td style="color:${L<0?'#f0856a':'#a3b2c1'}">${L!==0?(L>0?'Long':'Short'):'—'}</td>
+        <td>${tags}</td><td style="color:#7fe3b6;font-size:13px">${esc(op.estado||'Confirmada')}</td>
+        <td style="white-space:nowrap">${acc}</td></tr>`;
+    }).join('');
+  }
+
+  /* ── Long / Short / Neto (toneladas), por producto ── */
+  function renderLSN(prod){
+    let long=0, short=0, pL_n=0,pL_d=0, pS_n=0,pS_d=0;
+    getFilteredOps().forEach(op=>{
+      if(op.producto!==prod) return;
+      const pM=getPrecioMercado(op.producto,op.vencimiento);
+      const L=calcularL(op,pM); if(L===0) return;
+      const v=Number(op.volumen)||0, pr=Number(op.precio)||0;
+      if(L>0){ long+=v; if(pr){pL_n+=pr*v; pL_d+=v;} } else { short+=v; if(pr){pS_n+=pr*v; pS_d+=v;} }
+    });
+    const neto=long-short, f=n=>Math.round(n).toLocaleString('es-AR');
+    const pr=(n,d)=>d?('$'+(n/d).toFixed(2)):'—';
+    document.getElementById('mob-lsn-cols').innerHTML=
+      `<div class="h">Long</div><div class="h">Short</div><div class="h">Neto</div>
+       <div class="tn">${f(long)}</div><div class="tn">${f(short)}</div><div class="tn">${f(neto)}</div>
+       <div class="pr">${pr(pL_n,pL_d)}</div><div class="pr">${pr(pS_n,pS_d)}</div><div class="pr">${long+short?(neto/(long+short)).toFixed(3):'—'}</div>`;
+    document.getElementById('mob-lsn-badge').textContent = neto>=0?'Long':'Short';
+  }
+
+  /* ── Render principal ── */
+  function render(){
+    if(!isMob()) return;
+    const t=document.getElementById('mob-title'), back=document.getElementById('mob-back'), hint=document.getElementById('mob-hint');
+    if(!t) return;
+    try{
+      const who=document.getElementById('mob-who');
+      if(who) who.textContent = (currentCliente && currentCliente.nombre_empresa) || '—';
+      const c = calcularCartera();
+      document.getElementById('mob-real').textContent = usdFull(c.realizado);
+      document.getElementById('mob-pend').textContent = usdFull(c.pendiente);
+    }catch(e){}
+
+    back.style.display = mob.level>0 ? 'block':'none';
+    document.getElementById('mob-lsn-box').style.display = mob.level>=1?'block':'none';
+    document.getElementById('mob-ops-box').style.display = mob.level>=1?'block':'none';
+
+    if(mob.level===0){
+      const items=buildLevel0(), tot=items.reduce((s,i)=>s+i.value,0);
+      t.textContent='Cartera';
+      drawDonut(items,0,usd(tot),'VALOR TOTAL', it=>{mob={level:1,prod:it.name,slot:null,tipo:null};render();});
+      hint.textContent='Tocá un producto en la dona para filtrar';
+    } else if(mob.level===1){
+      const items=buildLevel1(mob.prod), tot=items.reduce((s,i)=>s+i.value,0);
+      t.innerHTML=`<span class="mob-crumb">Cartera › </span>${esc(mob.prod)}`;
+      drawDonut(items,1,usd(tot),'LONG + SHORT', it=>{mob={...mob,level:2,slot:it.name,tipo:null};render();});
+      hint.textContent='Tocá Realizado o Pendiente en la dona para ver los tipos de operación';
+      renderLSN(mob.prod); renderOps();
+    } else {
+      const items=buildLevel2(mob.prod,mob.slot), tot=items.reduce((s,i)=>s+i.value,0);
+      t.innerHTML=`<span class="mob-crumb">${esc(mob.prod)} › </span>${esc(mob.slot)}`;
+      drawDonut(items,2,usd(tot), mob.slot==='Pendiente'?'LONG':'SHORT',
+        it=>{mob={...mob,tipo: mob.tipo===it.name?null:it.name};render();}, mob.tipo);
+      hint.textContent = mob.tipo ? `Filtrando por: ${mob.tipo}. Tocá de nuevo para quitar el filtro.`
+                                  : 'Tocá un tipo de operación para filtrar la tabla';
+      renderLSN(mob.prod); renderOps();
+    }
+  }
+
+  window.mobBack=function(){
+    if(mob.level===2){ if(mob.tipo) mob.tipo=null; else mob={level:1,prod:mob.prod,slot:null,tipo:null}; }
+    else if(mob.level===1){ mob={level:0,prod:null,slot:null,tipo:null}; }
+    render();
+  };
+  window.mobOpenMenu=()=>document.getElementById('mob-ov-menu').classList.add('on');
+  window.mobCloseMenu=()=>document.getElementById('mob-ov-menu').classList.remove('on');
+
+  /* Mueve el DOM real (no lo duplica): conserva IDs y handlers */
+  window.mobSheet=function(kind){
+    mobCloseMenu();
+    const body=document.getElementById('mob-sheet-body'), ttl=document.getElementById('mob-sheet-t');
+    body.innerHTML='';
+    if(kind==='nueva'){
+      ttl.textContent='Nueva operación';
+      const form=document.getElementById('acc-nueva');
+      if(form){ form.dataset.mobHome=form.dataset.mobHome||'1'; form.style.display='block'; body.appendChild(form); }
+    } else {
+      ttl.textContent='Gestionar campañas';
+      const tabs=document.getElementById('campaign-tabs');
+      if(tabs) body.appendChild(tabs);
+      const acts=document.createElement('div');
+      acts.style.cssText='display:flex;gap:10px;margin-top:18px;flex-wrap:wrap';
+      acts.innerHTML='<button class="mob-volver" onclick="addCampaign()">+ Agregar campaña</button>'
+        +'<button class="mob-volver" style="border-color:rgba(217,81,44,.5);color:#f0a58f;background:rgba(217,81,44,.08)" onclick="deleteActiveCampaign()">Borrar campaña</button>';
+      body.appendChild(acts);
+    }
+    document.getElementById('mob-ov-sheet').classList.add('on');
+  };
+  window.mobCloseSheet=function(){ document.getElementById('mob-ov-sheet').classList.remove('on'); render(); };
+
+  window.mobOpenAI=function(){
+    const body=document.getElementById('mob-ai-body');
+    const sec=document.getElementById('sec-asesor-ia');
+    if(sec && sec.parentElement!==body){ sec.style.display='block'; body.appendChild(sec); }
+    document.getElementById('mob-ov-ai').classList.add('on');
+    document.getElementById('mob-ai-ico').classList.add('on');
+  };
+  window.mobCloseAI=function(){
+    document.getElementById('mob-ov-ai').classList.remove('on');
+    document.getElementById('mob-ai-ico').classList.remove('on');
+  };
+
+  function sync(){
+    const view=document.getElementById('view-agricultura');
+    if(!view) return;
+    view.classList.toggle('mob-on', isMob());
+    document.body.classList.toggle('mob-active', isMob());
+    if(isMob()) render();
+  }
+  window.mobRender=render;
+  window.addEventListener('resize', sync);
+  document.addEventListener('DOMContentLoaded', sync);
+  setTimeout(sync, 800);
+})();
+
 </script>
