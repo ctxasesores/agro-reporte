@@ -652,6 +652,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .mob-sect{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--mgris);
   margin:26px 0 6px;display:flex;align-items:center;gap:10px}
 .mob-sect::after{content:'';flex:1;height:1px;background:var(--mline)}
+.mob-tasas-tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.mob-tasas-tab{background:rgba(255,255,255,.04);border:1px solid var(--mline);color:var(--mgris);font-size:14px;font-weight:600;padding:8px 15px;border-radius:10px;cursor:pointer}
+.mob-tasas-tab.active{border-color:var(--mgold);color:var(--mgold-l);background:rgba(212,160,23,.08)}
+.mob-tasas-tgl{margin-left:auto;background:rgba(255,255,255,.04);border:1px solid var(--mline);color:var(--mgris);font-size:13px;font-weight:600;padding:7px 13px;border-radius:10px;cursor:pointer}
+#mob-tasas .tasas-table{width:100%}
+#mob-tasas{font-size:13px}
 .mob-shint{font-size:13px;color:var(--mgris-d);margin:6px 2px 8px}
 .mob-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .mob-ops{border-collapse:collapse;font-size:14px;white-space:nowrap;min-width:960px}
@@ -667,6 +673,18 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .mob-sheet{position:absolute;inset:0;overflow-y:auto;background:var(--navy,#0f2740);padding:16px 18px 40px}
 .mob-sheet-h{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .mob-sheet-h .t{font-size:22px;font-weight:700;color:#fff}
+/* Tasas implícitas: nota DLR/TAMAR + toggle moneda del heatmap */
+.tasas-nota{font-size:11px;color:var(--gris);margin:0 0 10px}
+.tasas-nota b{color:var(--oro-l)}
+.tasas-nota i{color:var(--gris)}
+.tasas-cur{display:inline-flex;gap:2px;border:1px solid rgba(255,255,255,.14);border-radius:8px;overflow:hidden}
+.tasas-cur-btn{background:transparent;border:none;color:var(--gris);font-size:11px;font-weight:700;padding:3px 11px;cursor:pointer}
+.tasas-cur-btn.on{background:var(--oro);color:#0f2740}
+.tasas-vamax{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 18px;margin:0 0 12px}
+.tasas-vamax .t{font-size:19px;font-weight:700;color:var(--oro-l);line-height:1.1}
+.tasas-vamax .p{font-size:10px;letter-spacing:.6px;color:var(--gris);margin-top:3px}
+.tasas-vamax .p b{color:var(--texto);font-weight:700}
+.tasas-vamax .v{font-size:30px;font-weight:800;color:var(--oro-l);letter-spacing:-.5px}
 </style>
 </head>
 <body>
@@ -1274,6 +1292,11 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
         </div>
         <div id="mob-lsn-box" style="display:none">
           <div class="mob-lsn"><div class="mob-lsn-cols" id="mob-lsn-cols"></div><div class="mob-badge" id="mob-lsn-badge">Long</div></div>
+        </div>
+        <div id="mob-tasas-box" style="display:none">
+          <div class="mob-sect">Tasas implícitas</div>
+          <div id="mob-tasas-tabs" class="mob-tasas-tabs"></div>
+          <div id="mob-tasas"></div>
         </div>
         <div id="mob-ops-box" style="display:none">
           <div class="mob-sect" id="mob-ops-title">Operaciones</div>
@@ -4298,48 +4321,102 @@ function renderAll() {
 function renderPrecios() { renderTasas(); }
 
 let _tasasProd = null;
+let _tasasMoneda = 'usd'; // heatmap: 'usd' | 'ars'
 
-function renderTasas() {
-  const el       = document.getElementById('d-tasas');
-  const tabsEl   = document.getElementById('tasas-tabs');
-  const useTNA   = document.getElementById('tasas-toggle')?.checked;
-  const track    = document.getElementById('tasas-toggle-track');
-  const thumb    = document.getElementById('tasas-toggle-thumb');
-  if (track) track.style.background = useTNA ? 'var(--oro)' : 'var(--crema-dd)';
-  if (thumb) thumb.style.left = useTNA ? '18px' : '2px';
+// ── Datos auxiliares para tasas en pesos y Valor Actual (TAMAR) ──
+// DLR (a3_precios), dólar mayorista spot (tipo_de_cambio) y TAMAR (bcra_observaciones).
+// Todas con lectura pública, así que se leen con la key publishable.
+let mercadoAux = { dlr: {}, dlrPts: [], tamar: null, spot: null, loaded: false, loading: false };
 
-  const rows = Object.entries(precios);
-  if (!rows.length) { el.innerHTML='<div class="empty-state">Sin precios cargados</div>'; return; }
+async function cargarMercadoAux() {
+  if (mercadoAux.loading || typeof sb === 'undefined') return;
+  mercadoAux.loading = true;
+  try {
+    const [dlrRes, tcRes, serieRes] = await Promise.all([
+      sb.from('a3_precios').select('vencimiento,settlement_price,last_price').eq('subyacente','DLR').eq('es_opcion', false),
+      sb.from('tipo_de_cambio').select('valor,fecha').order('fecha', { ascending:false }).limit(1),
+      sb.from('bcra_series').select('id').eq('codigo','tamar_priv').limit(1),
+    ]);
+    const dlr = {}, pts = [];
+    (dlrRes.data || []).forEach(r => {
+      const px = r.settlement_price ?? r.last_price;
+      if (px == null || !r.vencimiento) return;
+      dlr[r.vencimiento] = Number(px);
+      const [mes, anio] = r.vencimiento.split('_').map(Number);
+      if (mes && anio) pts.push({ t: new Date(anio, mes-1, 15).getTime(), px: Number(px) });
+    });
+    pts.sort((a,b) => a.t - b.t);
+    mercadoAux.dlr = dlr;
+    mercadoAux.dlrPts = pts;
+    mercadoAux.spot = tcRes.data?.[0]?.valor != null ? Number(tcRes.data[0].valor) : null;
+    const serieId = serieRes.data?.[0]?.id;
+    if (serieId) {
+      const obs = await sb.from('bcra_observaciones').select('valor,fecha').eq('serie_id', serieId).order('fecha', { ascending:false }).limit(1);
+      mercadoAux.tamar = obs.data?.[0]?.valor != null ? Number(obs.data[0].valor) / 100 : null; // % n.a. -> decimal
+    }
+    mercadoAux.loaded = true;
+  } catch (e) { console.warn('mercadoAux:', e); }
+  mercadoAux.loading = false;
+  if (document.getElementById('d-tasas')) renderTasas();
+}
 
-  // Excluir categorías ganaderas — solo mostrar granos
+// Interpola el DLR para un (mes, anio): exacto si existe; si no, lineal por fecha entre
+// los vencimientos que lo rodean; plano fuera de los extremos. null si no hay curva.
+function dlrInterp(mes, anio) {
+  const pts = mercadoAux.dlrPts;
+  if (!pts || !pts.length) return null;
+  const exact = mercadoAux.dlr[`${mes}_${anio}`];
+  if (exact != null) return exact;
+  const t = new Date(anio, mes-1, 15).getTime();
+  if (t <= pts[0].t) return pts[0].px;
+  if (t >= pts[pts.length-1].t) return pts[pts.length-1].px;
+  for (let i = 0; i < pts.length-1; i++) {
+    if (t >= pts[i].t && t <= pts[i+1].t) {
+      const f = (t - pts[i].t) / (pts[i+1].t - pts[i].t);
+      return pts[i].px + f * (pts[i+1].px - pts[i].px);
+    }
+  }
+  return null;
+}
+
+// ── Tasas implícitas: núcleo reutilizable (desktop + móvil) ──
+function tasasByProd() {
   const CATEGORIAS_GAN = new Set(['Ternero','Novillo','Vaquillona','Vaca','Toro']);
-
-  // Group by producto, exclude CONT from heatmap, keep for base
   const byProd = {};
-  rows.forEach(([key, precio]) => {
+  Object.entries(precios).forEach(([key, precio]) => {
     const parts = key.split('_');
     const prod  = parts[0];
-    if (CATEGORIAS_GAN.has(prod)) return; // skip hacienda
+    if (CATEGORIAS_GAN.has(prod)) return;
     const venc  = parts.slice(1).join('_');
     if (!byProd[prod]) byProd[prod] = {};
     byProd[prod][venc] = precio;
   });
+  return byProd;
+}
+// Solo Soja/Maíz/Trigo se muestran en solapas (los demás granos se calculan pero no se listan).
+function tasasProductosVisibles(byProd) {
+  const VIS = new Set(['Soja','Maiz','Trigo']);
+  return Object.keys(byProd).filter(p => VIS.has(p)).sort();
+}
 
-  const prods = Object.keys(byProd).sort();
-  // Default: mostrar Soja al entrar (si está disponible); si no, el primero.
-  if (!_tasasProd || !prods.includes(_tasasProd)) {
-    _tasasProd = prods.find(p => p.toLowerCase() === 'soja') || prods[0];
+// HTML del contenido (banner V.A. Max + nota TAMAR + tabla + heatmap) para un producto.
+function buildTasasContentHTML(vencMap, useTNA) {
+  function tasaDirecta(pBase, pFut) { if (!pBase || !pFut || pBase === 0) return null; return (pFut - pBase) / pBase; }
+  function mesesEntre(d1, d2) { return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); }
+  function toTNA(tDir, meses) { if (meses <= 0) return null; return tDir * (12 / meses); }
+  function fmtTasa(t) { if (t === null || isNaN(t)) return '—'; return (t * 100).toFixed(1) + '%'; }
+  function heatColor(t) {
+    if (t === null || isNaN(t)) return 'var(--crema-d)';
+    const pct = t * 100;
+    if (pct < 0)   return 'rgba(217,81,44,0.75)';
+    if (pct < 3)   return 'rgba(212,160,23,0.5)';
+    if (pct < 8)   return 'rgba(212,160,23,0.75)';
+    if (pct < 15)  return 'rgba(30,153,112,0.55)';
+    return 'rgba(30,153,112,0.85)';
   }
+  function heatTextColor(t) { if (t === null || isNaN(t)) return 'var(--gris)'; return '#fff'; }
 
-  // Render tabs
-  tabsEl.innerHTML = prods.map(p =>
-    `<button class="tasas-tab ${p===_tasasProd?'active':''}" onclick="_tasasProd='${p}';renderTasas()">${p}</button>`
-  ).join('');
-
-  const vencMap = byProd[_tasasProd];
-  if (!vencMap) { el.innerHTML='<div class="empty-state">Sin datos</div>'; return; }
-
-  // Parse and sort vencimientos (exclude CONT, use as base "Disp")
+  if (!vencMap) return '<div class="empty-state">Sin datos</div>';
   const basePrice = vencMap['CONT'] || null;
   const vencList = Object.entries(vencMap)
     .filter(([v]) => v !== 'CONT')
@@ -4351,81 +4428,89 @@ function renderTasas() {
     })
     .filter(v => v && !isExpiredMonthYear(v.mes, v.anio))
     .sort((a,b) => a.fecha - b.fecha);
+  if (!vencList.length) return '<div class="empty-state">Sin vencimientos</div>';
 
-  if (!vencList.length) { el.innerHTML='<div class="empty-state">Sin vencimientos</div>'; return; }
+  const today  = new Date();
+  const spot   = mercadoAux.spot;
+  const tamar  = mercadoAux.tamar;
+  const pesoDe = (usd, mes, anio) => { const d = dlrInterp(mes, anio); return (usd != null && d != null) ? usd * d : null; };
+  const diasA  = (f) => Math.max(0, Math.round((f - today) / 86400000));
+  const vaDe   = (pv, d) => (pv != null && tamar != null) ? pv / (1 + tamar * d / 365) : null;
+  const f0     = (n) => n == null ? '—' : Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+  const pesoBase = spot != null ? basePrice * spot : null;
+  let maxVA = null, maxVALabel = null;
 
-  const today = new Date();
+  const notaAux = `<div class="tasas-nota">${
+    tamar != null ? `TAMAR <b>${(tamar*100).toFixed(1)}%</b> n.a.` : ''
+  }${(tamar != null && spot != null) ? ' · ' : ''}${
+    spot != null ? `Dólar mayorista <b>$${f0(spot)}</b>` : ''
+  }${!mercadoAux.loaded ? `${(tamar!=null||spot!=null)?' · ':''}<i>cargando dólar / TAMAR…</i>` : ''}</div>`;
 
-  function tasaDirecta(pBase, pFut) {
-    if (!pBase || !pFut || pBase === 0) return null;
-    return (pFut - pBase) / pBase;
-  }
-  function mesesEntre(d1, d2) {
-    return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
-  }
-  function toTNA(tDir, meses) {
-    if (meses <= 0) return null;
-    return tDir * (12 / meses);
-  }
-  function fmtTasa(t) {
-    if (t === null || isNaN(t)) return '—';
-    return (t * 100).toFixed(1) + '%';
-  }
-  function heatColor(t) {
-    if (t === null || isNaN(t)) return 'var(--crema-d)';
-    const pct = t * 100;
-    if (pct < 0)   return 'rgba(217,81,44,0.75)';
-    if (pct < 3)   return 'rgba(212,160,23,0.5)';
-    if (pct < 8)   return 'rgba(212,160,23,0.75)';
-    if (pct < 15)  return 'rgba(30,153,112,0.55)';
-    return 'rgba(30,153,112,0.85)';
-  }
-  function heatTextColor(t) {
-    if (t === null || isNaN(t)) return 'var(--gris)';
-    return '#fff';
-  }
-
-  // ── Tabla de tasas vs Disp ──
-  let tableHTML = '';
+  let tableHTML = notaAux;
   if (basePrice) {
-    tableHTML = `<table class="tasas-table">
+    tableHTML += `<table class="tasas-table">
       <thead><tr>
-        <th>Posición</th>
-        <th>USD/tn</th>
-        <th>${useTNA ? 'TNA' : 'T. Directa'}</th>
+        <th>Posición</th><th>USD/tn</th><th>$/tn</th>
+        <th>${useTNA ? 'TNA USD' : 'Dir. USD'}</th>
+        <th>${useTNA ? 'TNA $' : 'Dir. $'}</th>
+        <th>VA/tn $</th>
       </tr></thead>
       <tbody>
-        <tr><td>Disponible</td><td style="color:var(--oro-l);font-weight:700">$${basePrice}</td><td>—</td></tr>`;
+        <tr><td>Disponible</td>
+          <td style="color:var(--oro-l);font-weight:700">$${basePrice}</td>
+          <td style="color:var(--oro-l);font-weight:700">${pesoBase != null ? '$'+f0(pesoBase) : '—'}</td>
+          <td>—</td><td>—</td><td>—</td></tr>`;
     vencList.forEach(v => {
-      const tDir  = tasaDirecta(basePrice, v.precio);
       const meses = mesesEntre(today, v.fecha);
-      const tShow = useTNA ? toTNA(tDir, meses) : tDir;
+      const tUsd  = tasaDirecta(basePrice, v.precio);
+      const pesoV = pesoDe(v.precio, v.mes, v.anio);
+      const tArs  = (pesoBase && pesoV != null) ? tasaDirecta(pesoBase, pesoV) : null;
+      const tUsdS = useTNA ? toTNA(tUsd, meses) : tUsd;
+      const tArsS = tArs == null ? null : (useTNA ? toTNA(tArs, meses) : tArs);
+      const vaV   = vaDe(pesoV, diasA(v.fecha));
+      const cU = tUsdS !== null && tUsdS < 0 ? 'var(--rojo)' : tUsdS !== null && tUsdS > 0.05 ? 'var(--verde-l)' : 'var(--texto)';
+      const cA = tArsS !== null && tArsS < 0 ? 'var(--rojo)' : tArsS !== null && tArsS > 0.05 ? 'var(--verde-l)' : 'var(--texto)';
       const label = v.mes + '/' + String(v.anio).slice(2);
-      const color = tShow !== null && tShow < 0 ? 'var(--rojo)' : tShow !== null && tShow > 0.05 ? 'var(--verde-l)' : 'var(--texto)';
+      if (vaV != null && (maxVA == null || vaV > maxVA)) { maxVA = vaV; maxVALabel = label; }
       tableHTML += `<tr>
         <td>${label}</td>
         <td style="color:var(--oro-l);font-weight:700">$${v.precio}</td>
-        <td style="color:${color};font-weight:700">${fmtTasa(tShow)}</td>
+        <td style="color:var(--oro-l);font-weight:700">${pesoV != null ? '$'+f0(pesoV) : '—'}</td>
+        <td style="color:${cU};font-weight:700">${fmtTasa(tUsdS)}</td>
+        <td style="color:${cA};font-weight:700">${fmtTasa(tArsS)}</td>
+        <td>${vaV != null ? '$'+f0(vaV) : '—'}</td>
       </tr>`;
     });
     tableHTML += '</tbody></table>';
   } else {
-    tableHTML = `<table class="tasas-table">
-      <thead><tr><th>Posición</th><th>USD/tn</th></tr></thead>
-      <tbody>${vencList.map(v => `<tr><td>${v.mes}/${String(v.anio).slice(2)}</td><td style="color:var(--oro-l);font-weight:700">$${v.precio}</td></tr>`).join('')}</tbody>
+    tableHTML += `<table class="tasas-table">
+      <thead><tr><th>Posición</th><th>USD/tn</th><th>$/tn</th></tr></thead>
+      <tbody>${vencList.map(v => { const pv = pesoDe(v.precio, v.mes, v.anio); return `<tr><td>${v.mes}/${String(v.anio).slice(2)}</td><td style="color:var(--oro-l);font-weight:700">$${v.precio}</td><td style="color:var(--oro-l);font-weight:700">${pv != null ? '$'+f0(pv) : '—'}</td></tr>`; }).join('')}</tbody>
     </table>`;
   }
 
-  // ── Heatmap: matrix entre todos los vencimientos ──
-  // Include CONT as first column/row if available
+  const vaMaxHTML = (maxVA != null) ? `
+    <div class="tasas-vamax">
+      <div><div class="t">V.A. Max.</div><div class="p">POSICIÓN <b>${maxVALabel}</b></div></div>
+      <div class="v">$${f0(maxVA)}</div>
+    </div>` : '';
+
   const heatVenc = [];
-  if (basePrice) heatVenc.push({ key:'CONT', label:'Disp', precio:basePrice, fecha:today });
-  heatVenc.push(...vencList.map(v => ({...v, label: v.mes+'/'+String(v.anio).slice(2)})));
+  if (basePrice) heatVenc.push({ key:'CONT', label:'Disp', precioUsd:basePrice, precioArs:pesoBase, fecha:today });
+  heatVenc.push(...vencList.map(v => ({ ...v, label: v.mes+'/'+String(v.anio).slice(2), precioUsd:v.precio, precioArs:pesoDe(v.precio, v.mes, v.anio) })));
+  const moneda = _tasasMoneda;
+  const pxDe = (x) => moneda === 'ars' ? x.precioArs : x.precioUsd;
 
   let heatHTML = '';
   if (heatVenc.length >= 2) {
     heatHTML = `<div class="heatmap-section">
-      <div class="heatmap-title">Tasa implícita entre vencimientos (${useTNA ? 'TNA' : 'Directa'})</div>
+      <div class="heatmap-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span>Tasa implícita entre vencimientos (${useTNA ? 'TNA' : 'Directa'}) — ${moneda === 'ars' ? 'pesos' : 'dólares'}</span>
+        <span class="tasas-cur">
+          <button class="tasas-cur-btn ${moneda==='usd'?'on':''}" onclick="_tasasMoneda='usd';refrescarTasas()">USD</button>
+          <button class="tasas-cur-btn ${moneda==='ars'?'on':''}" onclick="_tasasMoneda='ars';refrescarTasas()">$</button>
+        </span>
+      </div>
       <div style="overflow-x:auto">
       <table class="heatmap-table">
         <thead><tr>
@@ -4439,13 +4524,11 @@ function renderTasas() {
         if (ci === ri) {
           heatHTML += `<td class="hm-diag">—</td>`;
         } else if (ci < ri) {
-          // lower triangle: rate from col→row (forward)
-          const tDir  = tasaDirecta(vCol.precio, vRow.precio);
+          const pC = pxDe(vCol), pR = pxDe(vRow);
+          const tDir  = (pC != null && pR != null) ? tasaDirecta(pC, pR) : null;
           const meses = mesesEntre(vCol.fecha, vRow.fecha);
-          const t     = useTNA ? toTNA(tDir, meses) : tDir;
-          const bg    = heatColor(t);
-          const fg    = heatTextColor(t);
-          heatHTML += `<td style="background:${bg};color:${fg}">${fmtTasa(t)}</td>`;
+          const t     = tDir == null ? null : (useTNA ? toTNA(tDir, meses) : tDir);
+          heatHTML += `<td style="background:${heatColor(t)};color:${heatTextColor(t)}">${fmtTasa(t)}</td>`;
         } else {
           heatHTML += `<td class="hm-empty"></td>`;
         }
@@ -4455,7 +4538,37 @@ function renderTasas() {
     heatHTML += '</tbody></table></div></div>';
   }
 
-  el.innerHTML = tableHTML + heatHTML;
+  return vaMaxHTML + tableHTML + heatHTML;
+}
+
+function renderTasas() {
+  const el       = document.getElementById('d-tasas');
+  const tabsEl   = document.getElementById('tasas-tabs');
+  const useTNA   = document.getElementById('tasas-toggle')?.checked;
+  const track    = document.getElementById('tasas-toggle-track');
+  const thumb    = document.getElementById('tasas-toggle-thumb');
+  if (track) track.style.background = useTNA ? 'var(--oro)' : 'var(--crema-dd)';
+  if (thumb) thumb.style.left = useTNA ? '18px' : '2px';
+  if (!el || !tabsEl) return;
+
+  if (!Object.keys(precios).length) { el.innerHTML='<div class="empty-state">Sin precios cargados</div>'; return; }
+  if (!mercadoAux.loaded && !mercadoAux.loading) cargarMercadoAux();
+
+  const byProd = tasasByProd();
+  const prods  = tasasProductosVisibles(byProd);
+  if (!_tasasProd || !prods.includes(_tasasProd)) {
+    _tasasProd = prods.find(p => p.toLowerCase() === 'soja') || prods[0];
+  }
+  tabsEl.innerHTML = prods.map(p =>
+    `<button class="tasas-tab ${p===_tasasProd?'active':''}" onclick="_tasasProd='${p}';refrescarTasas()">${p}</button>`
+  ).join('');
+  el.innerHTML = buildTasasContentHTML(byProd[_tasasProd], useTNA);
+}
+
+// Re-render de tasas en la vista activa (desktop y/o móvil).
+function refrescarTasas() {
+  if (document.getElementById('d-tasas')) renderTasas();
+  if (typeof window.mobRenderTasas === 'function' && document.getElementById('mob-tasas')) window.mobRenderTasas();
 }
 
 function renderComposicion() {
@@ -7104,6 +7217,7 @@ window.addEventListener('load', async () => {
 (function(){
   const MOB_BP = 768;
   let mob = {level:0, prod:null, slot:null, tipo:null};
+  let _mobTasasProd = null, _mobTasasTNA = false;
 
   const isMob = () => window.innerWidth <= MOB_BP;
   const usd = v => v>=1e6 ? (v/1e6).toFixed(2)+'M' : Math.round(v/1e3)+'k';
@@ -7229,12 +7343,14 @@ window.addEventListener('load', async () => {
 
     back.style.display = mob.level>0 ? 'block':'none';
     document.getElementById('mob-lsn-box').style.display = mob.level>=1?'block':'none';
+    document.getElementById('mob-tasas-box').style.display = mob.level>=1?'block':'none';
     document.getElementById('mob-ops-box').style.display = mob.level>=1?'block':'none';
+    if(mob.level>=1) mobRenderTasas();
 
     if(mob.level===0){
       const items=buildLevel0(), tot=items.reduce((s,i)=>s+i.value,0);
       t.textContent='Cartera';
-      drawDonut(items,0,usd(tot),'VALOR TOTAL', it=>{mob={level:1,prod:it.name,slot:null,tipo:null};render();});
+      drawDonut(items,0,usd(tot),'VALOR TOTAL', it=>{mob={level:1,prod:it.name,slot:null,tipo:null};_mobTasasProd=it.name;render();});
       hint.textContent='Tocá un producto en la dona para filtrar';
     } else if(mob.level===1){
       const items=buildLevel1(mob.prod), tot=items.reduce((s,i)=>s+i.value,0);
@@ -7303,6 +7419,25 @@ window.addEventListener('load', async () => {
     document.body.classList.toggle('mob-active', isMob());
     if(isMob()) render();
   }
+  function mobRenderTasas(){
+    const tabsEl = document.getElementById('mob-tasas-tabs');
+    const el = document.getElementById('mob-tasas');
+    if(!tabsEl || !el) return;
+    if(typeof precios === 'undefined' || !Object.keys(precios).length){ tabsEl.innerHTML=''; el.innerHTML='<div style="color:var(--mgris-d);font-size:13px;padding:6px 2px">Sin precios cargados</div>'; return; }
+    if(!mercadoAux.loaded && !mercadoAux.loading) cargarMercadoAux();
+    const byProd = tasasByProd();
+    const prods = tasasProductosVisibles(byProd);
+    if(!prods.length){ tabsEl.innerHTML=''; el.innerHTML=''; return; }
+    if(!_mobTasasProd || !prods.includes(_mobTasasProd)){
+      _mobTasasProd = (mob.prod && prods.includes(mob.prod)) ? mob.prod : (prods.find(p=>p.toLowerCase()==='soja') || prods[0]);
+    }
+    tabsEl.innerHTML = prods.map(p=>`<button class="mob-tasas-tab ${p===_mobTasasProd?'active':''}" onclick="window._mobSetTasasProd('${p}')">${p}</button>`).join('')
+      + `<button class="mob-tasas-tgl" onclick="window._mobToggleTasasTNA()">${_mobTasasTNA?'TNA':'Directa'}</button>`;
+    el.innerHTML = buildTasasContentHTML(byProd[_mobTasasProd], _mobTasasTNA);
+  }
+  window._mobSetTasasProd = function(p){ _mobTasasProd = p; mobRenderTasas(); };
+  window._mobToggleTasasTNA = function(){ _mobTasasTNA = !_mobTasasTNA; mobRenderTasas(); };
+  window.mobRenderTasas = mobRenderTasas;
   window.mobRender=render;
   window.addEventListener('resize', sync);
   document.addEventListener('DOMContentLoaded', sync);
