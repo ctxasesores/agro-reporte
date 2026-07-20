@@ -656,8 +656,11 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .mob-tasas-tab{background:rgba(255,255,255,.04);border:1px solid var(--mline);color:var(--mgris);font-size:14px;font-weight:600;padding:8px 15px;border-radius:10px;cursor:pointer}
 .mob-tasas-tab.active{border-color:var(--mgold);color:var(--mgold-l);background:rgba(212,160,23,.08)}
 .mob-tasas-tgl{margin-left:auto;background:rgba(255,255,255,.04);border:1px solid var(--mline);color:var(--mgris);font-size:13px;font-weight:600;padding:7px 13px;border-radius:10px;cursor:pointer}
-#mob-tasas .tasas-table{width:100%}
+#mob-tasas .tasas-table{min-width:520px;white-space:nowrap}
 #mob-tasas{font-size:13px}
+#mob-tasas .tasas-vamax{min-width:0}
+#mob-tasas .tasas-vamax .v{font-size:26px;white-space:nowrap}
+#mob-tasas .tasas-vamax .t{font-size:17px}
 .mob-shint{font-size:13px;color:var(--mgris-d);margin:6px 2px 8px}
 .mob-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .mob-ops{border-collapse:collapse;font-size:14px;white-space:nowrap;min-width:960px}
@@ -685,6 +688,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .tasas-vamax .p{font-size:10px;letter-spacing:.6px;color:var(--gris);margin-top:3px}
 .tasas-vamax .p b{color:var(--texto);font-weight:700}
 .tasas-vamax .v{font-size:30px;font-weight:800;color:var(--oro-l);letter-spacing:-.5px}
+.tasas-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 </style>
 </head>
 <body>
@@ -4446,9 +4450,9 @@ function buildTasasContentHTML(vencMap, useTNA) {
     spot != null ? `Dólar mayorista <b>$${f0(spot)}</b>` : ''
   }${!mercadoAux.loaded ? `${(tamar!=null||spot!=null)?' · ':''}<i>cargando dólar / TAMAR…</i>` : ''}</div>`;
 
-  let tableHTML = notaAux;
+  let tableInner = '';
   if (basePrice) {
-    tableHTML += `<table class="tasas-table">
+    tableInner += `<table class="tasas-table">
       <thead><tr>
         <th>Posición</th><th>USD/tn</th><th>$/tn</th>
         <th>${useTNA ? 'TNA USD' : 'Dir. USD'}</th>
@@ -4472,7 +4476,7 @@ function buildTasasContentHTML(vencMap, useTNA) {
       const cA = tArsS !== null && tArsS < 0 ? 'var(--rojo)' : tArsS !== null && tArsS > 0.05 ? 'var(--verde-l)' : 'var(--texto)';
       const label = v.mes + '/' + String(v.anio).slice(2);
       if (vaV != null && (maxVA == null || vaV > maxVA)) { maxVA = vaV; maxVALabel = label; }
-      tableHTML += `<tr>
+      tableInner += `<tr>
         <td>${label}</td>
         <td style="color:var(--oro-l);font-weight:700">$${v.precio}</td>
         <td style="color:var(--oro-l);font-weight:700">${pesoV != null ? '$'+f0(pesoV) : '—'}</td>
@@ -4481,13 +4485,15 @@ function buildTasasContentHTML(vencMap, useTNA) {
         <td>${vaV != null ? '$'+f0(vaV) : '—'}</td>
       </tr>`;
     });
-    tableHTML += '</tbody></table>';
+    tableInner += '</tbody></table>';
   } else {
-    tableHTML += `<table class="tasas-table">
+    tableInner += `<table class="tasas-table">
       <thead><tr><th>Posición</th><th>USD/tn</th><th>$/tn</th></tr></thead>
       <tbody>${vencList.map(v => { const pv = pesoDe(v.precio, v.mes, v.anio); return `<tr><td>${v.mes}/${String(v.anio).slice(2)}</td><td style="color:var(--oro-l);font-weight:700">$${v.precio}</td><td style="color:var(--oro-l);font-weight:700">${pv != null ? '$'+f0(pv) : '—'}</td></tr>`; }).join('')}</tbody>
     </table>`;
   }
+
+  const tableHTML = notaAux + '<div class="tasas-scroll">' + tableInner + '</div>';
 
   const vaMaxHTML = (maxVA != null) ? `
     <div class="tasas-vamax">
