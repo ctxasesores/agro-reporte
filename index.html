@@ -687,8 +687,55 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .tasas-vamax .t{font-size:19px;font-weight:700;color:var(--oro-l);line-height:1.1}
 .tasas-vamax .p{font-size:10px;letter-spacing:.6px;color:var(--gris);margin-top:3px}
 .tasas-vamax .p b{color:var(--texto);font-weight:700}
-.tasas-vamax .v{font-size:30px;font-weight:800;color:var(--oro-l);letter-spacing:-.5px}
+.tasas-vamax .v{font-size:30px;font-weight:800;color:var(--oro-l);letter-spacing:-.5px;white-space:nowrap}
+.tasas-vamax .v .u{font-size:12px;font-weight:600;color:var(--gris);letter-spacing:0;margin-left:6px}
 .tasas-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tasas-rocket{flex-shrink:0;width:44px;height:44px;border-radius:12px;border:none;background:var(--oro);
+  color:#0f2740;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:transform .15s}
+.tasas-rocket:hover{transform:translateY(-1px)}
+.tasas-rocket.on{margin-right:14px}
+.tasas-vamax.booster{border-color:var(--oro)}
+.tasas-help{flex-shrink:0;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.06);color:var(--gris);font-size:19px;font-weight:700;cursor:pointer;margin-left:14px}
+.tasas-help:hover{color:var(--txt);border-color:rgba(255,255,255,.4)}
+.bst-ov{position:fixed;inset:0;z-index:3000;background:rgba(6,15,26,.72);display:flex;align-items:center;
+  justify-content:center;padding:20px}
+.bst-card{background:var(--navy-2,#13314f);border:1px solid rgba(255,255,255,.12);border-radius:18px;
+  max-width:640px;width:100%;max-height:88vh;overflow-y:auto;padding:24px}
+.bst-card h3{margin:0 0 4px;font-size:26px;color:var(--oro-l)}
+.bst-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:14px}
+.bst-row b{color:var(--txt)}
+.bst-big{display:flex;gap:26px;margin:16px 0}
+.bst-big div span{display:block;font-size:11px;letter-spacing:.7px;color:var(--gris);text-transform:uppercase}
+.bst-big div b{font-size:30px;color:var(--oro-l)}
+.bst-big div small{font-size:11px;font-weight:600;color:var(--gris);margin-left:5px}
+.bst-esc{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13px;line-height:1.5;color:var(--gris)}
+.bst-esc i{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1px solid var(--oro);color:var(--oro-l);
+  display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:12px}
+.bstd-wrap{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:10px;margin:16px 0}
+.bstd{width:100%;height:auto;display:block;overflow:visible}
+.bstd-l{stroke:rgba(255,255,255,.22);stroke-width:1.2}
+.bstd-l.duplo{stroke:var(--oro);stroke-width:2}
+.bstd-lab{fill:var(--gris);font-size:10px;font-weight:700;letter-spacing:.6px;text-anchor:end}
+.bstd-lab.duplo{fill:var(--oro-l)}
+.bstd-val{fill:rgba(255,255,255,.55);font-size:10px;text-anchor:end}
+.bstd-val.duplo{fill:var(--oro-l)}
+.bstd-lines{opacity:0;animation:bstdFade .5s ease forwards}
+.bstd-dot0{fill:var(--oro-l);opacity:0;animation:bstdFade .4s ease .45s forwards}
+.bstd-path{fill:none;stroke:#8fb6d8;stroke-width:2.6;stroke-linecap:round;
+  stroke-dasharray:640;stroke-dashoffset:640;animation:bstdDraw 2.8s ease-in-out .6s forwards}
+.bstd-br2{fill:none;stroke:#8fb6d8;stroke-width:2.2;stroke-dasharray:3 4;opacity:0;animation:bstdFade .5s ease 3.3s forwards}
+.bstd-br1{fill:none;stroke:#8fb6d8;stroke-width:2.2;opacity:0;animation:bstdFade .5s ease 3.3s forwards}
+.bstd-brk{stroke:rgba(255,255,255,.35);stroke-width:1.2;opacity:0;animation:bstdFade .4s ease 3.6s forwards}
+.bstd-arrow{fill:var(--oro);opacity:0;animation:bstdFade .4s ease 3.8s forwards}
+.bstd-b1 circle,.bstd-b2 circle{fill:rgba(15,39,64,.9);stroke:var(--oro);stroke-width:1.4}
+.bstd-b1 text,.bstd-b2 text{fill:var(--oro-l);font-size:11px;font-weight:700;text-anchor:middle}
+.bstd-b1,.bstd-b2{opacity:0;animation:bstdPop .45s cubic-bezier(.2,1.4,.4,1) 3.9s forwards}
+.bstd-dur{stroke:rgba(255,255,255,.25);stroke-width:1;opacity:0;animation:bstdFade .5s ease 4.2s forwards}
+.bstd-durlab{fill:var(--gris);font-size:9px;letter-spacing:.5px;text-anchor:middle;opacity:0;animation:bstdFade .5s ease 4.2s forwards}
+@keyframes bstdDraw{to{stroke-dashoffset:0}}
+@keyframes bstdFade{to{opacity:1}}
+@keyframes bstdPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 </style>
 </head>
 <body>
@@ -1625,8 +1672,19 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           </div>
         </div>
 
+      <!-- Opciones (Black-76) -->
+      <div class="section" id="sec-opciones">
+        <div class="section-title">Opciones</div>
+        <div class="card" style="padding:16px">
+          <div id="opc-tabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px"></div>
+          <div id="opc-info" class="tasas-nota"></div>
+          <div class="tasas-scroll"><div id="opc-body"></div></div>
+        </div>
+      </div>
+
+      <!-- Análisis CTX IA — oculto en desktop; la app móvil lo reubica vía mobOpenAI() -->
         <!-- Análisis CTX IA (acordeón) -->
-        <div style="margin-top:16px" id="sec-asesor-ia">
+        <div style="margin-top:16px;display:none" id="sec-asesor-ia">
           <div class="section-title" onclick="toggleAcc('acc-asesor','icon-asesor')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
             <span>Análisis CTX IA</span>
             <span id="icon-asesor" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
@@ -1677,52 +1735,6 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           @keyframes asesorBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
         </style>
 
-      </div>
-
-
-
-
-      <!-- Flujo de Fondos -->
-      <div class="section" id="sec-flujo">
-        <div class="section-title">Flujo de fondos</div>
-
-        <!-- Filtros -->
-        <div class="card" style="margin-bottom:16px">
-          <div class="flujo-filters">
-            <select class="flujo-filter-select" id="flujo-prod" onchange="renderFlujo()">
-              <option value="">Todos los productos</option>
-              <option>Soja</option><option>Maiz</option><option>Trigo</option>
-              <option>Girasol</option><option>Sorgo</option><option>Cebada</option>
-            </select>
-            <select class="flujo-filter-select" id="flujo-tipo" onchange="renderFlujo()">
-              <option value="">Todos los tipos</option>
-              <option>Precio</option><option>FIX</option><option>Forward</option>
-              <option>Futuro</option><option>Call</option><option>Put</option>
-            </select>
-          </div>
-          <!-- Chart -->
-          <div style="padding:16px">
-            <div style="position:relative;height:280px"><canvas id="flujoChart"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Tabla -->
-        <div class="card">
-          <div style="overflow-x:auto">
-            <table class="flujo-table">
-              <thead>
-                <tr>
-                  <th>Mes</th>
-                  <th>Ingresos</th>
-                  <th>Egresos</th>
-                  <th>Neto</th>
-                  <th>Detalle</th>
-                </tr>
-              </thead>
-              <tbody id="flujo-tbody"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
       <!-- Nueva operación -->
@@ -4295,6 +4307,7 @@ function calcularPorProducto(options = {}) {
 
 // ── RENDER ALL ──
 function renderAll() {
+  try { if (window.renderOpciones) window.renderOpciones(); } catch(e){}
   try { if (window.mobRender) window.mobRender(); } catch(e){}
   // Sidebar info
   document.getElementById('s-nombre').textContent = currentCliente.nombre_empresa;
@@ -4326,6 +4339,8 @@ function renderPrecios() { renderTasas(); }
 
 let _tasasProd = null;
 let _tasasMoneda = 'usd'; // heatmap: 'usd' | 'ars'
+let _tasasBanner = 'va';  // banner: 'va' | 'booster'
+function _tasasToggleBanner(){ _tasasBanner = (_tasasBanner === 'booster') ? 'va' : 'booster'; refrescarTasas(); }
 
 // ── Datos auxiliares para tasas en pesos y Valor Actual (TAMAR) ──
 // DLR (a3_precios), dólar mayorista spot (tipo_de_cambio) y TAMAR (bcra_observaciones).
@@ -4404,7 +4419,7 @@ function tasasProductosVisibles(byProd) {
 }
 
 // HTML del contenido (banner V.A. Max + nota TAMAR + tabla + heatmap) para un producto.
-function buildTasasContentHTML(vencMap, useTNA) {
+function buildTasasContentHTML(vencMap, useTNA, prod) {
   function tasaDirecta(pBase, pFut) { if (!pBase || !pFut || pBase === 0) return null; return (pFut - pBase) / pBase; }
   function mesesEntre(d1, d2) { return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); }
   function toTNA(tDir, meses) { if (meses <= 0) return null; return tDir * (12 / meses); }
@@ -4495,11 +4510,26 @@ function buildTasasContentHTML(vencMap, useTNA) {
 
   const tableHTML = notaAux + '<div class="tasas-scroll">' + tableInner + '</div>';
 
-  const vaMaxHTML = (maxVA != null) ? `
-    <div class="tasas-vamax">
-      <div><div class="t">V.A. Max.</div><div class="p">POSICIÓN <b>${maxVALabel}</b></div></div>
+  // ── Banner: V.A. Máximo ⇄ Booster (se alterna con el cohete) ──
+  const ROCKET = '<svg viewBox="0 0 60 60" width="46" height="46" aria-hidden="true"><path fill="currentColor" d="M47.448,3.475H12.877c-4.797,0-8.686,3.889-8.686,8.686v34.571c0,4.797,3.889,8.686,8.686,8.686 h34.571c4.797,0,8.686-3.889,8.686-8.686V12.16C56.134,7.364,52.245,3.475,47.448,3.475z M16.599,29.451 c-1.159-0.48-2.378-0.644-3.516-0.645c-1.143,0.001-2.197,0.167-3.055,0.359c0.924-0.843,1.852-1.608,2.786-2.208 c1.437-0.924,2.871-1.477,4.324-1.476c1.457,0.003,2.979,0.555,4.634,1.951c-0.852,1.232-1.697,2.553-2.535,3.958 C18.466,30.484,17.559,29.847,16.599,29.451z M32.025,46.168c-0.6,0.934-1.365,1.863-2.208,2.786 c0.192-0.858,0.358-1.912,0.359-3.056c0-1.139-0.164-2.357-0.645-3.516c-0.397-0.96-1.033-1.867-1.94-2.638 c1.405-0.838,2.727-1.683,3.958-2.535c1.396,1.656,1.948,3.178,1.951,4.634C33.501,43.298,32.949,44.731,32.025,46.168z M30.873,35.664c-1.628,1.183-3.394,2.365-5.307,3.541c-0.399,0.245-0.809,0.49-1.22,0.734l-2.652-2.652l-2.652-2.652 c0.245-0.411,0.489-0.822,0.734-1.22c1.176-1.913,2.358-3.679,3.541-5.307c8.164-11.238,16.346-15.787,22.957-15.78 c0.124,0,0.245,0.007,0.368,0.011c0.003,0.123,0.011,0.244,0.011,0.368C46.661,19.318,42.111,27.501,30.873,35.664z"/></svg>';
+  const bst = (typeof window.calcularBooster === 'function' && prod) ? window.calcularBooster(prod) : null;
+  const rocketBtn = `<button class="tasas-rocket${_tasasBanner==='booster'?' on':''}" onclick="_tasasToggleBanner()" title="${_tasasBanner==='booster'?'Ver V.A. Máximo':'Ver Booster'}">${ROCKET}</button>`;
+  let vaMaxHTML = '';
+  if (_tasasBanner === 'booster' && bst) {
+    const pm = String(bst.pos.split('_')[0]).padStart(2,'0'), pa = String(bst.pos.split('_')[1]).slice(2);
+    vaMaxHTML = `<div class="tasas-vamax booster">
+      ${rocketBtn}
+      <div style="flex:1"><div class="t">Booster</div><div class="p">POSICIÓN <b>${pm}/${pa}</b>${bst.sintetico?' <span style="color:var(--gris)">· strike sintético</span>':(bst.teorico?' <span style="color:var(--gris)">· prima teórica</span>':'')}</div></div>
+      <div class="v">${f0(bst.duplo)}<span class="u">U$S / tn.</span></div>
+      <button class="tasas-help" onclick="boosterDetalle('${prod}')" title="Cómo funciona la estrategia">?</button>
+    </div>`;
+  } else if (maxVA != null) {
+    vaMaxHTML = `<div class="tasas-vamax">
+      <div style="flex:1"><div class="t">V.A. Max.</div><div class="p">POSICIÓN <b>${maxVALabel}</b></div></div>
       <div class="v">$${f0(maxVA)}</div>
-    </div>` : '';
+      ${bst ? rocketBtn : ''}
+    </div>`;
+  }
 
   const heatVenc = [];
   if (basePrice) heatVenc.push({ key:'CONT', label:'Disp', precioUsd:basePrice, precioArs:pesoBase, fecha:today });
@@ -4568,7 +4598,7 @@ function renderTasas() {
   tabsEl.innerHTML = prods.map(p =>
     `<button class="tasas-tab ${p===_tasasProd?'active':''}" onclick="_tasasProd='${p}';refrescarTasas()">${p}</button>`
   ).join('');
-  el.innerHTML = buildTasasContentHTML(byProd[_tasasProd], useTNA);
+  el.innerHTML = buildTasasContentHTML(byProd[_tasasProd], useTNA, _tasasProd);
 }
 
 // Re-render de tasas en la vista activa (desktop y/o móvil).
@@ -7214,6 +7244,446 @@ window.addEventListener('load', async () => {
 </script>
 
 <script>
+/* ============================================================================
+   OPCIONES AGROPECUARIAS A3 — Motor Black-76
+   El subyacente es el FUTURO del mismo vencimiento (no el disponible),
+   por eso se usa Black-76 y no Black-Scholes clásico.
+   Uso informativo / diagnóstico. No es recomendación de inversión.
+   ========================================================================== */
+(function () {
+  // Feriados AR — verificar contra el calendario oficial de A3 (los puentes
+  // turísticos los fija el PEN cada año y no siguen regla fija).
+  const FERIADOS_AR = new Set([
+    '2026-01-01','2026-02-16','2026-02-17','2026-03-24','2026-04-02','2026-04-03',
+    '2026-05-01','2026-05-25','2026-06-15','2026-06-20','2026-07-09','2026-08-17',
+    '2026-10-12','2026-11-20','2026-12-08','2026-12-25',
+    '2027-01-01','2027-02-08','2027-02-09','2027-03-24','2027-03-26','2027-04-02',
+    '2027-05-01','2027-05-25','2027-06-21','2027-06-20','2027-07-09','2027-08-16',
+    '2027-10-11','2027-11-22','2027-12-08','2027-12-25',
+  ]);
+  const iso = d => d.toISOString().slice(0,10);
+  const esHabil = d => { const w = d.getUTCDay(); return w!==0 && w!==6 && !FERIADOS_AR.has(iso(d)); };
+
+  // Reglamento A3: 5º día hábil anterior al inicio del mes de entrega del futuro.
+  function vencimientoOpcion(mes, anio) {
+    const d = new Date(Date.UTC(anio, mes-1, 1));
+    let h = 0;
+    while (h < 5) { d.setUTCDate(d.getUTCDate()-1); if (esHabil(d)) h++; }
+    return d;
+  }
+  const tiempoAlVto = (v, hoy = new Date()) => Math.max((v - hoy) / (365*24*3600*1000), 0);
+
+  const normPdf = x => Math.exp(-0.5*x*x) / Math.sqrt(2*Math.PI);
+  function normCdf(x) {
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const s = x<0?-1:1, z = Math.abs(x)/Math.SQRT2, t = 1/(1+p*z);
+    return 0.5*(1 + s*(1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-z*z)));
+  }
+
+  function black76(F,K,t,r,sig,tipo) {
+    if (!(F>0)||!(K>0)) return null;
+    const df = Math.exp(-r*t);
+    if (t<=0 || sig<=0) return df * (tipo==='C' ? Math.max(F-K,0) : Math.max(K-F,0));
+    const vt = sig*Math.sqrt(t);
+    const d1 = (Math.log(F/K) + 0.5*sig*sig*t)/vt, d2 = d1-vt;
+    return tipo==='C' ? df*(F*normCdf(d1)-K*normCdf(d2)) : df*(K*normCdf(-d2)-F*normCdf(-d1));
+  }
+
+  function griegas(F,K,t,r,sig,tipo) {
+    if (!(F>0)||!(K>0)||t<=0||sig<=0) return null;
+    const df=Math.exp(-r*t), vt=sig*Math.sqrt(t);
+    const d1=(Math.log(F/K)+0.5*sig*sig*t)/vt, nd1=normPdf(d1);
+    const precio = black76(F,K,t,r,sig,tipo);
+    return {
+      delta: tipo==='C' ? df*normCdf(d1) : df*(normCdf(d1)-1),
+      gamma: df*nd1/(F*vt),
+      vega:  df*F*nd1*Math.sqrt(t)/100,                                  // por 1% de vol
+      theta: (r*precio - df*F*nd1*sig/(2*Math.sqrt(t)))/365,             // por día
+    };
+  }
+
+  // Volatilidad implícita por bisección (robusta en los extremos del smile).
+  function volImplicita(prima,F,K,t,r,tipo) {
+    if (!(prima>0)||!(F>0)||!(K>0)||t<=0) return null;
+    const df=Math.exp(-r*t), tol=1e-6;
+    const intr = df*(tipo==='C'?Math.max(F-K,0):Math.max(K-F,0));
+    const max  = df*(tipo==='C'?F:K);
+    if (prima < intr-tol || prima > max+tol) return null;   // fuera de no-arbitraje
+    let lo=1e-6, hi=5.0;
+    if (black76(F,K,t,r,hi,tipo) < prima) return null;
+    for (let i=0;i<100;i++){
+      const m=0.5*(lo+hi), px=black76(F,K,t,r,m,tipo);
+      if (Math.abs(px-prima)<tol) return m;
+      if (px<prima) lo=m; else hi=m;
+    }
+    return 0.5*(lo+hi);
+  }
+
+  // Volatilidad histórica anualizada por (producto, posición), desde histData
+  // (la serie de precios_historicos que ya carga el panel). Se usa como fallback
+  // cuando el mercado no operó la opción y no hay prima válida.
+  let volHistCache = null;
+  function volHistDe(producto, posicion) {
+    if (volHistCache === null) {
+      if (typeof histData === 'undefined' || !histData.length) return null;
+      const g = {};
+      histData.forEach(r => {
+        if (r.precio == null || Number(r.precio) <= 0) return;
+        const k = r.producto + '|' + r.posicion;
+        (g[k] = g[k] || []).push({ f: r.fecha, p: Number(r.precio) });
+      });
+      volHistCache = {};
+      Object.entries(g).forEach(([k, arr]) => {
+        arr.sort((a,b) => a.f < b.f ? -1 : 1);
+        const px = arr.slice(-120).map(x => x.p);      // últimas ~120 ruedas
+        if (px.length < 25) return;
+        const lr = [];
+        for (let i=1;i<px.length;i++) lr.push(Math.log(px[i]/px[i-1]));
+        const m = lr.reduce((a,b)=>a+b,0)/lr.length;
+        const v = lr.reduce((a,b)=>a+(b-m)**2,0)/(lr.length-1);
+        volHistCache[k] = Math.sqrt(v*252);
+      });
+    }
+    const exact = volHistCache[producto+'|'+posicion];
+    if (exact != null) return exact;
+    // Fallback: promedio de las posiciones del mismo producto
+    const vs = Object.entries(volHistCache)
+      .filter(([k]) => k.startsWith(producto+'|')).map(([,v]) => v);
+    return vs.length ? vs.reduce((a,b)=>a+b,0)/vs.length : null;
+  }
+
+  // Tasa USD única para todas las posiciones: la MÁS ALTA de la paridad
+  // TAMAR/DLR entre todos los meses de la curva. Evita tasas negativas
+  // (inconsistentes) y mantiene un criterio uniforme entre vencimientos.
+  function tasaUsdUnica() {
+    if (!mercadoAux.loaded || mercadoAux.tamar == null || !mercadoAux.spot) return { r:0, mes:null };
+    const hoy = Date.now();
+    let mejor = null, mejorT = null;
+    (mercadoAux.dlrPts || []).forEach(p => {
+      const t = (p.t - hoy) / (365*24*3600*1000);
+      if (t <= 0.02) return;                       // descarta lo casi vencido (ruido)
+      const r = ((1 + mercadoAux.tamar * t) * mercadoAux.spot / p.px - 1) / t;
+      if (mejor == null || r > mejor) { mejor = r; mejorT = p.t; }
+    });
+    if (mejor == null) return { r:0, mes:null };
+    const d = mejorT ? new Date(mejorT) : null;
+    return { r: Math.max(0, mejor), mes: d ? (d.getMonth()+1)+'/'+String(d.getFullYear()).slice(2) : null };
+  }
+
+  // ───────────────────────────── Datos ─────────────────────────────
+  const SUBY = { 'SOJ.ROS':'Soja', 'MAI.ROS':'Maiz', 'TRI.ROS':'Trigo' };
+  let opcData = { loaded:false, loading:false, ops:[], fut:{} };
+  let _opcProd = null, _opcVto = null;
+
+  async function cargarOpciones() {
+    if (opcData.loading || typeof sb === 'undefined') return;
+    opcData.loading = true;
+    try {
+      const { data } = await sb.from('a3_precios')
+        .select('symbol,subyacente,vencimiento,es_opcion,tipo_opcion,strike,settlement_price,last_price,volumen,open_interest')
+        .in('subyacente', Object.keys(SUBY));
+      const fut = {}, ops = [];
+      (data||[]).forEach(r => {
+        if (r.es_opcion) { if (r.strike != null) ops.push(r); }
+        else { const px = r.settlement_price ?? r.last_price; if (px != null) fut[r.subyacente+'|'+r.vencimiento] = Number(px); }
+      });
+      opcData.ops = ops; opcData.fut = fut; opcData.loaded = true;
+    } catch(e) { console.warn('opciones:', e); }
+    opcData.loading = false;
+    renderOpciones();
+    // El Booster vive en la sección de Tasas: hay que refrescarla también,
+    // si no el cohete no aparece hasta que el usuario toca una solapa.
+    try { if (typeof refrescarTasas === 'function') refrescarTasas(); } catch (e) {}
+  }
+
+  function renderOpciones() {
+    const tabsEl = document.getElementById('opc-tabs');
+    const infoEl = document.getElementById('opc-info');
+    const bodyEl = document.getElementById('opc-body');
+    if (!tabsEl || !bodyEl) return;
+
+    if (!opcData.loaded) {
+      if (!opcData.loading) cargarOpciones();
+      infoEl.innerHTML = '<i>Cargando opciones…</i>'; bodyEl.innerHTML = ''; return;
+    }
+    if (!opcData.ops.length) {
+      tabsEl.innerHTML=''; infoEl.innerHTML=''; 
+      bodyEl.innerHTML = '<div class="empty-state">Sin opciones disponibles</div>'; return;
+    }
+
+    // Productos con opciones
+    const prods = [...new Set(opcData.ops.map(o => SUBY[o.subyacente]).filter(Boolean))].sort();
+    if (!_opcProd || !prods.includes(_opcProd)) _opcProd = prods.includes('Soja') ? 'Soja' : prods[0];
+    const subyDe = p => Object.keys(SUBY).find(k => SUBY[k] === p);
+    const suby = subyDe(_opcProd);
+
+    // Vencimientos de ese producto, ordenados
+    const vtos = [...new Set(opcData.ops.filter(o=>o.subyacente===suby).map(o=>o.vencimiento))]
+      .sort((a,b)=>{const[ma,aa]=a.split('_').map(Number),[mb,ab]=b.split('_').map(Number);return (aa-ab)||(ma-mb);});
+    if (!_opcVto || !vtos.includes(_opcVto)) _opcVto = vtos[0];
+
+    tabsEl.innerHTML =
+      prods.map(p=>`<button class="tasas-tab ${p===_opcProd?'active':''}" onclick="window._opcSetProd('${p}')">${p}</button>`).join('')
+      + '<span style="width:14px"></span>'
+      + vtos.map(v=>{const[m,a]=v.split('_');return `<button class="tasas-tab ${v===_opcVto?'active':''}" style="font-size:11px;padding:5px 10px" onclick="window._opcSetVto('${v}')">${m}/${String(a).slice(2)}</button>`;}).join('');
+
+    // Insumos del modelo
+    const [mes, anio] = _opcVto.split('_').map(Number);
+    const F   = opcData.fut[suby+'|'+_opcVto];
+    const vto = vencimientoOpcion(mes, anio);
+    const t   = tiempoAlVto(vto);
+    const tasaInfo = tasaUsdUnica();
+    const r = tasaInfo.r;
+    const fVto = vto.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
+
+    if (F == null) {
+      infoEl.innerHTML = `Vence <b>${fVto}</b> · <i>sin precio del futuro subyacente: no se puede valuar</i>`;
+      bodyEl.innerHTML = '<div class="empty-state">Falta el futuro subyacente</div>'; return;
+    }
+    infoEl.innerHTML = `Futuro <b>$${F}</b> · vence <b>${fVto}</b> · ${(t*365).toFixed(0)} días `
+      + `· tasa USD <b>${(r*100).toFixed(2)}%</b> <span style="opacity:.65">(máx. paridad TAMAR/DLR`
+      + `${tasaInfo.mes ? ', '+tasaInfo.mes : ''})</span>`;
+
+    const rows = opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===_opcVto)
+      .map(o => ({...o, strike:Number(o.strike), prima: o.settlement_price ?? o.last_price}))
+      .sort((a,b) => (a.tipo_opcion===b.tipo_opcion ? a.strike-b.strike : (a.tipo_opcion==='C'?-1:1)));
+
+    const f2 = n => n==null ? '—' : Number(n).toFixed(2);
+    let html = `<table class="tasas-table" style="min-width:640px">
+      <thead><tr><th>Tipo</th><th>Strike</th><th>Prima</th><th>Volatilidad</th><th>Teórico</th>
+      <th>Delta</th><th>Gamma</th><th>Vega</th><th>Theta/día</th></tr></thead><tbody>`;
+    let conHist = 0;
+    const vh = volHistDe(_opcProd, _opcVto);   // vol histórica del futuro subyacente
+    rows.forEach(o => {
+      const tipoTxt = o.tipo_opcion==='C' ? 'Call' : 'Put';
+      const prima = o.prima != null ? Number(o.prima) : null;
+      // Volatilidad implícita si el mercado operó y la prima es coherente;
+      // si no, se valúa con la volatilidad HISTÓRICA del futuro.
+      const iv = prima != null ? volImplicita(prima, F, o.strike, t, r, o.tipo_opcion) : null;
+      const sigma = iv != null ? iv : vh;
+      const esHist = (iv == null && sigma != null);
+      if (esHist) conHist++;
+      const g  = sigma != null ? griegas(F, o.strike, t, r, sigma, o.tipo_opcion) : null;
+      const px = sigma != null ? black76(F, o.strike, t, r, sigma, o.tipo_opcion) : null;
+      const itm = (o.tipo_opcion==='C' ? F > o.strike : F < o.strike);
+      const volTxt = sigma == null ? '—'
+        : esHist
+          ? `<span style="color:var(--gris)" title="Sin prima operada: volatilidad histórica del futuro">${(sigma*100).toFixed(1)}% <span style="font-size:9px">hist</span></span>`
+          : `${(sigma*100).toFixed(1)}%`;
+      html += `<tr>
+        <td style="color:${o.tipo_opcion==='C'?'var(--verde-l)':'var(--oro-l)'};font-weight:700">${tipoTxt}</td>
+        <td style="font-weight:${itm?'700':'400'}">${o.strike}${itm?' <span style="font-size:9px;opacity:.6">ITM</span>':''}</td>
+        <td style="color:var(--oro-l);font-weight:700">${prima!=null?'$'+f2(prima):'—'}</td>
+        <td style="font-weight:700">${volTxt}</td>
+        <td style="color:${esHist?'var(--gris)':'var(--texto)'};font-weight:${esHist?'400':'700'}">${px!=null?'$'+f2(px):'—'}</td>
+        <td>${g?g.delta.toFixed(3):'—'}</td>
+        <td>${g?g.gamma.toFixed(4):'—'}</td>
+        <td>${g?g.vega.toFixed(3):'—'}</td>
+        <td>${g?g.theta.toFixed(4):'—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    if (conHist) html += `<div class="tasas-nota" style="margin-top:10px">`
+      + `<b>${conHist}</b> opción(es) sin prima operada (o con prima por debajo del valor intrínseco): `
+      + `se valúan con la <b>volatilidad histórica</b> del futuro`
+      + `${vh!=null ? ' ('+(vh*100).toFixed(1)+'% anual, últimas 120 ruedas)' : ''}. `
+      + `Se muestran en gris para distinguirlas de las que sí tienen precio de mercado.</div>`;
+    bodyEl.innerHTML = html;
+  }
+
+  // ══════════════════ BOOSTER ══════════════════
+  // Lanzamiento (venta) de un CALL y un PUT sobre la posición de COSECHA.
+  // Las primas cobradas son el "plus" sobre el futuro.
+  //   R1  simetría con sesgo permitido a la suba:  (Kc - F) >= (F - Kp)
+  //   R2  las primas deben alcanzar el DUPLO:      F + primaC + primaP >= Kc
+  //   R3  DUPLO = Kc  ·  CIERRE = Kp
+  // Entre los pares válidos se elige el de MAYOR PLUS (suma de primas).
+  // Uso informativo. No es recomendación de inversión.
+  const MES_COSECHA = { Soja: 5, Trigo: 1, Maiz: 4 };   // mayo / enero / abril
+
+  function posicionCosecha(prod) {
+    const mes = MES_COSECHA[prod];
+    const suby = Object.keys(SUBY).find(k => SUBY[k] === prod);
+    if (!mes || !suby) return null;
+    const hoy = Date.now();
+    return [...new Set(opcData.ops.filter(o => o.subyacente === suby).map(o => o.vencimiento))]
+      .filter(v => +v.split('_')[0] === mes)
+      .map(v => { const [m,a] = v.split('_').map(Number); return { v, t: vencimientoOpcion(m,a).getTime() }; })
+      .filter(x => x.t > hoy)
+      .sort((a,b) => a.t - b.t)
+      .map(x => x.v)[0] || null;
+  }
+
+  window.calcularBooster = function (prod) {
+    if (!opcData.loaded) { if (!opcData.loading) cargarOpciones(); return null; }
+    const pos = posicionCosecha(prod);
+    if (!pos) return null;
+    const suby = Object.keys(SUBY).find(k => SUBY[k] === prod);
+    const F = opcData.fut[suby + '|' + pos];
+    if (!(F > 0)) return null;
+
+    const [mes, anio] = pos.split('_').map(Number);
+    const vto = vencimientoOpcion(mes, anio);
+    const t = tiempoAlVto(vto);
+    if (t <= 0) return null;
+    const r = tasaUsdUnica().r;
+    const vh = volHistDe(prod, pos);
+
+    // ── Escalera de strikes de 4 en 4 dólares ──
+    // El Booster es una operación OTC: puede pactarse en strikes que A3 no lista
+    // (o que el colector todavía no captura). Se completa la escalera y se valúan
+    // esas primas con Black-76 + volatilidad histórica.
+    // Origen de cada prima:  mkt = operada en mercado · teo = strike listado sin
+    // volumen · sint = strike sintético (no listado).
+    const PASO = 4;
+    function escalera(listados) {
+      const lo = Math.floor((F * 0.82) / PASO) * PASO;
+      const hi = Math.ceil((F * 1.18) / PASO) * PASO;
+      const m = new Map();
+      listados.forEach(o => {
+        const k = Number(o.strike);
+        const mkt = o.settlement_price ?? o.last_price;
+        m.set(k, { strike: k, prima: (mkt != null && Number(mkt) > 0) ? Number(mkt) : null, listado: true });
+      });
+      for (let k = lo; k <= hi; k += PASO) if (!m.has(k)) m.set(k, { strike: k, prima: null, listado: false });
+      return [...m.values()].sort((a, b) => a.strike - b.strike);
+    }
+    const primaDe = (it, tipo) => {
+      if (it.prima != null) return { v: it.prima, src: 'mkt', strike: it.strike };
+      if (vh == null) return null;
+      const px = black76(F, it.strike, t, r, vh, tipo);
+      return px > 0.01 ? { v: px, src: it.listado ? 'teo' : 'sint', strike: it.strike } : null;
+    };
+
+    const calls = escalera(opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===pos && o.tipo_opcion==='C'));
+    const puts  = escalera(opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===pos && o.tipo_opcion==='P'));
+    let mejor = null;
+    calls.forEach(c => {
+      const Kc = c.strike, pc = primaDe(c, 'C');
+      if (!pc) return;
+      puts.forEach(p => {
+        const Kp = p.strike;
+        if (Kp >= Kc) return;
+        if (!(Kp < F)) return;             // CIERRE siempre por debajo del FORWARD
+        if (!((Kc - F) >= (F - Kp))) return;                 // R1
+        const pp = primaDe(p, 'P');
+        if (!pp) return;
+        const plus = pc.v + pp.v;
+        const excedente = (F + plus) - Kc;
+        if (!(excedente > 0)) return;                        // R2: el excedente debe ser > 0
+        const asimetria = (Kc - F) - (F - Kp);               // >= 0 por R1 (0 = simetría exacta)
+        const score = excedente + asimetria;
+        // R4: se prioriza el DUPLO más alto posible, aun a costa de la simetría.
+        // A igual DUPLO, gana el de menor excedente (F + primas más cerca del strike).
+        const gana = !mejor || (Kc > mejor.duplo) || (Kc === mejor.duplo && excedente < mejor.excedente);
+        if (gana)
+          mejor = { duplo: Kc, cierre: Kp, plus, primaC: pc, primaP: pp,
+                    F, pos, vto, t, r, vh, prod, score, excedente, asimetria,
+                    dias: Math.round(t * 365),
+                    teorico:   (pc.src !== 'mkt' || pp.src !== 'mkt'),
+                    sintetico: (pc.src === 'sint' || pp.src === 'sint') };
+      });
+    });
+    return mejor;
+  };
+  // Diagrama animado de la estrategia (recorrido del precio + bifurcación x1/x2)
+  function bstDiagrama(b) {
+    const f1 = n => Number(n).toLocaleString('es-AR', { maximumFractionDigits:1 });
+    return `<div class="bstd-wrap">
+      <svg viewBox="0 0 470 250" class="bstd">
+        <!-- niveles -->
+        <g class="bstd-lines">
+          <line x1="95" y1="62"  x2="440" y2="62"  class="bstd-l duplo"/>
+          <line x1="95" y1="125" x2="440" y2="125" class="bstd-l"/>
+          <line x1="95" y1="188" x2="440" y2="188" class="bstd-l"/>
+          <text x="88" y="59"  class="bstd-lab duplo">DUPLO</text>
+          <text x="88" y="122" class="bstd-lab">FORWARD</text>
+          <text x="88" y="185" class="bstd-lab">CIERRE</text>
+          <text x="88" y="73"  class="bstd-val duplo">${f1(b.duplo)}</text>
+          <text x="88" y="136" class="bstd-val">${f1(b.F)}</text>
+          <text x="88" y="199" class="bstd-val">${f1(b.cierre)}</text>
+        </g>
+        <!-- recorrido del precio -->
+        <circle cx="105" cy="125" r="5" class="bstd-dot0"/>
+        <path class="bstd-path" d="M105,125 C116,125 116,166 134,166 C152,166 146,90 166,90
+              C186,90 184,170 204,170 C224,170 221,82 244,82 C266,82 264,168 284,168
+              C304,168 300,96 328,96"/>
+        <!-- bifurcación -->
+        <path class="bstd-br2" d="M328,96 L372,58"/>
+        <path class="bstd-br1" d="M328,96 L372,128"/>
+        <line x1="372" y1="58" x2="372" y2="128" class="bstd-brk"/>
+        <path class="bstd-arrow" d="M372,62 l-5,-7 l10,0 z"/>
+        <g class="bstd-b2"><circle cx="392" cy="58" r="13"/><text x="392" y="62">x2</text></g>
+        <g class="bstd-b1"><circle cx="392" cy="128" r="13"/><text x="392" y="132">x1</text></g>
+        <!-- duración -->
+        <line x1="105" y1="222" x2="328" y2="222" class="bstd-dur"/>
+        <text x="216" y="240" class="bstd-durlab">DURACIÓN A LA EXPIRACIÓN DE LA ESTRATEGIA</text>
+      </svg>
+    </div>`;
+  }
+
+  // Registro de la valuación: devuelve el detalle completo (insumos + par elegido)
+  // listo para persistir cuando se arme la pantalla de admin.
+  window.boosterAuditoria = function (prod) {
+    const b = window.calcularBooster(prod);
+    if (!b) return null;
+    const r4 = n => Math.round(n * 10000) / 10000;
+    return {
+      calculado_en: new Date().toISOString(),
+      producto: prod,
+      posicion: b.pos,
+      expiracion: b.vto.toISOString().slice(0, 10),
+      dias: b.dias,
+      insumos: { futuro: r4(b.F), vol_historica: r4(b.vh), tasa_usd: r4(b.r), modelo: 'black76', paso_strike: 4 },
+      call: { strike: b.duplo,  prima: r4(b.primaC.v), origen: b.primaC.src },
+      put:  { strike: b.cierre, prima: r4(b.primaP.v), origen: b.primaP.src },
+      resultado: {
+        duplo: b.duplo, cierre: b.cierre, plus: r4(b.plus),
+        futuro_mas_plus: r4(b.F + b.plus),
+        excedente: r4(b.excedente), asimetria: r4(b.asimetria), score: r4(b.score),
+      },
+    };
+  };
+
+  window.boosterDetalle = function (prod) {
+    const b = window.calcularBooster(prod);
+    if (!b) return;
+    const f1 = n => Number(n).toLocaleString('es-AR', { maximumFractionDigits:1 });
+    const fecha = d => d.toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'});
+    const src = x => x.src === 'teo' ? ' <span style="color:var(--gris);font-size:11px">teórica</span>' : '';
+    const ov = document.createElement('div');
+    ov.className = 'bst-ov';
+    ov.onclick = e => { if (e.target === ov) ov.remove(); };
+    ov.innerHTML = `<div class="bst-card">
+      <h3>Booster</h3>
+      <div style="font-size:12px;color:var(--gris);margin-bottom:16px">Análisis informativo de escenarios — no es recomendación de inversión.</div>
+      <div class="bst-row"><span>Posición</span><b>${prod} ${b.pos.split('_')[0]}/${b.pos.split('_')[1]}</b></div>
+      <div class="bst-row"><span>Inicio</span><b>${fecha(new Date())}</b></div>
+      <div class="bst-row"><span>Expiración de la estrategia</span><b>${fecha(b.vto)}</b></div>
+      <div class="bst-row"><span>Días</span><b>${b.dias}</b></div>
+      <div class="bst-row"><span>Futuro subyacente</span><b>${f1(b.F)} U$S/tn</b></div>
+      ${b.sintetico ? '<div class="tasas-nota" style="margin:10px 0 0">Operación <b>OTC</b>: al menos uno de los strikes no cotiza en A3 y su prima se valuó con Black-76 sobre la volatilidad histórica del futuro (' + (b.vh!=null?(b.vh*100).toFixed(1)+'%':'s/d') + ' anual).</div>' : ''}
+      <div class="bst-big">
+        <div><span>Duplo</span><b>${f1(b.duplo)}</b><small>U$S / tn.</small></div>
+        <div><span>Cierre</span><b>${f1(b.cierre)}</b><small>U$S / tn.</small></div>
+      </div>
+      ${bstDiagrama(b)}
+      <p style="font-size:14px;line-height:1.6;margin:18px 0 8px">El día de contratación el precio cerrado es sensiblemente superior a los valores del forward. Ese precio contratado es el <b>DUPLO</b>. El volumen contratado dependerá del precio de la posición el día de expiración.</p>
+      <div class="bst-esc"><i>✕</i><div>Si el precio baja hasta el <b>CIERRE</b>, el volumen es el pactado originalmente y queda comprometido <b>sin precio fijado</b>.</div></div>
+      <div class="bst-esc"><i>x1</i><div>Si el precio está por debajo del <b>DUPLO</b>, el volumen es el pactado originalmente al precio del DUPLO.</div></div>
+      <div class="bst-esc"><i>x2</i><div>Si el precio está por encima del <b>DUPLO</b>, el volumen a entregar <b>se duplica</b> al precio del DUPLO.</div></div>
+      <div style="text-align:right;margin-top:20px"><button onclick="this.closest('.bst-ov').remove()" style="background:var(--oro);border:none;color:#0f2740;font-size:15px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer">Cerrar</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+  };
+
+  window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); };
+  window._opcSetVto  = v => { _opcVto = v; renderOpciones(); };
+  window.renderOpciones = renderOpciones;
+})();
+</script>
+
+<script>
 
 /* ═══════════════ APP MÓVIL — AGRICULTURA ═══════════════
    Reusa las funciones reales del panel: buildLevel0/1/2, getFilteredOps,
@@ -7439,7 +7909,7 @@ window.addEventListener('load', async () => {
     }
     tabsEl.innerHTML = prods.map(p=>`<button class="mob-tasas-tab ${p===_mobTasasProd?'active':''}" onclick="window._mobSetTasasProd('${p}')">${p}</button>`).join('')
       + `<button class="mob-tasas-tgl" onclick="window._mobToggleTasasTNA()">${_mobTasasTNA?'TNA':'Directa'}</button>`;
-    el.innerHTML = buildTasasContentHTML(byProd[_mobTasasProd], _mobTasasTNA);
+    el.innerHTML = buildTasasContentHTML(byProd[_mobTasasProd], _mobTasasTNA, _mobTasasProd);
   }
   window._mobSetTasasProd = function(p){ _mobTasasProd = p; mobRenderTasas(); };
   window._mobToggleTasasTNA = function(){ _mobTasasTNA = !_mobTasasTNA; mobRenderTasas(); };
