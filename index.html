@@ -5764,6 +5764,11 @@ async function loadHistoricos() {
   actualizarFiltroPos();
   renderPosicionesChart();
   renderEvolucion();
+  // El Booster valúa strikes sin prima con la volatilidad histórica que sale de
+  // histData: hasta que la serie no está, no puede calcularse. Se refresca Tasas
+  // para que el cohete aparezca apenas los datos están disponibles.
+  try { if (typeof _volHistCacheReset === 'function') _volHistCacheReset(); } catch (e) {}
+  try { if (typeof refrescarTasas === 'function') refrescarTasas(); } catch (e) {}
 }
 
 function actualizarFiltroPos() {
@@ -7323,6 +7328,7 @@ window.addEventListener('load', async () => {
   // (la serie de precios_historicos que ya carga el panel). Se usa como fallback
   // cuando el mercado no operó la opción y no hay prima válida.
   let volHistCache = null;
+  window._volHistCacheReset = function () { volHistCache = null; };
   function volHistDe(producto, posicion) {
     if (volHistCache === null) {
       if (typeof histData === 'undefined' || !histData.length) return null;
@@ -7527,7 +7533,20 @@ window.addEventListener('load', async () => {
     const t = tiempoAlVto(vto);
     if (t <= 0) return null;
     const r = tasaUsdUnica().r;
-    const vh = volHistDe(prod, pos);
+    // Volatilidad: histórica del futuro. Si la serie todavía no cargó, se usa como
+    // respaldo la implícita de la opción listada más cercana al dinero con prima
+    // operada, para que el Booster no quede sin calcular por un tema de orden de carga.
+    let vh = volHistDe(prod, pos);
+    if (vh == null) {
+      const cand = opcData.ops
+        .filter(o => o.subyacente===suby && o.vencimiento===pos && (o.settlement_price ?? o.last_price) > 0)
+        .map(o => ({ o, dist: Math.abs(Number(o.strike) - F) }))
+        .sort((a,b) => a.dist - b.dist);
+      for (const c of cand) {
+        const iv = volImplicita(Number(c.o.settlement_price ?? c.o.last_price), F, Number(c.o.strike), t, r, c.o.tipo_opcion);
+        if (iv != null) { vh = iv; break; }
+      }
+    }
 
     // ── Escalera de strikes de 4 en 4 dólares ──
     // El Booster es una operación OTC: puede pactarse en strikes que A3 no lista
@@ -7624,6 +7643,26 @@ window.addEventListener('load', async () => {
 
   // Registro de la valuación: devuelve el detalle completo (insumos + par elegido)
   // listo para persistir cuando se arme la pantalla de admin.
+  // Diagnóstico: explica en consola por qué un producto no tiene Booster.
+  window.boosterDebug = function (prod) {
+    const est = {
+      producto: prod,
+      opciones_cargadas: opcData.loaded,
+      opciones_en_memoria: opcData.ops.length,
+      serie_historica: (typeof histData !== 'undefined' ? histData.length : 0),
+      posicion_cosecha: posicionCosecha(prod),
+    };
+    if (est.posicion_cosecha) {
+      const suby = Object.keys(SUBY).find(k => SUBY[k] === prod);
+      est.futuro = opcData.fut[suby + '|' + est.posicion_cosecha] ?? null;
+      est.vol_historica = volHistDe(prod, est.posicion_cosecha);
+      est.tasa_usd = tasaUsdUnica().r;
+    }
+    est.resultado = window.calcularBooster(prod);
+    console.log('[booster]', est);
+    return est;
+  };
+
   window.boosterAuditoria = function (prod) {
     const b = window.calcularBooster(prod);
     if (!b) return null;
