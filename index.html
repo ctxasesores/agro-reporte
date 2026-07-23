@@ -712,30 +712,47 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .bst-esc{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13px;line-height:1.5;color:var(--gris)}
 .bst-esc i{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1px solid var(--oro);color:var(--oro-l);
   display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:12px}
-.bstd-wrap{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:10px;margin:16px 0}
+.bstd-wrap{position:relative;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:14px 10px 6px;margin:16px 0}
 .bstd{width:100%;height:auto;display:block;overflow:visible}
-.bstd-l{stroke:rgba(255,255,255,.22);stroke-width:1.2}
-.bstd-l.duplo{stroke:var(--oro);stroke-width:2}
-.bstd-lab{fill:var(--gris);font-size:10px;font-weight:700;letter-spacing:.6px;text-anchor:end}
+.bstd-l{stroke:rgba(255,255,255,.28);stroke-width:1.1;stroke-miterlimit:10;fill:none}
+.bstd-l.duplo{stroke:var(--oro);stroke-width:2;filter:drop-shadow(0 0 4px rgba(212,160,23,.5))}
+.bstd-lab{fill:var(--gris);font-size:9.5px;font-weight:700;letter-spacing:.7px;text-anchor:end}
 .bstd-lab.duplo{fill:var(--oro-l)}
-.bstd-val{fill:rgba(255,255,255,.55);font-size:10px;text-anchor:end}
-.bstd-val.duplo{fill:var(--oro-l)}
+.bstd-val{fill:rgba(255,255,255,.5);font-size:9px;text-anchor:end}
+.bstd-val.duplo{fill:var(--oro-l);font-weight:700}
 .bstd-lines{opacity:0;animation:bstdFade .5s ease forwards}
-.bstd-dot0{fill:var(--oro-l);opacity:0;animation:bstdFade .4s ease .45s forwards}
-.bstd-path{fill:none;stroke:#8fb6d8;stroke-width:2.6;stroke-linecap:round;
-  stroke-dasharray:640;stroke-dashoffset:640;animation:bstdDraw 2.8s ease-in-out .6s forwards}
-.bstd-br2{fill:none;stroke:#8fb6d8;stroke-width:2.2;stroke-dasharray:3 4;opacity:0;animation:bstdFade .5s ease 3.3s forwards}
-.bstd-br1{fill:none;stroke:#8fb6d8;stroke-width:2.2;opacity:0;animation:bstdFade .5s ease 3.3s forwards}
-.bstd-brk{stroke:rgba(255,255,255,.35);stroke-width:1.2;opacity:0;animation:bstdFade .4s ease 3.6s forwards}
-.bstd-arrow{fill:var(--oro);opacity:0;animation:bstdFade .4s ease 3.8s forwards}
-.bstd-b1 circle,.bstd-b2 circle{fill:rgba(15,39,64,.9);stroke:var(--oro);stroke-width:1.4}
-.bstd-b1 text,.bstd-b2 text{fill:var(--oro-l);font-size:11px;font-weight:700;text-anchor:middle}
-.bstd-b1,.bstd-b2{opacity:0;animation:bstdPop .45s cubic-bezier(.2,1.4,.4,1) 3.9s forwards}
-.bstd-dur{stroke:rgba(255,255,255,.25);stroke-width:1;opacity:0;animation:bstdFade .5s ease 4.2s forwards}
-.bstd-durlab{fill:var(--gris);font-size:9px;letter-spacing:.5px;text-anchor:middle;opacity:0;animation:bstdFade .5s ease 4.2s forwards}
-@keyframes bstdDraw{to{stroke-dashoffset:0}}
+.bstd-dot0{fill:var(--oro-l);opacity:0;animation:bstdPop .5s cubic-bezier(.2,1.5,.4,1) .35s forwards}
+/* Actos: solo uno visible por vez */
+.bstd-acto{opacity:0;pointer-events:none;transition:opacity .45s ease}
+.bstd-acto.on{opacity:1}
+.bstd-curva{fill:none;stroke:#7fb2da;stroke-width:2.8;stroke-linecap:round;stroke-miterlimit:10}
+.bstd-cruz{fill:#9fb3c4;opacity:0;transition:opacity .4s ease}
+.bstd-brazo{fill:none;stroke:#7fb2da;stroke-width:2.2;stroke-miterlimit:10;opacity:0;transition:opacity .4s ease}
+.bstd-burb{opacity:0;transition:opacity .4s ease,transform .4s cubic-bezier(.2,1.6,.4,1);transform:scale(.5);transform-box:fill-box;transform-origin:center}
+.bstd-burb circle{fill:rgba(15,39,64,.92);stroke:var(--oro);stroke-width:1.3}
+.bstd-burb text{fill:var(--oro-l);font-size:10px;font-weight:700;text-anchor:middle}
+.bstd-flecha{fill:var(--oro);opacity:0;transition:opacity .4s ease}
+.bstd-dur{opacity:0;transition:opacity .4s ease}
+.bstd-dur path{fill:none;stroke:rgba(255,255,255,.25);stroke-width:1}
+.bstd-dur text{fill:var(--gris);font-size:8.5px;letter-spacing:.5px;text-anchor:middle}
+/* Los adornos entran una vez que la curva terminó de dibujarse */
+.bstd-acto.on .bstd-cruz,.bstd-acto.on .bstd-brazo,.bstd-acto.on .bstd-flecha,.bstd-acto.on .bstd-dur{opacity:1;transition-delay:2.6s}
+.bstd-acto.on .bstd-burb{opacity:1;transform:scale(1);transition-delay:2.85s}
+/* Indicador de paso */
+.bstd-pasos{display:flex;gap:6px;justify-content:center;padding:2px 0 4px}
+.bstd-paso{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gris-l,#6f8296);
+  border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:2px 10px;transition:all .3s ease}
+.bstd-paso.on{color:#0f2740;background:var(--oro);border-color:var(--oro)}
+.bstd-replay{position:absolute;top:8px;right:10px;background:transparent;border:1px solid rgba(255,255,255,.16);
+  color:var(--gris);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;cursor:pointer}
+.bstd-replay:hover{color:var(--txt);border-color:rgba(255,255,255,.35)}
 @keyframes bstdFade{to{opacity:1}}
-@keyframes bstdPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+@keyframes bstdPop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){
+  .bstd-lines,.bstd-dot0{animation:none;opacity:1}
+  .bstd-acto.on *{transition:none}
+}
 </style>
 </head>
 <body>
@@ -7606,44 +7623,123 @@ window.addEventListener('load', async () => {
     return mejor;
   };
   // Diagrama animado de la estrategia (recorrido del precio + bifurcación x1/x2)
+  // Curvas reales de la animación original (Booster 2026), revertidas para que se
+  // dibujen en el sentido del tiempo. Las tres arrancan en el FORWARD (383,192.7).
+  //   ✕  el precio cae hasta el CIERRE      · termina en (510.45, 260.81)
+  //   x1 el precio queda debajo del DUPLO   · termina en (589.8, 170.31)
+  //   x2 el precio supera el DUPLO          · termina en (589.79, 95.21)
+  const BST_CURVAS = {
+    x0: "M 383.35,192.67 C 397.39,192.67 408.77,204.05 408.77,218.09 L 408.77,225.32 C 408.77,239.36 420.15,250.74 434.19,250.74 L 434.19,250.74 C 448.23,250.74 459.61,239.36 459.61,225.32 L 459.61,147.65 C 459.61,133.61 470.99,122.23 485.03,122.23 L 485.03,122.23 C 499.07,122.23 510.45,133.61 510.45,147.65 L 510.45,260.81",
+    x1: "M 383.35,192.67 C 397.39,192.67 408.77,204.05 408.77,218.09 L 408.77,225.32 C 408.77,239.36 420.15,250.74 434.19,250.74 L 434.19,250.74 C 448.23,250.74 459.61,239.36 459.61,225.32 L 459.61,147.65 C 459.61,133.61 470.99,122.23 485.03,122.23 L 485.03,122.23 C 499.07,122.23 510.45,133.61 510.45,147.65 L 510.45,205.72 C 510.45,219.76 521.83,231.14 535.87,231.14 L 535.87,231.14 C 549.91,231.14 561.29,219.76 561.29,205.72 L 561.29,193.62 C 562.39,180.6 573.29,170.36 586.6,170.36 L 589.8,170.31",
+    x2: "M 383.35,192.66 C 397.39,192.66 408.77,204.04 408.77,218.08 L 408.77,225.31 C 408.77,239.35 420.15,250.73 434.19,250.73 L 434.19,250.73 C 448.23,250.73 459.61,239.35 459.61,225.31 L 459.61,147.64 C 459.61,133.6 470.99,122.22 485.03,122.22 L 485.03,122.22 C 499.07,122.22 510.45,133.6 510.45,147.64 L 510.45,205.71 C 510.45,219.75 521.83,231.13 535.87,231.13 L 535.87,231.13 C 549.91,231.13 561.29,219.75 561.29,205.71 L 561.29,120.62 C 561.29,119.9 561.34,119.18 561.4,118.47 C 562.5,105.45 573.4,95.21 586.71,95.21 L 589.79,95.21",
+  };
+
   function bstDiagrama(b) {
     const f1 = n => Number(n).toLocaleString('es-AR', { maximumFractionDigits:1 });
+    // Geometría original de la animación Booster 2026 (frames 18/19/20), usada tal cual.
+    // Los paths están trazados de derecha a izquierda; se animan con dashoffset
+    // negativo para que se dibujen en el sentido del tiempo (izquierda → derecha).
+    // Niveles: DUPLO y=138.09 · FORWARD y=192.68 · CIERRE y=260.81 · eje x 383→627.
+    const ACTO1 = 'M 383.34,192.67 C 397.38,192.67 408.76,204.05 408.76,218.09 L 408.76,225.32 C 408.76,239.36 420.14,250.74 434.18,250.74 L 434.18,250.74 C 448.22,250.74 459.60,239.35 459.60,225.32 L 459.60,147.65 C 459.60,133.61 470.98,122.23 485.03,122.23 L 485.03,122.23 C 499.07,122.23 510.45,133.61 510.45,147.65 L 510.45,260.81';
+    const ACTO2 = 'M 383.34,192.67 C 397.38,192.67 408.76,204.05 408.76,218.09 L 408.76,225.32 C 408.76,239.36 420.14,250.74 434.18,250.74 L 434.18,250.74 C 448.22,250.74 459.60,239.35 459.60,225.32 L 459.60,147.64 C 459.60,133.60 470.98,122.22 485.03,122.22 L 485.03,122.22 C 499.07,122.22 510.45,133.60 510.45,147.64 L 510.45,205.71 C 510.45,219.76 521.83,231.14 535.87,231.14 L 535.87,231.14 C 549.91,231.14 561.29,219.76 561.29,205.72 L 561.29,193.46 L 561.29,193.62 C 562.38,180.60 573.29,170.36 586.59,170.36 L 586.59,170.36 L 586.59,170.36 L 589.8,170.31';
+    const ACTO3 = 'M 383.34,192.66 C 397.38,192.66 408.76,204.04 408.76,218.08 L 408.76,225.31 C 408.76,239.35 420.14,250.73 434.18,250.73 L 434.18,250.73 C 448.22,250.73 459.60,239.35 459.60,225.31 L 459.60,147.64 C 459.60,133.6 470.98,122.21 485.03,122.21 L 485.03,122.21 C 499.07,122.21 510.45,133.6 510.45,147.64 L 510.45,205.70 C 510.45,219.75 521.83,231.13 535.87,231.13 L 535.87,231.13 C 549.91,231.13 561.29,219.75 561.29,205.71 L 561.29,193.45 L 561.29,193.61 L 561.29,120.62 C 561.29,119.9 561.34,119.17 561.4,118.47 C 562.49,105.44 573.4,95.21 586.70,95.21 L 589.79,95.21';
     return `<div class="bstd-wrap">
-      <svg viewBox="0 0 470 250" class="bstd">
-        <!-- niveles -->
+      <svg viewBox="286 58 372 268" class="bstd">
         <g class="bstd-lines">
-          <line x1="95" y1="62"  x2="440" y2="62"  class="bstd-l duplo"/>
-          <line x1="95" y1="125" x2="440" y2="125" class="bstd-l"/>
-          <line x1="95" y1="188" x2="440" y2="188" class="bstd-l"/>
-          <text x="88" y="59"  class="bstd-lab duplo">DUPLO</text>
-          <text x="88" y="122" class="bstd-lab">FORWARD</text>
-          <text x="88" y="185" class="bstd-lab">CIERRE</text>
-          <text x="88" y="73"  class="bstd-val duplo">${f1(b.duplo)}</text>
-          <text x="88" y="136" class="bstd-val">${f1(b.F)}</text>
-          <text x="88" y="199" class="bstd-val">${f1(b.cierre)}</text>
+          <line x1="383.4" y1="138.09" x2="626.79" y2="138.09" class="bstd-l duplo"/>
+          <line x1="383.4" y1="192.68" x2="626.79" y2="192.68" class="bstd-l"/>
+          <line x1="383.4" y1="260.81" x2="626.79" y2="260.81" class="bstd-l"/>
+          <text x="374" y="134" class="bstd-lab duplo">DUPLO</text>
+          <text x="374" y="189" class="bstd-lab">FORWARD</text>
+          <text x="374" y="257" class="bstd-lab">CIERRE</text>
+          <text x="374" y="148" class="bstd-val duplo">${f1(b.duplo)}</text>
+          <text x="374" y="203" class="bstd-val">${f1(b.F)}</text>
+          <text x="374" y="271" class="bstd-val">${f1(b.cierre)}</text>
         </g>
-        <!-- recorrido del precio -->
-        <circle cx="105" cy="125" r="5" class="bstd-dot0"/>
-        <path class="bstd-path" d="M105,125 C116,125 116,166 134,166 C152,166 146,90 166,90
-              C186,90 184,170 204,170 C224,170 221,82 244,82 C266,82 264,168 284,168
-              C304,168 300,96 328,96"/>
-        <!-- bifurcación -->
-        <path class="bstd-br2" d="M328,96 L372,58"/>
-        <path class="bstd-br1" d="M328,96 L372,128"/>
-        <line x1="372" y1="58" x2="372" y2="128" class="bstd-brk"/>
-        <path class="bstd-arrow" d="M372,62 l-5,-7 l10,0 z"/>
-        <g class="bstd-b2"><circle cx="392" cy="58" r="13"/><text x="392" y="62">x2</text></g>
-        <g class="bstd-b1"><circle cx="392" cy="128" r="13"/><text x="392" y="132">x1</text></g>
-        <!-- duración -->
-        <line x1="105" y1="222" x2="328" y2="222" class="bstd-dur"/>
-        <text x="216" y="240" class="bstd-durlab">DURACIÓN A LA EXPIRACIÓN DE LA ESTRATEGIA</text>
+        <circle cx="383.4" cy="192.68" r="5.4" class="bstd-dot0"/>
+
+        <!-- ACTO 1 · el precio cae hasta el CIERRE -->
+        <g class="bstd-acto" data-acto="1">
+          <path class="bstd-curva" d="${ACTO1}"/>
+          <polygon class="bstd-cruz" points="516.78 264.89 512.33 260.43 516.78 255.97 514.91 254.1 510.45 258.56 505.99 254.1 504.12 255.97 508.57 260.43 504.12 264.89 505.99 266.76 510.45 262.31 514.91 266.76 516.78 264.89"/>
+          <g class="bstd-dur">
+            <path d="M385.09,300.92v4.06c0,2.82,2.28,5.1,5.1,5.1h117.7c2.82,0,5.1-2.28,5.1-5.1v-4.06"/>
+            <text x="449" y="322">DURACIÓN AL CIERRE</text>
+          </g>
+        </g>
+
+        <!-- ACTO 2 · el precio queda por debajo del DUPLO (x1) -->
+        <g class="bstd-acto" data-acto="2">
+          <path class="bstd-curva" d="${ACTO2}"/>
+          <path class="bstd-brazo" d="M589.8,170.31l25.01-.1c2.82,0,5.1-2.16,5.1-4.98l-.12-22.19"/>
+          <g class="bstd-burb"><circle cx="603.24" cy="153.18" r="9.55"/><text x="603.24" y="156.6">x1</text></g>
+          <path class="bstd-flecha" d="M619.78,133.5l-4.2,-6.4h8.4z"/>
+          <g class="bstd-dur">
+            <path d="M385.09,300.92v4.06c0,2.82,2.28,5.1,5.1,5.1h194.09c2.82,0,5.1-2.28,5.1-5.1v-4.06"/>
+            <text x="487" y="322">DURACIÓN A LA EXPIRACIÓN DE LA ESTRATEGIA</text>
+          </g>
+        </g>
+
+        <!-- ACTO 3 · el precio supera el DUPLO (x2) -->
+        <g class="bstd-acto" data-acto="3">
+          <path class="bstd-curva" d="${ACTO3}"/>
+          <path class="bstd-brazo" d="M589.69,95.21h24.98c2.82,0,5.1,2.28,5.1,5.1v32.79"/>
+          <g class="bstd-burb"><circle cx="603.31" cy="77.94" r="9.55"/><text x="603.31" y="81.4">x2</text></g>
+          <path class="bstd-flecha" d="M619.78,133.5l-4.2,-6.4h8.4z"/>
+          <g class="bstd-dur">
+            <path d="M385.09,300.92v4.06c0,2.82,2.28,5.1,5.1,5.1h194.09c2.82,0,5.1-2.28,5.1-5.1v-4.06"/>
+            <text x="487" y="322">DURACIÓN A LA EXPIRACIÓN DE LA ESTRATEGIA</text>
+          </g>
+        </g>
       </svg>
+      <div class="bstd-pasos">
+        <span class="bstd-paso" data-p="1">Cierre</span>
+        <span class="bstd-paso" data-p="2">x1</span>
+        <span class="bstd-paso" data-p="3">x2</span>
+      </div>
+      <button class="bstd-replay" onclick="bstReplay(this)" title="Volver a ver">↻ Repetir</button>
     </div>`;
   }
 
-  // Registro de la valuación: devuelve el detalle completo (insumos + par elegido)
-  // listo para persistir cuando se arme la pantalla de admin.
-  // Diagnóstico: explica en consola por qué un producto no tiene Booster.
+  // Secuencia de 3 actos: se dibuja cada escenario, se sostiene 5 s y pasa al siguiente.
+  const BSTD_DIBUJO = 2600, BSTD_PAUSA = 5000;
+  function bstdAnimar(wrap) {
+    if (!wrap) return;
+    clearTimeout(wrap._t);
+    const actos = [...wrap.querySelectorAll('.bstd-acto')];
+    const pasos = [...wrap.querySelectorAll('.bstd-paso')];
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    actos.forEach(g => {
+      g.classList.remove('on');
+      const p = g.querySelector('.bstd-curva');
+      const L = p.getTotalLength();
+      p.style.strokeDasharray = L;
+      p.style.transition = 'none';
+      p.style.strokeDashoffset = L;    // oculto; al ir a 0 se dibuja de izquierda a derecha
+    });
+    wrap.getBoundingClientRect();       // fuerza el commit del estado inicial
+
+    if (reduce) { actos.forEach((g,i) => { if (i===actos.length-1) g.classList.add('on'); }); return; }
+
+    const mostrar = (i) => {
+      actos.forEach((g, k) => g.classList.toggle('on', k === i));
+      pasos.forEach((s, k) => s.classList.toggle('on', k === i));
+      const p = actos[i].querySelector('.bstd-curva');
+      const L = p.getTotalLength();
+      requestAnimationFrame(() => {
+        p.style.transition = `stroke-dashoffset ${BSTD_DIBUJO}ms cubic-bezier(.45,.05,.55,.95)`;
+        p.style.strokeDashoffset = 0;
+      });
+      if (i < actos.length - 1)
+        wrap._t = setTimeout(() => mostrar(i + 1), BSTD_DIBUJO + BSTD_PAUSA);
+    };
+    mostrar(0);
+  }
+
+  window.bstReplay = function (btn) { bstdAnimar(btn.closest('.bstd-wrap')); };
+  window.bstdAnimar = bstdAnimar;
+
   window.boosterDebug = function (prod) {
     const est = {
       producto: prod,
@@ -7714,6 +7810,8 @@ window.addEventListener('load', async () => {
       <div style="text-align:right;margin-top:20px"><button onclick="this.closest('.bst-ov').remove()" style="background:var(--oro);border:none;color:#0f2740;font-size:15px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer">Cerrar</button></div>
     </div>`;
     document.body.appendChild(ov);
+    // arranca la secuencia una vez montado en el DOM (getTotalLength necesita layout)
+    requestAnimationFrame(() => bstdAnimar(ov.querySelector('.bstd-wrap')));
   };
 
   window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); };
