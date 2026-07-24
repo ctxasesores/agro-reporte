@@ -722,11 +722,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .bstd-val{fill:rgba(255,255,255,.5);font-size:9px;text-anchor:end}
 .bstd-val.duplo{fill:var(--oro-l);font-weight:700}
 .bstd-lines{opacity:0;animation:bstdFade .5s ease forwards}
-.bstd-dot0{fill:var(--oro-l);opacity:0;animation:bstdPop .5s cubic-bezier(.2,1.5,.4,1) .35s forwards}
+.bstd-dot0{fill:var(--oro-l);opacity:0;animation:bstdFade .45s ease .2s forwards}
 /* Actos: solo uno visible por vez */
 .bstd-acto{opacity:0;pointer-events:none;transition:opacity .45s ease}
 .bstd-acto.on{opacity:1}
 .bstd-curva{fill:none;stroke:#7fb2da;stroke-width:2.8;stroke-linecap:round;stroke-miterlimit:10}
+.bstd-dotf{fill:var(--oro-l);opacity:0;transition:opacity .4s ease}
 .bstd-cruz{fill:#9fb3c4;opacity:0;transition:opacity .4s ease}
 .bstd-brazo{fill:none;stroke:#7fb2da;stroke-width:2.2;stroke-miterlimit:10;opacity:0;transition:opacity .4s ease}
 .bstd-burb{opacity:0;transition:opacity .4s ease,transform .4s cubic-bezier(.2,1.6,.4,1);transform:scale(.5);transform-box:fill-box;transform-origin:center}
@@ -737,7 +738,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .bstd-dur path{fill:none;stroke:rgba(255,255,255,.25);stroke-width:1}
 .bstd-dur text{fill:var(--gris);font-size:8.5px;letter-spacing:.5px;text-anchor:middle}
 /* Los adornos entran una vez que la curva terminó de dibujarse */
-.bstd-acto.on .bstd-cruz,.bstd-acto.on .bstd-brazo,.bstd-acto.on .bstd-flecha,.bstd-acto.on .bstd-dur{opacity:1;transition-delay:2.6s}
+.bstd-acto.on .bstd-dotf,.bstd-acto.on .bstd-cruz,.bstd-acto.on .bstd-brazo,.bstd-acto.on .bstd-flecha,.bstd-acto.on .bstd-dur{opacity:1;transition-delay:2.6s}
 .bstd-acto.on .bstd-burb{opacity:1;transform:scale(1);transition-delay:2.85s}
 /* Indicador de paso */
 .bstd-pasos{display:flex;gap:6px;justify-content:center;padding:2px 0 4px}
@@ -7671,6 +7672,7 @@ window.addEventListener('load', async () => {
         <!-- ACTO 2 · el precio queda por debajo del DUPLO (x1) -->
         <g class="bstd-acto" data-acto="2">
           <path class="bstd-curva" d="${ACTO2}"/>
+          <circle class="bstd-dotf" cx="589.8" cy="170.31" r="5.4"/>
           <path class="bstd-brazo" d="M589.8,170.31l25.01-.1c2.82,0,5.1-2.16,5.1-4.98l-.12-22.19"/>
           <g class="bstd-burb"><circle cx="603.24" cy="153.18" r="9.55"/><text x="603.24" y="156.6">x1</text></g>
           <path class="bstd-flecha" d="M619.78,133.5l-4.2,-6.4h8.4z"/>
@@ -7683,6 +7685,7 @@ window.addEventListener('load', async () => {
         <!-- ACTO 3 · el precio supera el DUPLO (x2) -->
         <g class="bstd-acto" data-acto="3">
           <path class="bstd-curva" d="${ACTO3}"/>
+          <circle class="bstd-dotf" cx="589.79" cy="95.21" r="5.4"/>
           <path class="bstd-brazo" d="M589.69,95.21h24.98c2.82,0,5.1,2.28,5.1,5.1v32.79"/>
           <g class="bstd-burb"><circle cx="603.31" cy="77.94" r="9.55"/><text x="603.31" y="81.4">x2</text></g>
           <path class="bstd-flecha" d="M619.78,133.5l-4.2,-6.4h8.4z"/>
