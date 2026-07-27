@@ -1,0 +1,260 @@
+<!-- ============================================================
+     CONTEXT — PAQUETE PWA
+     Instrucciones de integracion en index.html
+     ============================================================
+
+     PASO 1 — Reemplazar el bloque de <meta> existente
+     PASO 2 — Pegar el script antes de </body>
+     PASO 3 — Subir manifest.json, sw.js y la carpeta icons/
+              a la RAIZ del repo agro-reporte (mismo nivel que index.html)
+
+     Estructura final del repo:
+       /agro-reporte/
+         index.html
+         manifest.json
+         sw.js
+         icons/
+           icon-192.png
+           icon-512.png
+           icon-maskable-192.png
+           icon-maskable-512.png
+           apple-touch-icon.png
+           favicon-32.png
+           favicon-16.png
+           favicon.ico
+     ============================================================ -->
+
+
+<!-- ============================================================
+     PASO 1 — VA EN EL <head>
+     ------------------------------------------------------------
+     Buscá en tu index.html actual estas dos lineas y BORRALAS:
+
+       <meta name="theme-color" content="#1c1a18">
+       <meta name="apple-mobile-web-app-title" content="CTX Cartera">
+
+     (el theme-color marron es el bug: pinta la barra de estado
+      del celular de un color que no es el de la marca)
+
+     Y pegá TODO este bloque en su lugar:
+     ============================================================ -->
+
+<!-- PWA · Context -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2035">
+
+<!-- iOS: no lee el manifest, necesita sus propias etiquetas -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CTX Cartera">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<!-- Android / escritorio -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="CTX Cartera">
+
+<!-- Favicons -->
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+
+<!-- Compartir en WhatsApp / redes -->
+<meta property="og:title" content="Context — Tu cartera de granos en el celular">
+<meta property="og:description" content="Qué tenés realizado, qué te queda pendiente, y qué pasa si el precio se mueve.">
+<meta property="og:image" content="https://ctxasesores.github.io/agro-reporte/icons/icon-512.png">
+<meta property="og:url" content="https://ctxasesores.github.io/agro-reporte/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_AR">
+<meta name="twitter:card" content="summary_large_image">
+
+
+
+<!-- ============================================================
+     PASO 2 — VA JUSTO ANTES DE </body>
+     ------------------------------------------------------------
+     Registra el service worker, maneja el boton de instalar,
+     y — clave para el plan de 90 dias — mide las instalaciones.
+     ============================================================ -->
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- 1. Registrar el service worker ---------- */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js')
+        .then(function (reg) {
+          // Si hay una version nueva esperando, la activamos.
+          if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+
+          reg.addEventListener('updatefound', function () {
+            var nuevo = reg.installing;
+            if (!nuevo) return;
+            nuevo.addEventListener('statechange', function () {
+              if (nuevo.state === 'installed' && navigator.serviceWorker.controller) {
+                // Hay version nueva disponible.
+                console.log('[PWA] Version nueva lista. Se aplica al reabrir.');
+              }
+            });
+          });
+        })
+        .catch(function (err) {
+          console.warn('[PWA] No se pudo registrar el SW:', err);
+        });
+    });
+  }
+
+
+  /* ---------- 2. Deteccion de plataforma ---------- */
+  var ua = navigator.userAgent || '';
+  var esIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  var yaInstalada = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true;
+
+  window.CTX_PWA = { esIOS: esIOS, instalada: yaInstalada, promptDisponible: false };
+
+
+  /* ---------- 3. Capturar el prompt de instalacion (Android) ---------- */
+  var deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();              // no mostrar el banner automatico
+    deferredPrompt = e;
+    window.CTX_PWA.promptDisponible = true;
+    mostrarBotonInstalar();
+    registrarEvento('pwa_instalable');
+  });
+
+
+  /* ---------- 4. Confirmacion de instalacion ---------- */
+  window.addEventListener('appinstalled', function () {
+    deferredPrompt = null;
+    window.CTX_PWA.instalada = true;
+    ocultarBotonInstalar();
+    registrarEvento('pwa_instalada');
+  });
+
+
+  /* ---------- 5. Boton de instalar ---------- */
+  function mostrarBotonInstalar() {
+    if (yaInstalada) return;
+    var btn = document.getElementById('ctx-install-btn');
+    if (btn) btn.style.display = 'flex';
+  }
+
+  function ocultarBotonInstalar() {
+    var btn = document.getElementById('ctx-install-btn');
+    if (btn) btn.style.display = 'none';
+  }
+
+  // Llamar desde el onclick del boton.
+  window.ctxInstalarApp = function () {
+    // iOS no expone API de instalacion: hay que explicarle al usuario.
+    if (esIOS) {
+      mostrarInstruccionesIOS();
+      registrarEvento('pwa_instrucciones_ios');
+      return;
+    }
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function (choice) {
+      registrarEvento(choice.outcome === 'accepted'
+        ? 'pwa_prompt_aceptado'
+        : 'pwa_prompt_rechazado');
+      deferredPrompt = null;
+    });
+  };
+
+
+  /* ---------- 6. Instrucciones para iOS ---------- */
+  function mostrarInstruccionesIOS() {
+    var ov = document.createElement('div');
+    ov.style.cssText =
+      'position:fixed;inset:0;z-index:9999;background:rgba(13,32,53,.92);' +
+      'display:flex;align-items:center;justify-content:center;padding:24px;' +
+      "font-family:'DM Sans',sans-serif";
+    ov.onclick = function () { ov.remove(); };
+
+    ov.innerHTML =
+      '<div style="background:#1a3349;border:1px solid rgba(255,255,255,.09);' +
+      'border-radius:10px;padding:26px 22px;max-width:340px;color:#dce8f5">' +
+        '<div style="font-size:17px;font-weight:600;margin-bottom:14px">' +
+          'Instalá Context en tu iPhone' +
+        '</div>' +
+        '<div style="font-size:14px;line-height:1.65;color:#a3b2c1">' +
+          '<div style="margin-bottom:10px">' +
+            '<b style="color:#d4a017">1.</b> Tocá el botón <b>Compartir</b> ' +
+            'abajo en el centro de la pantalla' +
+          '</div>' +
+          '<div style="margin-bottom:10px">' +
+            '<b style="color:#d4a017">2.</b> Deslizá y elegí ' +
+            '<b>Agregar a pantalla de inicio</b>' +
+          '</div>' +
+          '<div>' +
+            '<b style="color:#d4a017">3.</b> Tocá <b>Agregar</b> arriba a la derecha' +
+          '</div>' +
+        '</div>' +
+        '<div style="margin-top:20px;font-size:12px;color:#8296a8">' +
+          'Tocá afuera para cerrar' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(ov);
+  }
+
+
+  /* ---------- 7. Medicion ---------- */
+  // Estos son los eventos del KPI "instalaciones PWA" del plan de 90 dias.
+  // Conectar con Supabase o Plausible segun corresponda.
+  function registrarEvento(nombre) {
+    console.log('[PWA]', nombre);
+
+    // Plausible, si esta cargado
+    if (window.plausible) {
+      try { window.plausible(nombre); } catch (e) {}
+    }
+
+    // Supabase: descomentar cuando exista la tabla eventos_app
+    // if (window.sb) {
+    //   window.sb.from('eventos_app').insert({
+    //     evento: nombre,
+    //     plataforma: esIOS ? 'ios' : 'android_desktop',
+    //     creado_en: new Date().toISOString()
+    //   });
+    // }
+  }
+
+
+  /* ---------- 8. Marcar el <html> si corre instalada ---------- */
+  if (yaInstalada) {
+    document.documentElement.setAttribute('data-pwa', 'standalone');
+    registrarEvento('pwa_abierta_standalone');
+  }
+
+  // En iOS el prompt nunca llega: mostramos el boton igual.
+  if (esIOS && !yaInstalada) {
+    window.addEventListener('load', mostrarBotonInstalar);
+  }
+})();
+</script>
+
+
+
+<!-- ============================================================
+     PASO 3 — BOTON DE INSTALAR (opcional pero recomendado)
+     ------------------------------------------------------------
+     Pegalo dentro de la topbar movil, al lado del boton "+".
+     Aparece solo cuando la app se puede instalar y todavia no lo esta.
+     ============================================================ -->
+
+<button id="ctx-install-btn"
+        onclick="ctxInstalarApp()"
+        style="display:none;align-items:center;gap:6px;
+               background:#d4a017;color:#0d2035;border:0;
+               border-radius:20px;padding:7px 14px;
+               font-family:'DM Sans',sans-serif;font-size:12px;
+               font-weight:600;cursor:pointer;white-space:nowrap">
+  ↓ Instalar app
+</button>
