@@ -5,13 +5,34 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="mobile-web-app-capable" content="yes">
+<!-- PWA · Context -->
+<link rel="manifest" href="/agro-reporte/manifest.json">
+<meta name="theme-color" content="#0d2035">
+
+<!-- iOS: no lee el manifest, necesita sus propias etiquetas -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CTX Cartera">
-<meta name="theme-color" content="#1c1a18">
-<link rel="manifest" href="/agro-reporte/manifest.json">
-<link rel="apple-touch-icon" href="/agro-reporte/icon-192.svg">
+<link rel="apple-touch-icon" href="/agro-reporte/icons/apple-touch-icon.png">
+
+<!-- Android / escritorio -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="CTX Cartera">
+
+<!-- Favicons -->
+<link rel="icon" href="/agro-reporte/icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/agro-reporte/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/agro-reporte/icons/favicon-16.png">
+
+<!-- Compartir en WhatsApp / redes -->
+<meta property="og:title" content="Context — Tu cartera de granos en el celular">
+<meta property="og:description" content="Qué tenés realizado, qué te queda pendiente, y qué pasa si el precio se mueve.">
+<meta property="og:image" content="https://ctxasesores.github.io/agro-reporte/icons/icon-512.png">
+<meta property="og:url" content="https://ctxasesores.github.io/agro-reporte/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_AR">
+<meta name="twitter:card" content="summary_large_image">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Context | Reporte de Cartera</title>
 <!-- v20260401015516 -->
@@ -1343,6 +1364,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
     <div id="mob-app">
       <div class="mob-bar">
         <svg class="iso" viewBox="0 0 422.54 425.2" aria-label="CTX"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#fcfcfc" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+        <button id="ctx-install-btn" onclick="ctxInstalarApp()" style="display:none;align-items:center;gap:6px;background:var(--mgold);color:#0d2035;border:0;border-radius:20px;padding:7px 13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:10px">&#8595; Instalar</button>
         <div class="sp"></div>
         <button class="mob-ico" id="mob-ai-ico" onclick="mobOpenAI()" aria-label="Asesor IA">&#10022;</button>
         <button class="mob-ico" onclick="mobOpenMenu()" aria-label="Agregar">+</button>
@@ -6517,13 +6539,133 @@ function cerrarMacroModal(ev){
   if (modal) modal.style.display = 'none';
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/agro-reporte/sw.js')
-      .then(r => console.log('SW registrado:', r.scope))
-      .catch(e => console.log('SW error:', e));
+/* ============================================================
+   CONTEXT — PWA: registro + instalación + medición
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ---------- 1. Registrar el service worker ---------- */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/agro-reporte/sw.js')
+        .then(function (reg) {
+          console.log('SW registrado:', reg.scope);
+          if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+          reg.addEventListener('updatefound', function () {
+            var nuevo = reg.installing;
+            if (!nuevo) return;
+            nuevo.addEventListener('statechange', function () {
+              if (nuevo.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA] Versión nueva lista. Se aplica al reabrir.');
+              }
+            });
+          });
+        })
+        .catch(function (e) { console.log('SW error:', e); });
+    });
+  }
+
+  /* ---------- 2. Detección de plataforma ---------- */
+  var ua = navigator.userAgent || '';
+  var esIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  var yaInstalada = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true;
+  window.CTX_PWA = { esIOS: esIOS, instalada: yaInstalada, promptDisponible: false };
+
+  /* ---------- 3. Capturar prompt de instalación (Android) ---------- */
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    window.CTX_PWA.promptDisponible = true;
+    mostrarBotonInstalar();
+    registrarEvento('pwa_instalable');
   });
-}
+
+  /* ---------- 4. Confirmación de instalación ---------- */
+  window.addEventListener('appinstalled', function () {
+    deferredPrompt = null;
+    window.CTX_PWA.instalada = true;
+    ocultarBotonInstalar();
+    registrarEvento('pwa_instalada');
+  });
+
+  /* ---------- 5. Botón de instalar ---------- */
+  function mostrarBotonInstalar() {
+    if (yaInstalada) return;
+    var btn = document.getElementById('ctx-install-btn');
+    if (btn) btn.style.display = 'flex';
+  }
+  function ocultarBotonInstalar() {
+    var btn = document.getElementById('ctx-install-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  window.ctxInstalarApp = function () {
+    if (esIOS) {
+      mostrarInstruccionesIOS();
+      registrarEvento('pwa_instrucciones_ios');
+      return;
+    }
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function (choice) {
+      registrarEvento(choice.outcome === 'accepted'
+        ? 'pwa_prompt_aceptado' : 'pwa_prompt_rechazado');
+      deferredPrompt = null;
+    });
+  };
+
+  /* ---------- 6. Instrucciones para iOS ---------- */
+  function mostrarInstruccionesIOS() {
+    var ov = document.createElement('div');
+    ov.style.cssText =
+      'position:fixed;inset:0;z-index:9999;background:rgba(13,32,53,.92);' +
+      'display:flex;align-items:center;justify-content:center;padding:24px;' +
+      "font-family:'DM Sans',sans-serif";
+    ov.onclick = function () { ov.remove(); };
+    ov.innerHTML =
+      '<div style="background:#1a3349;border:1px solid rgba(255,255,255,.09);' +
+      'border-radius:10px;padding:26px 22px;max-width:340px;color:#dce8f5">' +
+        '<div style="font-size:17px;font-weight:600;margin-bottom:14px">' +
+          'Instalá Context en tu iPhone</div>' +
+        '<div style="font-size:14px;line-height:1.65;color:#a3b2c1">' +
+          '<div style="margin-bottom:10px"><b style="color:#d4a017">1.</b> ' +
+            'Tocá el botón <b>Compartir</b> abajo en el centro de la pantalla</div>' +
+          '<div style="margin-bottom:10px"><b style="color:#d4a017">2.</b> ' +
+            'Deslizá y elegí <b>Agregar a pantalla de inicio</b></div>' +
+          '<div><b style="color:#d4a017">3.</b> ' +
+            'Tocá <b>Agregar</b> arriba a la derecha</div>' +
+        '</div>' +
+        '<div style="margin-top:20px;font-size:12px;color:#8296a8">' +
+          'Tocá afuera para cerrar</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+  }
+
+  /* ---------- 7. Medición (KPI instalaciones PWA) ---------- */
+  function registrarEvento(nombre) {
+    console.log('[PWA]', nombre);
+    if (window.plausible) { try { window.plausible(nombre); } catch (e) {} }
+    // Supabase: descomentar cuando exista la tabla eventos_app
+    // if (typeof sb !== 'undefined' && sb) {
+    //   sb.from('eventos_app').insert({
+    //     evento: nombre,
+    //     plataforma: esIOS ? 'ios' : 'android_desktop',
+    //     creado_en: new Date().toISOString()
+    //   });
+    // }
+  }
+
+  /* ---------- 8. Marcar el <html> si corre instalada ---------- */
+  if (yaInstalada) {
+    document.documentElement.setAttribute('data-pwa', 'standalone');
+    registrarEvento('pwa_abierta_standalone');
+  }
+  if (esIOS && !yaInstalada) {
+    window.addEventListener('load', mostrarBotonInstalar);
+  }
+})();
 
 window.addEventListener('load', async () => {
   try {
