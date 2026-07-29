@@ -1865,19 +1865,32 @@ async function eliminarCliente(id, nombre, codigo) {
     return;
   }
 
-  setLoading(45);
+  setLoading(40);
   const { error: errOps } = await sb.from('operaciones')
     .delete()
     .eq('cliente_codigo', codigo);
   if (errOps) { alert('Error al borrar operaciones: ' + errOps.message); setLoading(100); return; }
-  setLoading(75);
+
+  // Escenarios productivos (simulaciones de ganadería/tambo): se borran para no
+  // dejar registros huérfanos. Se vinculan por cliente_id, que en este esquema
+  // coincide con el id de Auth; borramos por ambas columnas por las dudas.
+  setLoading(60);
+  const { error: errEsc } = await sb.from('escenarios_productivos')
+    .delete()
+    .or(`cliente_id.eq.${id},user_id.eq.${id}`);
+  if (errEsc) console.warn('No se pudieron borrar escenarios productivos:', errEsc.message);
+
+  // NOTA: pagos_pro y facturas_pro se CONSERVAN a propósito (respaldo fiscal).
+  // Quedan asociados al cliente_id aunque el cliente ya no exista.
+
+  setLoading(80);
   const { error: errCli } = await sb.from('clientes')
     .delete()
     .eq('id', id);
   if (errCli) { alert('Error al borrar cliente: ' + errCli.message); setLoading(100); return; }
   setLoading(100);
   await loadAll();
-  alert(`✓ Cliente "${nombre}" eliminado completamente.`);
+  alert(`✓ Cliente "${nombre}" eliminado.\n\nSe conservan sus pagos y facturas como respaldo fiscal.`);
 }
 
 // NAVEGACIÓN
