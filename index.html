@@ -2294,49 +2294,68 @@ async function doRegister() {
   btn.disabled = true;
   btn.textContent = 'Creando cuenta...';
   const codigo = slugCodigo(nombre);
-  initSupabase();
   try {
-    // El alta se hace vía Edge Function crear-usuario: crea Auth + perfil de cliente
-    // de forma ATÓMICA (si el perfil falla, borra el usuario de Auth y no queda el
-    // email "quemado"). Es el mismo camino confiable que usa el panel de admin.
-    const res = await fetch(`${FUNCTIONS_URL}/crear-usuario`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPA_KEY}`, 'apikey': SUPA_KEY },
-      body: JSON.stringify({
-        email, password: pass, codigo, nombre_empresa: nombre, campania, actividad,
-        // Auto-registro: los tres paneles en ESTANDAR + términos aceptados.
-        acceso_agricola: true,  agricultura_nivel: 'ESTANDAR', panel_agricola: true,  agricultura_dashboard: 'ESTANDAR',
-        acceso_ganaderia: true, ganaderia_nivel: 'ESTANDAR',  panel_ganaderia: true, ganaderia_dashboard: 'ESTANDAR',
-        acceso_tambo: true,     tambo_nivel: 'ESTANDAR',       panel_tambo: true,     tambo_dashboard: 'ESTANDAR',
-        plan_pago: 'estandar',  estado_pago: 'pendiente',      premium_activo: false, acceso_premium: false,
-        terminos_aceptados: true, terminos_aceptados_at: new Date().toISOString(), terminos_version: TERMS_VERSION
-      })
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pass,
+      options: {
+        data: { nombre_empresa: nombre, campania, actividad, codigo }
+      }
     });
-    const result = await res.json().catch(() => ({}));
-    if (!res.ok || result.error) {
-      const err = String(result.error || 'No se pudo crear la cuenta.');
-      let msg = err;
-      if (err === 'EMAIL_DUPLICADO') msg = 'Ese email ya está registrado. Probá iniciar sesión o recuperar tu contraseña.';
-      else if (err === 'CODIGO_DUPLICADO') msg = 'Ya existe una cuenta con un nombre de empresa muy similar. Contactanos para habilitarte.';
-      throw new Error(msg);
+    if (error) throw error;
+
+    const newUser = data.user;
+    if (newUser?.id) {
+      const payload = {
+        id: newUser.id,
+        email,
+        codigo,
+        nombre_empresa: nombre,
+        campania,
+        actividad,
+        activo: true,
+        acceso_agricola: true,
+        agricultura_nivel: 'ESTANDAR',
+        panel_agricola: true,
+        agricultura_dashboard: 'ESTANDAR',
+        acceso_ganaderia: true,
+        ganaderia_nivel: 'ESTANDAR',
+        panel_ganaderia: true,
+        ganaderia_dashboard: 'ESTANDAR',
+        acceso_tambo: true,
+        tambo_nivel: 'ESTANDAR',
+        panel_tambo: true,
+        tambo_dashboard: 'ESTANDAR',
+        plan_pago: 'estandar',
+        estado_pago: 'pendiente',
+        premium_activo: false,
+        acceso_premium: false,
+        terminos_aceptados: true,
+        terminos_aceptados_at: new Date().toISOString(),
+        terminos_version: TERMS_VERSION
+      };
+      const { error: insertError } = await insertClienteProfile(payload);
+      if (insertError && !String(insertError.message || '').toLowerCase().includes('duplicate')) {
+        console.warn('Registro cliente pendiente:', insertError.message);
+        okEl.textContent = 'La cuenta fue creada, pero el perfil comercial quedó pendiente. Avísanos para terminar de habilitar accesos y planes.';
+        okEl.style.display = 'block';
+      } else {
+        okEl.textContent = 'Tu cuenta fue creada. Ya puedes ingresar a tu panel.';
+        okEl.style.display = 'block';
+      }
     }
 
-    // Perfil creado OK. Iniciamos sesión con las mismas credenciales.
-    const { data: loginData, error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (loginError) {
-      // Caso raro: la cuenta existe pero el login falló. No es un email quemado
-      // (el perfil ya está creado), así que lo mandamos al login normal.
-      switchAuthMode('login');
-      document.getElementById('loginEmail').value = email;
-      okEl.textContent = 'Tu cuenta fue creada. Ya podés ingresar con tu email y contraseña.';
-      okEl.style.display = 'block';
+    if (data.session && data.user) {
+      currentUser = data.user;
+      document.getElementById('loginScreen').style.display='none';
+      await loadApp();
       return;
     }
-
-    currentUser = loginData.user;
-    document.getElementById('loginScreen').style.display = 'none';
-    await loadApp();
-    return;
+    switchAuthMode('login');
+    document.getElementById('loginEmail').value = email;
+    document.getElementById('loginPass').value = pass;
+    okEl.textContent = okEl.textContent || 'Tu cuenta fue creada. Ya puedes ingresar.';
+    okEl.style.display = 'block';
   } catch (error) {
     errEl.textContent = error.message || 'No se pudo crear la cuenta.';
     errEl.style.display = 'block';
@@ -6657,11 +6676,30 @@ window.addEventListener('load', async () => {
       currentUser = data.session.user;
       document.getElementById('loginScreen').style.display='none';
       await loadApp();
+      return;
     }
+    // Si la URL pide registro (link desde la landing: /agro-reporte/#registro),
+    // abrir directamente la pestaña Registrarme.
+    abrirRegistroDesdeHash();
   } catch (e) {
     console.warn('No se pudo restaurar la sesión:', e.message);
+    abrirRegistroDesdeHash();
   }
 });
+
+// Abre la pestaña Registrarme si el hash lo pide (#registro o #register).
+function abrirRegistroDesdeHash() {
+  var h = (window.location.hash || '').toLowerCase();
+  if (h.indexOf('registro') === -1 && h.indexOf('register') === -1) return;
+  if (typeof switchAuthMode === 'function') {
+    switchAuthMode('register');
+    var pane = document.getElementById('pane-register');
+    if (pane && pane.scrollIntoView) pane.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+// También responde si el usuario ya está en la pantalla y cambia el hash.
+window.addEventListener('hashchange', abrirRegistroDesdeHash);
+
 </script>
 
 <!-- ░░░ ASESOR CTX IA — lógica (Agricultura) ░░░ -->
