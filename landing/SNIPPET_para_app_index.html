@@ -1,0 +1,38 @@
+<!-- ============================================================
+     SNIPPET PARA LA APP (agro-reporte/index.html)
+     ------------------------------------------------------------
+     Hace que el link /agro-reporte/#registro abra directamente
+     la pestaña REGISTRARME al cargar la app.
+
+     Sin esto, el link de la landing cae en la pantalla de LOGIN
+     y el usuario tiene que tocar "Registrarme" a mano.
+
+     DÓNDE PEGARLO:
+     Al final de tu bloque <script> principal, o dentro del
+     arranque de la app (después de que switchAuthMode esté
+     definida). Es seguro: solo actúa si el hash es #registro.
+     ============================================================ -->
+<script>
+(function () {
+  function abrirRegistroSiCorresponde() {
+    var h = (window.location.hash || '').toLowerCase();
+    if (h.indexOf('registro') !== -1 || h.indexOf('register') !== -1) {
+      // switchAuthMode ya existe en la app
+      if (typeof switchAuthMode === 'function') {
+        switchAuthMode('register');
+        // llevar el foco al formulario de registro
+        var pane = document.getElementById('pane-register');
+        if (pane && pane.scrollIntoView) pane.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    }
+  }
+  // al cargar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', abrirRegistroSiCorresponde);
+  } else {
+    abrirRegistroSiCorresponde();
+  }
+  // si el usuario ya está en la app y cambia el hash
+  window.addEventListener('hashchange', abrirRegistroSiCorresponde);
+})();
+</script>
