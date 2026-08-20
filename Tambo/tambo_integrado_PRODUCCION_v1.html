@@ -253,7 +253,7 @@ label .u{margin-left:4px}
 .subcat-btn{margin-bottom:12px;padding:8px 14px;border-radius:9px;border:1px solid var(--oro,#d4a017);
   background:rgba(212,160,23,.1);color:var(--oro-l,#e8c45a);font-size:13px;font-weight:600;cursor:pointer}
 .subcat-btn:hover{background:rgba(212,160,23,.18)}
-.sc-modal{max-width:720px;width:100%;max-height:88vh;overflow-y:auto}
+.sc-modal{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012)), var(--negro-s);border:.5px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:1.4rem;max-width:720px;width:100%;max-height:88vh;overflow-y:auto}
 .sc-modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .sc-modal-hdr h3{margin:0;font-size:20px;color:var(--oro-l,#e8c45a)}
 .sc-close,.sc-del{background:transparent;border:none;color:var(--txt-soft,#9fb2c4);font-size:20px;cursor:pointer;line-height:1}
@@ -2397,7 +2397,7 @@ render();
 </script>
 
 <div class="modal-bg" id="subcatModal" style="display:none" onclick="subcatCerrar(event)">
-  <div class="modal-card sc-modal" onclick="event.stopPropagation()">
+  <div class="modal sc-modal" onclick="event.stopPropagation()">
     <div class="sc-modal-hdr">
       <h3>Subcategorías de costos</h3>
       <button class="sc-close" onclick="subcatCerrar()">×</button>
