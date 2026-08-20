@@ -201,6 +201,79 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
   .fg,.fg3,.res-3,.split{grid-template-columns:1fr}
   .bar-row{grid-template-columns:1fr}
 }
+
+/* ---- Barra multi-tambo (PRO) ---- */
+.mt-barra{margin-bottom:14px}
+.mt-tabs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mt-tab{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);color:var(--txt,#e8eef5);
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.mt-tab:hover{border-color:rgba(255,255,255,.35)}
+.mt-tab.mt-on{background:var(--oro,#d4a017);color:#0f2740;border-color:var(--oro,#d4a017)}
+.mt-tab-x{font-size:16px;line-height:1;opacity:.6;border-radius:50%;width:18px;height:18px;
+  display:inline-flex;align-items:center;justify-content:center}
+.mt-tab-x:hover{opacity:1;background:rgba(0,0,0,.15)}
+.mt-tab.mt-on .mt-tab-x{opacity:.8}
+.mt-add{border-style:dashed;font-weight:700}
+.mt-cons{margin-left:6px;border-color:var(--oro,#d4a017);color:var(--oro-l,#e8c45a)}
+.mt-cons.mt-on{color:#0f2740}
+.mt-cons-banner{margin:10px 0 4px;padding:10px 14px;border-radius:10px;background:rgba(212,160,23,.12);border:1px solid rgba(212,160,23,.3);color:var(--txt,#e8eef5);font-size:12.5px;line-height:1.5}
+.mt-cons-badge{font-size:11px;font-weight:600;opacity:.7;margin-left:6px}
+
+/* ---- Estructura de costos: % del total (punto 3) ---- */
+.bar-pct{min-width:66px;text-align:right;font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--txt-soft,#9fb2c4)}
+.bar-head{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-soft,#9fb2c4);opacity:.75;font-weight:700}
+.bar-head .bar-value,.bar-head .bar-pct{color:var(--txt-soft,#9fb2c4)}
+.bar-total{border-top:1px solid rgba(255,255,255,.14);margin-top:4px;padding-top:8px;font-weight:700}
+.bar-total .bar-value,.bar-total .bar-pct{color:var(--oro-l,#e8c45a)}
+
+/* ---- Unidades en labels (punto 2) ---- */
+.u{font-weight:400;font-size:11px;color:var(--txt-soft,#8fa3b5);opacity:.85}
+label .u{margin-left:4px}
+
+/* ---- Filas de costos con unidad y destino (punto 2 y 4a) ---- */
+.cost-head{display:grid;grid-template-columns:1.1fr 1.5fr .9fr 1.1fr;gap:10px;padding:0 2px 6px;
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-soft,#9fb2c4);opacity:.7;font-weight:700}
+.cost-row{display:grid;grid-template-columns:1.1fr 1.5fr .9fr 1.1fr;gap:10px;align-items:center;
+  padding:7px 2px;border-bottom:1px solid rgba(255,255,255,.06)}
+.cost-label{font-size:13px;font-weight:600}
+.cost-inputs{display:flex;gap:6px}
+.cost-entry{width:70px;min-width:0}
+.cost-unit{flex:1;min-width:0;font-size:12px}
+.cost-derived{font-size:12px;color:var(--oro-l,#e8c45a);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cost-dest{font-size:11.5px;min-width:0}
+@media(max-width:640px){
+  .cost-head{display:none}
+  .cost-row{grid-template-columns:1fr 1fr;gap:6px}
+  .cost-label{grid-column:1/-1}
+  .cost-derived{grid-column:1/-1}
+}
+
+/* ---- ABM subcategorías (punto 4b) ---- */
+.subcat-btn{margin-bottom:12px;padding:8px 14px;border-radius:9px;border:1px solid var(--oro,#d4a017);
+  background:rgba(212,160,23,.1);color:var(--oro-l,#e8c45a);font-size:13px;font-weight:600;cursor:pointer}
+.subcat-btn:hover{background:rgba(212,160,23,.18)}
+.sc-modal{max-width:720px;width:100%;max-height:88vh;overflow-y:auto}
+.sc-modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sc-modal-hdr h3{margin:0;font-size:20px;color:var(--oro-l,#e8c45a)}
+.sc-close,.sc-del{background:transparent;border:none;color:var(--txt-soft,#9fb2c4);font-size:20px;cursor:pointer;line-height:1}
+.sc-modal-desc{font-size:12.5px;color:var(--txt-soft,#9fb2c4);line-height:1.5;margin:0 0 16px}
+.sc-cat{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;margin-bottom:12px}
+.sc-cat-hdr{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sc-cat-name{font-weight:700;font-size:14px;flex:1}
+.sc-cat-sub{font-size:12px;color:var(--txt-soft,#9fb2c4)}
+.sc-cat-sub b{color:var(--oro-l,#e8c45a)}
+.sc-add{padding:5px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,.25);background:transparent;
+  color:var(--txt,#e8eef5);font-size:12px;cursor:pointer;font-weight:600}
+.sc-rows{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.sc-row{display:grid;grid-template-columns:1fr 90px 110px 28px;gap:8px;align-items:center}
+.sc-name,.sc-val,.sc-unit{padding:6px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.04);color:var(--txt,#e8eef5);font-size:12.5px;min-width:0}
+.sc-del{font-size:18px;color:#e06060}
+.sc-empty{margin-top:8px;font-size:12px;color:var(--txt-soft,#9fb2c4);font-style:italic}
+.sc-modal-foot{display:flex;justify-content:flex-end;margin-top:8px}
+.sc-apply{padding:10px 20px;border-radius:10px;border:none;background:var(--oro,#d4a017);color:#0f2740;font-weight:700;font-size:14px;cursor:pointer}
+@media(max-width:560px){ .sc-row{grid-template-columns:1fr 70px 28px} .sc-unit{grid-column:1/2} }
 </style>
 </head>
 <body>
@@ -243,7 +316,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
         <div class="action-stack">
           <div>
             <label for="scenario_name">Nombre del escenario</label>
-            <input type="text" id="scenario_name" value="Base cliente" placeholder="Ej. Cuenca oeste - mixto invierno">
+            <input type="text" id="scenario_name" value="Base cliente" oninput="if(typeof mtSyncNombre==='function')mtSyncNombre()" placeholder="Ej. Cuenca oeste - mixto invierno">
           </div>
           <div class="save-row">
             <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
@@ -327,24 +400,24 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
             <div>
               <div class="sec-lbl">Rodeo y superficie</div>
               <div class="fg">
-                <div><label for="rodeo_total">Rodeo total</label><input type="number" id="rodeo_total" value="240" min="1"></div>
-                <div><label for="vacas_ordene">Vacas en ordene</label><input type="number" id="vacas_ordene" value="185" min="1"></div>
-                <div><label for="litros_vaca">Litros por vaca por dia</label><input type="number" id="litros_vaca" value="27.5" step="0.1" min="0"></div>
-                <div><label for="dias_mes">Dias de ordene por mes</label><input type="number" id="dias_mes" value="30" min="1" max="31"></div>
-                <div><label for="superficie">Superficie tambo (ha)</label><input type="number" id="superficie" value="165" step="0.1" min="1"></div>
-                <div><label for="consumo_ms">Consumo MS por vaca</label><input type="number" id="consumo_ms" value="22.5" step="0.1" min="0"></div>
+                <div><label for="rodeo_total">Rodeo total <span class="u">(cabezas)</span></label><input type="number" id="rodeo_total" value="240" min="1"></div>
+                <div><label for="vacas_ordene">Vacas en ordeñe <span class="u">(cabezas)</span></label><input type="number" id="vacas_ordene" value="185" min="1"></div>
+                <div><label for="litros_vaca">Litros por vaca <span class="u">(L/vaca/día)</span></label><input type="number" id="litros_vaca" value="27.5" step="0.1" min="0"></div>
+                <div><label for="dias_mes">Días de ordeñe <span class="u">(días/mes)</span></label><input type="number" id="dias_mes" value="30" min="1" max="31"></div>
+                <div><label for="superficie">Superficie <span class="u">(ha)</span></label><input type="number" id="superficie" value="165" step="0.1" min="1"></div>
+                <div><label for="consumo_ms">Consumo materia seca <span class="u">(kg MS/vaca/día)</span></label><input type="number" id="consumo_ms" value="22.5" step="0.1" min="0"></div>
               </div>
             </div>
 
             <div>
               <div class="sec-lbl">Precio y calidad</div>
               <div class="fg3">
-                <div><label for="precio_base">Precio base leche</label><input type="number" id="precio_base" value="430" step="1" min="0"></div>
-                <div><label for="grasa">Grasa</label><input type="number" id="grasa" value="3.75" step="0.01" min="0"></div>
-                <div><label for="proteina">Proteina</label><input type="number" id="proteina" value="3.28" step="0.01" min="0"></div>
-                <div><label for="bonif_solidos">Bonif. solidos</label><input type="number" id="bonif_solidos" value="0.05" step="0.01" min="-1"></div>
-                <div><label for="bonif_calidad">Bonif. calidad</label><input type="number" id="bonif_calidad" value="0.02" step="0.01" min="-1"></div>
-                <div><label for="merma">Merma comercial</label><input type="number" id="merma" value="1.5" step="0.1" min="0"></div>
+                <div><label for="precio_base">Precio base leche <span class="u">($/litro)</span></label><input type="number" id="precio_base" value="430" step="1" min="0"></div>
+                <div><label for="grasa">Grasa butirosa <span class="u">(%)</span></label><input type="number" id="grasa" value="3.75" step="0.01" min="0"></div>
+                <div><label for="proteina">Proteína <span class="u">(%)</span></label><input type="number" id="proteina" value="3.28" step="0.01" min="0"></div>
+                <div><label for="bonif_solidos">Bonif. sólidos <span class="u">(fracción, 0.05=5%)</span></label><input type="number" id="bonif_solidos" value="0.05" step="0.01" min="-1"></div>
+                <div><label for="bonif_calidad">Bonif. calidad <span class="u">(fracción, 0.02=2%)</span></label><input type="number" id="bonif_calidad" value="0.02" step="0.01" min="-1"></div>
+                <div><label for="merma">Merma comercial <span class="u">(%)</span></label><input type="number" id="merma" value="1.5" step="0.1" min="0"></div>
               </div>
               <div class="hint">Las bonificaciones se cargan como proporcion. Ejemplo: 0.05 = 5%.</div>
             </div>
@@ -360,16 +433,17 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
             <span class="acc-icon" id="icon-costos" style="transform:rotate(180deg)">▼</span>
           </div>
           <div class="fields" id="acc-costos">
-            <div class="fg">
-              <div><label for="c_alim">Alimentacion</label><input type="number" id="c_alim" value="205" step="1" min="0"></div>
-              <div><label for="c_personal">Personal</label><input type="number" id="c_personal" value="54" step="1" min="0"></div>
-              <div><label for="c_sanidad">Sanidad</label><input type="number" id="c_sanidad" value="14" step="1" min="0"></div>
-              <div><label for="c_repro">Reproduccion</label><input type="number" id="c_repro" value="10" step="1" min="0"></div>
-              <div><label for="c_energia">Energia y frio</label><input type="number" id="c_energia" value="11" step="1" min="0"></div>
-              <div><label for="c_estructura">Estructura</label><input type="number" id="c_estructura" value="26" step="1" min="0"></div>
-              <div><label for="c_recria">Reposicion / recria</label><input type="number" id="c_recria" value="19" step="1" min="0"></div>
-              <div><label for="c_impuestos">Impuestos y otros</label><input type="number" id="c_impuestos" value="12" step="1" min="0"></div>
-            </div>
+            <button type="button" class="subcat-btn" onclick="subcatAbrir()">⚙ Administrar subcategorías de costos</button>
+            <div class="cost-head"><span>Rubro</span><span>Valor y unidad</span><span>Equivale</span><span>Destino</span></div>
+            <div class="cost-row" data-cost="c_alim"><label class="cost-label">Alimentación</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_alim_entry" value="205" step="0.01" min="0" oninput="costRecalc('c_alim')"><select class="cost-unit" id="c_alim_unit" onchange="costRecalc('c_alim')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_alim_derived">= 205 $/L</div><select class="cost-dest" id="c_alim_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_alim" value="205"></div>
+            <div class="cost-row" data-cost="c_personal"><label class="cost-label">Personal</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_personal_entry" value="54" step="0.01" min="0" oninput="costRecalc('c_personal')"><select class="cost-unit" id="c_personal_unit" onchange="costRecalc('c_personal')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_personal_derived">= 54 $/L</div><select class="cost-dest" id="c_personal_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_personal" value="54"></div>
+            <div class="cost-row" data-cost="c_sanidad"><label class="cost-label">Sanidad</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_sanidad_entry" value="14" step="0.01" min="0" oninput="costRecalc('c_sanidad')"><select class="cost-unit" id="c_sanidad_unit" onchange="costRecalc('c_sanidad')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_sanidad_derived">= 14 $/L</div><select class="cost-dest" id="c_sanidad_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_sanidad" value="14"></div>
+            <div class="cost-row" data-cost="c_repro"><label class="cost-label">Reproducción</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_repro_entry" value="10" step="0.01" min="0" oninput="costRecalc('c_repro')"><select class="cost-unit" id="c_repro_unit" onchange="costRecalc('c_repro')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_repro_derived">= 10 $/L</div><select class="cost-dest" id="c_repro_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_repro" value="10"></div>
+            <div class="cost-row" data-cost="c_energia"><label class="cost-label">Energía y frío</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_energia_entry" value="11" step="0.01" min="0" oninput="costRecalc('c_energia')"><select class="cost-unit" id="c_energia_unit" onchange="costRecalc('c_energia')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_energia_derived">= 11 $/L</div><select class="cost-dest" id="c_energia_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_energia" value="11"></div>
+            <div class="cost-row" data-cost="c_estructura"><label class="cost-label">Estructura</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_estructura_entry" value="26" step="0.01" min="0" oninput="costRecalc('c_estructura')"><select class="cost-unit" id="c_estructura_unit" onchange="costRecalc('c_estructura')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_estructura_derived">= 26 $/L</div><select class="cost-dest" id="c_estructura_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_estructura" value="26"></div>
+            <div class="cost-row" data-cost="c_recria"><label class="cost-label">Reposición / recría</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_recria_entry" value="19" step="0.01" min="0" oninput="costRecalc('c_recria')"><select class="cost-unit" id="c_recria_unit" onchange="costRecalc('c_recria')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_recria_derived">= 19 $/L</div><select class="cost-dest" id="c_recria_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_recria" value="19"></div>
+            <div class="cost-row" data-cost="c_impuestos"><label class="cost-label">Impuestos y otros</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_impuestos_entry" value="12" step="0.01" min="0" oninput="costRecalc('c_impuestos')"><select class="cost-unit" id="c_impuestos_unit" onchange="costRecalc('c_impuestos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_impuestos_derived">= 12 $/L</div><select class="cost-dest" id="c_impuestos_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_impuestos" value="12"></div>
+
             <div class="info-box">La referencia rapida queda en costo total por litro, peso de alimentacion y eficiencia litros/kg MS.</div>
           </div>
         </section>
@@ -424,6 +498,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
             <span class="acc-icon" id="icon-tablero" style="transform:rotate(180deg)">▼</span>
           </div>
           <div class="fields" id="acc-tablero">
+            <div id="mt_barra" class="mt-barra" style="display:none"></div>
             <div class="kpi-grid" id="top_kpis"></div>
           </div>
         </section>
@@ -885,6 +960,7 @@ function applyPresets(){
   syncPresetControls();
   updateSystemUI();
   render();
+  if(typeof mtInit==='function') mtInit();
   setStatus('Presets aplicados', 'ok');
   setTimeout(function(){ setStatus('', ''); }, 1800);
 }
@@ -905,6 +981,19 @@ function serializeForm(){
     if(!el) return;
     data[id] = el.value;
   });
+  // Metadatos de costos (unidad de carga y destino de prorrateo) por rubro.
+  var costMeta = {};
+  ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'].forEach(function(cid){
+    var unit = document.getElementById(cid+'_unit');
+    var dest = document.getElementById(cid+'_dest');
+    var entry = document.getElementById(cid+'_entry');
+    costMeta[cid] = {
+      unit: unit ? unit.value : 'litro',
+      dest: dest ? dest.value : 'this',
+      entry: entry ? entry.value : (data[cid]||'0')
+    };
+  });
+  data._costMeta = costMeta;
   return data;
 }
 
@@ -915,8 +1004,10 @@ function deserializeForm(data){
   syncPresetControls();
   updateSystemUI();
   render();
-}
 
+  // Sincronizar los inputs visibles de costos ($/litro) con los hidden cargados
+  if(typeof costSyncEntriesFromHidden === 'function') costSyncEntriesFromHidden();
+}
 function getStorageKey(){
   return 'ctx_tambo_escenarios_' + REPORT_MODE + '_' + currentUserId;
 }
@@ -1236,7 +1327,7 @@ async function guardar(){
     usuario_id: currentUserId,
     modo: REPORT_MODE,
     nombre: scenarioName,
-    datos: serializeForm(),
+    datos: mtDatosParaGuardar(),
     outputs: buildSavedOutputs(),
     updated_at: new Date().toISOString()
   });
@@ -1296,7 +1387,15 @@ function cargarAnalisis(id){
   currentClienteId = item.cliente_id || currentClienteId;
   currentClienteNombre = item.cliente_nombre || currentClienteNombre;
   document.getElementById('report_cliente_nombre').textContent = currentClienteNombre;
-  deserializeForm(item.datos || {});
+  if(mtActivo()){
+    mtRestaurarDesdeDatos(item.datos || {});
+    var act = MT.tambos.find(function(x){ return x.id === MT.activo; }) || MT.tambos[0];
+    deserializeForm(act.datos || {});
+    mtSetConsolidadoUI(false);
+    mtRenderBarra();
+  } else {
+    deserializeForm(item.datos || {});
+  }
   document.getElementById('last_saved').textContent = 'Cargado: ' + item.nombre;
   setStatus('Escenario cargado para edición', 'ok');
   cerrarHistorial();
@@ -1446,6 +1545,479 @@ function buildModel(adj){
   return buildModelFromData(serializeForm(), adj);
 }
 
+
+
+/* ============================================================
+   MULTI-TAMBO (solo PRO)
+   ------------------------------------------------------------
+   Permite cargar varios tambos y verlos por separado o
+   consolidados. Cada tambo es un snapshot de FORM_FIELDS.
+   No toca el motor buildModelFromData: lo llama una vez por
+   tambo y combina los resultados.
+   ============================================================ */
+
+var MT = {
+  tambos: [],          // [{id, nombre, datos:{...FORM_FIELDS}}]
+  activo: null,        // id del tambo en edición, o '__consolidado__'
+  CONSOLIDADO: '__consolidado__'
+};
+
+function mtNuevoId(){ return 'tambo_' + Date.now() + '_' + Math.floor(Math.random()*1000); }
+
+// ¿el multi-tambo está habilitado? Solo en PRO.
+function mtActivo(){ return typeof isTamboPro === 'function' && isTamboPro(); }
+
+// Captura el formulario actual como snapshot de datos de un tambo.
+
+// Empaqueta los datos a persistir. En PRO incluye la lista completa de tambos
+// bajo datos._mt; el bloque plano (serializeForm) queda como "tambo activo" para
+// retrocompatibilidad con escenarios viejos y con el panel ESTANDAR.
+function mtDatosParaGuardar(){
+  if(typeof mtGuardarActivoDesdeForm === 'function') mtGuardarActivoDesdeForm();
+  var datos = serializeForm();
+  if(mtActivo() && MT.tambos.length){
+    datos._subcats = (typeof subcatParaGuardar==='function') ? subcatParaGuardar() : {};
+    datos._mt = {
+      version: 1,
+      activo: (MT.activo === MT.CONSOLIDADO) ? MT.CONSOLIDADO : MT.activo,
+      tambos: MT.tambos.map(function(t){ return { id: t.id, nombre: t.nombre, datos: t.datos }; })
+    };
+  }
+  return datos;
+}
+
+// Restaura la lista de tambos desde un escenario cargado.
+function mtRestaurarDesdeDatos(datos){
+  if(!mtActivo()){ return; }
+  if(datos && datos._mt && Array.isArray(datos._mt.tambos) && datos._mt.tambos.length){
+    MT.tambos = datos._mt.tambos.map(function(t){
+      return { id: t.id || mtNuevoId(), nombre: t.nombre || 'Tambo', datos: t.datos || {} };
+    });
+    var act = datos._mt.activo;
+    MT.activo = (act === MT.CONSOLIDADO) ? MT.tambos[0].id : (MT.tambos.find(function(x){return x.id===act;}) ? act : MT.tambos[0].id);
+  } else {
+    // Escenario viejo (un solo tambo): lo envolvemos.
+    var d = Object.assign({}, datos); delete d._mt;
+    MT.tambos = [{ id: mtNuevoId(), nombre: (d.scenario_name || 'Tambo 1').trim() || 'Tambo 1', datos: d }];
+    MT.activo = MT.tambos[0].id;
+  }
+  mtRenderBarra();
+}
+
+function mtSnapshotActual(){
+  return serializeForm();
+}
+
+// Crea el primer tambo a partir de lo que haya en el formulario.
+function mtInit(){
+  if(!mtActivo()) return;
+  if(MT.tambos.length === 0){
+    var datos = mtSnapshotActual();
+    var nombre = (datos.scenario_name || 'Tambo 1').trim() || 'Tambo 1';
+    MT.tambos.push({ id: mtNuevoId(), nombre: nombre, datos: datos });
+    MT.activo = MT.tambos[0].id;
+  }
+  mtRenderBarra();
+}
+
+// Guarda lo que está en el formulario dentro del tambo activo.
+function mtGuardarActivoDesdeForm(){
+  if(MT.activo === MT.CONSOLIDADO) return;
+  var t = MT.tambos.find(function(x){ return x.id === MT.activo; });
+  if(t){ t.datos = mtSnapshotActual(); t.nombre = (t.datos.scenario_name || t.nombre).trim() || t.nombre; }
+}
+
+// Carga un tambo al formulario (o entra a vista consolidada).
+function mtSeleccionar(id){
+  if(id !== MT.CONSOLIDADO) mtGuardarActivoDesdeForm();
+  else mtGuardarActivoDesdeForm();
+  MT.activo = id;
+  if(id === MT.CONSOLIDADO){
+    mtRenderBarra();
+    mtRenderConsolidado();
+    mtSetConsolidadoUI(true);
+  } else {
+    mtSetConsolidadoUI(false);
+    var t = MT.tambos.find(function(x){ return x.id === id; });
+    if(t){ if(typeof subcatRestaurar==='function') subcatRestaurar(t.datos); deserializeForm(t.datos); }
+    mtRenderBarra();
+  }
+}
+
+// Agrega un tambo nuevo (copia del activo como punto de partida).
+function mtAgregar(){
+  mtGuardarActivoDesdeForm();
+  var base = MT.tambos.find(function(x){ return x.id === MT.activo; });
+  var datos = base ? JSON.parse(JSON.stringify(base.datos)) : mtSnapshotActual();
+  var n = MT.tambos.length + 1;
+  datos.scenario_name = 'Tambo ' + n;
+  var nuevo = { id: mtNuevoId(), nombre: 'Tambo ' + n, datos: datos };
+  MT.tambos.push(nuevo);
+  mtSeleccionar(nuevo.id);
+}
+
+// Elimina un tambo (no permite quedar en 0).
+function mtEliminar(id){
+  if(MT.tambos.length <= 1){ alert('Tiene que quedar al menos un tambo.'); return; }
+  var t = MT.tambos.find(function(x){ return x.id === id; });
+  if(t && !confirm('¿Eliminar "' + t.nombre + '"?')) return;
+  MT.tambos = MT.tambos.filter(function(x){ return x.id !== id; });
+  if(MT.activo === id) mtSeleccionar(MT.tambos[0].id);
+  else mtRenderBarra();
+}
+
+// Renombra el tambo activo desde el campo scenario_name.
+function mtSyncNombre(){
+  var t = MT.tambos.find(function(x){ return x.id === MT.activo; });
+  var el = document.getElementById('scenario_name');
+  if(t && el){ t.nombre = (el.value || t.nombre).trim() || t.nombre; mtRenderBarra(); }
+}
+
+/* ---------- Barra selectora de tambos ---------- */
+function mtRenderBarra(){
+  var cont = document.getElementById('mt_barra');
+  if(!cont){ return; }
+  if(!mtActivo()){ cont.style.display = 'none'; return; }
+  cont.style.display = '';
+
+  var html = '<div class="mt-tabs">';
+  MT.tambos.forEach(function(t){
+    var on = (t.id === MT.activo) ? ' mt-on' : '';
+    html += '<button class="mt-tab' + on + '" onclick="mtSeleccionar(\'' + t.id + '\')" title="' + t.nombre + '">'
+         + '<span class="mt-tab-txt">' + (t.nombre || 'Tambo') + '</span>'
+         + '<span class="mt-tab-x" onclick="event.stopPropagation();mtEliminar(\'' + t.id + '\')">×</span>'
+         + '</button>';
+  });
+  html += '<button class="mt-tab mt-add" onclick="mtAgregar()" title="Agregar tambo">+ Tambo</button>';
+  var onCons = (MT.activo === MT.CONSOLIDADO) ? ' mt-on' : '';
+  html += '<button class="mt-tab mt-cons' + onCons + '" onclick="mtSeleccionar(\'' + MT.CONSOLIDADO + '\')">Σ Todos juntos</button>';
+  html += '</div>';
+  cont.innerHTML = html;
+}
+
+/* ---------- Consolidación ---------- */
+// Combina N tambos: suma de flujos + promedios ponderados por litros vendibles.
+function mtModeloConsolidado(adj){
+  adj = adj || { price:0, prod:0, cost:0 };
+  var modelos = MT.tambos.map(function(t){ return buildModelFromData(t.datos, adj); });
+
+  var sum = function(sel){ return modelos.reduce(function(a,m){ return a + (sel(m)||0); }, 0); };
+  var litrosMesTot = sum(function(m){ return m.litrosVendiblesMes; });
+  var pond = function(sel){  // promedio ponderado por litros vendibles/mes
+    if(litrosMesTot <= 0) return 0;
+    return modelos.reduce(function(a,m){ return a + (sel(m)||0) * (m.litrosVendiblesMes||0); }, 0) / litrosMesTot;
+  };
+
+  // Costos por rubro consolidados ($/litro ponderado por litros de cada tambo).
+  // Si un rubro está marcado para prorrateo en algún tambo, su costo total ($/mes)
+  // se reparte entre TODOS los tambos por litros — el efecto neto sobre el $/litro
+  // consolidado es el mismo total repartido sobre los litros totales.
+  var rubros = {};
+  if(modelos.length){
+    Object.keys(modelos[0].costos).forEach(function(k){
+      // total $/mes del rubro sumando cada tambo (costo $/litro × litros/mes del tambo)
+      var totalMesRubro = modelos.reduce(function(a,m){ return a + (m.costos[k]||0) * (m.litrosVendiblesMes||0); }, 0);
+      rubros[k] = litrosMesTot > 0 ? totalMesRubro / litrosMesTot : 0;   // $/litro consolidado
+    });
+  }
+  // Guardamos también el total $ y % de cada rubro para la lectura consolidada.
+  var rubrosMes = {}, rubrosPct = {}, totalMesCostos = 0;
+  Object.keys(rubros).forEach(function(k){ var mes = rubros[k]*litrosMesTot; rubrosMes[k]=mes; totalMesCostos+=mes; });
+  Object.keys(rubros).forEach(function(k){ rubrosPct[k] = totalMesCostos>0 ? rubrosMes[k]/totalMesCostos*100 : 0; });
+
+  var ingresoMesTot = sum(function(m){ return m.ingresoMes; });
+  var egresoMesTot  = sum(function(m){ return m.egresoMes; });
+  var margenMesTot  = ingresoMesTot - egresoMesTot;
+  var superficieTot = sum(function(m){ return m.superficie; });
+
+  return {
+    __consolidado: true,
+    nTambos: modelos.length,
+    rodeoTotal: sum(function(m){ return m.rodeoTotal; }),
+    vacasOrdene: sum(function(m){ return m.vacasOrdene; }),
+    vacasSecas: sum(function(m){ return m.vacasSecas; }),
+    superficie: superficieTot,
+    litrosBrutosDia: sum(function(m){ return m.litrosBrutosDia; }),
+    litrosVendiblesMes: litrosMesTot,
+    litrosVendiblesAnio: sum(function(m){ return m.litrosVendiblesAnio; }),
+    litrosHaAnio: superficieTot > 0 ? sum(function(m){ return m.litrosVendiblesAnio; }) / superficieTot : 0,
+    carga: superficieTot > 0 ? sum(function(m){ return m.vacasOrdene; }) / superficieTot : 0,
+    pctOrdene: pond(function(m){ return m.pctOrdene; }),
+    litrosVaca: pond(function(m){ return m.litrosVaca; }),
+    consumoMs: pond(function(m){ return m.consumoMs; }),
+    eficiencia: pond(function(m){ return m.eficiencia; }),
+    grasa: pond(function(m){ return m.grasa; }),
+    proteina: pond(function(m){ return m.proteina; }),
+    solidos: pond(function(m){ return m.solidos; }),
+    solidosKgMes: sum(function(m){ return m.solidosKgMes; }),
+    precioFinal: pond(function(m){ return m.precioFinal; }),   // $/litro ponderado
+    costos: rubros,
+    costosMes: rubrosMes,
+    costosPct: rubrosPct,
+    costoLitro: pond(function(m){ return m.costoLitro; }),
+    ingresoMes: ingresoMesTot,
+    egresoMes: egresoMesTot,
+    margenMes: margenMesTot,
+    margenAnio: margenMesTot * 12,
+    margenLitro: pond(function(m){ return m.margenLitro; }),
+    ioFc: egresoMesTot > 0 ? ingresoMesTot / egresoMesTot : 0,
+    sistema: 'consolidado'
+  };
+}
+
+// Render de la vista consolidada: reusa los render existentes con el modelo combinado.
+
+// En vista consolidada los inputs quedan de solo lectura (los números son
+// combinación de varios tambos; no se edita un tambo "promedio").
+function mtSetConsolidadoUI(activo){
+  var form = document.getElementById('acc-config') ? document : null;
+  // Deshabilitar/relanzar inputs de datos del tambo (no los de escenarios/targets globales)
+  var ids = ['rodeo_total','vacas_ordene','litros_vaca','dias_mes','superficie','consumo_ms',
+    'precio_base','grasa','proteina','bonif_solidos','bonif_calidad','merma','preset_sistema','scenario_name',
+    'c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'];
+  ids.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.disabled = !!activo; }
+  });
+  var banner = document.getElementById('mt_cons_banner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'mt_cons_banner';
+    banner.className = 'mt-cons-banner';
+    banner.innerHTML = 'Vista <b>consolidada</b>: sumás litros, ingresos y costos de todos los tambos. '
+      + 'Los $/litro y % son promedios ponderados por litros. Para editar, elegí un tambo.';
+    var barra = document.getElementById('mt_barra');
+    if(barra && barra.parentNode) barra.parentNode.insertBefore(banner, barra.nextSibling);
+  }
+  banner.style.display = activo ? '' : 'none';
+}
+
+function mtRenderConsolidado(){
+  var base = mtModeloConsolidado();
+  var pes = mtModeloConsolidado({ price: pc(n('pes_precio')), prod: pc(n('pes_prod')), cost: pc(n('pes_costo')) });
+  var opt = mtModeloConsolidado({ price: pc(n('opt_precio')), prod: pc(n('opt_prod')), cost: pc(n('opt_costo')) });
+  renderTop(base);
+  renderScenarios(base, pes, opt);
+  renderCosts(base);
+  renderBenchmarks(base);
+  renderActions(base);
+  renderSummary(base);
+}
+
+
+
+// ---- PUNTO 2: conversión de unidad de carga de costos a $/litro ----
+// El motor siempre consume $/litro (hidden input id=c_xxx). El usuario puede
+// cargar en $/litro, $/mes total o $/vaca/mes; acá se convierte.
+
+// Al cargar un tambo, los hidden c_xxx traen $/litro. Reflejamos ese valor en el
+// campo visible y dejamos la unidad en $/litro (es el valor canónico guardado).
+function costSyncEntriesFromHidden(){
+  ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos']
+    .forEach(function(cid){
+      var hidden = document.getElementById(cid);
+      var entry = document.getElementById(cid+'_entry');
+      var unit = document.getElementById(cid+'_unit');
+      var deriv = document.getElementById(cid+'_derived');
+      if(hidden && entry){
+        entry.value = hidden.value;
+        if(unit) unit.value = 'litro';
+        if(deriv) deriv.textContent = '= ' + parseFloat(hidden.value||0).toFixed(2) + ' $/L';
+      }
+    });
+}
+
+function costLitrosMesActual(){
+  // litros vendibles/mes del tambo en edición, calculado on the fly
+  try { var m = buildModelFromData(serializeForm(), {price:0,prod:0,cost:0}); return m.litrosVendiblesMes||0; }
+  catch(e){ return 0; }
+}
+function costVacasActual(){
+  var v = parseFloat((document.getElementById('vacas_ordene')||{}).value);
+  return isFinite(v) ? v : 0;
+}
+function costRecalc(cid){
+  var entry = document.getElementById(cid+'_entry');
+  var unit  = document.getElementById(cid+'_unit');
+  var hidden= document.getElementById(cid);
+  var deriv = document.getElementById(cid+'_derived');
+  if(!entry||!unit||!hidden) return;
+  var v = parseFloat(entry.value); if(!isFinite(v)) v = 0;
+  var litrosMes = costLitrosMesActual();
+  var vacas = costVacasActual();
+  var perLitro = v;  // por defecto ya viene en $/litro
+  if(unit.value === 'mes'){
+    perLitro = litrosMes > 0 ? v / litrosMes : 0;          // $/mes ÷ litros/mes
+  } else if(unit.value === 'vaca'){
+    var totalMes = v * vacas;                               // $/vaca/mes × vacas = $/mes
+    perLitro = litrosMes > 0 ? totalMes / litrosMes : 0;
+  }
+  hidden.value = perLitro.toFixed(4);
+  if(deriv) deriv.textContent = '= ' + (isFinite(perLitro)?perLitro.toFixed(2):'0') + ' $/L';
+  if(typeof render === 'function') render();
+}
+// Al cambiar producción (litros/vacas) hay que recalcular todos los costos que
+// estén cargados en $/mes o $/vaca (su equivalencia en $/litro cambia).
+function costRecalcAll(){
+  ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos']
+    .forEach(function(cid){
+      var u = document.getElementById(cid+'_unit');
+      if(u && u.value !== 'litro') costRecalc(cid);
+    });
+}
+
+
+/* ============================================================
+   PUNTO 4b — ABM de subcategorías de costos (solo PRO)
+   ------------------------------------------------------------
+   El usuario crea subcategorías libres bajo cada categoría
+   predefinida. La SUMA de subcategorías de una categoría
+   reemplaza el valor $/litro de esa categoría (c_xxx) para
+   los cálculos del dashboard. Las 8 categorías predefinidas
+   son fijas; las subcategorías son administrables.
+   Se guarda por tambo, dentro de datos._subcats.
+   ============================================================ */
+
+var COST_CATS = [
+  {id:'c_alim',      nombre:'Alimentación'},
+  {id:'c_personal',  nombre:'Personal'},
+  {id:'c_estructura',nombre:'Estructura'},
+  {id:'c_recria',    nombre:'Reposición / recría'},
+  {id:'c_sanidad',   nombre:'Sanidad'},
+  {id:'c_impuestos', nombre:'Impuestos y otros'},
+  {id:'c_repro',     nombre:'Reproducción'},
+  {id:'c_energia',   nombre:'Energía y frío'}
+];
+
+// subcats vive en memoria como { c_alim:[{id,nombre,valor,unit}], ... }
+// (valor guardado en la unidad elegida; se convierte a $/litro al sumar)
+var SUBCATS = {};
+
+function subcatCatById(id){ return COST_CATS.find(function(c){return c.id===id;}); }
+function subcatNuevoId(){ return 'sc_' + Date.now() + '_' + Math.floor(Math.random()*10000); }
+
+// ¿Una categoría está gobernada por subcategorías? (tiene al menos una)
+function subcatCatTieneSubs(catId){ return Array.isArray(SUBCATS[catId]) && SUBCATS[catId].length > 0; }
+
+// Convierte un valor de subcategoría a $/litro según su unidad.
+function subcatAPerLitro(valor, unit){
+  var v = parseFloat(valor); if(!isFinite(v)) v = 0;
+  if(unit === 'litro') return v;
+  var litrosMes = (typeof costLitrosMesActual==='function') ? costLitrosMesActual() : 0;
+  var vacas = (typeof costVacasActual==='function') ? costVacasActual() : 0;
+  if(unit === 'mes')  return litrosMes>0 ? v/litrosMes : 0;
+  if(unit === 'vaca') return litrosMes>0 ? (v*vacas)/litrosMes : 0;
+  return v;
+}
+
+// Suma las subcategorías de una categoría → total $/litro, y lo vuelca al hidden c_xxx.
+function subcatAplicarCategoria(catId){
+  if(!subcatCatTieneSubs(catId)) return;
+  var total = SUBCATS[catId].reduce(function(a,sc){ return a + subcatAPerLitro(sc.valor, sc.unit); }, 0);
+  var hidden = document.getElementById(catId);
+  var entry = document.getElementById(catId+'_entry');
+  var deriv = document.getElementById(catId+'_derived');
+  var unitSel = document.getElementById(catId+'_unit');
+  if(hidden) hidden.value = total.toFixed(4);
+  if(entry){ entry.value = total.toFixed(2); entry.disabled = true; entry.title = 'Definido por subcategorías'; }
+  if(unitSel){ unitSel.value = 'litro'; unitSel.disabled = true; }
+  if(deriv) deriv.textContent = '= ' + total.toFixed(2) + ' $/L · ' + SUBCATS[catId].length + ' subcat.';
+}
+
+// Libera una categoría (sin subcategorías): reactiva el input manual.
+function subcatLiberarCategoria(catId){
+  var entry = document.getElementById(catId+'_entry');
+  var unitSel = document.getElementById(catId+'_unit');
+  if(entry){ entry.disabled = false; entry.title=''; }
+  if(unitSel){ unitSel.disabled = false; }
+}
+
+function subcatAplicarTodas(){
+  COST_CATS.forEach(function(c){
+    if(subcatCatTieneSubs(c.id)) subcatAplicarCategoria(c.id);
+    else subcatLiberarCategoria(c.id);
+  });
+  if(typeof render==='function') render();
+}
+
+/* ---------- Modal ABM ---------- */
+function subcatAbrir(){
+  var modal = document.getElementById('subcatModal');
+  if(!modal) return;
+  subcatRenderModal();
+  modal.style.display = 'flex';
+}
+function subcatCerrar(ev){
+  if(ev && ev.target && ev.target.id !== 'subcatModal' && ev.type==='click') return;
+  var modal = document.getElementById('subcatModal');
+  if(modal) modal.style.display = 'none';
+  subcatAplicarTodas();
+}
+
+function subcatAddFila(catId){
+  if(!SUBCATS[catId]) SUBCATS[catId] = [];
+  SUBCATS[catId].push({ id:subcatNuevoId(), nombre:'', valor:0, unit:'litro' });
+  subcatRenderModal();
+}
+function subcatDelFila(catId, scId){
+  SUBCATS[catId] = (SUBCATS[catId]||[]).filter(function(sc){ return sc.id !== scId; });
+  subcatRenderModal();
+}
+function subcatEditar(catId, scId, campo, valor){
+  var sc = (SUBCATS[catId]||[]).find(function(x){ return x.id===scId; });
+  if(sc){ sc[campo] = (campo==='valor') ? parseFloat(valor)||0 : valor; }
+  // recalcular subtotal en vivo
+  var st = document.getElementById('subtot_'+catId);
+  if(st){
+    var total = (SUBCATS[catId]||[]).reduce(function(a,x){ return a+subcatAPerLitro(x.valor,x.unit); },0);
+    st.textContent = total.toFixed(2) + ' $/L';
+  }
+}
+
+function subcatRenderModal(){
+  var cont = document.getElementById('subcat_body');
+  if(!cont) return;
+  var html = '';
+  COST_CATS.forEach(function(cat){
+    var subs = SUBCATS[cat.id] || [];
+    var subtotal = subs.reduce(function(a,x){ return a+subcatAPerLitro(x.valor,x.unit); },0);
+    html += '<div class="sc-cat">';
+    html +=   '<div class="sc-cat-hdr">';
+    html +=     '<span class="sc-cat-name">'+cat.nombre+'</span>';
+    html +=     '<span class="sc-cat-sub">Subtotal: <b id="subtot_'+cat.id+'">'+subtotal.toFixed(2)+' $/L</b></span>';
+    html +=     '<button class="sc-add" onclick="subcatAddFila(\''+cat.id+'\')">+ subcategoría</button>';
+    html +=   '</div>';
+    if(subs.length){
+      html += '<div class="sc-rows">';
+      subs.forEach(function(sc){
+        html += '<div class="sc-row">';
+        html +=   '<input class="sc-name" type="text" placeholder="Nombre (ej. Balanceado, Silo...)" value="'+(sc.nombre||'').replace(/"/g,'&quot;')+'" oninput="subcatEditar(\''+cat.id+'\',\''+sc.id+'\',\'nombre\',this.value)">';
+        html +=   '<input class="sc-val" type="number" step="0.01" min="0" value="'+sc.valor+'" oninput="subcatEditar(\''+cat.id+'\',\''+sc.id+'\',\'valor\',this.value)">';
+        html +=   '<select class="sc-unit" onchange="subcatEditar(\''+cat.id+'\',\''+sc.id+'\',\'unit\',this.value)">';
+        html +=     '<option value="litro"'+(sc.unit==='litro'?' selected':'')+'>$/litro</option>';
+        html +=     '<option value="mes"'+(sc.unit==='mes'?' selected':'')+'>$/mes</option>';
+        html +=     '<option value="vaca"'+(sc.unit==='vaca'?' selected':'')+'>$/vaca/mes</option>';
+        html +=   '</select>';
+        html +=   '<button class="sc-del" onclick="subcatDelFila(\''+cat.id+'\',\''+sc.id+'\')">×</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="sc-empty">Sin subcategorías. Se usa el valor cargado manualmente en la categoría.</div>';
+    }
+    html += '</div>';
+  });
+  cont.innerHTML = html;
+}
+
+// Persistencia: incluir SUBCATS en los datos guardados y restaurarlos.
+function subcatParaGuardar(){ return JSON.parse(JSON.stringify(SUBCATS)); }
+function subcatRestaurar(datos){
+  SUBCATS = (datos && datos._subcats) ? JSON.parse(JSON.stringify(datos._subcats)) : {};
+  subcatAplicarTodas();
+}
+
+
 function render(){
   var base = buildModel();
   var pes = buildModel({
@@ -1529,18 +2101,36 @@ function renderScenarios(base, pes, opt){
 }
 
 function renderCosts(base){
-  var total = Math.max(base.costoLitro, 1);
+  var totalLitro = 0;
+  Object.keys(base.costos).forEach(function(k){ totalLitro += (base.costos[k]||0); });
+  totalLitro = Math.max(totalLitro, 0.0001);
   var bars = document.getElementById('cost_bars');
+  // Encabezado con la unidad en la que se muestra la estructura de costos.
+  var head = '<div class="bar-row bar-head">' +
+      '<label>Rubro</label>' +
+      '<div class="bar-track" style="visibility:hidden"></div>' +
+      '<div class="bar-value">$/litro</div>' +
+      '<div class="bar-pct">% del total</div>' +
+    '</div>';
   var rows = Object.keys(base.costos).sort(function(a, b){ return base.costos[b] - base.costos[a]; }).map(function(key){
     var val = base.costos[key];
-    var width = clamp(val / total * 100, 2, 100);
+    var pct = val / totalLitro * 100;
+    var width = clamp(pct, 2, 100);
     return '<div class="bar-row">' +
       '<label>' + key + '</label>' +
       '<div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div>' +
       '<div class="bar-value">' + money(val) + '</div>' +
+      '<div class="bar-pct">' + fm(pct, 1) + '%</div>' +
     '</div>';
   });
-  bars.innerHTML = rows.join('');
+  // Fila de total
+  rows.push('<div class="bar-row bar-total">' +
+      '<label>Costo total</label>' +
+      '<div class="bar-track" style="visibility:hidden"></div>' +
+      '<div class="bar-value">' + money(totalLitro) + '</div>' +
+      '<div class="bar-pct">100%</div>' +
+    '</div>');
+  bars.innerHTML = head + rows.join('');
 
   var metrics = document.getElementById('metric_rows');
   metrics.innerHTML = [
@@ -1805,5 +2395,20 @@ render();
   else document.addEventListener('DOMContentLoaded', window.gasReveal);
 })();
 </script>
+
+<div class="modal-bg" id="subcatModal" style="display:none" onclick="subcatCerrar(event)">
+  <div class="modal-card sc-modal" onclick="event.stopPropagation()">
+    <div class="sc-modal-hdr">
+      <h3>Subcategorías de costos</h3>
+      <button class="sc-close" onclick="subcatCerrar()">×</button>
+    </div>
+    <p class="sc-modal-desc">Creá subcategorías dentro de cada rubro. La <b>suma</b> de las subcategorías reemplaza el valor del rubro en el dashboard. Las 8 categorías son fijas; las subcategorías las administrás vos.</p>
+    <div id="subcat_body"></div>
+    <div class="sc-modal-foot">
+      <button class="sc-apply" onclick="subcatCerrar()">Aplicar y cerrar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
