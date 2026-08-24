@@ -705,6 +705,15 @@ tr:hover td { background:#f9faf6; }
           <div class="tool-empty">Elegí una campaña arriba para ver sus posiciones.</div>
         </div>
       </div>
+
+      <div class="tool-panel" style="margin-top:16px">
+        <h3 style="font-size:14px;margin:0 0 4px">Posición de cosecha para valuar Planes de Siembra</h3>
+        <p class="field-hint" style="margin:0 0 14px">Definí con qué contrato de futuro se valúa el Plan de Siembra de cada producto en esta campaña. <b>Si no configurás ninguno, se valúa por el precio SPOT (disponible)</b> — así quedan las campañas viejas cuya cosecha ya venció.</p>
+        <div id="campania-cosecha-grilla">
+          <div class="tool-empty">Elegí una campaña arriba.</div>
+        </div>
+        <div id="cosecha-status" style="margin-top:10px"></div>
+      </div>
     </div>
 
     </div>
@@ -2061,6 +2070,7 @@ function mostrarToast(id, msg, type) {
       const activa = _campaniasCache.find(c => c.activa);
       if (activa) { select.value = activa.id; if (badge) badge.textContent = `Activa actualmente: ${activa.codigo}`; }
       await cargarGrillaExclusiones();
+      await cargarGrillaCosecha();
     } catch (e) {
       select.innerHTML = '<option value="">Error al cargar</option>';
     }
@@ -2147,6 +2157,87 @@ function mostrarToast(id, msg, type) {
       `).join('');
     } catch (e) {
       container.innerHTML = `<div class="tool-error">Error: ${e.message}</div>`;
+    }
+  }
+
+  // ── Posiciones de cosecha por campaña (valuación de Planes de Siembra) ──
+  var _cosechaMeses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var _cosechaProductos = ['Soja','Maiz','Trigo'];
+
+  function cosechaCodigoActual() {
+    var sel = document.getElementById('campania-select');
+    if (!sel || !sel.value) return null;
+    var c = (_campaniasCache || []).find(function(x){ return String(x.id) === String(sel.value); });
+    return c ? c.codigo : null;
+  }
+
+  async function cargarGrillaCosecha() {
+    var container = document.getElementById('campania-cosecha-grilla');
+    var codigo = cosechaCodigoActual();
+    if (!container) return;
+    if (!codigo) { container.innerHTML = '<div class="tool-empty">Elegí una campaña arriba.</div>'; return; }
+    container.innerHTML = '<div class="tool-empty">Cargando...</div>';
+    try {
+      // Universo de vencimientos disponibles (mismo que exclusiones) + config guardada
+      if (!_universoCache) {
+        var uni = await gestionCampanias({ accion: 'universo_posiciones' });
+        _universoCache = uni.universo || [];
+      }
+      var { data: config, error } = await sb.from('campania_posiciones_cosecha')
+        .select('producto,mes,anio').eq('campania_codigo', codigo);
+      if (error) throw error;
+      var configMap = {};
+      (config || []).forEach(function(r){ configMap[r.producto] = r.mes + '_' + r.anio; });
+
+      // Vencimientos por producto desde el universo
+      var porProd = {};
+      (_universoCache || []).forEach(function(u){
+        if (!porProd[u.producto]) porProd[u.producto] = [];
+        porProd[u.producto].push(u.vencimiento);
+      });
+
+      container.innerHTML = _cosechaProductos.map(function(prod){
+        var vencs = (porProd[prod] || []).slice().sort();
+        var actual = configMap[prod] || '';
+        var opts = '<option value="">— SPOT (disponible) —</option>' + vencs.map(function(v){
+          var m = v.match(/^(\d{1,2})_(\d{4})$/);
+          var label = m ? (_cosechaMeses[Number(m[1])] + '-' + m[2]) : v;
+          return '<option value="' + v + '"' + (v === actual ? ' selected' : '') + '>' + label + '</option>';
+        }).join('');
+        return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">'
+          + '<div style="font-size:13px;font-weight:600;width:70px">' + prod + '</div>'
+          + '<select id="cosecha-sel-' + prod + '" onchange="guardarCosecha(\'' + prod + '\')" '
+          + 'style="flex:1;max-width:280px;padding:7px 10px;border-radius:6px;border:1px solid var(--crema-dd);background:var(--crema-d)">'
+          + opts + '</select>'
+          + '</div>';
+      }).join('');
+    } catch (e) {
+      container.innerHTML = '<div class="tool-error">Error: ' + e.message + '</div>';
+    }
+  }
+
+  async function guardarCosecha(producto) {
+    var codigo = cosechaCodigoActual();
+    var sel = document.getElementById('cosecha-sel-' + producto);
+    if (!codigo || !sel) return;
+    var val = sel.value;
+    try {
+      if (!val) {
+        // SPOT: borrar la fila si existe
+        var d = await sb.from('campania_posiciones_cosecha')
+          .delete().eq('campania_codigo', codigo).eq('producto', producto);
+        if (d.error) throw d.error;
+      } else {
+        var m = val.match(/^(\d{1,2})_(\d{4})$/);
+        if (!m) throw new Error('Vencimiento inválido');
+        var up = await sb.from('campania_posiciones_cosecha')
+          .upsert({ campania_codigo: codigo, producto: producto, mes: Number(m[1]), anio: Number(m[2]), updated_at: new Date().toISOString() },
+                  { onConflict: 'campania_codigo,producto' });
+        if (up.error) throw up.error;
+      }
+      mostrarToast('cosecha-status', 'Guardado: ' + producto + ' → ' + (val ? sel.options[sel.selectedIndex].text : 'SPOT'), 'success');
+    } catch (e) {
+      mostrarToast('cosecha-status', 'Error: ' + e.message, 'error');
     }
   }
 

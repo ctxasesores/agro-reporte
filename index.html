@@ -2136,6 +2136,11 @@ let currentUser = null;
 let currentCliente = null;
 let allOps = [];
 let precios = {};  // key: "Producto_mes_año" o "Producto_CONT"
+// Posiciones de cosecha por campaña para valuar Planes de Siembra.
+// Estructura: { "26/27": { "Soja": {mes:5,anio:2027}, ... }, ... }
+// Si una campaña no está acá (o el producto no está), el Plan de Siembra se
+// valúa por SPOT — comportamiento histórico, protege las campañas viejas.
+let posicionesCosecha = {};
 let pieChart = null;
 let activeSection = 'resumen';
 let filterProd = 'todos';
@@ -2509,12 +2514,13 @@ async function loadApp() {
   currentCliente = cli;
 
   // Load operaciones y precios en paralelo
-  const [opsRes, preciosRes] = await Promise.all([
+  const [opsRes, preciosRes, cosechaRes] = await Promise.all([
     sb.from('operaciones').select('*')
       .eq('cliente_codigo', cli.codigo)
       .eq('estado','confirmada')
       .order('created_at', {ascending:false}),
-    sb.from('precios_mercado').select('*').eq('activo',true).order('updated_at',{ascending:false})
+    sb.from('precios_mercado').select('*').eq('activo',true).order('updated_at',{ascending:false}),
+    sb.from('campania_posiciones_cosecha').select('campania_codigo,producto,mes,anio')
   ]);
 
   // Normalize product names (remove accents for consistency)
@@ -2525,6 +2531,7 @@ async function loadApp() {
   allOps = (opsRes.data || []).map(op => ({...op, producto: normalize(op.producto)}));
   refreshCampaignState();
   buildPreciosMap(preciosRes.data || []);
+  buildPosicionesCosecha(cosechaRes && cosechaRes.data ? cosechaRes.data : []);
   // Load tags — normalizar null a [] siempre
   const rawTags = cli.tags_disponibles;
   // Filtrar tags vacíos o inválidos
@@ -4032,6 +4039,58 @@ function normalizeStr(s) {
   return s ? s.normalize('NFD').replace(/[\u0300-\u036f]/g,'') : s;
 }
 
+
+// Construye el mapa de posiciones de cosecha por campaña.
+
+// ── Precio de valuación unificado por operación ──
+// Centraliza la regla: un Plan de Siembra cuya campaña tiene posición de cosecha
+// configurada se valúa con ese contrato; en cualquier otro caso (incl. Plan de
+// Siembra sin config) se usa la lógica de mercado/SPOT de siempre.
+// Todos los puntos de cálculo deben usar esta función.
+function getPrecioValuacionOp(op) {
+  if (op && op.tipo === 'Plan de Siembra') {
+    const pCos = getPrecioPlanSiembra(op);
+    if (pCos !== null && pCos !== undefined) return pCos;
+  }
+  return getPrecioMercado(op.producto, op.vencimiento);
+}
+
+function buildPosicionesCosecha(rows) {
+  posicionesCosecha = {};
+  (rows || []).forEach(r => {
+    const camp = normalizeCampaign(r.campania_codigo);
+    const prod = normalizeStr(r.producto);
+    if (!camp || !prod) return;
+    if (!posicionesCosecha[camp]) posicionesCosecha[camp] = {};
+    posicionesCosecha[camp][prod] = { mes: Number(r.mes), anio: Number(r.anio) };
+  });
+}
+
+// Devuelve la posición de cosecha configurada para una operación (según su
+// campaña y producto), o null si no hay → el llamador cae a SPOT.
+function getPosicionCosecha(op) {
+  const camp = getOperationCampaign(op);
+  const prod = normalizeStr(op && op.producto);
+  if (!camp || !prod) return null;
+  const porCamp = posicionesCosecha[camp];
+  if (!porCamp) return null;
+  return porCamp[prod] || null;
+}
+
+// Precio de valuación para un Plan de Siembra: si su campaña tiene posición de
+// cosecha configurada, usa ese contrato de futuro; si no, cae a SPOT (null →
+// getPrecioMercado con el vencimiento propio, que para Plan de Siembra es SPOT).
+function getPrecioPlanSiembra(op) {
+  const pos = getPosicionCosecha(op);
+  if (!pos) return null;   // sin config → el llamador usa la lógica SPOT actual
+  const prod = normalizeStr(op.producto);
+  const exactKey = prod + '_' + pos.mes + '_' + pos.anio;
+  if (exactKey in precios) return precios[exactKey];
+  // Configurada pero sin precio en la curva: intentamos el más cercano, y si no,
+  // devolvemos null para no romper (cae a SPOT).
+  return getPrecioMasCercano(prod);
+}
+
 function buildPreciosMap(rows) {
   precios = {};
   // rows ordered by updated_at DESC — keep first occurrence per key (newest price)
@@ -4274,7 +4333,7 @@ function calcularCartera(options = {}) {
   let resFinLong = 0, resFinShort = 0;
 
   getFilteredOps(options).forEach(op => {
-    const pM = getPrecioMercado(op.producto, op.vencimiento);
+    const pM = getPrecioValuacionOp(op);
     const L  = calcularL(op, pM);
     const resFin = getResultadoFinanciero(op, L, pM);
     const lFin = calcularLFinanciero(op, pM);
@@ -4308,7 +4367,7 @@ function calcularPorProducto(options = {}) {
   getFilteredOps(options).forEach(op => {
     const m  = map[op.producto];
     if (!m) return;
-    const pM = getPrecioMercado(op.producto, op.vencimiento);
+    const pM = getPrecioValuacionOp(op);
     if (m.pMercado === null && pM !== null) m.pMercado = pM;
     const L  = calcularL(op, pM);
     if (L !== 0) {
@@ -4770,7 +4829,7 @@ function buildLevel0() {
     let val = 0;
     getFilteredOps().forEach(op => {
       if (op.producto !== prod) return;
-      const pM = getPrecioMercado(op.producto, op.vencimiento);
+      const pM = getPrecioValuacionOp(op);
       const L  = calcularL(op, pM); if (L === 0) return;
       const pEf = getPrecioEfectivo(op, pM); if (!pEf) return;
       val += Math.abs(pEf * op.volumen);
@@ -4783,7 +4842,7 @@ function buildLevel1(prod) {
   const g = {Realizado:0, Pendiente:0};
   getFilteredOps().forEach(op => {
     if (op.producto !== prod) return;
-    const pM = getPrecioMercado(op.producto, op.vencimiento);
+    const pM = getPrecioValuacionOp(op);
     const L  = calcularL(op, pM); if (L === 0) return;
     const pEf = getPrecioEfectivo(op, pM); if (!pEf) return;
     const val = Math.abs(pEf * op.volumen);
@@ -4796,7 +4855,7 @@ function buildLevel2(prod, slot) {
   const tipos = {};
   getFilteredOps().forEach(op => {
     if (op.producto !== prod) return;
-    const pM = getPrecioMercado(op.producto, op.vencimiento);
+    const pM = getPrecioValuacionOp(op);
     const L  = calcularL(op, pM); if (L === 0) return;
     const pEf = getPrecioEfectivo(op, pM); if (!pEf) return;
     const val    = Math.abs(pEf * op.volumen);
@@ -5087,7 +5146,7 @@ function renderOps() {
   if (!ops.length) { tbody.innerHTML=`<tr><td colspan="12" class="empty-state">Sin operaciones confirmadas en la campaña ${activeCampaign || getLegacyCampaign()}</td></tr>`; return; }
 
   const rows = sortOpsRows(ops.map((op, idx) => {
-    const pM  = getPrecioMercado(op.producto, op.vencimiento);
+    const pM  = getPrecioValuacionOp(op);
     const L   = calcularL(op, pM);
     const pEf = getPrecioEfectivo(op, pM);
     const res = getResultadoFinanciero(op, L, pM);
@@ -5898,7 +5957,7 @@ function renderPosicionesChart() {
   const bubbleOpcEj   = [];
 
   ops.forEach(op => {
-    const pM = getPrecioMercado(op.producto, op.vencimiento);
+    const pM = getPrecioValuacionOp(op);
     const L  = calcularL(op, pM);
     if (L === 0) return; // PAF o no ejercible
     const entregado = isEntregaEfectiva(op);
@@ -6041,7 +6100,7 @@ function calcularFlujoPorOp(op) {
   const vol  = Number(op.volumen);
   const pOp  = Number(op.precio) || 0;
   const pEj  = Number(op.precio_ejercicio) || 0;
-  const pM   = getPrecioMercado(op.producto, op.vencimiento) || 0;
+  const pM   = getPrecioValuacionOp(op) || 0;
 
   if (!op.vencimiento) return null;
   const vto  = op.vencimiento.substring(0, 7); // YYYY-MM
@@ -6820,7 +6879,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
       if (typeof isDerivadoEntregable !== 'function' || !isDerivadoEntregable(op?.tipo)) return;
       resumen.total += 1;
       const estado = (typeof getEstadoDerivado === 'function') ? getEstadoDerivado(op) : '';
-      const pMercado = (typeof getPrecioMercado === 'function') ? getPrecioMercado(op.producto, op.vencimiento) : null;
+      const pMercado = (typeof getPrecioMercado === 'function') ? getPrecioValuacionOp(op) : null;
       const ejercible = (typeof isOpcionEjercible === 'function') ? isOpcionEjercible(op, pMercado) : false;
       const resFin = (typeof getResultadoFinanciero === 'function') ? getResultadoFinanciero(op, 0, pMercado) : 0;
       const tipoKey = op.tipo || 'Sin tipo';
@@ -8043,7 +8102,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
   /* ── Operaciones (mismos criterios que el panel) ── */
   function opsFiltradas(){
     let rows = getFilteredOps().map(op=>{
-      const pM = getPrecioMercado(op.producto, op.vencimiento);
+      const pM = getPrecioValuacionOp(op);
       const L  = calcularL(op, pM);
       return {op, pM, L};
     }).filter(r => r.L !== 0);
@@ -8091,7 +8150,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
     let long=0, short=0, pL_n=0,pL_d=0, pS_n=0,pS_d=0;
     getFilteredOps().forEach(op=>{
       if(op.producto!==prod) return;
-      const pM=getPrecioMercado(op.producto,op.vencimiento);
+      const pM=getPrecioValuacionOp(op);
       const L=calcularL(op,pM); if(L===0) return;
       const v=Number(op.volumen)||0, pr=Number(op.precio)||0;
       if(L>0){ long+=v; if(pr){pL_n+=pr*v; pL_d+=v;} } else { short+=v; if(pr){pS_n+=pr*v; pS_d+=v;} }
