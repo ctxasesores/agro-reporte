@@ -775,6 +775,23 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   .bstd-lines,.bstd-dot0{animation:none;opacity:1}
   .bstd-acto.on *{transition:none}
 }
+
+/* ---- Cartel de actualización de versión (PWA) ---- */
+#ctx-update-banner{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:12px;z-index:9999;
+  background:#1a3349;border:1px solid rgba(212,160,23,.4);border-radius:12px;
+  padding:12px 14px 12px 18px;box-shadow:0 12px 32px rgba(0,0,0,.4);
+  transition:bottom .35s cubic-bezier(.2,.9,.3,1);max-width:calc(100vw - 24px)}
+#ctx-update-banner.show{bottom:20px}
+.ctx-upd-txt{color:#e8eef5;font-size:14px;font-weight:500}
+.ctx-upd-btn{background:#d4a017;color:#0f2740;border:none;border-radius:8px;
+  padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.ctx-upd-btn:hover{background:#e0b02a}
+.ctx-upd-btn:disabled{opacity:.7;cursor:default}
+.ctx-upd-x{background:transparent;border:none;color:#9fb2c4;font-size:20px;
+  cursor:pointer;line-height:1;padding:0 4px}
+.ctx-upd-x:hover{color:#e8eef5}
+@media(max-width:480px){ .ctx-upd-txt{font-size:13px} #ctx-update-banner{width:calc(100vw - 24px)} }
 </style>
 </head>
 <body>
@@ -6605,23 +6622,56 @@ function cerrarMacroModal(ev){
   'use strict';
 
   /* ---------- 1. Registrar el service worker ---------- */
+
+  // Cartel de "hay una versión nueva" con botón para aplicarla.
+  function mostrarCartelActualizar(worker) {
+    if (document.getElementById('ctx-update-banner')) return;  // no duplicar
+    var b = document.createElement('div');
+    b.id = 'ctx-update-banner';
+    b.innerHTML =
+      '<span class="ctx-upd-txt">Hay una versión nueva de la app.</span>' +
+      '<button class="ctx-upd-btn" id="ctx-upd-btn">Actualizar</button>' +
+      '<button class="ctx-upd-x" id="ctx-upd-x" title="Ahora no">×</button>';
+    document.body.appendChild(b);
+    requestAnimationFrame(function () { b.classList.add('show'); });
+    document.getElementById('ctx-upd-btn').addEventListener('click', function () {
+      worker.postMessage('SKIP_WAITING');   // el SW nuevo toma control → controllerchange recarga
+      var btn = document.getElementById('ctx-upd-btn');
+      if (btn) { btn.textContent = 'Actualizando...'; btn.disabled = true; }
+    });
+    document.getElementById('ctx-upd-x').addEventListener('click', function () {
+      b.classList.remove('show');
+      setTimeout(function () { b.remove(); }, 300);
+    });
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('/agro-reporte/sw.js')
         .then(function (reg) {
           console.log('SW registrado:', reg.scope);
-          if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+          // Si ya hay una versión nueva esperando al cargar, ofrecerla.
+          if (reg.waiting && navigator.serviceWorker.controller) mostrarCartelActualizar(reg.waiting);
           reg.addEventListener('updatefound', function () {
             var nuevo = reg.installing;
             if (!nuevo) return;
             nuevo.addEventListener('statechange', function () {
+              // Versión nueva instalada y ya había una app activa → avisar al usuario.
               if (nuevo.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[PWA] Versión nueva lista. Se aplica al reabrir.');
+                mostrarCartelActualizar(nuevo);
               }
             });
           });
         })
         .catch(function (e) { console.log('SW error:', e); });
+
+      // Cuando el SW nuevo toma control, recargamos una sola vez para ver la versión nueva.
+      var _recargando = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (_recargando) return;
+        _recargando = true;
+        window.location.reload();
+      });
     });
   }
 
