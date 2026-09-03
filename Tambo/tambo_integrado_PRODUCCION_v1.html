@@ -322,6 +322,7 @@ label .u{margin-left:4px}
             <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
             <button class="btn" type="button" onclick="abrirAyuda()">Ayuda</button>
             <button class="btn" type="button" onclick="applyPresets()">Aplicar presets</button>
+            <button class="btn" type="button" onclick="nuevoEscenario()">Nuevo escenario</button>
             <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
             <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
           </div>
@@ -342,12 +343,12 @@ label .u{margin-left:4px}
         </div>
         <div class="fields" id="acc-cuenca">
           <div class="fg">
-            <div><label for="cuenca_superficie_ref">Superficie de referencia (ha)</label><input type="number" id="cuenca_superficie_ref" value="165" step="0.1" min="1"></div>
-            <div><label for="cuenca_c_alim_ref">Costo alimentacion de base</label><input type="number" id="cuenca_c_alim_ref" value="188" step="1" min="0"></div>
-            <div><label for="cuenca_c_estructura_ref">Costo estructura de base</label><input type="number" id="cuenca_c_estructura_ref" value="24" step="1" min="0"></div>
-            <div><label for="cuenca_c_impuestos_ref">Impuestos y otros de base</label><input type="number" id="cuenca_c_impuestos_ref" value="11" step="1" min="0"></div>
-            <div><label for="cuenca_tgt_carga_ref">Carga objetivo de cuenca</label><input type="number" id="cuenca_tgt_carga_ref" value="1.18" step="0.01" min="0"></div>
-            <div><label for="cuenca_bonif_solidos_ref">Bonif. solidos de cuenca</label><input type="number" id="cuenca_bonif_solidos_ref" value="0.04" step="0.01" min="-1"></div>
+            <div><label for="cuenca_superficie_ref">Superficie de referencia (ha)</label><input type="number" id="cuenca_superficie_ref" value="165" step="0.1" min="1"><div class="hint">Hectáreas de referencia de la cuenca (ha).</div></div>
+            <div><label for="cuenca_c_alim_ref">Costo alimentacion de base</label><input type="number" id="cuenca_c_alim_ref" value="188" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="cuenca_c_estructura_ref">Costo estructura de base</label><input type="number" id="cuenca_c_estructura_ref" value="24" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="cuenca_c_impuestos_ref">Impuestos y otros de base</label><input type="number" id="cuenca_c_impuestos_ref" value="11" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="cuenca_tgt_carga_ref">Carga objetivo de cuenca</label><input type="number" id="cuenca_tgt_carga_ref" value="1.18" step="0.01" min="0"><div class="hint">Vacas en ordeñe por hectárea (vacas/ha).</div></div>
+            <div><label for="cuenca_bonif_solidos_ref">Bonif. solidos de cuenca</label><input type="number" id="cuenca_bonif_solidos_ref" value="0.04" step="0.01" min="-1"><div class="hint">Fracción sobre el precio: 0.04 = +4%.</div></div>
           </div>
           <div class="info-box">Este bloque actualiza automaticamente superficie, alimentacion, estructura, impuestos, meta de carga y bonificacion por solidos del caso base.</div>
         </div>
@@ -363,12 +364,12 @@ label .u{margin-left:4px}
         </div>
         <div class="fields" id="acc-sistema-preset">
           <div class="fg">
-            <div><label for="sis_litros_vaca_ref">Litros por vaca base</label><input type="number" id="sis_litros_vaca_ref" value="25.5" step="0.1" min="0"></div>
-            <div><label for="sis_consumo_ms_ref">Consumo MS base</label><input type="number" id="sis_consumo_ms_ref" value="20.8" step="0.1" min="0"></div>
-            <div><label for="sis_c_personal_ref">Costo personal de base</label><input type="number" id="sis_c_personal_ref" value="54" step="1" min="0"></div>
-            <div><label for="sis_c_energia_ref">Costo energia de base</label><input type="number" id="sis_c_energia_ref" value="9" step="1" min="0"></div>
-            <div><label for="sis_merma_ref">Merma comercial de base</label><input type="number" id="sis_merma_ref" value="1.7" step="0.1" min="0"></div>
-            <div><label for="sis_tgt_costo_ref">Meta costo/litro del sistema</label><input type="number" id="sis_tgt_costo_ref" value="345" step="1" min="0"></div>
+            <div><label for="sis_litros_vaca_ref">Litros por vaca base</label><input type="number" id="sis_litros_vaca_ref" value="25.5" step="0.1" min="0"><div class="hint">Litros por vaca por día (L/vaca/día).</div></div>
+            <div><label for="sis_consumo_ms_ref">Consumo MS base</label><input type="number" id="sis_consumo_ms_ref" value="20.8" step="0.1" min="0"><div class="hint">Kg de materia seca por vaca por día (kg MS/vaca/día).</div></div>
+            <div><label for="sis_c_personal_ref">Costo personal de base</label><input type="number" id="sis_c_personal_ref" value="54" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="sis_c_energia_ref">Costo energia de base</label><input type="number" id="sis_c_energia_ref" value="9" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="sis_merma_ref">Merma comercial de base</label><input type="number" id="sis_merma_ref" value="1.7" step="0.1" min="0"><div class="hint">Porcentaje de leche no comercializable (%).</div></div>
+            <div><label for="sis_tgt_costo_ref">Meta costo/litro del sistema</label><input type="number" id="sis_tgt_costo_ref" value="345" step="1" min="0"><div class="hint">Pesos por litro objetivo ($/litro).</div></div>
           </div>
           <div class="sec-lbl">Palancas editables del sistema</div>
           <div class="fg">
@@ -1227,18 +1228,9 @@ async function upsertRemoteAnalisis(item){
     if(existingByOrigin.data && existingByOrigin.data.id) remoteId = existingByOrigin.data.id;
   }
 
-  if(!remoteId){
-    var existingByName = await client
-      .from('escenarios_productivos')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('cliente_id', currentClienteId)
-      .eq('modulo', 'tambo')
-      .eq('modo', payload.modo)
-      .eq('nombre_escenario', payload.nombre_escenario)
-      .maybeSingle();
-    if(existingByName.data && existingByName.data.id) remoteId = existingByName.data.id;
-  }
+  // NO buscar por nombre: dos escenarios distintos pueden llamarse igual.
+  // La identidad es origen_local_id (único por escenario). Si no hubo match
+  // arriba, se INSERTA uno nuevo en vez de pisar otro con el mismo nombre.
 
   if(remoteId){
     var updateRes = await client
@@ -1300,6 +1292,18 @@ async function syncAnalisisFromSupabase(force){
   }finally{
     scenarioSyncPromise = null;
   }
+}
+
+async function nuevoEscenario(){
+  // Desvincula del escenario en edición: el próximo guardado crea uno nuevo
+  // (no pisa el anterior). No borra nada de lo ya guardado.
+  currentAnalisisId = null;
+  var nombreEl = document.getElementById('scenario_name');
+  if(nombreEl) nombreEl.value = '';
+  document.getElementById('last_saved').textContent = 'Escenario nuevo (sin guardar)';
+  setStatus('Cargá los datos y guardá con un nombre nuevo', 'ok');
+  setTimeout(function(){ setStatus('', ''); }, 2600);
+  if(nombreEl) nombreEl.focus();
 }
 
 async function guardar(){
