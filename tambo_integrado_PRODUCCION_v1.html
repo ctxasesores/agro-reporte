@@ -343,12 +343,12 @@ label .u{margin-left:4px}
         </div>
         <div class="fields" id="acc-cuenca">
           <div class="fg">
-            <div><label for="cuenca_superficie_ref">Superficie de referencia (ha)</label><input type="number" id="cuenca_superficie_ref" value="165" step="0.1" min="1"></div>
-            <div><label for="cuenca_c_alim_ref">Costo alimentacion de base</label><input type="number" id="cuenca_c_alim_ref" value="188" step="1" min="0"></div>
-            <div><label for="cuenca_c_estructura_ref">Costo estructura de base</label><input type="number" id="cuenca_c_estructura_ref" value="24" step="1" min="0"></div>
-            <div><label for="cuenca_c_impuestos_ref">Impuestos y otros de base</label><input type="number" id="cuenca_c_impuestos_ref" value="11" step="1" min="0"></div>
-            <div><label for="cuenca_tgt_carga_ref">Carga objetivo de cuenca</label><input type="number" id="cuenca_tgt_carga_ref" value="1.18" step="0.01" min="0"></div>
-            <div><label for="cuenca_bonif_solidos_ref">Bonif. solidos de cuenca</label><input type="number" id="cuenca_bonif_solidos_ref" value="0.04" step="0.01" min="-1"></div>
+            <div><label for="cuenca_superficie_ref">Superficie de referencia (ha)</label><input type="number" id="cuenca_superficie_ref" value="165" step="0.1" min="1"><div class="hint">Hectáreas de referencia de la cuenca (ha).</div></div>
+            <div><label for="cuenca_c_alim_ref">Costo alimentacion de base</label><input type="number" id="cuenca_c_alim_ref" value="188" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="cuenca_c_estructura_ref">Costo estructura de base</label><input type="number" id="cuenca_c_estructura_ref" value="24" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="cuenca_c_impuestos_ref">Impuestos y otros de base</label><input type="number" id="cuenca_c_impuestos_ref" value="11" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="cuenca_tgt_carga_ref">Carga objetivo de cuenca</label><input type="number" id="cuenca_tgt_carga_ref" value="1.18" step="0.01" min="0"><div class="hint">Vacas en ordeñe por hectárea (vacas/ha).</div></div>
+            <div><label for="cuenca_bonif_solidos_ref">Bonif. solidos de cuenca</label><input type="number" id="cuenca_bonif_solidos_ref" value="0.04" step="0.01" min="-1"><div class="hint">Fracción sobre el precio: 0.04 = +4%.</div></div>
           </div>
           <div class="info-box">Este bloque actualiza automaticamente superficie, alimentacion, estructura, impuestos, meta de carga y bonificacion por solidos del caso base.</div>
         </div>
@@ -364,12 +364,12 @@ label .u{margin-left:4px}
         </div>
         <div class="fields" id="acc-sistema-preset">
           <div class="fg">
-            <div><label for="sis_litros_vaca_ref">Litros por vaca base</label><input type="number" id="sis_litros_vaca_ref" value="25.5" step="0.1" min="0"></div>
-            <div><label for="sis_consumo_ms_ref">Consumo MS base</label><input type="number" id="sis_consumo_ms_ref" value="20.8" step="0.1" min="0"></div>
-            <div><label for="sis_c_personal_ref">Costo personal de base</label><input type="number" id="sis_c_personal_ref" value="54" step="1" min="0"></div>
-            <div><label for="sis_c_energia_ref">Costo energia de base</label><input type="number" id="sis_c_energia_ref" value="9" step="1" min="0"></div>
-            <div><label for="sis_merma_ref">Merma comercial de base</label><input type="number" id="sis_merma_ref" value="1.7" step="0.1" min="0"></div>
-            <div><label for="sis_tgt_costo_ref">Meta costo/litro del sistema</label><input type="number" id="sis_tgt_costo_ref" value="345" step="1" min="0"></div>
+            <div><label for="sis_litros_vaca_ref">Litros por vaca base</label><input type="number" id="sis_litros_vaca_ref" value="25.5" step="0.1" min="0"><div class="hint">Litros por vaca por día (L/vaca/día).</div></div>
+            <div><label for="sis_consumo_ms_ref">Consumo MS base</label><input type="number" id="sis_consumo_ms_ref" value="20.8" step="0.1" min="0"><div class="hint">Kg de materia seca por vaca por día (kg MS/vaca/día).</div></div>
+            <div><label for="sis_c_personal_ref">Costo personal de base</label><input type="number" id="sis_c_personal_ref" value="54" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="sis_c_energia_ref">Costo energia de base</label><input type="number" id="sis_c_energia_ref" value="9" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="sis_merma_ref">Merma comercial de base</label><input type="number" id="sis_merma_ref" value="1.7" step="0.1" min="0"><div class="hint">Porcentaje de leche no comercializable (%).</div></div>
+            <div><label for="sis_tgt_costo_ref">Meta costo/litro del sistema</label><input type="number" id="sis_tgt_costo_ref" value="345" step="1" min="0"><div class="hint">Pesos por litro objetivo ($/litro).</div></div>
           </div>
           <div class="sec-lbl">Palancas editables del sistema</div>
           <div class="fg">
