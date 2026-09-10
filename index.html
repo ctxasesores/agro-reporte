@@ -792,6 +792,52 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   cursor:pointer;line-height:1;padding:0 4px}
 .ctx-upd-x:hover{color:#e8eef5}
 @media(max-width:480px){ .ctx-upd-txt{font-size:13px} #ctx-update-banner{width:calc(100vw - 24px)} }
+
+/* ══ Analizador de estrategias de opciones ══ */
+#sec-estrategias .estr-params{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+#sec-estrategias .estr-params label{display:block;font-size:11px;color:var(--gris,#9a9a9a);margin-bottom:4px}
+#sec-estrategias .estr-params input,#sec-estrategias .estr-params select{width:100%;padding:8px 10px;border-radius:8px;border:.5px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px}
+.estr-pata{display:grid;grid-template-columns:80px 100px 1fr 1fr 68px 32px;gap:8px;align-items:center;margin-bottom:6px}
+.estr-teo{font-size:12.5px;color:var(--oro-l,#e8c45a);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.estr-pata-head{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris,#9a9a9a);margin-bottom:2px}
+.estr-pata input,.estr-pata select{padding:7px 9px;border-radius:7px;border:.5px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:12.5px;min-width:0}
+.estr-pata input:disabled{opacity:.4}
+.estr-del{background:transparent;border:none;color:#e06060;font-size:18px;cursor:pointer;line-height:1}
+.estr-vacio{font-size:12.5px;color:var(--gris,#9a9a9a);font-style:italic;padding:8px 0}
+.estr-add{margin-top:8px;padding:7px 14px;border-radius:8px;border:1px dashed rgba(255,255,255,.25);background:transparent;color:var(--txt,#e8e0d4);font-size:12.5px;font-weight:600;cursor:pointer}
+.estr-resumen{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.estr-resumen .estr-kpi{background:var(--negro-b,rgba(255,255,255,.03));border:.5px solid var(--border,rgba(255,255,255,.08));border-radius:10px;padding:10px 12px}
+.estr-resumen .estr-kpi span{display:block;font-size:10.5px;color:var(--gris,#9a9a9a);margin-bottom:3px}
+.estr-resumen .estr-kpi b{font-size:15px;font-variant-numeric:tabular-nums}
+.estr-resumen .pos{color:#4caf82}.estr-resumen .neg{color:#e06060}
+.estr-graf-wrap{margin:8px 0 4px}
+.estr-graf-tabs{display:flex;gap:6px;margin-bottom:8px}
+.estr-gtab{font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;border:.5px solid var(--border2,rgba(255,255,255,.14));background:transparent;color:var(--gris,#9a9a9a);cursor:pointer}
+.estr-gtab.on{background:var(--oro,#d4a017);color:#132d46;border-color:var(--oro,#d4a017)}
+#estr_canvas{width:100%;display:block;background:var(--negro-b,rgba(255,255,255,.02));border-radius:10px}
+.estr-leyenda{font-size:11.5px;color:var(--gris,#9a9a9a);margin-top:6px;line-height:1.5}
+.estr-leyenda b{color:var(--oro-l,#e8c45a)}
+.estr-griegas{margin-top:18px}
+.estr-griegas-title{font-size:13px;font-weight:600;color:var(--txt,#e8e0d4);margin-bottom:8px}
+.estr-griegas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.estr-griegas-grid>div{background:var(--negro-b,rgba(255,255,255,.03));border:.5px solid var(--border,rgba(255,255,255,.08));border-radius:10px;padding:10px 12px;text-align:center}
+.estr-griegas-grid span{display:block;font-size:11px;color:var(--gris,#9a9a9a)}
+.estr-griegas-grid b{display:block;font-size:16px;color:var(--oro-l,#e8c45a);font-variant-numeric:tabular-nums;margin:2px 0}
+.estr-griegas-grid small{font-size:9.5px;color:var(--gris,#9a9a9a)}
+@media(max-width:640px){
+  #sec-estrategias .estr-params,.estr-resumen,.estr-griegas-grid{grid-template-columns:repeat(2,1fr)}
+  .estr-pata{grid-template-columns:52px 74px 1fr 1fr 52px 26px;gap:5px}
+}
+
+.estr-dte-slider{margin:10px 0 4px;padding:12px 14px;background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.25);border-radius:10px}
+.estr-dte-slider label{display:block;font-size:12.5px;color:var(--txt,#e8e0d4);margin-bottom:8px}
+.estr-dte-slider label b{color:var(--oro-l,#e8c45a)}
+.estr-dte-slider input[type=range]{width:100%;accent-color:var(--oro,#d4a017)}
+.estr-dte-marks{display:flex;justify-content:space-between;font-size:10.5px;color:var(--gris,#9a9a9a);margin-top:4px}
+
+.estr-hered-nota{font-size:12px;color:var(--gris,#9a9a9a);margin-bottom:12px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;border:.5px solid var(--border,rgba(255,255,255,.08))}
+.estr-hered-nota b{color:var(--oro-l,#e8c45a)}
+input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e8c45a)!important;cursor:default;border-style:dashed!important;font-weight:600}
 </style>
 </head>
 <body>
@@ -1792,6 +1838,59 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
           @keyframes asesorBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
         </style>
 
+      </div>
+
+      <!-- ══ ANALIZADOR DE ESTRATEGIAS DE OPCIONES (P&L) ══ -->
+      <div class="section" id="sec-estrategias" style="margin-top:28px">
+        <div class="section-title" onclick="toggleAcc('acc-estrategias','icon-estrategias');estrInitSiHaceFalta()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
+          <span>Analizador de estrategias de opciones</span>
+          <span id="icon-estrategias" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
+        </div>
+        <div id="acc-estrategias" style="display:none;margin-top:12px">
+          <div class="card" style="padding:16px">
+            <div class="tasas-nota" style="margin-bottom:12px">
+              Armá una cartera de opciones y futuros y mirá su resultado (P&amp;L) al vencimiento y hoy. Diagnóstico informativo, no es recomendación de inversión.
+            </div>
+
+            <!-- Parámetros globales (editables a mano) -->
+            <div class="estr-params">
+              <div><label>Producto</label>
+                <select id="estr_producto" onchange="estrRefrescar()">
+                  <option value="Soja">Soja</option><option value="Maiz">Maíz</option><option value="Trigo">Trigo</option>
+                </select>
+              </div>
+              <div><label>Futuro subyacente (F)</label><input type="number" id="estr_F" step="0.5" oninput="estrRender()" placeholder="Precio del futuro"></div>
+              <div><label>Días al vencimiento</label><input type="number" id="estr_dte" step="1" min="0" value="60" oninput="estrRender()"></div>
+              <div><label>Volatilidad anual (%)</label><input type="number" id="estr_vol" step="0.5" min="0" value="19" oninput="estrRender()"></div>
+            </div>
+
+            <!-- Patas de la estrategia -->
+            <div id="estr_patas"></div>
+            <button class="estr-add" type="button" onclick="estrAgregarPata()">+ Agregar pata</button>
+
+            <!-- Resumen de posición -->
+            <div id="estr_resumen" class="estr-resumen"></div>
+
+            <!-- Gráfico de P&L -->
+            <div class="estr-graf-wrap">
+              <div class="estr-graf-tabs">
+                <button class="estr-gtab on" id="estr_gtab_venc" onclick="estrSetVista('venc')">Al vencimiento</button>
+                <button class="estr-gtab" id="estr_gtab_hoy" onclick="estrSetVista('hoy')">Teórico hoy</button>
+              </div>
+              <!-- Selector de días para la curva teórica (Current Theoretical P&L) -->
+              <div class="estr-dte-slider" id="estr_dte_slider" style="display:none">
+                <label>Días al vencimiento para la curva teórica: <b id="estr_dte_view_val">60</b></label>
+                <input type="range" id="estr_dte_view" min="0" max="240" value="60" step="1" oninput="estrDteView()">
+                <div class="estr-dte-marks"><span>Vencimiento (0)</span><span id="estr_dte_max">hoy</span></div>
+              </div>
+              <canvas id="estr_canvas" height="300"></canvas>
+              <div id="estr_graf_leyenda" class="estr-leyenda"></div>
+            </div>
+
+            <!-- Griegas de posición -->
+            <div id="estr_griegas" class="estr-griegas"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Nueva operación -->
@@ -7595,6 +7694,324 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
     };
   }
 
+/* ============================================================
+   ANALIZADOR DE ESTRATEGIAS DE OPCIONES (P&L)
+   Reusa el motor Black-76 global: black76(F,K,t,r,sig,tipo) y griegas(...).
+   Carga manual de patas. P&L al vencimiento + teórico hoy + griegas.
+   ============================================================ */
+var ESTR = { patas: [], vista: 'venc', chart: null };
+
+function estrNuevoId(){ return 'p'+Date.now()+Math.floor(Math.random()*1000); }
+
+// Prima teórica sugerida con Black-76 (si hay datos), para prellenar.
+function estrPrimaTeorica(pata){
+  var F = parseFloat(document.getElementById('estr_F').value);
+  var dte = parseFloat(document.getElementById('estr_dte').value);
+  var vol = parseFloat(document.getElementById('estr_vol').value)/100;
+  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica()||{}).r||0) : 0;
+  if(!(F>0)||!(pata.strike>0)||!(dte>=0)||!(vol>0)) return null;
+  var t = dte/365;
+  if(pata.tipo==='F') return null; // futuro no tiene prima
+  var pr = black76(F, pata.strike, t, r, vol, pata.tipo);
+  return (pr!==null && isFinite(pr)) ? pr : null;
+}
+
+function estrAgregarPata(){
+  ESTR.patas.push({ id:estrNuevoId(), cant:1, tipo:'C', strike:0, prima:'', primaAuto:true });
+  estrRenderPatas(); estrRender();
+}
+function estrEliminarPata(id){
+  ESTR.patas = ESTR.patas.filter(function(p){ return p.id!==id; });
+  estrRenderPatas(); estrRender();
+}
+function estrEditarPata(id, campo, valor){
+  var p = ESTR.patas.find(function(x){ return x.id===id; });
+  if(!p) return;
+  if(campo==='cant'||campo==='strike') p[campo] = parseFloat(valor)||0;
+  else if(campo==='prima'){ p.prima = valor; p.primaAuto = (valor===''||valor===null); }
+  else p[campo] = valor;
+  if(campo==='tipo' || campo==='strike'){ if(p.primaAuto) estrRenderPatas(); }
+  estrRender();
+}
+
+// Prima efectiva de una pata: override manual o teórica.
+function estrPrimaUsada(p){
+  if(p.tipo==='F') return 0;
+  if(!p.primaAuto && p.prima!=='' && isFinite(parseFloat(p.prima))) return parseFloat(p.prima);
+  var t = estrPrimaTeorica(p);
+  return t!==null ? t : 0;
+}
+
+function estrRenderPatas(){
+  var cont = document.getElementById('estr_patas');
+  if(!ESTR.patas.length){
+    cont.innerHTML = '<div class="estr-vacio">Todavía no cargaste patas. Tocá "+ Agregar pata".</div>';
+    return;
+  }
+  var head = '<div class="estr-pata estr-pata-head"><span>Cant.</span><span>Tipo</span><span>Strike</span><span>Prima</span><span>Teórico</span><span></span></div>';
+  var filas = ESTR.patas.map(function(p){
+    var teo = estrPrimaTeorica(p);
+    var ph = (teo!==null) ? ('teórica '+teo.toFixed(2)) : '—';
+    var teoTxt = (p.tipo==='F') ? ('entra '+estrPrecioEntradaFut(p).toFixed(2)) : (teo!==null ? teo.toFixed(2) : '—');
+    return '<div class="estr-pata">'
+      + '<input type="number" step="1" value="'+p.cant+'" title="Positivo=compra, negativo=venta" oninput="estrEditarPata(\''+p.id+'\',\'cant\',this.value)">'
+      + '<select onchange="estrEditarPata(\''+p.id+'\',\'tipo\',this.value)">'
+        + '<option value="C"'+(p.tipo==='C'?' selected':'')+'>CALL</option>'
+        + '<option value="P"'+(p.tipo==='P'?' selected':'')+'>PUT</option>'
+        + '<option value="F"'+(p.tipo==='F'?' selected':'')+'>Futuro</option>'
+      + '</select>'
+      + '<input type="number" step="0.5" value="'+(p.strike||'')+'" oninput="estrEditarPata(\''+p.id+'\',\'strike\',this.value)" placeholder="'+(p.tipo==='F'?'precio entrada (F)':'strike')+'">'
+      + '<input type="number" step="0.01" value="'+(p.prima||'')+'" placeholder="'+ph+'" oninput="estrEditarPata(\''+p.id+'\',\'prima\',this.value)"'+(p.tipo==='F'?' disabled':'')+'>'
+      + '<div class="estr-teo" title="Prima teórica Black-76 con el strike y vencimiento actuales">'+teoTxt+'</div>'
+      + '<button class="estr-del" onclick="estrEliminarPata(\''+p.id+'\')" title="Eliminar">×</button>'
+      + '</div>';
+  });
+  cont.innerHTML = head + filas.join('');
+}
+
+// P&L de UNA pata a un precio del subyacente S, al vencimiento (valor intrínseco).
+// Precio de entrada de un futuro: el que el usuario cargue en "strike",
+// o el futuro subyacente actual (F) si lo deja vacío.
+function estrPrecioEntradaFut(p){
+  if(p.strike && p.strike>0) return p.strike;
+  var F = parseFloat(document.getElementById('estr_F').value);
+  return (F>0) ? F : 0;
+}
+
+function estrPayoffVenc(p, S){
+  var prima = estrPrimaUsada(p), c = p.cant;
+  if(p.tipo==='F'){ var ent=estrPrecioEntradaFut(p); return c*(S - ent); }  // futuro: entra al precio F (o al que cargues)
+  var intr = (p.tipo==='C') ? Math.max(S-p.strike,0) : Math.max(p.strike-S,0);
+  // comprado (c>0): pago prima, cobro intrínseco. vendido (c<0): al revés. c ya lleva signo.
+  return c*(intr - prima);
+}
+
+// P&L teórico HOY de una pata a precio S (revalúa con Black-76 al DTE actual).
+function estrPayoffHoy(p, S){
+  var prima = estrPrimaUsada(p), c = p.cant;
+  if(p.tipo==='F'){ var entH=estrPrecioEntradaFut(p); return c*(S - entH); }
+  // En la vista teórica usamos el DTE del slider (permite ver la curva a distintos
+  // momentos de la vida de la opción); si no, el DTE global.
+  var slider = document.getElementById('estr_dte_view');
+  var dte = (ESTR.vista==='hoy' && slider) ? parseFloat(slider.value)
+                                           : parseFloat(document.getElementById('estr_dte').value);
+  var vol = parseFloat(document.getElementById('estr_vol').value)/100;
+  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica()||{}).r||0) : 0;
+  var t = Math.max(dte/365, 0);
+  var val = (t>0 && vol>0) ? black76(S, p.strike, t, r, vol, p.tipo)
+                           : (p.tipo==='C'?Math.max(S-p.strike,0):Math.max(p.strike-S,0));
+  return c*((val||0) - prima);
+}
+
+// Rango de precios para el eje X: alrededor de F, cubriendo todos los strikes.
+function estrRangoPrecios(){
+  var F = parseFloat(document.getElementById('estr_F').value) || 0;
+  // Referencias del eje X: strikes de opciones + precios de entrada de futuros + F.
+  var refs = [];
+  ESTR.patas.forEach(function(p){
+    if(p.tipo==='F'){ var ent=estrPrecioEntradaFut(p); if(ent>0) refs.push(ent); }
+    else if(p.strike>0){ refs.push(p.strike); }
+  });
+  if(F>0) refs.push(F);
+  if(!refs.length) return null;
+  var min = Math.min.apply(null,refs), max = Math.max.apply(null,refs);
+  var span = Math.max(max-min, max*0.15, 20);
+  var lo = Math.max(0, min - span*0.6), hi = max + span*0.6;
+  var N = 60, step = (hi-lo)/N, xs=[];
+  for(var i=0;i<=N;i++) xs.push(lo + i*step);
+  return xs;
+}
+
+// Griegas agregadas de la posición (suma ponderada por cantidad).
+function estrGriegasPosicion(){
+  var F = parseFloat(document.getElementById('estr_F').value);
+  var dte = parseFloat(document.getElementById('estr_dte').value);
+  var vol = parseFloat(document.getElementById('estr_vol').value)/100;
+  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica()||{}).r||0) : 0;
+  var t = dte/365;
+  var tot = { delta:0, gamma:0, vega:0, theta:0 };
+  if(!(F>0)||!(t>0)||!(vol>0)) return null;
+  ESTR.patas.forEach(function(p){
+    if(p.tipo==='F'){ tot.delta += p.cant; return; }   // futuro: delta 1 por contrato
+    if(!(p.strike>0)) return;
+    var g = griegas(F, p.strike, t, r, vol, p.tipo);
+    if(!g) return;
+    tot.delta += p.cant*g.delta;
+    tot.gamma += p.cant*g.gamma;
+    tot.vega  += p.cant*g.vega;
+    tot.theta += p.cant*g.theta;
+  });
+  return tot;
+}
+
+function estrRender(){
+  estrRenderPatas();      // refresca el valor teórico de cada pata
+  estrRenderResumen();
+  estrRenderGrafico();
+  estrRenderGriegas();
+}
+
+function estrRenderResumen(){
+  var cont = document.getElementById('estr_resumen');
+  if(!ESTR.patas.length){ cont.innerHTML=''; return; }
+  var xs = estrRangoPrecios();
+  var costo = ESTR.patas.reduce(function(a,p){
+    if(p.tipo==='F') return a;
+    return a + p.cant*estrPrimaUsada(p);   // c>0 compra: costo positivo (débito)
+  },0);
+  // máx pérdida / ganancia sobre el rango al vencimiento
+  var maxP=-Infinity, minP=Infinity, breakevens=[];
+  if(xs){
+    var prev=null, prevX=null;
+    xs.forEach(function(S){
+      var pl = ESTR.patas.reduce(function(a,p){return a+estrPayoffVenc(p,S);},0);
+      if(pl>maxP) maxP=pl; if(pl<minP) minP=pl;
+      if(prev!==null && ((prev<0&&pl>=0)||(prev>0&&pl<=0))){
+        var x0 = prevX + (prevX-S)*(prev)/(pl-prev)*-1; // interpolación lineal del cruce por 0
+        breakevens.push(x0);
+      }
+      prev=pl; prevX=S;
+    });
+  }
+  var f2=function(x){ return isFinite(x)? x.toLocaleString('es-AR',{maximumFractionDigits:2}):'—'; };
+  cont.innerHTML =
+    '<div class="estr-kpi"><span>Costo neto (prima)</span><b class="'+(costo>0?'neg':'pos')+'">'+(costo>0?'-':'+')+f2(Math.abs(costo))+'</b></div>'
+   +'<div class="estr-kpi"><span>Máx. ganancia (venc.)</span><b class="pos">'+f2(maxP)+'</b></div>'
+   +'<div class="estr-kpi"><span>Máx. pérdida (venc.)</span><b class="neg">'+f2(minP)+'</b></div>'
+   +'<div class="estr-kpi"><span>Break-even(s)</span><b>'+(breakevens.length?breakevens.map(function(b){return f2(b);}).join(' · '):'—')+'</b></div>';
+}
+
+function estrRenderGriegas(){
+  var cont = document.getElementById('estr_griegas');
+  var g = estrGriegasPosicion();
+  if(!g){ cont.innerHTML=''; return; }
+  var f=function(x,d){ return x.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}); };
+  cont.innerHTML = '<div class="estr-griegas-title">Griegas de la posición</div>'
+    +'<div class="estr-griegas-grid">'
+    +'<div><span>Delta</span><b>'+f(g.delta,3)+'</b><small>por $1 del futuro</small></div>'
+    +'<div><span>Gamma</span><b>'+f(g.gamma,4)+'</b><small>cambio del delta</small></div>'
+    +'<div><span>Vega</span><b>'+f(g.vega,3)+'</b><small>por 1% de vol</small></div>'
+    +'<div><span>Theta</span><b>'+f(g.theta,3)+'</b><small>por día</small></div>'
+    +'</div>';
+}
+
+// Dibuja el gráfico de P&L en canvas (sin librerías).
+function estrRenderGrafico(){
+  var cv = document.getElementById('estr_canvas');
+  if(!cv) return;
+  var xs = estrRangoPrecios();
+  var leyenda = document.getElementById('estr_graf_leyenda');
+  if(!xs){ var ctx0=cv.getContext('2d'); ctx0.clearRect(0,0,cv.width,cv.height); if(leyenda) leyenda.innerHTML=''; return; }
+
+  var fn = (ESTR.vista==='hoy') ? estrPayoffHoy : estrPayoffVenc;
+  var ys = xs.map(function(S){ return ESTR.patas.reduce(function(a,p){return a+fn(p,S);},0); });
+
+  // dimensionar al ancho real
+  var W = cv.clientWidth || cv.parentElement.clientWidth || 600, H = 300;
+  cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  var padL=52, padR=16, padT=16, padB=32;
+  var x0=padL, x1=W-padR, y0=padT, y1=H-padB;
+
+  var xmin=xs[0], xmax=xs[xs.length-1];
+  var ymin=Math.min.apply(null,ys), ymax=Math.max.apply(null,ys);
+  var pad=(ymax-ymin)*0.1||1; ymin-=pad; ymax+=pad;
+  var sx=function(v){ return x0+(v-xmin)/(xmax-xmin)*(x1-x0); };
+  var sy=function(v){ return y1-(v-ymin)/(ymax-ymin)*(y1-y0); };
+
+  var css=getComputedStyle(document.documentElement);
+  var oro=(css.getPropertyValue('--oro')||'#d4a017').trim();
+  var gris=(css.getPropertyValue('--gris')||'#9a9a9a').trim();
+  var txt=(css.getPropertyValue('--txt')||'#e8e0d4').trim();
+
+  // grilla + eje Y
+  ctx.font='10px sans-serif'; ctx.fillStyle=gris; ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){
+    var yv=ymin+(ymax-ymin)*i/4, yy=sy(yv);
+    ctx.beginPath(); ctx.moveTo(x0,yy); ctx.lineTo(x1,yy); ctx.stroke();
+    ctx.textAlign='right'; ctx.fillText(yv.toLocaleString('es-AR',{maximumFractionDigits:0}), x0-6, yy+3);
+  }
+  // eje X (algunas marcas)
+  ctx.textAlign='center';
+  for(var j=0;j<=5;j++){
+    var xv=xmin+(xmax-xmin)*j/5, xx=sx(xv);
+    ctx.fillText(xv.toLocaleString('es-AR',{maximumFractionDigits:0}), xx, y1+16);
+  }
+  // línea de P&L = 0
+  if(ymin<0&&ymax>0){
+    ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(x0,sy(0)); ctx.lineTo(x1,sy(0)); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // línea vertical en F (precio actual)
+  var F=parseFloat(document.getElementById('estr_F').value);
+  if(F>=xmin&&F<=xmax){
+    ctx.strokeStyle='rgba(212,160,23,.4)'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(sx(F),y0); ctx.lineTo(sx(F),y1); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=oro; ctx.textAlign='center'; ctx.fillText('F', sx(F), y0-2);
+  }
+  // relleno ganancia/pérdida + curva
+  ctx.beginPath();
+  xs.forEach(function(S,k){ var X=sx(S),Y=sy(ys[k]); k?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
+  ctx.strokeStyle=oro; ctx.lineWidth=2.4; ctx.stroke();
+
+  if(leyenda){
+    leyenda.innerHTML = (ESTR.vista==='hoy')
+      ? 'Curva: P&L teórico si el futuro llega a ese precio <b>hoy</b> (con valor tiempo).'
+      : 'Curva: P&L <b>al vencimiento</b> según el precio final del futuro (valor intrínseco).';
+  }
+}
+
+function estrSetVista(v){
+  ESTR.vista=v;
+  document.getElementById('estr_gtab_venc').classList.toggle('on', v==='venc');
+  document.getElementById('estr_gtab_hoy').classList.toggle('on', v==='hoy');
+  var box = document.getElementById('estr_dte_slider');
+  if(box){
+    box.style.display = (v==='hoy') ? '' : 'none';
+    if(v==='hoy') estrSyncDteSlider();
+  }
+  estrRenderGrafico();
+}
+
+// Sincroniza el rango del slider con el DTE global (el máximo = días al vencimiento).
+function estrSyncDteSlider(){
+  var dteGlobal = parseFloat(document.getElementById('estr_dte').value) || 0;
+  var slider = document.getElementById('estr_dte_view');
+  var maxLbl = document.getElementById('estr_dte_max');
+  if(!slider) return;
+  slider.max = Math.max(1, dteGlobal);
+  if(parseFloat(slider.value) > dteGlobal) slider.value = dteGlobal;
+  document.getElementById('estr_dte_view_val').textContent = slider.value;
+  if(maxLbl) maxLbl.textContent = 'Hoy (' + dteGlobal + ')';
+}
+
+// Al mover el slider: actualiza la etiqueta y redibuja la curva teórica.
+function estrDteView(){
+  var slider = document.getElementById('estr_dte_view');
+  document.getElementById('estr_dte_view_val').textContent = slider.value;
+  estrRenderGrafico();
+}
+
+
+// Precarga F con el precio de mercado del producto elegido, si está disponible.
+function estrRefrescar(){
+  var prod = document.getElementById('estr_producto').value;
+  var F = null;
+  if(typeof getPrecioMasCercano==='function') F = getPrecioMasCercano(prod);
+  if(F && F>0 && !document.getElementById('estr_F').value) document.getElementById('estr_F').value = F;
+  estrRenderPatas(); estrRender();
+}
+
+// Init: al abrir el acordeón por primera vez, sembrar una pata y precargar.
+var _estrInit=false;
+function estrInitSiHaceFalta(){
+  if(_estrInit) return; _estrInit=true;
+  estrRefrescar();
+  if(!ESTR.patas.length) estrAgregarPata();
+}
+
+
   // Volatilidad implícita por bisección (robusta en los extremos del smile).
   function volImplicita(prima,F,K,t,r,tipo) {
     if (!(prima>0)||!(F>0)||!(K>0)||t<=0) return null;
@@ -8090,6 +8507,17 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
   window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); };
   window._opcSetVto  = v => { _opcVto = v; renderOpciones(); };
   window.renderOpciones = renderOpciones;
+
+  // ── Exponer el analizador de estrategias (llamado desde onclick del HTML) ──
+  window.estrAgregarPata = estrAgregarPata;
+  window.estrEliminarPata = estrEliminarPata;
+  window.estrEditarPata = estrEditarPata;
+  window.estrRender = estrRender;
+  window.estrRenderPatas = estrRenderPatas;
+  window.estrSetVista = estrSetVista;
+  window.estrRefrescar = estrRefrescar;
+  window.estrInitSiHaceFalta = estrInitSiHaceFalta;
+  window.estrDteView = estrDteView;
 })();
 </script>
 
