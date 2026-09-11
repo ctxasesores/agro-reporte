@@ -1852,17 +1852,16 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               Armá una cartera de opciones y futuros y mirá su resultado (P&amp;L) al vencimiento y hoy. Diagnóstico informativo, no es recomendación de inversión.
             </div>
 
-            <!-- Parámetros globales (editables a mano) -->
+            <!-- Parámetros: producto, futuro y días se heredan de la sección Opciones -->
+            <div class="estr-hered-nota" id="estr_hered_nota">Tomando el futuro y el vencimiento seleccionados arriba en <b>Opciones</b>. Cambialos ahí.</div>
             <div class="estr-params">
-              <div><label>Producto</label>
-                <select id="estr_producto" onchange="estrRefrescar()">
-                  <option value="Soja">Soja</option><option value="Maiz">Maíz</option><option value="Trigo">Trigo</option>
-                </select>
-              </div>
-              <div><label>Futuro subyacente (F)</label><input type="number" id="estr_F" step="0.5" oninput="estrRender()" placeholder="Precio del futuro"></div>
-              <div><label>Días al vencimiento</label><input type="number" id="estr_dte" step="1" min="0" value="60" oninput="estrRender()"></div>
-              <div><label>Volatilidad anual (%)</label><input type="number" id="estr_vol" step="0.5" min="0" value="19" oninput="estrRender()"></div>
+              <div><label>Producto</label><input type="text" id="estr_producto_lbl" readonly class="estr-hered"></div>
+              <div><label>Futuro subyacente (F)</label><input type="number" id="estr_F" readonly class="estr-hered" placeholder="—"></div>
+              <div><label>Días al vencimiento</label><input type="number" id="estr_dte" readonly class="estr-hered" placeholder="—"></div>
+              <div><label>Volatilidad anual (%)</label><input type="number" id="estr_vol" step="0.5" min="0" value="19" oninput="this.dataset.tocado=1;estrRender()"></div>
             </div>
+            <!-- producto interno para las funciones que lo leen por value -->
+            <select id="estr_producto" style="display:none"><option value="Soja">Soja</option><option value="Maiz">Maiz</option><option value="Trigo">Trigo</option></select>
 
             <!-- Patas de la estrategia -->
             <div id="estr_patas"></div>
@@ -7727,17 +7726,29 @@ function estrEliminarPata(id){
 function estrEditarPata(id, campo, valor){
   var p = ESTR.patas.find(function(x){ return x.id===id; });
   if(!p) return;
-  if(campo==='cant'||campo==='strike') p[campo] = parseFloat(valor)||0;
-  else if(campo==='prima'){ p.prima = valor; p.primaAuto = (valor===''||valor===null); }
-  else p[campo] = valor;
-  if(campo==='tipo' || campo==='strike'){ if(p.primaAuto) estrRenderPatas(); }
+  if(campo==='cant'){
+    p.cant = parseFloat(valor);   // puede quedar NaN mientras escribe "-"; se resuelve al calcular
+  } else if(campo==='strike'){
+    p.strikeRaw = valor;          // guardamos el texto crudo
+    p.strike = parseFloat(valor)||0;
+  } else if(campo==='prima'){
+    p.prima = valor;              // texto crudo: permite "4." y decimales a medio escribir
+    p.primaAuto = (valor===''||valor===null);
+  } else if(campo==='tipo'){
+    p.tipo = valor;
+    estrRenderPatas();            // cambiar tipo sí reconstruye (habilita/deshabilita campos)
+    estrRender();
+    return;
+  }
+  // Para cant/strike/prima NO reconstruimos los inputs → no se pierde el foco.
   estrRender();
 }
 
 // Prima efectiva de una pata: override manual o teórica.
 function estrPrimaUsada(p){
   if(p.tipo==='F') return 0;
-  if(!p.primaAuto && p.prima!=='' && isFinite(parseFloat(p.prima))) return parseFloat(p.prima);
+  var manual = parseFloat(p.prima);
+  if(!p.primaAuto && p.prima!=='' && p.prima!=null && isFinite(manual)) return manual;
   var t = estrPrimaTeorica(p);
   return t!==null ? t : 0;
 }
@@ -7754,15 +7765,15 @@ function estrRenderPatas(){
     var ph = (teo!==null) ? ('teórica '+teo.toFixed(2)) : '—';
     var teoTxt = (p.tipo==='F') ? ('entra '+estrPrecioEntradaFut(p).toFixed(2)) : (teo!==null ? teo.toFixed(2) : '—');
     return '<div class="estr-pata">'
-      + '<input type="number" step="1" value="'+p.cant+'" title="Positivo=compra, negativo=venta" oninput="estrEditarPata(\''+p.id+'\',\'cant\',this.value)">'
+      + '<input type="text" inputmode="numeric" value="'+p.cant+'" title="Positivo=compra, negativo=venta" oninput="estrEditarPata(\''+p.id+'\',\'cant\',this.value)">'
       + '<select onchange="estrEditarPata(\''+p.id+'\',\'tipo\',this.value)">'
         + '<option value="C"'+(p.tipo==='C'?' selected':'')+'>CALL</option>'
         + '<option value="P"'+(p.tipo==='P'?' selected':'')+'>PUT</option>'
         + '<option value="F"'+(p.tipo==='F'?' selected':'')+'>Futuro</option>'
       + '</select>'
-      + '<input type="number" step="0.5" value="'+(p.strike||'')+'" oninput="estrEditarPata(\''+p.id+'\',\'strike\',this.value)" placeholder="'+(p.tipo==='F'?'precio entrada (F)':'strike')+'">'
-      + '<input type="number" step="0.01" value="'+(p.prima||'')+'" placeholder="'+ph+'" oninput="estrEditarPata(\''+p.id+'\',\'prima\',this.value)"'+(p.tipo==='F'?' disabled':'')+'>'
-      + '<div class="estr-teo" title="Prima teórica Black-76 con el strike y vencimiento actuales">'+teoTxt+'</div>'
+      + '<input type="text" inputmode="decimal" value="'+(p.strike||'')+'" oninput="estrEditarPata(\''+p.id+'\',\'strike\',this.value)" placeholder="'+(p.tipo==='F'?'precio entrada (F)':'strike')+'">'
+      + '<input type="text" inputmode="decimal" value="'+(p.prima||'')+'" placeholder="'+ph+'" oninput="estrEditarPata(\''+p.id+'\',\'prima\',this.value)"'+(p.tipo==='F'?' disabled':'')+'>'
+      + '<div class="estr-teo" data-pid="'+p.id+'" title="Prima teórica Black-76 con el strike y vencimiento actuales">'+teoTxt+'</div>'
       + '<button class="estr-del" onclick="estrEliminarPata(\''+p.id+'\')" title="Eliminar">×</button>'
       + '</div>';
   });
@@ -7779,7 +7790,7 @@ function estrPrecioEntradaFut(p){
 }
 
 function estrPayoffVenc(p, S){
-  var prima = estrPrimaUsada(p), c = p.cant;
+  var prima = estrPrimaUsada(p), c = isFinite(p.cant)?p.cant:0;
   if(p.tipo==='F'){ var ent=estrPrecioEntradaFut(p); return c*(S - ent); }  // futuro: entra al precio F (o al que cargues)
   var intr = (p.tipo==='C') ? Math.max(S-p.strike,0) : Math.max(p.strike-S,0);
   // comprado (c>0): pago prima, cobro intrínseco. vendido (c<0): al revés. c ya lleva signo.
@@ -7788,7 +7799,7 @@ function estrPayoffVenc(p, S){
 
 // P&L teórico HOY de una pata a precio S (revalúa con Black-76 al DTE actual).
 function estrPayoffHoy(p, S){
-  var prima = estrPrimaUsada(p), c = p.cant;
+  var prima = estrPrimaUsada(p), c = isFinite(p.cant)?p.cant:0;
   if(p.tipo==='F'){ var entH=estrPrecioEntradaFut(p); return c*(S - entH); }
   // En la vista teórica usamos el DTE del slider (permite ver la curva a distintos
   // momentos de la vida de la opción); si no, el DTE global.
@@ -7806,13 +7817,8 @@ function estrPayoffHoy(p, S){
 // Rango de precios para el eje X: alrededor de F, cubriendo todos los strikes.
 function estrRangoPrecios(){
   var F = parseFloat(document.getElementById('estr_F').value) || 0;
-  // Referencias del eje X: strikes de opciones + precios de entrada de futuros + F.
-  var refs = [];
-  ESTR.patas.forEach(function(p){
-    if(p.tipo==='F'){ var ent=estrPrecioEntradaFut(p); if(ent>0) refs.push(ent); }
-    else if(p.strike>0){ refs.push(p.strike); }
-  });
-  if(F>0) refs.push(F);
+  var strikes = ESTR.patas.filter(function(p){return p.tipo!=='F'&&p.strike>0;}).map(function(p){return p.strike;});
+  var refs = strikes.concat(F>0?[F]:[]);
   if(!refs.length) return null;
   var min = Math.min.apply(null,refs), max = Math.max.apply(null,refs);
   var span = Math.max(max-min, max*0.15, 20);
@@ -7845,10 +7851,22 @@ function estrGriegasPosicion(){
 }
 
 function estrRender(){
-  estrRenderPatas();      // refresca el valor teórico de cada pata
+  estrActualizarTeoricos();   // actualiza solo el texto del teórico, sin tocar inputs
   estrRenderResumen();
   estrRenderGrafico();
   estrRenderGriegas();
+}
+
+// Actualiza el valor teórico mostrado en cada fila SIN reconstruir los inputs
+// (así no se pierde el foco ni el cursor mientras el usuario escribe).
+function estrActualizarTeoricos(){
+  ESTR.patas.forEach(function(p){
+    var celda = document.querySelector('.estr-teo[data-pid="'+p.id+'"]');
+    if(!celda) return;
+    if(p.tipo==='F'){ celda.textContent = 'entra '+estrPrecioEntradaFut(p).toFixed(2); return; }
+    var teo = estrPrimaTeorica(p);
+    celda.textContent = (teo!==null) ? teo.toFixed(2) : '—';
+  });
 }
 
 function estrRenderResumen(){
@@ -7994,6 +8012,62 @@ function estrDteView(){
 }
 
 
+// Sincroniza F, días y producto del analizador con lo seleccionado en Opciones.
+// Se llama cada vez que cambia el producto/vencimiento arriba.
+function estrSincronizarDesdeOpciones(){
+  // Si Opciones todavía no tiene datos, no podemos sincronizar aún.
+  if(typeof opcData==='undefined' || !opcData.loaded || !opcData.ops || !opcData.ops.length){
+    var nota0 = document.getElementById('estr_hered_nota');
+    if(nota0) nota0.innerHTML = 'Cargando datos de mercado… si no aparece, entrá una vez a la sección <b>Opciones</b> de arriba.';
+    return;
+  }
+  // Si el usuario aún no eligió producto/vencimiento arriba, elegimos el primero
+  // disponible (mismo criterio que renderOpciones): Soja si existe.
+  var prodsDisp = [];
+  opcData.ops.forEach(function(o){ var p=SUBY[o.subyacente]; if(p && prodsDisp.indexOf(p)<0) prodsDisp.push(p); });
+  prodsDisp.sort();
+  if(!_opcProd || prodsDisp.indexOf(_opcProd)<0) _opcProd = (prodsDisp.indexOf('Soja')>=0)?'Soja':prodsDisp[0];
+  if(!_opcProd){ return; }
+  var suby = subyDe(_opcProd);
+  var vtosDisp = [];
+  opcData.ops.forEach(function(o){ if(o.subyacente===suby && vtosDisp.indexOf(o.vencimiento)<0) vtosDisp.push(o.vencimiento); });
+  vtosDisp.sort(function(a,b){var pa=a.split('_').map(Number),pb=b.split('_').map(Number);return (pa[1]-pb[1])||(pa[0]-pb[0]);});
+  if(!_opcVto || vtosDisp.indexOf(_opcVto)<0) _opcVto = vtosDisp[0];
+  if(!_opcVto){ return; }
+  var partes = _opcVto.split('_').map(Number);
+  var mes = partes[0], anio = partes[1];
+  var F = opcData.fut[suby+'|'+_opcVto];
+  var vto = vencimientoOpcion(mes, anio);
+  var t = tiempoAlVto(vto);
+  var dias = Math.max(0, Math.round(t*365));
+
+  var elProd = document.getElementById('estr_producto');
+  var elProdLbl = document.getElementById('estr_producto_lbl');
+  var elF = document.getElementById('estr_F');
+  var elDte = document.getElementById('estr_dte');
+  if(elProd) elProd.value = _opcProd;
+  if(elProdLbl) elProdLbl.value = _opcProd + ' · ' + mes + '/' + String(anio).slice(2);
+  if(elF) elF.value = (F!=null) ? F : '';
+  if(elDte) elDte.value = dias;
+
+  // Vol histórica del futuro como sugerencia inicial (editable).
+  var elVol = document.getElementById('estr_vol');
+  if(elVol && !elVol.dataset.tocado){
+    var vh = (typeof volHistDe==='function') ? volHistDe(_opcProd, _opcVto) : null;
+    if(vh!=null && isFinite(vh)) elVol.value = (vh*100).toFixed(1);
+  }
+
+  var nota = document.getElementById('estr_hered_nota');
+  if(nota){
+    nota.innerHTML = (F!=null)
+      ? 'Tomando el futuro <b>$'+F+'</b> y el vencimiento <b>'+mes+'/'+String(anio).slice(2)+'</b> ('+dias+' días) seleccionados arriba en <b>Opciones</b>.'
+      : 'Elegí un producto y vencimiento arriba en <b>Opciones</b> para valuar la estrategia.';
+  }
+
+  if(document.getElementById('estr_dte_slider')) estrSyncDteSlider();
+  estrRender();
+}
+
 // Precarga F con el precio de mercado del producto elegido, si está disponible.
 function estrRefrescar(){
   var prod = document.getElementById('estr_producto').value;
@@ -8007,8 +8081,20 @@ function estrRefrescar(){
 var _estrInit=false;
 function estrInitSiHaceFalta(){
   if(_estrInit) return; _estrInit=true;
-  estrRefrescar();
   if(!ESTR.patas.length) estrAgregarPata();
+  estrSincronizarDesdeOpciones();
+  // Si aún no hay datos, dispararlos y reintentar sincronizar por polling breve.
+  if(typeof opcData!=='undefined' && !opcData.loaded){
+    if(typeof cargarOpciones==='function'){ try{ cargarOpciones(); }catch(e){} }
+    var intentos=0;
+    var iv = setInterval(function(){
+      intentos++;
+      if((typeof opcData!=='undefined' && opcData.loaded) || intentos>40){
+        clearInterval(iv);
+        estrSincronizarDesdeOpciones();
+      }
+    }, 250);   // reintenta hasta 10s
+  }
 }
 
 
@@ -8504,8 +8590,8 @@ function estrInitSiHaceFalta(){
     requestAnimationFrame(() => bstdAnimar(ov.querySelector('.bstd-wrap')));
   };
 
-  window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); };
-  window._opcSetVto  = v => { _opcVto = v; renderOpciones(); };
+  window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); if(typeof estrSincronizarDesdeOpciones==='function') estrSincronizarDesdeOpciones(); };
+  window._opcSetVto  = v => { _opcVto = v; renderOpciones(); if(typeof estrSincronizarDesdeOpciones==='function') estrSincronizarDesdeOpciones(); };
   window.renderOpciones = renderOpciones;
 
   // ── Exponer el analizador de estrategias (llamado desde onclick del HTML) ──
