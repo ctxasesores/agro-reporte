@@ -838,6 +838,30 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .estr-hered-nota{font-size:12px;color:var(--gris,#9a9a9a);margin-bottom:12px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;border:.5px solid var(--border,rgba(255,255,255,.08))}
 .estr-hered-nota b{color:var(--oro-l,#e8c45a)}
 input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e8c45a)!important;cursor:default;border-style:dashed!important;font-weight:600}
+
+/* Guía de estrategias (matriz dirección × volatilidad) */
+.estr-guia{margin-bottom:16px}
+.estr-guia-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:9px;border:.5px solid rgba(212,160,23,.3);background:rgba(212,160,23,.06);color:var(--oro-l,#e8c45a);font-size:13px;font-weight:600;cursor:pointer;text-align:left}
+.estr-guia-toggle:hover{background:rgba(212,160,23,.1)}
+.estr-guia-intro{font-size:12px;color:var(--gris,#9a9a9a);line-height:1.6;margin:12px 2px}
+.estr-guia-intro b{color:var(--oro-l,#e8c45a)}
+.estr-matriz-wrap{overflow-x:auto;margin:4px 0}
+.estr-matriz{width:100%;border-collapse:collapse;font-size:11.5px;min-width:560px}
+.estr-matriz th,.estr-matriz td{border:.5px solid var(--border,rgba(255,255,255,.1));padding:8px 10px;vertical-align:top;text-align:left}
+.estr-matriz thead th{background:rgba(255,255,255,.04);color:var(--txt,#e8e0d4);font-weight:700;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.estr-matriz td{color:var(--gris,#b8c4d0);line-height:1.55}
+.estr-dir{font-weight:700;text-align:center!important;width:74px;font-size:12px}
+.estr-dir.bajista{color:#e08a6a}.estr-dir.neutral{color:#c9b26a}.estr-dir.alcista{color:#6ab894}
+.estr-matriz .estr-simple{background:rgba(255,255,255,.02)}
+.gex-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;border-bottom:.5px solid rgba(255,255,255,.05)}
+.gex-item:last-child{border-bottom:none}
+.gex-item>span{font-size:11px;color:var(--txt,#e8e0d4);flex:1}
+.gex-btn{flex-shrink:0;font-size:10px;font-weight:600;padding:3px 9px;border-radius:6px;border:.5px solid rgba(212,160,23,.4);background:rgba(212,160,23,.08);color:var(--oro-l,#e8c45a);cursor:pointer;white-space:nowrap}
+.gex-btn:hover{background:var(--oro,#d4a017);color:#132d46}
+.estr-simple .gex-item{justify-content:center;flex-direction:column;gap:5px}
+.estr-simple .gex-item>span{flex:none;text-align:center}
+.estr-gex-feedback{margin:12px 2px;padding:9px 13px;border-radius:8px;background:rgba(106,184,148,.12);border:.5px solid rgba(106,184,148,.4);color:#8fd3b0;font-size:12px;font-weight:600}
+.estr-guia-nota{font-size:11px;color:var(--gris,#9a9a9a);line-height:1.6;margin:12px 2px 2px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;border-left:2px solid rgba(212,160,23,.4)}
 </style>
 </head>
 <body>
@@ -1852,16 +1876,55 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               Armá una cartera de opciones y futuros y mirá su resultado (P&amp;L) al vencimiento y hoy. Diagnóstico informativo, no es recomendación de inversión.
             </div>
 
-            <!-- Parámetros: producto, futuro y días se heredan de la sección Opciones -->
-            <div class="estr-hered-nota" id="estr_hered_nota">Tomando el futuro y el vencimiento seleccionados arriba en <b>Opciones</b>. Cambialos ahí.</div>
-            <div class="estr-params">
-              <div><label>Producto</label><input type="text" id="estr_producto_lbl" readonly class="estr-hered"></div>
-              <div><label>Futuro subyacente (F)</label><input type="number" id="estr_F" readonly class="estr-hered" placeholder="—"></div>
-              <div><label>Días al vencimiento</label><input type="number" id="estr_dte" readonly class="estr-hered" placeholder="—"></div>
-              <div><label>Volatilidad anual (%)</label><input type="number" id="estr_vol" step="0.5" min="0" value="19" oninput="this.dataset.tocado=1;estrRender()"></div>
+            <!-- Guía de referencia: matriz dirección × volatilidad con generador -->
+            <div class="estr-guia">
+              <button class="estr-guia-toggle" type="button" onclick="estrToggleGuia()">
+                <span>📖 Guía: ¿qué estrategia según mi visión de mercado y volatilidad?</span>
+                <span id="estr-guia-ico">▼</span>
+              </button>
+              <div id="estr-guia-body" style="display:none">
+                <p class="estr-guia-intro">Elegí según hacia dónde creés que va el <b>precio</b> (filas) y si la <b>volatilidad implícita</b> está baja, normal o alta (columnas). Regla de fondo: con volatilidad <b>baja</b> conviene <b>comprar</b> opciones (están baratas); con volatilidad <b>alta</b>, <b>venderlas</b> (están caras). Tocá <b>Generar</b> para armar el ejemplo con los strikes reales.</p>
+                <div class="estr-matriz-wrap">
+                  <table class="estr-matriz">
+                    <thead><tr><th></th><th>Volatilidad baja</th><th>Volatilidad normal</th><th>Volatilidad alta</th></tr></thead>
+                    <tbody>
+                      <tr>
+                        <th class="estr-dir bajista">Bajista</th>
+                        <td><div class="gex-item"><span>Comprar put</span><button class="gex-btn" onclick="gexGenerar('comprar_put')">Generar</button></div><div class="gex-item"><span>Bear put spread</span><button class="gex-btn" onclick="gexGenerar('bear_put_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (puts)</span><button class="gex-btn" onclick="gexGenerar('butterfly_put')">Generar</button></div></td>
+                        <td class="estr-simple"><div class="gex-item"><span>Vender futuro</span><button class="gex-btn" onclick="gexGenerar('vender_futuro')">Generar</button></div></td>
+                        <td><div class="gex-item"><span>Vender call</span><button class="gex-btn" onclick="gexGenerar('vender_call')">Generar</button></div><div class="gex-item"><span>Bear call spread</span><button class="gex-btn" onclick="gexGenerar('bear_call_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (calls)</span><button class="gex-btn" onclick="gexGenerar('butterfly_call')">Generar</button></div></td>
+                      </tr>
+                      <tr>
+                        <th class="estr-dir neutral">Neutral</th>
+                        <td><div class="gex-item"><span>Comprar straddle</span><button class="gex-btn" onclick="gexGenerar('comprar_straddle')">Generar</button></div><div class="gex-item"><span>Comprar strangle</span><button class="gex-btn" onclick="gexGenerar('comprar_strangle')">Generar</button></div><div class="gex-item"><span>Backspread</span><button class="gex-btn" onclick="gexGenerar('backspread')">Generar</button></div></td>
+                        <td class="estr-simple"><div class="gex-item"><span>No operar</span><button class="gex-btn" onclick="gexGenerar('no_operar')">Generar</button></div></td>
+                        <td><div class="gex-item"><span>Vender straddle</span><button class="gex-btn" onclick="gexGenerar('vender_straddle')">Generar</button></div><div class="gex-item"><span>Vender strangle</span><button class="gex-btn" onclick="gexGenerar('vender_strangle')">Generar</button></div><div class="gex-item"><span>Ratio spread</span><button class="gex-btn" onclick="gexGenerar('ratio_spread')">Generar</button></div></td>
+                      </tr>
+                      <tr>
+                        <th class="estr-dir alcista">Alcista</th>
+                        <td><div class="gex-item"><span>Comprar call</span><button class="gex-btn" onclick="gexGenerar('comprar_call')">Generar</button></div><div class="gex-item"><span>Bull call spread</span><button class="gex-btn" onclick="gexGenerar('bull_call_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (calls)</span><button class="gex-btn" onclick="gexGenerar('butterfly_call')">Generar</button></div></td>
+                        <td class="estr-simple"><div class="gex-item"><span>Comprar futuro</span><button class="gex-btn" onclick="gexGenerar('comprar_futuro')">Generar</button></div></td>
+                        <td><div class="gex-item"><span>Vender put</span><button class="gex-btn" onclick="gexGenerar('vender_put')">Generar</button></div><div class="gex-item"><span>Bull put spread</span><button class="gex-btn" onclick="gexGenerar('bull_put_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (puts)</span><button class="gex-btn" onclick="gexGenerar('butterfly_put')">Generar</button></div></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="estr_gex_feedback" class="estr-gex-feedback" style="display:none"></div>
+                <p class="estr-guia-nota">⚠ Vender opciones "desnudas" (naked) cobra prima pero expone a pérdidas grandes. Armarlas como spreads limita el riesgo. Al generar, la estrategia se carga abajo para ver su P&amp;L y griegas.</p>
+              </div>
             </div>
-            <!-- producto interno para las funciones que lo leen por value -->
-            <select id="estr_producto" style="display:none"><option value="Soja">Soja</option><option value="Maiz">Maiz</option><option value="Trigo">Trigo</option></select>
+
+            <!-- Parámetros globales (editables a mano) -->
+            <div class="estr-params">
+              <div><label>Producto</label>
+                <select id="estr_producto" onchange="estrRefrescar()">
+                  <option value="Soja">Soja</option><option value="Maiz">Maíz</option><option value="Trigo">Trigo</option>
+                </select>
+              </div>
+              <div><label>Futuro subyacente (F)</label><input type="number" id="estr_F" step="0.5" oninput="estrRender()" placeholder="Precio del futuro"></div>
+              <div><label>Días al vencimiento</label><input type="number" id="estr_dte" step="1" min="0" value="60" oninput="estrRender()"></div>
+              <div><label>Volatilidad anual (%)</label><input type="number" id="estr_vol" step="0.5" min="0" value="19" oninput="estrRender()"></div>
+            </div>
 
             <!-- Patas de la estrategia -->
             <div id="estr_patas"></div>
@@ -8012,62 +8075,6 @@ function estrDteView(){
 }
 
 
-// Sincroniza F, días y producto del analizador con lo seleccionado en Opciones.
-// Se llama cada vez que cambia el producto/vencimiento arriba.
-function estrSincronizarDesdeOpciones(){
-  // Si Opciones todavía no tiene datos, no podemos sincronizar aún.
-  if(typeof opcData==='undefined' || !opcData.loaded || !opcData.ops || !opcData.ops.length){
-    var nota0 = document.getElementById('estr_hered_nota');
-    if(nota0) nota0.innerHTML = 'Cargando datos de mercado… si no aparece, entrá una vez a la sección <b>Opciones</b> de arriba.';
-    return;
-  }
-  // Si el usuario aún no eligió producto/vencimiento arriba, elegimos el primero
-  // disponible (mismo criterio que renderOpciones): Soja si existe.
-  var prodsDisp = [];
-  opcData.ops.forEach(function(o){ var p=SUBY[o.subyacente]; if(p && prodsDisp.indexOf(p)<0) prodsDisp.push(p); });
-  prodsDisp.sort();
-  if(!_opcProd || prodsDisp.indexOf(_opcProd)<0) _opcProd = (prodsDisp.indexOf('Soja')>=0)?'Soja':prodsDisp[0];
-  if(!_opcProd){ return; }
-  var suby = subyDe(_opcProd);
-  var vtosDisp = [];
-  opcData.ops.forEach(function(o){ if(o.subyacente===suby && vtosDisp.indexOf(o.vencimiento)<0) vtosDisp.push(o.vencimiento); });
-  vtosDisp.sort(function(a,b){var pa=a.split('_').map(Number),pb=b.split('_').map(Number);return (pa[1]-pb[1])||(pa[0]-pb[0]);});
-  if(!_opcVto || vtosDisp.indexOf(_opcVto)<0) _opcVto = vtosDisp[0];
-  if(!_opcVto){ return; }
-  var partes = _opcVto.split('_').map(Number);
-  var mes = partes[0], anio = partes[1];
-  var F = opcData.fut[suby+'|'+_opcVto];
-  var vto = vencimientoOpcion(mes, anio);
-  var t = tiempoAlVto(vto);
-  var dias = Math.max(0, Math.round(t*365));
-
-  var elProd = document.getElementById('estr_producto');
-  var elProdLbl = document.getElementById('estr_producto_lbl');
-  var elF = document.getElementById('estr_F');
-  var elDte = document.getElementById('estr_dte');
-  if(elProd) elProd.value = _opcProd;
-  if(elProdLbl) elProdLbl.value = _opcProd + ' · ' + mes + '/' + String(anio).slice(2);
-  if(elF) elF.value = (F!=null) ? F : '';
-  if(elDte) elDte.value = dias;
-
-  // Vol histórica del futuro como sugerencia inicial (editable).
-  var elVol = document.getElementById('estr_vol');
-  if(elVol && !elVol.dataset.tocado){
-    var vh = (typeof volHistDe==='function') ? volHistDe(_opcProd, _opcVto) : null;
-    if(vh!=null && isFinite(vh)) elVol.value = (vh*100).toFixed(1);
-  }
-
-  var nota = document.getElementById('estr_hered_nota');
-  if(nota){
-    nota.innerHTML = (F!=null)
-      ? 'Tomando el futuro <b>$'+F+'</b> y el vencimiento <b>'+mes+'/'+String(anio).slice(2)+'</b> ('+dias+' días) seleccionados arriba en <b>Opciones</b>.'
-      : 'Elegí un producto y vencimiento arriba en <b>Opciones</b> para valuar la estrategia.';
-  }
-
-  if(document.getElementById('estr_dte_slider')) estrSyncDteSlider();
-  estrRender();
-}
-
 // Precarga F con el precio de mercado del producto elegido, si está disponible.
 function estrRefrescar(){
   var prod = document.getElementById('estr_producto').value;
@@ -8079,22 +8086,127 @@ function estrRefrescar(){
 
 // Init: al abrir el acordeón por primera vez, sembrar una pata y precargar.
 var _estrInit=false;
+/* ============================================================
+   GENERADOR DE EJEMPLOS DE ESTRATEGIAS
+   Dado un id de estrategia y F, arma las patas con strikes
+   reales de la grilla A3 (o calculados si no cotizan) y las
+   carga en el analizador.
+   Vive en el mismo IIFE: accede a opcData, SUBY, _opcProd, _opcVto, F.
+   ============================================================ */
+
+// Devuelve los strikes REALES que cotizan para el producto/vencimiento actual,
+// ordenados. Vacío si no hay datos.
+function gexStrikesReales(){
+  if(typeof opcData==='undefined' || !opcData.loaded) return [];
+  var prod = document.getElementById('estr_producto').value;
+  var suby = Object.keys(SUBY).find(function(k){ return SUBY[k]===prod; });
+  if(!suby || !_opcVto) return [];
+  var set = {};
+  opcData.ops.forEach(function(o){
+    if(o.subyacente===suby && o.vencimiento===_opcVto && o.strike>0) set[o.strike]=1;
+  });
+  return Object.keys(set).map(Number).sort(function(a,b){return a-b;});
+}
+
+// Strike real más cercano a un objetivo; si no hay grilla, redondea el objetivo.
+function gexStrikeCercano(objetivo, reales){
+  if(reales && reales.length){
+    var best=reales[0], bd=Math.abs(reales[0]-objetivo);
+    reales.forEach(function(k){ var d=Math.abs(k-objetivo); if(d<bd){bd=d;best=k;} });
+    return best;
+  }
+  // sin grilla: redondear a múltiplo de 2
+  return Math.round(objetivo/2)*2;
+}
+
+// Elige un strike a cierto % del futuro, en la dirección indicada, evitando repetir.
+function gexStrikePorPct(F, pct, reales, usados){
+  var obj = F*(1+pct/100);
+  var k = gexStrikeCercano(obj, reales);
+  // evitar duplicados: si ya se usó, tomar el siguiente en la dirección
+  if(usados && usados.indexOf(k)>=0 && reales.length){
+    var idx = reales.indexOf(k);
+    var paso = pct>=0 ? 1 : -1;
+    var ni = idx+paso;
+    if(ni>=0 && ni<reales.length) k = reales[ni];
+  }
+  return k;
+}
+
+// Definición de cada estrategia: función que devuelve las patas.
+// pct>0 = OTM para calls / ITM para puts (arriba de F); pct<0 = abajo de F.
+var GEX_ESTRATEGIAS = {
+  // ── BAJISTA ──
+  'comprar_put': function(F,R){ var k=gexStrikeCercano(F,R); return {nombre:'Compra de put (ATM)', patas:[{cant:1,tipo:'P',strike:k}]}; },
+  'bear_put_spread': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,2,R,u);u.push(k1); var k2=gexStrikePorPct(F,-6,R,u); return {nombre:'Bear put spread', patas:[{cant:1,tipo:'P',strike:k1},{cant:-1,tipo:'P',strike:k2}]}; },
+  'vender_call': function(F,R){ var k=gexStrikePorPct(F,4,R,[]); return {nombre:'Venta de call (OTM)', patas:[{cant:-1,tipo:'C',strike:k}]}; },
+  'bear_call_spread': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,2,R,u);u.push(k1); var k2=gexStrikePorPct(F,8,R,u); return {nombre:'Bear call spread', patas:[{cant:-1,tipo:'C',strike:k1},{cant:1,tipo:'C',strike:k2}]}; },
+  'vender_futuro': function(F,R){ return {nombre:'Venta de futuro', patas:[{cant:-1,tipo:'F',strike:F}]}; },
+  // ── NEUTRAL ──
+  'comprar_straddle': function(F,R){ var k=gexStrikeCercano(F,R); return {nombre:'Compra de straddle (ATM)', patas:[{cant:1,tipo:'C',strike:k},{cant:1,tipo:'P',strike:k}]}; },
+  'comprar_strangle': function(F,R){ var kc=gexStrikePorPct(F,5,R,[]); var kp=gexStrikePorPct(F,-5,R,[]); return {nombre:'Compra de strangle', patas:[{cant:1,tipo:'C',strike:kc},{cant:1,tipo:'P',strike:kp}]}; },
+  'vender_straddle': function(F,R){ var k=gexStrikeCercano(F,R); return {nombre:'Venta de straddle (ATM)', patas:[{cant:-1,tipo:'C',strike:k},{cant:-1,tipo:'P',strike:k}]}; },
+  'vender_strangle': function(F,R){ var kc=gexStrikePorPct(F,5,R,[]); var kp=gexStrikePorPct(F,-5,R,[]); return {nombre:'Venta de strangle', patas:[{cant:-1,tipo:'C',strike:kc},{cant:-1,tipo:'P',strike:kp}]}; },
+  'no_operar': function(F,R){ return {nombre:'No operar', patas:[]}; },
+  // ── ALCISTA ──
+  'comprar_call': function(F,R){ var k=gexStrikeCercano(F,R); return {nombre:'Compra de call (ATM)', patas:[{cant:1,tipo:'C',strike:k}]}; },
+  'bull_call_spread': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,-2,R,u);u.push(k1); var k2=gexStrikePorPct(F,6,R,u); return {nombre:'Bull call spread', patas:[{cant:1,tipo:'C',strike:k1},{cant:-1,tipo:'C',strike:k2}]}; },
+  'vender_put': function(F,R){ var k=gexStrikePorPct(F,-4,R,[]); return {nombre:'Venta de put (OTM)', patas:[{cant:-1,tipo:'P',strike:k}]}; },
+  'bull_put_spread': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,-2,R,u);u.push(k1); var k2=gexStrikePorPct(F,-8,R,u); return {nombre:'Bull put spread', patas:[{cant:-1,tipo:'P',strike:k1},{cant:1,tipo:'P',strike:k2}]}; },
+  'comprar_futuro': function(F,R){ return {nombre:'Compra de futuro', patas:[{cant:1,tipo:'F',strike:F}]}; },
+  // ── MARIPOSAS (butterflies) — bajo costo, apuesta a que quede cerca de un nivel ──
+  'butterfly_call': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,-6,R,u);u.push(k1); var k2=gexStrikeCercano(F,R);u.push(k2); var k3=gexStrikePorPct(F,6,R,u); return {nombre:'Mariposa con calls', patas:[{cant:1,tipo:'C',strike:k1},{cant:-2,tipo:'C',strike:k2},{cant:1,tipo:'C',strike:k3}]}; },
+  'butterfly_put': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,-6,R,u);u.push(k1); var k2=gexStrikeCercano(F,R);u.push(k2); var k3=gexStrikePorPct(F,6,R,u); return {nombre:'Mariposa con puts', patas:[{cant:1,tipo:'P',strike:k1},{cant:-2,tipo:'P',strike:k2},{cant:1,tipo:'P',strike:k3}]}; },
+  // ── BACKSPREAD (neutral/low vol, net long options) ──
+  'backspread': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,-2,R,u);u.push(k1); var k2=gexStrikePorPct(F,5,R,u); return {nombre:'Backspread con calls', patas:[{cant:-1,tipo:'C',strike:k1},{cant:2,tipo:'C',strike:k2}]}; },
+  'ratio_spread': function(F,R){ var u=[]; var k1=gexStrikePorPct(F,2,R,u);u.push(k1); var k2=gexStrikePorPct(F,8,R,u); return {nombre:'Ratio spread con calls', patas:[{cant:1,tipo:'C',strike:k1},{cant:-2,tipo:'C',strike:k2}]}; }
+};
+
+// Genera la estrategia: arma las patas, las carga en ESTR y renderiza.
+function gexGenerar(id){
+  var F = parseFloat(document.getElementById('estr_F').value);
+  if(!(F>0)){ alert('Cargá primero el Futuro subyacente (F) arriba para generar el ejemplo.'); return; }
+  var def = GEX_ESTRATEGIAS[id];
+  if(!def) return;
+  var R = gexStrikesReales();
+  var out = def(F, R);
+  // convertir a patas del analizador
+  ESTR.patas = out.patas.map(function(pt){
+    return { id:estrNuevoId(), cant:pt.cant, tipo:pt.tipo, strike:pt.strike||0, prima:'', primaAuto:true };
+  });
+  if(!ESTR.patas.length){
+    // "no operar": limpiar
+    ESTR.patas = [];
+  }
+  estrRenderPatas(); estrRender();
+  // feedback: nombre de la estrategia generada
+  var fb = document.getElementById('estr_gex_feedback');
+  if(fb){
+    var origen = R.length ? 'strikes reales de A3' : 'strikes calculados (no hay grilla cargada)';
+    fb.textContent = '✓ Generado: ' + out.nombre + ' · ' + origen;
+    fb.style.display = 'block';
+    setTimeout(function(){ fb.style.display='none'; }, 4000);
+  }
+  // scroll suave a las patas
+  var patas = document.getElementById('estr_patas');
+  if(patas && patas.scrollIntoView) patas.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+
+function estrToggleGuia(){
+  var body = document.getElementById('estr-guia-body');
+  var ico = document.getElementById('estr-guia-ico');
+  if(!body) return;
+  var abierto = body.style.display !== 'none';
+  body.style.display = abierto ? 'none' : 'block';
+  if(ico) ico.textContent = abierto ? '▼' : '▲';
+}
+
+
 function estrInitSiHaceFalta(){
   if(_estrInit) return; _estrInit=true;
+  estrRefrescar();
   if(!ESTR.patas.length) estrAgregarPata();
-  estrSincronizarDesdeOpciones();
-  // Si aún no hay datos, dispararlos y reintentar sincronizar por polling breve.
-  if(typeof opcData!=='undefined' && !opcData.loaded){
-    if(typeof cargarOpciones==='function'){ try{ cargarOpciones(); }catch(e){} }
-    var intentos=0;
-    var iv = setInterval(function(){
-      intentos++;
-      if((typeof opcData!=='undefined' && opcData.loaded) || intentos>40){
-        clearInterval(iv);
-        estrSincronizarDesdeOpciones();
-      }
-    }, 250);   // reintenta hasta 10s
-  }
 }
 
 
@@ -8590,8 +8702,8 @@ function estrInitSiHaceFalta(){
     requestAnimationFrame(() => bstdAnimar(ov.querySelector('.bstd-wrap')));
   };
 
-  window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); if(typeof estrSincronizarDesdeOpciones==='function') estrSincronizarDesdeOpciones(); };
-  window._opcSetVto  = v => { _opcVto = v; renderOpciones(); if(typeof estrSincronizarDesdeOpciones==='function') estrSincronizarDesdeOpciones(); };
+  window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); };
+  window._opcSetVto  = v => { _opcVto = v; renderOpciones(); };
   window.renderOpciones = renderOpciones;
 
   // ── Exponer el analizador de estrategias (llamado desde onclick del HTML) ──
@@ -8603,6 +8715,8 @@ function estrInitSiHaceFalta(){
   window.estrSetVista = estrSetVista;
   window.estrRefrescar = estrRefrescar;
   window.estrInitSiHaceFalta = estrInitSiHaceFalta;
+  window.estrToggleGuia = estrToggleGuia;
+  window.gexGenerar = gexGenerar;
   window.estrDteView = estrDteView;
 })();
 </script>
