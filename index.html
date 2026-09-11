@@ -2407,27 +2407,6 @@ function slugCodigo(nombre = '') {
     .slice(0, 14) || 'CLIENTE';
 }
 
-async function insertClienteProfile(payload) {
-  const optionalColumns = [
-    'terminos_aceptados',
-    'terminos_aceptados_at',
-    'terminos_version',
-    'plan_pago',
-    'estado_pago',
-    'premium_activo',
-    'acceso_premium'
-  ];
-  const firstAttempt = await sb.from('clientes').insert(payload);
-  if (!firstAttempt.error) return firstAttempt;
-
-  const missingOptional = optionalColumns.find(col => isMissingColumnError(firstAttempt.error, col));
-  if (!missingOptional) return firstAttempt;
-
-  const fallbackPayload = { ...payload };
-  optionalColumns.forEach(col => delete fallbackPayload[col]);
-  return sb.from('clientes').insert(fallbackPayload);
-}
-
 async function doLogin() {
   hideAuthMessages();
   const email = document.getElementById('loginEmail').value.trim();
@@ -2455,22 +2434,22 @@ async function doRegister() {
   const pass      = document.getElementById('regPass').value.trim();
   const campania  = document.getElementById('regCampania').value.trim();
   const acceptedTerms = document.getElementById('regTermsAccepted')?.checked;
-  const actividad = 'Agricultura, Ganadería y Tambo';
+  const actividad = 'Agricultura, Ganader\u00eda y Tambo';
   const btn       = document.getElementById('btnRegister');
   const errEl     = document.getElementById('loginError');
   const okEl      = document.getElementById('loginSuccess');
   if (!nombre || !email || !pass) {
-    errEl.textContent = 'Completá empresa, email y contraseña.';
+    errEl.textContent = 'Complet\u00e1 empresa, email y contrase\u00f1a.';
     errEl.style.display = 'block';
     return;
   }
   if (pass.length < 8) {
-    errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+    errEl.textContent = 'La contrase\u00f1a debe tener al menos 8 caracteres.';
     errEl.style.display = 'block';
     return;
   }
   if (!acceptedTerms) {
-    errEl.textContent = 'Para crear la cuenta tenés que aceptar los Términos y Condiciones.';
+    errEl.textContent = 'Para crear la cuenta ten\u00e9s que aceptar los T\u00e9rminos y Condiciones.';
     errEl.style.display = 'block';
     return;
   }
@@ -2478,67 +2457,53 @@ async function doRegister() {
   btn.textContent = 'Creando cuenta...';
   const codigo = slugCodigo(nombre);
   try {
-    const { data, error } = await sb.auth.signUp({
-      email,
-      password: pass,
-      options: {
-        data: { nombre_empresa: nombre, campania, actividad, codigo }
-      }
-    });
-    if (error) throw error;
-
-    const newUser = data.user;
-    if (newUser?.id) {
-      const payload = {
-        id: newUser.id,
+    // Alta at\u00f3mica v\u00eda Edge Function crear-usuario (Auth + perfil con rollback).
+    // El signup directo de Supabase Auth est\u00e1 deshabilitado a prop\u00f3sito:
+    // registrar por ac\u00e1 garantiza que la cuenta quede con su perfil comercial.
+    const resp = await fetch(SUPA_URL + '/functions/v1/crear-usuario', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY
+      },
+      body: JSON.stringify({
         email,
+        password: pass,
         codigo,
         nombre_empresa: nombre,
         campania,
         actividad,
-        activo: true,
-        acceso_agricola: true,
-        agricultura_nivel: 'ESTANDAR',
-        panel_agricola: true,
-        agricultura_dashboard: 'ESTANDAR',
-        acceso_ganaderia: true,
-        ganaderia_nivel: 'ESTANDAR',
-        panel_ganaderia: true,
-        ganaderia_dashboard: 'ESTANDAR',
-        acceso_tambo: true,
-        tambo_nivel: 'ESTANDAR',
-        panel_tambo: true,
-        tambo_dashboard: 'ESTANDAR',
-        plan_pago: 'estandar',
-        estado_pago: 'pendiente',
-        premium_activo: false,
-        acceso_premium: false,
+        acceso_agricola: true,  panel_agricola: true,
+        acceso_ganaderia: true, panel_ganaderia: true,
+        acceso_tambo: true,     panel_tambo: true,
         terminos_aceptados: true,
         terminos_aceptados_at: new Date().toISOString(),
         terminos_version: TERMS_VERSION
-      };
-      const { error: insertError } = await insertClienteProfile(payload);
-      if (insertError && !String(insertError.message || '').toLowerCase().includes('duplicate')) {
-        console.warn('Registro cliente pendiente:', insertError.message);
-        okEl.textContent = 'La cuenta fue creada, pero el perfil comercial quedó pendiente. Avísanos para terminar de habilitar accesos y planes.';
-        okEl.style.display = 'block';
-      } else {
-        okEl.textContent = 'Tu cuenta fue creada. Ya puedes ingresar a tu panel.';
-        okEl.style.display = 'block';
-      }
+      })
+    });
+    const result = await resp.json().catch(() => ({}));
+    if (!resp.ok || result.error) {
+      const raw = String(result.error || '');
+      if (raw === 'EMAIL_DUPLICADO') throw new Error('Ese email ya tiene una cuenta. Ingres\u00e1 o recuper\u00e1 tu contrase\u00f1a.');
+      if (raw === 'CODIGO_DUPLICADO') throw new Error('Ya existe una empresa registrada con un nombre muy similar. Escribinos y lo resolvemos.');
+      throw new Error(raw || 'No se pudo crear la cuenta.');
     }
 
-    if (data.session && data.user) {
-      currentUser = data.user;
-      document.getElementById('loginScreen').style.display='none';
-      await loadApp();
+    // Cuenta creada: ingresar directo con las credenciales nuevas.
+    const { data: loginData, error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (loginError || !loginData?.user) {
+      switchAuthMode('login');
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('loginPass').value = pass;
+      okEl.textContent = 'Tu cuenta fue creada. Ingres\u00e1 con tu email y contrase\u00f1a.';
+      okEl.style.display = 'block';
       return;
     }
-    switchAuthMode('login');
-    document.getElementById('loginEmail').value = email;
-    document.getElementById('loginPass').value = pass;
-    okEl.textContent = okEl.textContent || 'Tu cuenta fue creada. Ya puedes ingresar.';
-    okEl.style.display = 'block';
+    currentUser = loginData.user;
+    document.getElementById('loginScreen').style.display = 'none';
+    showLoading(true);
+    await loadApp();
   } catch (error) {
     errEl.textContent = error.message || 'No se pudo crear la cuenta.';
     errEl.style.display = 'block';
