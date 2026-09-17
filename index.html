@@ -883,6 +883,85 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 .fw-launch-txt{flex:1;font-size:14px;line-height:1.4}
 .fw-launch-txt small{color:var(--gris,#9a9a9a);font-size:11.5px;font-weight:400}
 .fw-launch-arrow{font-size:18px;color:var(--oro-l,#e8c45a);flex-shrink:0}
+
+/* ══ Riesgo productivo ══ */
+.rp-barra{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.rp-btn{padding:7px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);color:var(--txt,#e8e0d4);font-size:12.5px;font-weight:600;cursor:pointer}
+.rp-btn:hover{border-color:rgba(255,255,255,.35)}
+.rp-btn-alt{border-color:rgba(212,160,23,.4);color:var(--oro-l,#e8c45a);background:rgba(212,160,23,.08)}
+.rp-btn-ok{background:var(--oro,#d4a017);color:#132d46;border-color:var(--oro,#d4a017)}
+.rp-sub{font-size:12.5px;font-weight:700;color:var(--txt,#e8e0d4);margin:16px 0 8px;letter-spacing:.2px}
+.rp-tabla-wrap{overflow-x:auto;border-radius:10px}
+.rp-tabla{width:100%;border-collapse:collapse;font-size:12px}
+.rp-tabla th,.rp-tabla td{border:.5px solid var(--border,rgba(255,255,255,.1));padding:5px 7px;text-align:center}
+.rp-tabla thead th{background:rgba(255,255,255,.05);color:var(--txt,#e8e0d4);font-weight:700;font-size:10.5px;white-space:nowrap}
+.rp-tabla thead th small{display:block;font-weight:400;color:var(--gris,#9a9a9a);font-size:9.5px}
+.rp-th-camp{min-width:74px}.rp-th-acc{width:28px}
+.rp-th-cult{display:flex;align-items:center;gap:4px}
+.rp-cult-nom{width:100%;min-width:82px;background:transparent;border:none;color:var(--txt,#e8e0d4);font-size:10.5px;font-weight:700;text-align:center;padding:2px}
+.rp-cult-nom:focus{outline:none;background:rgba(255,255,255,.06);border-radius:4px}
+.rp-camp,.rp-val{width:100%;box-sizing:border-box;background:transparent;border:none;color:var(--txt,#e8e0d4);font-size:12px;text-align:center;padding:3px;font-variant-numeric:tabular-nums}
+.rp-camp{color:var(--gris,#9a9a9a);font-weight:600}
+.rp-val:focus,.rp-camp:focus{outline:none;background:rgba(212,160,23,.12);border-radius:4px}
+.rp-val::placeholder{color:rgba(255,255,255,.18)}
+.rp-x{background:transparent;border:none;color:#e06060;font-size:15px;cursor:pointer;line-height:1;padding:0 3px;opacity:.6}
+.rp-x:hover{opacity:1}
+.rp-hint{font-size:11px;color:var(--gris,#9a9a9a);margin:6px 2px 0;font-style:italic}
+.rp-pegar{background:rgba(255,255,255,.03);border:1px solid rgba(212,160,23,.25);border-radius:10px;padding:14px;margin-bottom:14px}
+.rp-pegar p{font-size:11.5px;color:var(--gris,#9a9a9a);margin:0 0 8px;line-height:1.5}
+.rp-pegar textarea{width:100%;box-sizing:border-box;background:var(--bg2,#0f2236);border:1px solid var(--border2,rgba(255,255,255,.14));border-radius:8px;color:var(--txt,#e8e0d4);font-family:ui-monospace,monospace;font-size:11.5px;padding:8px}
+.rp-pegar-acc{display:flex;gap:8px;margin-top:8px}
+.rp-fb{margin-top:8px;padding:7px 11px;border-radius:7px;font-size:11.5px;font-weight:600}
+.rp-fb.ok{background:rgba(106,184,148,.12);border:.5px solid rgba(106,184,148,.4);color:#8fd3b0}
+.rp-fb.err{background:rgba(224,96,96,.12);border:.5px solid rgba(224,96,96,.4);color:#e58f8f}
+.rp-tabla-riesgo td{font-variant-numeric:tabular-nums}
+.rp-tabla-riesgo .rp-nom{text-align:left;font-weight:600;color:var(--txt,#e8e0d4)}
+.rp-chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700}
+.rp-bajo{background:rgba(106,184,148,.18);color:#8fd3b0}
+.rp-medio{background:rgba(201,178,106,.18);color:#d8c47e}
+.rp-alto{background:rgba(224,138,106,.18);color:#e8a98f}
+.rp-neg{color:#e58f8f}
+.rp-sin td{color:var(--gris,#9a9a9a)}
+.rp-sin-txt{font-style:italic;font-size:11px}
+.rp-vacio{font-size:12.5px;color:var(--gris,#9a9a9a);font-style:italic;padding:18px;text-align:center;background:rgba(255,255,255,.02);border-radius:10px}
+.rp-avisos{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.rp-aviso{font-size:11.5px;color:#d8c47e;background:rgba(201,178,106,.1);border-left:2px solid rgba(201,178,106,.5);border-radius:6px;padding:7px 11px;line-height:1.5}
+.rp-glosario{margin-top:14px;font-size:11px;color:var(--gris,#9a9a9a);line-height:1.65;padding:10px 13px;background:rgba(255,255,255,.03);border-radius:8px}
+.rp-glosario b{color:var(--txt,#e8e0d4)}
+
+/* ── Riesgo productivo: correlaciones, óptimo, planteo, guardado ── */
+.rp-expl{font-size:11.5px;color:var(--gris,#9a9a9a);line-height:1.6;margin:0 2px 10px}
+.rp-expl b{color:var(--txt,#e8e0d4)}
+.rp-matriz td{position:relative;font-variant-numeric:tabular-nums;font-weight:600}
+.rp-matriz td small{display:block;font-size:9px;font-weight:400;opacity:.55}
+.rp-matriz th.rp-nom{text-align:left;background:rgba(255,255,255,.04);font-size:10.5px}
+.rp-diag{background:rgba(255,255,255,.04);color:var(--gris,#9a9a9a)}
+.rp-corr-alta{background:rgba(224,138,106,.16);color:#e8a98f}
+.rp-corr-media{background:rgba(201,178,106,.14);color:#d8c47e}
+.rp-corr-baja{background:rgba(106,184,148,.14);color:#8fd3b0}
+.rp-corr-pocos{outline:1px dashed rgba(255,255,255,.2);outline-offset:-2px}
+.rp-opt-grid{display:flex;flex-direction:column;gap:7px;margin:10px 0}
+.rp-opt-row{display:grid;grid-template-columns:150px 1fr 62px;gap:10px;align-items:center}
+.rp-opt-nom{font-size:12px;color:var(--txt,#e8e0d4);font-weight:600}
+.rp-opt-bar{height:16px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.rp-opt-fill{height:100%;background:linear-gradient(90deg,var(--oro,#d4a017),var(--oro-l,#e8c45a));border-radius:4px}
+.rp-opt-fill.rp-opt-neg{background:linear-gradient(90deg,#c0392b,#e08a6a)}
+.rp-opt-pct{font-size:12.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--oro-l,#e8c45a)}
+.rp-opt-resumen{margin-top:10px;font-size:12.5px;color:var(--txt,#e8e0d4);padding:9px 13px;background:rgba(255,255,255,.03);border-radius:8px}
+.rp-opt-resumen b{color:var(--oro-l,#e8c45a);font-size:14px}
+.rp-opt-resumen small{color:var(--gris,#9a9a9a);font-size:11px}
+.rp-has-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:6px}
+.rp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px}
+.rp-kpi{background:rgba(255,255,255,.03);border:.5px solid var(--border,rgba(255,255,255,.08));border-radius:10px;padding:10px 12px}
+.rp-kpi span{display:block;font-size:10.5px;color:var(--gris,#9a9a9a);margin-bottom:3px}
+.rp-kpi b{font-size:16px;font-variant-numeric:tabular-nums;color:var(--txt,#e8e0d4)}
+.rp-kpi small{display:block;font-size:9.5px;color:var(--gris,#9a9a9a);margin-top:2px}
+.rp-ok{color:#8fd3b0}.rp-warn{color:#d8c47e}.rp-bad{color:#e58f8f}
+.rp-guardar{margin-top:24px;padding:14px;background:rgba(255,255,255,.03);border:.5px solid var(--border,rgba(255,255,255,.08));border-radius:10px}
+.rp-guardar-fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.rp-guardar-fila:last-of-type{margin-bottom:0}
+.rp-input-nom,.rp-select{flex:1;min-width:180px;box-sizing:border-box;height:36px;padding:0 11px;border-radius:8px;border:1px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px}
+.rp-input-nom:focus,.rp-select:focus{outline:none;border-color:var(--oro,#d4a017)}
 </style>
 </head>
 <body>
@@ -1883,6 +1962,68 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
           @keyframes asesorBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
         </style>
 
+      </div>
+
+      <!-- ══ RIESGO PRODUCTIVO (Markowitz sobre rindes) — solo PRO ══ -->
+      <div class="section" id="sec-riesgo-prod" style="margin-top:28px;display:none">
+        <button class="fw-launch" onclick="abrirRiesgoProductivo()">
+          <span class="fw-launch-txt"><b>Análisis de riesgo productivo</b><br><small>Variabilidad de rindes por cultivo y combinación de hectáreas que minimiza el riesgo</small></span>
+          <span class="fw-launch-arrow">↗</span>
+        </button>
+        <div id="acc-riesgo-prod" style="display:none">
+          <div class="card" id="rp-contenido" style="padding:16px">
+            <div class="tasas-nota" style="margin-bottom:14px">
+              Analiza el <b>riesgo productivo puro</b>: cuánto varían los rindes de cada cultivo y cómo se combinan. Trabaja con rindes físicos (qq/ha), sin precios ni costos. Cuantas más campañas cargues, más precisas las estimaciones.
+            </div>
+
+            <div class="rp-barra">
+              <button class="rp-btn" onclick="rpAgregarFila()">+ Campaña</button>
+              <button class="rp-btn" onclick="rpAgregarCultivo()">+ Cultivo</button>
+              <button class="rp-btn rp-btn-alt" onclick="rpAbrirPegar()">Pegar desde Excel</button>
+            </div>
+
+            <div id="rp_pegar_box" class="rp-pegar" style="display:none">
+              <p>Copiá el bloque desde tu Excel (con o sin encabezado) y pegalo acá. Primera columna: campaña. Las demás: rindes en qq/ha.</p>
+              <textarea id="rp_pegar_ta" rows="6" placeholder="Campaña&#9;Soja 1ª&#9;Trigo&#10;23/24&#9;31&#9;19&#10;24/25&#9;27&#9;28"></textarea>
+              <div class="rp-pegar-acc">
+                <button class="rp-btn rp-btn-ok" onclick="rpProcesarPegado()">Cargar datos</button>
+                <button class="rp-btn" onclick="rpAbrirPegar()">Cancelar</button>
+              </div>
+              <div id="rp_pegar_fb" class="rp-fb" style="display:none"></div>
+            </div>
+
+            <div class="rp-sub">Rindes históricos (qq/ha)</div>
+            <div class="rp-tabla-wrap"><div id="rp_grilla"></div></div>
+            <p class="rp-hint">Dejá vacía la celda si ese año no sembraste ese cultivo. Vacío ≠ cero.</p>
+
+            <div id="rp_riesgo" style="margin-top:22px"></div>
+            <div id="rp_correl" style="margin-top:26px"></div>
+            <div id="rp_optimo" style="margin-top:26px"></div>
+
+            <div style="margin-top:26px">
+              <div class="rp-sub">Simulá tu planteo</div>
+              <p class="rp-expl">Cargá las hectáreas que pensás sembrar de cada cultivo y compará el riesgo de tu planteo contra la combinación de menor riesgo.</p>
+              <div id="rp_planteo_inputs"></div>
+              <div id="rp_planteo_res" style="margin-top:16px"></div>
+            </div>
+
+            <!-- Guardar / cargar -->
+            <div class="rp-guardar">
+              <div class="rp-guardar-fila">
+                <input type="text" id="rp_nombre" placeholder="Nombre del análisis (ej. Campo Norte)" class="rp-input-nom">
+                <button class="rp-btn rp-btn-ok" onclick="rpGuardar()">Guardar</button>
+                <button class="rp-btn" onclick="rpNuevo()">Nuevo</button>
+              </div>
+              <div class="rp-guardar-fila">
+                <select id="rp_guardados" class="rp-select" onchange="if(this.value) rpCargar(this.value)">
+                  <option value="">— Análisis guardados —</option>
+                </select>
+                <button class="rp-btn" onclick="rpEliminar()">Eliminar</button>
+              </div>
+              <div id="rp_estado" class="rp-fb" style="display:none"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ══ ANALIZADOR DE ESTRATEGIAS DE OPCIONES (P&L) ══ -->
@@ -9103,4 +9244,807 @@ function abrirAnalizadorOpciones(){
   FloatWin.abrir('analizador-opciones', { titulo:'Analizador de estrategias de opciones', contenidoEl:cont, ancho:780, alto:620 });
   if(typeof estrInitSiHaceFalta==='function') estrInitSiHaceFalta();
 }
+</script>
+
+<script>
+/* ===== RIESGO PRODUCTIVO: motor + interfaz (Agricultura PRO) ===== */
+/* ============================================================
+   MOTOR DE RIESGO PRODUCTIVO (Markowitz sobre rindes)
+   Trabaja con rindes físicos (qq/ha), sin precios.
+   - Métricas individuales por cultivo (media, desvío, CV, P10, CVaR)
+   - Shocks relativos (rinde/media - 1) para comparar escalas
+   - Matriz de correlación y covarianza
+   - Cartera de mínima varianza (inversión de matriz)
+   ============================================================ */
+
+// ---- Estadística básica ----
+function rpMedia(xs){ var v=xs.filter(function(x){return x!=null&&isFinite(x);}); return v.length? v.reduce(function(a,b){return a+b;},0)/v.length : NaN; }
+function rpDesvio(xs){ // desvío muestral (STDEV, n-1)
+  var v=xs.filter(function(x){return x!=null&&isFinite(x);});
+  if(v.length<2) return NaN;
+  var m=rpMedia(v);
+  var s=v.reduce(function(a,x){return a+(x-m)*(x-m);},0);
+  return Math.sqrt(s/(v.length-1));
+}
+function rpPercentil(xs, p){ // PERCENTILE.INC
+  var v=xs.filter(function(x){return x!=null&&isFinite(x);}).sort(function(a,b){return a-b;});
+  if(!v.length) return NaN;
+  if(v.length===1) return v[0];
+  var idx=p*(v.length-1), lo=Math.floor(idx), hi=Math.ceil(idx);
+  if(lo===hi) return v[lo];
+  return v[lo]+(v[hi]-v[lo])*(idx-lo);
+}
+function rpCVaR(xs, p){ // media de los valores <= percentil p (cola inferior)
+  var v=xs.filter(function(x){return x!=null&&isFinite(x);});
+  if(!v.length) return NaN;
+  var umbral=rpPercentil(v,p);
+  var cola=v.filter(function(x){return x<=umbral;});
+  return cola.length? rpMedia(cola) : umbral;
+}
+function rpCount(xs){ return xs.filter(function(x){return x!=null&&isFinite(x);}).length; }
+
+// ---- Métricas de riesgo individual por cultivo ----
+function rpRiesgoIndividual(serie){
+  var m=rpMedia(serie), sd=rpDesvio(serie), n=rpCount(serie);
+  var p10=rpPercentil(serie,0.1), cvar=rpCVaR(serie,0.1);
+  var vals=serie.filter(function(x){return x!=null&&isFinite(x);});
+  var peor= vals.length? Math.min.apply(null,vals)/m-1 : NaN;
+  var freqMalas = vals.length? vals.filter(function(x){return x<0.8*m;}).length/n : NaN;
+  var cv = (m&&m!==0)? sd/m : NaN;
+  var nivel = !isFinite(cv)?'n.a.' : cv<0.25?'Bajo' : cv<0.35?'Medio' : 'Alto';
+  return { n:n, mediaQq:m, mediaTn:m/10, desvio:sd, cv:cv, p10:p10, cvar:cvar, peorVsMedia:peor, freqMalas:freqMalas, nivelCV:nivel };
+}
+
+// ---- Shock relativo: rinde/media - 1 (por campaña) ----
+function rpShocks(serie){
+  var m=rpMedia(serie);
+  return serie.map(function(x){ return (x!=null&&isFinite(x)&&m)? x/m-1 : null; });
+}
+
+// ---- Correlación entre dos series de shocks (solo campañas con dato en ambas) ----
+function rpCorrel(a, b){
+  var pares=[];
+  for(var i=0;i<a.length;i++){ if(a[i]!=null&&isFinite(a[i])&&b[i]!=null&&isFinite(b[i])) pares.push([a[i],b[i]]); }
+  if(pares.length<2) return NaN;
+  var xa=pares.map(function(p){return p[0];}), xb=pares.map(function(p){return p[1];});
+  var ma=rpMedia(xa), mb=rpMedia(xb);
+  var num=0, da=0, db=0;
+  for(var i=0;i<pares.length;i++){ num+=(xa[i]-ma)*(xb[i]-mb); da+=(xa[i]-ma)*(xa[i]-ma); db+=(xb[i]-mb)*(xb[i]-mb); }
+  return (da&&db)? num/Math.sqrt(da*db) : NaN;
+}
+
+// ---- Inversión de matriz (Gauss-Jordan) ----
+function rpInversa(M){
+  var n=M.length;
+  var A=M.map(function(row,i){ return row.concat(row.map(function(_,j){return i===j?1:0;})); });
+  for(var col=0;col<n;col++){
+    // pivote
+    var piv=col;
+    for(var r=col+1;r<n;r++){ if(Math.abs(A[r][col])>Math.abs(A[piv][col])) piv=r; }
+    if(Math.abs(A[piv][col])<1e-12) return null; // singular
+    var tmp=A[col]; A[col]=A[piv]; A[piv]=tmp;
+    var d=A[col][col];
+    for(var k=0;k<2*n;k++) A[col][k]/=d;
+    for(var r=0;r<n;r++){ if(r!==col){ var f=A[r][col]; for(var k=0;k<2*n;k++) A[r][k]-=f*A[col][k]; } }
+  }
+  return A.map(function(row){ return row.slice(n); });
+}
+
+// ---- Producto matriz × vector ----
+function rpMatVec(M, v){ return M.map(function(row){ return row.reduce(function(a,x,i){return a+x*v[i];},0); }); }
+
+// ---- Cartera de mínima varianza: w = inv(Σ)·1 / (1ᵀ·inv(Σ)·1) ----
+function rpMinVarianza(cov){
+  var n=cov.length;
+  var inv=rpInversa(cov);
+  if(!inv) return null;
+  var unos=[]; for(var i=0;i<n;i++) unos.push(1);
+  var z=rpMatVec(inv, unos);
+  var suma=z.reduce(function(a,x){return a+x;},0);
+  if(!suma) return null;
+  return z.map(function(x){ return x/suma; });
+}
+
+
+// ---- Proyección sobre el símplex {w >= 0, suma w = 1} ----
+function rpProyectarSimplex(v){
+  var n=v.length, u=v.slice().sort(function(a,b){return b-a;});
+  var css=0, rho=-1, theta=0;
+  for(var i=0;i<n;i++){
+    css+=u[i];
+    var t=(css-1)/(i+1);
+    if(u[i]-t>0){ rho=i; theta=t; }
+  }
+  if(rho<0) theta=(v.reduce(function(a,b){return a+b;},0)-1)/n;
+  return v.map(function(x){ return Math.max(0, x-theta); });
+}
+
+// ---- Mínima varianza SOLO LARGO (0% a 100% por cultivo) ----
+// El óptimo sin restricciones puede dar pesos negativos o superiores a 100%
+// (matemáticamente válidos, agronómicamente imposibles: no se siembran hectáreas
+// negativas). Acá se minimiza w'Σw con w>=0 y suma(w)=1 por descenso proyectado.
+function rpMinVarianzaLongOnly(cov){
+  var n=cov.length;
+  if(!n) return null;
+  var w=[], i, j; for(i=0;i<n;i++) w.push(1/n);
+  var maxDiag=0; for(i=0;i<n;i++) maxDiag=Math.max(maxDiag, Math.abs(cov[i][i]));
+  var lr = maxDiag>0 ? 1/(4*maxDiag) : 0.1;
+  for(var it=0; it<4000; it++){
+    var grad=[];
+    for(i=0;i<n;i++){ var g=0; for(j=0;j<n;j++) g+=2*cov[i][j]*w[j]; grad.push(g); }
+    var nw=[]; for(i=0;i<n;i++) nw.push(w[i]-lr*grad[i]);
+    nw=rpProyectarSimplex(nw);
+    var dif=0; for(i=0;i<n;i++) dif+=Math.abs(nw[i]-w[i]);
+    w=nw;
+    if(dif<1e-10) break;
+  }
+  return w;
+}
+
+// ---- Riesgo (desvío) de una cartera dado pesos y covarianza ----
+function rpRiesgoCartera(pesos, cov){
+  var n=pesos.length, s=0;
+  for(var i=0;i<n;i++) for(var j=0;j<n;j++) s+=pesos[i]*pesos[j]*cov[i][j];
+  return Math.sqrt(Math.max(s,0));
+}
+
+
+// ---- Covarianza por PARES COMPLETOS (solo campañas donde ambos tienen dato) ----
+// Estadísticamente correcto: desvío y correlación se miden sobre el MISMO conjunto
+// de campañas comunes, evitando mezclar períodos distintos.
+function rpParesComunes(a, b){
+  var xa=[], xb=[];
+  for(var i=0;i<a.length;i++){
+    if(a[i]!=null&&isFinite(a[i])&&b[i]!=null&&isFinite(b[i])){ xa.push(a[i]); xb.push(b[i]); }
+  }
+  return { a:xa, b:xb, n:xa.length };
+}
+function rpCovar(shocksA, shocksB){
+  var par = rpParesComunes(shocksA, shocksB);
+  if(par.n < 2) return { cov:NaN, n:par.n };
+  var corr = rpCorrel(shocksA, shocksB);           // ya usa pares comunes
+  var da = rpDesvio(par.a), db = rpDesvio(par.b);  // desvíos SOBRE las campañas comunes
+  return { cov: corr*da*db, n:par.n, corr:corr };
+}
+// Matriz de covarianza y matriz de conteo de campañas comunes, para un set de series de shocks
+function rpMatrizCov(listaShocks){
+  var n=listaShocks.length, cov=[], comunes=[];
+  for(var i=0;i<n;i++){ cov[i]=[]; comunes[i]=[]; for(var j=0;j<n;j++){
+    var r=rpCovar(listaShocks[i], listaShocks[j]);
+    cov[i][j]=r.cov; comunes[i][j]=r.n;
+  }}
+  return { cov:cov, comunes:comunes };
+}
+
+
+
+
+/* ============================================================
+   RIESGO PRODUCTIVO — Interfaz (pasos 1 y 2)
+   1) Carga de rindes históricos: grilla editable + pegar desde Excel
+   2) Tabla de riesgo individual por cultivo
+   Solo Agricultura PRO. Usa el motor rp* (Markowitz sobre rindes).
+   ============================================================ */
+
+var RP = {
+  cultivos: ['Soja de primera','Soja de segunda','Maíz temprano','Maíz de segunda','Trigo'],
+  filas: [],          // [{camp:'23/24', v:[null,...]}]
+  init: false
+};
+
+function rpNuevaFila(camp){
+  return { camp: camp || '', v: RP.cultivos.map(function(){ return null; }) };
+}
+
+// Siembra la grilla con algunas campañas vacías para arrancar.
+function rpSembrarFilas(n){
+  var hoy = new Date().getFullYear();
+  RP.filas = [];
+  for(var i=n-1;i>=0;i--){
+    var a = hoy - 1 - i;
+    var camp = String(a).slice(2) + '/' + String(a+1).slice(2);
+    RP.filas.push(rpNuevaFila(camp));
+  }
+}
+
+/* ---------- Render de la grilla de carga ---------- */
+function rpRenderGrilla(){
+  var cont = document.getElementById('rp_grilla');
+  if(!cont) return;
+  var h = '<table class="rp-tabla"><thead><tr>';
+  h += '<th class="rp-th-camp">Campaña</th>';
+  RP.cultivos.forEach(function(c,i){
+    h += '<th><div class="rp-th-cult">'
+      +  '<input class="rp-cult-nom" value="'+String(c).replace(/"/g,'&quot;')+'" oninput="rpRenombrarCultivo('+i+',this.value)" title="Editá el nombre del cultivo">'
+      +  '<button class="rp-x" onclick="rpQuitarCultivo('+i+')" title="Quitar cultivo">×</button>'
+      +  '</div></th>';
+  });
+  h += '<th class="rp-th-acc"></th></tr></thead><tbody>';
+  RP.filas.forEach(function(f,fi){
+    h += '<tr><td><input class="rp-camp" value="'+String(f.camp).replace(/"/g,'&quot;')+'" oninput="rpEditarCamp('+fi+',this.value)" placeholder="23/24"></td>';
+    RP.cultivos.forEach(function(_,ci){
+      var val = (f.v[ci]==null) ? '' : f.v[ci];
+      h += '<td><input class="rp-val" inputmode="decimal" value="'+val+'" oninput="rpEditarVal('+fi+','+ci+',this.value)" placeholder="—"></td>';
+    });
+    h += '<td class="rp-td-acc"><button class="rp-x" onclick="rpQuitarFila('+fi+')" title="Quitar campaña">×</button></td></tr>';
+  });
+  h += '</tbody></table>';
+  cont.innerHTML = h;
+}
+
+/* ---------- Edición ---------- */
+function rpEditarCamp(fi, val){ if(RP.filas[fi]) RP.filas[fi].camp = val; }
+function rpEditarVal(fi, ci, val){
+  if(!RP.filas[fi]) return;
+  var t = String(val).trim().replace(',','.');
+  var n = (t==='') ? null : parseFloat(t);
+  RP.filas[fi].v[ci] = (n!=null && isFinite(n)) ? n : null;
+  rpRenderTodo();              // recalcula sin redibujar la grilla (no pierde el foco)
+}
+function rpRenombrarCultivo(i, val){
+  RP.cultivos[i] = val;
+  rpRenderTodo();
+}
+function rpQuitarCultivo(i){
+  if(RP.cultivos.length<=1){ alert('Tiene que quedar al menos un cultivo.'); return; }
+  RP.cultivos.splice(i,1);
+  RP.filas.forEach(function(f){ f.v.splice(i,1); });
+  rpRenderGrilla(); rpRenderTodo();
+}
+function rpAgregarCultivo(){
+  RP.cultivos.push('Nuevo cultivo');
+  RP.filas.forEach(function(f){ f.v.push(null); });
+  rpRenderGrilla(); rpRenderTodo();
+}
+function rpAgregarFila(){
+  // continúa la serie hacia atrás si se puede
+  var ult = RP.filas.length ? RP.filas[0].camp : '';
+  var m = String(ult).match(/^(\d{2})\/(\d{2})$/);
+  var nueva = '';
+  if(m){ var a=Number(m[1])-1; nueva = String((a+100)%100).padStart(2,'0')+'/'+String((a+1+100)%100).padStart(2,'0'); }
+  RP.filas.unshift(rpNuevaFila(nueva));
+  rpRenderGrilla(); rpRenderTodo();
+}
+function rpQuitarFila(fi){
+  RP.filas.splice(fi,1);
+  rpRenderGrilla(); rpRenderTodo();
+}
+
+/* ---------- Pegar desde Excel ---------- */
+// Acepta un bloque TSV/CSV. Primera columna = campaña; el resto, rindes.
+// Si la primera fila trae texto no numérico en las columnas de datos, se toma como encabezado.
+function rpPegarDesdeTexto(texto){
+  var lineas = String(texto).replace(/\r/g,'').split('\n').filter(function(l){ return l.trim()!==''; });
+  if(!lineas.length) return { ok:false, msg:'No hay datos para pegar.' };
+  var sep = lineas[0].indexOf('\t')>=0 ? '\t' : (lineas[0].indexOf(';')>=0 ? ';' : ',');
+  var tabla = lineas.map(function(l){ return l.split(sep).map(function(c){ return c.trim(); }); });
+
+  // ¿la primera fila es encabezado? (sus celdas de datos no son números)
+  var prim = tabla[0].slice(1);
+  var esHeader = prim.length && prim.every(function(c){ return c!=='' && !isFinite(parseFloat(c.replace(',','.'))); });
+  var cabecera = esHeader ? tabla.shift() : null;
+
+  if(!tabla.length) return { ok:false, msg:'Solo se encontró el encabezado.' };
+
+  // cultivos: los del encabezado si vino, si no se mantienen los actuales (ajustando cantidad)
+  var nCols = Math.max.apply(null, tabla.map(function(r){ return r.length-1; }));
+  if(cabecera){
+    RP.cultivos = cabecera.slice(1, nCols+1).map(function(c,i){ return c || ('Cultivo '+(i+1)); });
+  } else {
+    while(RP.cultivos.length < nCols) RP.cultivos.push('Cultivo '+(RP.cultivos.length+1));
+    RP.cultivos = RP.cultivos.slice(0, Math.max(nCols,1));
+  }
+
+  RP.filas = tabla.map(function(r){
+    var f = { camp: r[0]||'', v: [] };
+    for(var i=0;i<RP.cultivos.length;i++){
+      var c = (r[i+1]||'').replace(',','.');
+      var n = (c==='') ? null : parseFloat(c);
+      f.v.push((n!=null && isFinite(n)) ? n : null);
+    }
+    return f;
+  });
+  rpRenderGrilla(); rpRenderTodo();
+  return { ok:true, msg:'Se cargaron '+RP.filas.length+' campañas y '+RP.cultivos.length+' cultivos.' };
+}
+
+function rpAbrirPegar(){
+  var box = document.getElementById('rp_pegar_box');
+  if(box) box.style.display = (box.style.display==='none') ? 'block' : 'none';
+}
+function rpProcesarPegado(){
+  var ta = document.getElementById('rp_pegar_ta');
+  if(!ta) return;
+  var r = rpPegarDesdeTexto(ta.value);
+  var fb = document.getElementById('rp_pegar_fb');
+  if(fb){ fb.textContent = r.msg; fb.className = 'rp-fb ' + (r.ok?'ok':'err'); fb.style.display='block'; }
+  if(r.ok){ ta.value=''; setTimeout(function(){ var b=document.getElementById('rp_pegar_box'); if(b) b.style.display='none'; }, 1200); }
+}
+
+/* ============================================================
+   PASO 2 — Tabla de riesgo individual por cultivo
+   ============================================================ */
+
+// Serie de rindes de un cultivo (por índice de columna), en orden de campaña.
+function rpSerie(ci){
+  return RP.filas.map(function(f){ return f.v[ci]; });
+}
+
+function rpFmt(x, dec){
+  if(x==null || !isFinite(x)) return '—';
+  return Number(x).toLocaleString('es-AR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+
+function rpRenderRiesgo(){
+  var cont = document.getElementById('rp_riesgo');
+  if(!cont) return;
+
+  var conDato = RP.cultivos.map(function(c,i){
+    return { nombre:c, i:i, serie:rpSerie(i), n:rpCount(rpSerie(i)) };
+  });
+  var validos = conDato.filter(function(x){ return x.n>=2; });
+
+  if(!validos.length){
+    cont.innerHTML = '<div class="rp-vacio">Cargá al menos 2 campañas con rinde para ver el análisis de riesgo.</div>';
+    return;
+  }
+
+  var h = '<div class="rp-sub">Riesgo individual por cultivo</div>';
+  h += '<div class="rp-tabla-wrap"><table class="rp-tabla rp-tabla-riesgo"><thead><tr>'
+    +  '<th>Cultivo</th><th>Campañas</th><th>Media<br><small>qq/ha</small></th><th>Media<br><small>tn/ha</small></th>'
+    +  '<th>Desvío<br><small>qq/ha</small></th><th>Variabilidad<br><small>CV</small></th>'
+    +  '<th>P10<br><small>qq/ha</small></th><th>CVaR 10%<br><small>qq/ha</small></th>'
+    +  '<th>Peor campaña<br><small>vs media</small></th><th>Campañas malas<br><small>&lt;80% media</small></th><th>Riesgo</th>'
+    +  '</tr></thead><tbody>';
+
+  conDato.forEach(function(x){
+    if(x.n<2){
+      h += '<tr class="rp-sin"><td>'+x.nombre+'</td><td>'+x.n+'</td>'
+        +  '<td colspan="9" class="rp-sin-txt">Necesita al menos 2 campañas con dato</td></tr>';
+      return;
+    }
+    var r = rpRiesgoIndividual(x.serie);
+    var clase = r.nivelCV==='Bajo' ? 'rp-bajo' : (r.nivelCV==='Medio' ? 'rp-medio' : 'rp-alto');
+    h += '<tr>'
+      + '<td class="rp-nom">'+x.nombre+'</td>'
+      + '<td>'+r.n+'</td>'
+      + '<td>'+rpFmt(r.mediaQq,1)+'</td>'
+      + '<td>'+rpFmt(r.mediaTn,2)+'</td>'
+      + '<td>'+rpFmt(r.desvio,1)+'</td>'
+      + '<td>'+rpFmt(r.cv*100,1)+'%</td>'
+      + '<td>'+rpFmt(r.p10,1)+'</td>'
+      + '<td>'+rpFmt(r.cvar,1)+'</td>'
+      + '<td class="'+(r.peorVsMedia<-0.5?'rp-neg':'')+'">'+rpFmt(r.peorVsMedia*100,0)+'%</td>'
+      + '<td>'+rpFmt(r.freqMalas*100,0)+'%</td>'
+      + '<td><span class="rp-chip '+clase+'">'+r.nivelCV+'</span></td>'
+      + '</tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // Avisos de robustez
+  var avisos = [];
+  var pocos = conDato.filter(function(x){ return x.n>0 && x.n<10; });
+  if(pocos.length){
+    avisos.push('Con pocas campañas las estimaciones son poco robustas: '
+      + pocos.map(function(x){ return x.nombre+' ('+x.n+')'; }).join(', ')
+      + '. Cargá más años para mejorar el análisis.');
+  }
+  var sinDato = conDato.filter(function(x){ return x.n===0; });
+  if(sinDato.length){
+    avisos.push('Sin datos cargados: ' + sinDato.map(function(x){ return x.nombre; }).join(', ') + '.');
+  }
+  var maxN = Math.max.apply(null, conDato.map(function(x){ return x.n; }));
+  if(maxN>0 && maxN<15){
+    avisos.push('Tenés '+maxN+' campañas como máximo. Con 15 o más, las medidas de riesgo de cola (P10, CVaR) ganan precisión.');
+  }
+  if(avisos.length){
+    h += '<div class="rp-avisos">' + avisos.map(function(a){ return '<div class="rp-aviso">⚠ '+a+'</div>'; }).join('') + '</div>';
+  }
+
+  // Glosario corto
+  h += '<div class="rp-glosario">'
+    + '<b>Cómo leerlo.</b> <b>CV</b> (coeficiente de variación): cuánto varía el rinde respecto de su media; más alto, más incierto. '
+    + '<b>P10</b>: el rinde que solo se perfora en 1 de cada 10 campañas. '
+    + '<b>CVaR 10%</b>: el rinde promedio de ese 10% de peores campañas. '
+    + 'Referencia de riesgo por CV: bajo &lt;25%, medio 25–35%, alto &gt;35%.'
+    + '</div>';
+
+  cont.innerHTML = h;
+}
+
+/* ---------- Apertura del módulo ---------- */
+function rpInitSiHaceFalta(){
+  if(RP.init) return; RP.init = true;
+  if(!RP.filas.length) rpSembrarFilas(10);
+  rpRenderGrilla();
+  rpRenderTodo();
+  if(typeof rpListar==='function') rpListar();
+}
+function abrirRiesgoProductivo(){
+  var cont = document.getElementById('rp-contenido');
+  if(!cont) return;
+  FloatWin.abrir('riesgo-productivo', {
+    titulo: 'Análisis de riesgo productivo',
+    contenidoEl: cont, ancho: 900, alto: 640
+  });
+  rpInitSiHaceFalta();
+}
+
+
+
+/* ============================================================
+   PASO 3 — Matriz de correlaciones (pares completos + avisos)
+   ============================================================ */
+
+// Cultivos con datos suficientes para el análisis conjunto.
+function rpCultivosValidos(){
+  return RP.cultivos.map(function(c,i){
+    return { nombre:c, i:i, serie:rpSerie(i), n:rpCount(rpSerie(i)) };
+  }).filter(function(x){ return x.n>=3; });
+}
+
+// Shocks de cada cultivo válido (rinde/media - 1).
+function rpShocksValidos(){
+  return rpCultivosValidos().map(function(x){ return { nombre:x.nombre, s:rpShocks(x.serie) }; });
+}
+
+function rpRenderCorrelaciones(){
+  var cont = document.getElementById('rp_correl');
+  if(!cont) return;
+  var vs = rpShocksValidos();
+  if(vs.length<2){
+    cont.innerHTML = '<div class="rp-vacio">Se necesitan al menos 2 cultivos con 3 o más campañas para medir cómo se relacionan entre sí.</div>';
+    return;
+  }
+  var mat = rpMatrizCov(vs.map(function(v){ return v.s; }));
+
+  var h = '<div class="rp-sub">¿Los cultivos fallan juntos?</div>';
+  h += '<p class="rp-expl">La correlación muestra si dos cultivos tienen años buenos y malos <b>al mismo tiempo</b>. '
+    +  'Cerca de <b>+1</b>: se mueven juntos (no diversifican). Cerca de <b>0</b> o negativo: cuando uno falla el otro puede compensar (diversifica).</p>';
+  h += '<div class="rp-tabla-wrap"><table class="rp-tabla rp-matriz"><thead><tr><th></th>';
+  vs.forEach(function(v){ h += '<th>'+v.nombre+'</th>'; });
+  h += '</tr></thead><tbody>';
+  vs.forEach(function(va,i){
+    h += '<tr><th class="rp-nom">'+va.nombre+'</th>';
+    vs.forEach(function(vb,j){
+      if(i===j){ h += '<td class="rp-diag">—</td>'; return; }
+      var corr = rpCorrel(va.s, vb.s);
+      var n = mat.comunes[i][j];
+      var cls = !isFinite(corr) ? '' : (corr>0.6 ? 'rp-corr-alta' : (corr<0.2 ? 'rp-corr-baja' : 'rp-corr-media'));
+      var pocos = n<10 ? ' rp-corr-pocos' : '';
+      h += '<td class="'+cls+pocos+'" title="'+n+' campañas comparables">'
+        +  (isFinite(corr)? rpFmt(corr,2) : '—')
+        +  '<small>'+n+' camp.</small></td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // Avisos por pares con pocas campañas comunes
+  var flojos = [];
+  for(var i=0;i<vs.length;i++) for(var j=i+1;j<vs.length;j++){
+    if(mat.comunes[i][j] < 10) flojos.push(vs[i].nombre+' vs '+vs[j].nombre+' ('+mat.comunes[i][j]+')');
+  }
+  if(flojos.length){
+    h += '<div class="rp-avisos"><div class="rp-aviso">⚠ Pocas campañas comparables en: '+flojos.join(', ')
+      +  '. La relación entre esos cultivos es poco confiable; cargá más años en común para mejorarla.</div></div>';
+  }
+  h += '<div class="rp-glosario"><b>Leé el color:</b> <span class="rp-chip rp-corr-alta">alta</span> se mueven juntos · '
+    +  '<span class="rp-chip rp-corr-media">media</span> relación parcial · '
+    +  '<span class="rp-chip rp-corr-baja">baja</span> diversifican bien. El número chico es cuántas campañas se pudieron comparar.</div>';
+  cont.innerHTML = h;
+}
+
+/* ============================================================
+   PASO 4 — Optimizador: cartera de mínima varianza
+   ============================================================ */
+function rpCalcularOptimo(){
+  var vs = rpShocksValidos();
+  if(vs.length<2) return null;
+  var mat = rpMatrizCov(vs.map(function(v){ return v.s; }));
+  // si alguna covarianza no es finita, no se puede optimizar
+  for(var i=0;i<mat.cov.length;i++) for(var j=0;j<mat.cov.length;j++){ if(!isFinite(mat.cov[i][j])) return null; }
+  var pesos = rpMinVarianzaLongOnly(mat.cov);   // 0%-100% por cultivo
+  if(!pesos) return null;
+  return { nombres: vs.map(function(v){ return v.nombre; }), pesos: pesos, cov: mat.cov,
+           riesgo: rpRiesgoCartera(pesos, mat.cov), comunes: mat.comunes };
+}
+
+function rpRenderOptimo(){
+  var cont = document.getElementById('rp_optimo');
+  if(!cont) return;
+  var o = rpCalcularOptimo();
+  if(!o){
+    cont.innerHTML = '<div class="rp-vacio">Se necesitan al menos 2 cultivos con campañas en común para calcular la combinación de menor riesgo.</div>';
+    return;
+  }
+  RP.optimo = o;   // guardado para comparar con el planteo del usuario
+
+  var h = '<div class="rp-sub">Combinación de menor riesgo</div>';
+  h += '<p class="rp-expl">Esta es la distribución de hectáreas que <b>menos variabilidad de rinde</b> habría tenido según tu historia, '
+    +  'con cada cultivo entre 0% y 100%. Es un resultado estadístico: no considera rotación, precios, contratos ni límites agronómicos.</p>';
+  h += '<div class="rp-opt-grid">';
+  o.nombres.forEach(function(n,i){
+    var pct = o.pesos[i]*100;
+    var ancho = Math.max(0, Math.min(100, pct));
+    h += '<div class="rp-opt-row">'
+      +  '<span class="rp-opt-nom">'+n+'</span>'
+      +  '<div class="rp-opt-bar"><div class="rp-opt-fill'+(pct<0?' rp-opt-neg':'')+'" style="width:'+Math.abs(ancho)+'%"></div></div>'
+      +  '<span class="rp-opt-pct'+(pct<0?' rp-neg':'')+'">'+rpFmt(pct,1)+'%</span>'
+      +  '</div>';
+  });
+  h += '</div>';
+  h += '<div class="rp-opt-resumen">Variabilidad de la cartera óptima: <b>'+rpFmt(o.riesgo*100,1)+'%</b> '
+    +  '<small>(desvío del rinde conjunto respecto de su media)</small></div>';
+  // Si el modelo concentra casi todo en un cultivo, conviene explicar por qué.
+  var maxPeso = Math.max.apply(null, o.pesos);
+  var iMax = o.pesos.indexOf(maxPeso);
+  var enCero = o.pesos.filter(function(w){ return w < 0.005; }).length;
+  if(maxPeso > 0.85){
+    h += '<div class="rp-avisos"><div class="rp-aviso">⚠ El modelo concentra casi todo en <b>'+o.nombres[iMax]+'</b>. '
+      +  'Eso suele pasar cuando tus cultivos tienen años buenos y malos muy parecidos (mirá la tabla de arriba): si todos fallan juntos, '
+      +  'repartir hectáreas no baja el riesgo y el modelo elige el más estable. '
+      +  '<b>No lo tomes como una recomendación de sembrar un solo cultivo</b>: la rotación, los precios y los contratos pesan igual o más.</div></div>';
+  } else if(enCero){
+    h += '<div class="rp-avisos"><div class="rp-aviso">⚠ Algunos cultivos quedan en 0%: según tu historia no ayudan a bajar la variabilidad del conjunto. '
+      +  'Puede que igual convengan por precio, rotación o logística.</div></div>';
+  }
+  cont.innerHTML = h;
+}
+
+/* ============================================================
+   PASO 5 — Simulador de planteo (hectáreas del usuario)
+   ============================================================ */
+function rpRenderPlanteoInputs(){
+  var cont = document.getElementById('rp_planteo_inputs');
+  if(!cont) return;
+  var vs = rpCultivosValidos();
+  if(!vs.length){ cont.innerHTML='<div class="rp-vacio">Cargá rindes para poder simular un planteo.</div>'; return; }
+  if(!RP.has) RP.has = {};
+  var h = '<div class="rp-has-grid">';
+  vs.forEach(function(v){
+    var val = (RP.has[v.nombre]!=null) ? RP.has[v.nombre] : '';
+    h += '<div class="estr-field"><label>'+v.nombre+' <small>(ha)</small></label>'
+      +  '<input type="text" inputmode="decimal" value="'+val+'" oninput="rpEditarHas('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)" placeholder="0"></div>';
+  });
+  h += '</div>';
+  cont.innerHTML = h;
+}
+function rpEditarHas(nombre, val){
+  if(!RP.has) RP.has = {};
+  var t = String(val).trim().replace(',','.');
+  var n = (t==='') ? null : parseFloat(t);
+  RP.has[nombre] = (n!=null && isFinite(n) && n>=0) ? n : null;
+  rpRenderPlanteoResultado();
+}
+
+function rpRenderPlanteoResultado(){
+  var cont = document.getElementById('rp_planteo_res');
+  if(!cont) return;
+  var o = RP.optimo || rpCalcularOptimo();
+  if(!o){ cont.innerHTML=''; return; }
+  var has = RP.has || {};
+  var total = o.nombres.reduce(function(a,n){ return a + (has[n]||0); }, 0);
+  if(!(total>0)){
+    cont.innerHTML = '<div class="rp-vacio">Cargá las hectáreas de cada cultivo para ver el riesgo de tu planteo.</div>';
+    return;
+  }
+  var w = o.nombres.map(function(n){ return (has[n]||0)/total; });
+  var riesgoPlanteo = rpRiesgoCartera(w, o.cov);
+  var desvio = riesgoPlanteo - o.riesgo;
+  var desvioRel = o.riesgo>0 ? desvio/o.riesgo*100 : 0;
+
+  // Serie de shocks de la cartera (campañas donde TODOS los cultivos con peso tienen dato)
+  var vs = rpShocksValidos();
+  var serieCartera = [];
+  var nCamp = RP.filas.length;
+  for(var k=0;k<nCamp;k++){
+    var acum=0, completo=true;
+    o.nombres.forEach(function(n,i){
+      if(w[i]<=0) return;
+      var v = vs.find(function(x){ return x.nombre===n; });
+      var sh = v ? v.s[k] : null;
+      if(sh==null || !isFinite(sh)) completo=false; else acum += w[i]*sh;
+    });
+    if(completo) serieCartera.push(acum);
+  }
+  var p10 = serieCartera.length>=3 ? rpPercentil(serieCartera,0.1) : null;
+  var cvar = serieCartera.length>=3 ? rpCVaR(serieCartera,0.1) : null;
+
+  var h = '<div class="rp-kpis">';
+  h += '<div class="rp-kpi"><span>Superficie total</span><b>'+rpFmt(total,0)+' ha</b></div>';
+  h += '<div class="rp-kpi"><span>Variabilidad de tu planteo</span><b>'+rpFmt(riesgoPlanteo*100,1)+'%</b></div>';
+  h += '<div class="rp-kpi"><span>Mínima posible</span><b>'+rpFmt(o.riesgo*100,1)+'%</b></div>';
+  var clsD = desvioRel<=5 ? 'rp-ok' : (desvioRel<=20 ? 'rp-warn' : 'rp-bad');
+  h += '<div class="rp-kpi"><span>Exceso de riesgo</span><b class="'+clsD+'">'+(desvioRel>=0?'+':'')+rpFmt(desvioRel,0)+'%</b></div>';
+  h += '</div>';
+
+  if(p10!=null){
+    h += '<div class="rp-kpis">';
+    h += '<div class="rp-kpi"><span>Campaña mala (P10)</span><b class="rp-neg">'+rpFmt(p10*100,0)+'%</b><small>vs rinde medio</small></div>';
+    h += '<div class="rp-kpi"><span>Promedio del 10% peor</span><b class="rp-neg">'+rpFmt(cvar*100,0)+'%</b><small>vs rinde medio</small></div>';
+    h += '<div class="rp-kpi"><span>Campañas comparables</span><b>'+serieCartera.length+'</b></div>';
+    h += '</div>';
+  }
+
+  // Comparación planteo vs óptimo
+  h += '<div class="rp-sub" style="margin-top:16px">Tu planteo vs la combinación de menor riesgo</div>';
+  h += '<div class="rp-tabla-wrap"><table class="rp-tabla"><thead><tr><th>Cultivo</th><th>Tus ha</th><th>Tu %</th><th>% óptimo</th><th>Diferencia</th></tr></thead><tbody>';
+  o.nombres.forEach(function(n,i){
+    var ha = has[n]||0, pw = w[i]*100, po = o.pesos[i]*100, dif = pw-po;
+    h += '<tr><td class="rp-nom">'+n+'</td><td>'+rpFmt(ha,0)+'</td><td>'+rpFmt(pw,1)+'%</td>'
+      +  '<td>'+rpFmt(po,1)+'%</td>'
+      +  '<td class="'+(Math.abs(dif)>15?'rp-warn':'')+'">'+(dif>=0?'+':'')+rpFmt(dif,1)+'%</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<p class="rp-expl" style="margin-top:10px">Un exceso de riesgo chico (menos de 5%) significa que tu planteo ya está bien diversificado. '
+    +  'Recordá que el óptimo es sólo estadístico: la rotación, los contratos y el precio también mandan.</p>';
+  cont.innerHTML = h;
+}
+
+/* ============================================================
+   PASO 6 — Persistencia en Supabase
+   Reusa escenarios_productivos con modulo='agricultura_riesgo'.
+   RLS: cada cliente ve y edita solo lo suyo (auth.uid() = user_id).
+   ============================================================ */
+
+function rpDatosParaGuardar(){
+  return {
+    version: 1,
+    cultivos: RP.cultivos.slice(),
+    filas: RP.filas.map(function(f){ return { camp:f.camp, v:f.v.slice() }; }),
+    has: RP.has || {}
+  };
+}
+
+function rpRestaurarDatos(d){
+  if(!d) return;
+  if(Array.isArray(d.cultivos) && d.cultivos.length) RP.cultivos = d.cultivos.slice();
+  if(Array.isArray(d.filas)) RP.filas = d.filas.map(function(f){ return { camp:f.camp||'', v:(f.v||[]).slice() }; });
+  RP.has = d.has || {};
+  // asegurar consistencia de anchos
+  RP.filas.forEach(function(f){
+    while(f.v.length < RP.cultivos.length) f.v.push(null);
+    f.v = f.v.slice(0, RP.cultivos.length);
+  });
+  rpRenderGrilla(); rpRenderTodo();
+}
+
+function rpEstado(msg, tipo){
+  var el = document.getElementById('rp_estado');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'rp-fb ' + (tipo||'ok');
+  el.style.display = msg ? 'block' : 'none';
+  if(msg) setTimeout(function(){ el.style.display='none'; }, 4000);
+}
+
+async function rpGuardar(){
+  var nombreEl = document.getElementById('rp_nombre');
+  var nombre = (nombreEl && nombreEl.value || '').trim();
+  if(!nombre){ rpEstado('Poné un nombre al análisis antes de guardar.','err'); if(nombreEl) nombreEl.focus(); return; }
+  if(typeof sb==='undefined' || !sb){ rpEstado('Sin conexión para guardar.','err'); return; }
+  try{
+    var u = await sb.auth.getUser();
+    var uid = u && u.data && u.data.user && u.data.user.id;
+    if(!uid){ rpEstado('Tenés que estar logueado para guardar.','err'); return; }
+    var cliId = (typeof currentClienteId!=='undefined' && currentClienteId) ? currentClienteId : uid;
+
+    var payload = {
+      user_id: uid, cliente_id: cliId,
+      modulo: 'agricultura_riesgo', modo: 'PRO',
+      nombre_escenario: nombre,
+      actividades: {}, escenarios: {},
+      datos: rpDatosParaGuardar(),
+      outputs: rpOutputsResumen(),
+      fuente: 'dashboard',
+      origen_local_id: RP.localId || ('rp_' + Date.now()),
+      activo: true,
+      updated_at: new Date().toISOString()
+    };
+    RP.localId = payload.origen_local_id;
+
+    // ¿ya existe uno con este origen_local_id? → actualizar; si no, insertar
+    var ex = await sb.from('escenarios_productivos').select('id')
+      .eq('user_id', uid).eq('modulo','agricultura_riesgo')
+      .eq('origen_local_id', payload.origen_local_id).maybeSingle();
+
+    var res;
+    if(ex.data && ex.data.id){
+      res = await sb.from('escenarios_productivos').update(payload).eq('id', ex.data.id);
+    } else {
+      res = await sb.from('escenarios_productivos').insert(payload);
+    }
+    if(res.error) throw res.error;
+    rpEstado('Guardado: '+nombre,'ok');
+    rpListar();
+  }catch(e){ rpEstado('No se pudo guardar: '+(e.message||e),'err'); }
+}
+
+async function rpListar(){
+  var sel = document.getElementById('rp_guardados');
+  if(!sel || typeof sb==='undefined' || !sb) return;
+  try{
+    var u = await sb.auth.getUser();
+    var uid = u && u.data && u.data.user && u.data.user.id;
+    if(!uid) return;
+    var res = await sb.from('escenarios_productivos')
+      .select('id,nombre_escenario,origen_local_id,updated_at')
+      .eq('user_id', uid).eq('modulo','agricultura_riesgo').eq('activo',true)
+      .order('updated_at',{ascending:false});
+    if(res.error) throw res.error;
+    var items = res.data||[];
+    RP.guardados = items;
+    sel.innerHTML = '<option value="">— Análisis guardados ('+items.length+') —</option>'
+      + items.map(function(it){
+          var f = new Date(it.updated_at).toLocaleDateString('es-AR');
+          return '<option value="'+it.id+'">'+(it.nombre_escenario||'(sin nombre)')+' · '+f+'</option>';
+        }).join('');
+  }catch(e){ /* silencioso: la lista es secundaria */ }
+}
+
+async function rpCargar(id){
+  if(!id || typeof sb==='undefined' || !sb) return;
+  try{
+    var res = await sb.from('escenarios_productivos').select('*').eq('id', id).maybeSingle();
+    if(res.error) throw res.error;
+    if(!res.data){ rpEstado('No se encontró el análisis.','err'); return; }
+    RP.localId = res.data.origen_local_id || null;
+    var n = document.getElementById('rp_nombre');
+    if(n) n.value = res.data.nombre_escenario || '';
+    rpRestaurarDatos(res.data.datos || {});
+    rpEstado('Cargado: '+(res.data.nombre_escenario||''),'ok');
+  }catch(e){ rpEstado('No se pudo cargar: '+(e.message||e),'err'); }
+}
+
+async function rpEliminar(){
+  var sel = document.getElementById('rp_guardados');
+  var id = sel && sel.value;
+  if(!id){ rpEstado('Elegí un análisis guardado para eliminar.','err'); return; }
+  var it = (RP.guardados||[]).find(function(x){ return String(x.id)===String(id); });
+  if(!confirm('¿Eliminar "'+(it? it.nombre_escenario : '')+'"?')) return;
+  try{
+    var res = await sb.from('escenarios_productivos').delete().eq('id', id);
+    if(res.error) throw res.error;
+    rpEstado('Eliminado.','ok');
+    sel.value=''; rpListar();
+  }catch(e){ rpEstado('No se pudo eliminar: '+(e.message||e),'err'); }
+}
+
+function rpNuevo(){
+  RP.localId = null;
+  var n = document.getElementById('rp_nombre'); if(n) n.value='';
+  var sel = document.getElementById('rp_guardados'); if(sel) sel.value='';
+  rpEstado('Análisis nuevo: al guardar se crea uno aparte.','ok');
+}
+
+// Resumen que se guarda junto a los datos (para consultas rápidas sin recalcular).
+function rpOutputsResumen(){
+  var o = RP.optimo || rpCalcularOptimo();
+  var out = { cultivos: RP.cultivos.length, campanias: RP.filas.length };
+  if(o){
+    out.riesgo_optimo = o.riesgo;
+    out.pesos_optimos = {};
+    o.nombres.forEach(function(n,i){ out.pesos_optimos[n] = o.pesos[i]; });
+  }
+  return out;
+}
+
+/* ---------- Render conjunto ---------- */
+function rpRenderTodo(){
+  rpRenderRiesgo();
+  rpRenderCorrelaciones();
+  rpRenderOptimo();
+  rpRenderPlanteoInputs();
+  rpRenderPlanteoResultado();
+}
+
+// Muestra la sección solo si el cliente tiene Agricultura PRO.
+function rpAplicarGatePro(){
+  var sec = document.getElementById('sec-riesgo-prod');
+  if(!sec) return;
+  var pro = (typeof isAgriculturaPro==='function') ? isAgriculturaPro() : false;
+  sec.style.display = pro ? '' : 'none';
+}
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(rpAplicarGatePro, 1200); });
 </script>
