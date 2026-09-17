@@ -962,6 +962,14 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 .rp-guardar-fila:last-of-type{margin-bottom:0}
 .rp-input-nom,.rp-select{flex:1;min-width:180px;box-sizing:border-box;height:36px;padding:0 11px;border-radius:8px;border:1px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px}
 .rp-input-nom:focus,.rp-select:focus{outline:none;border-color:var(--oro,#d4a017)}
+
+.rp-has-item{position:relative}
+.rp-doble-sel{margin-top:5px;width:100%;box-sizing:border-box;height:30px;padding:0 8px;border-radius:7px;
+  border:1px dashed rgba(212,160,23,.4);background:rgba(212,160,23,.06);color:var(--oro-l,#e8c45a);font-size:11px}
+.rp-doble-sel:focus{outline:none;border-style:solid;border-color:var(--oro,#d4a017)}
+.rp-doble-info{margin-top:10px;font-size:11.5px;color:var(--txt,#e8e0d4);line-height:1.6;
+  padding:9px 13px;background:rgba(212,160,23,.08);border-left:2px solid var(--oro,#d4a017);border-radius:7px}
+.rp-doble-info b{color:var(--oro-l,#e8c45a)}
 </style>
 </head>
 <body>
@@ -1976,6 +1984,13 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               Analiza el <b>riesgo productivo puro</b>: cuánto varían los rindes de cada cultivo y cómo se combinan. Trabaja con rindes físicos (qq/ha), sin precios ni costos. Cuantas más campañas cargues, más precisas las estimaciones.
             </div>
 
+            <datalist id="rp_cultivos_ar">
+  <option value="Soja de primera"><option value="Soja de segunda">
+  <option value="Maíz temprano"><option value="Maíz tardío"><option value="Maíz de segunda">
+  <option value="Trigo"><option value="Cebada"><option value="Avena"><option value="Centeno">
+  <option value="Colza / canola"><option value="Girasol"><option value="Sorgo">
+  <option value="Maní"><option value="Arveja"><option value="Garbanzo"><option value="Algodón"><option value="Arroz">
+</datalist>
             <div class="rp-barra">
               <button class="rp-btn" onclick="rpAgregarFila()">+ Campaña</button>
               <button class="rp-btn" onclick="rpAgregarCultivo()">+ Cultivo</button>
@@ -9455,7 +9470,7 @@ function rpRenderGrilla(){
   h += '<th class="rp-th-camp">Campaña</th>';
   RP.cultivos.forEach(function(c,i){
     h += '<th><div class="rp-th-cult">'
-      +  '<input class="rp-cult-nom" value="'+String(c).replace(/"/g,'&quot;')+'" oninput="rpRenombrarCultivo('+i+',this.value)" title="Editá el nombre del cultivo">'
+      +  '<input class="rp-cult-nom" list="rp_cultivos_ar" value="'+String(c).replace(/"/g,'&quot;')+'" oninput="rpRenombrarCultivo('+i+',this.value)" title="Editá el nombre del cultivo">'
       +  '<button class="rp-x" onclick="rpQuitarCultivo('+i+')" title="Quitar cultivo">×</button>'
       +  '</div></th>';
   });
@@ -9492,7 +9507,7 @@ function rpQuitarCultivo(i){
   rpRenderGrilla(); rpRenderTodo();
 }
 function rpAgregarCultivo(){
-  RP.cultivos.push('Nuevo cultivo');
+  RP.cultivos.push('');
   RP.filas.forEach(function(f){ f.v.push(null); });
   rpRenderGrilla(); rpRenderTodo();
 }
@@ -9795,21 +9810,87 @@ function rpRenderOptimo(){
 /* ============================================================
    PASO 5 — Simulador de planteo (hectáreas del usuario)
    ============================================================ */
+
+// ── Doble cultivo: el cultivo de invierno comparte lote con uno de verano ──
+// (trigo/cebada + soja o maíz de segunda). Sin esto se contarían dos veces
+// las mismas hectáreas: 100 soja 1ª + 100 soja 2ª + 100 trigo son 200 ha, no 300.
+var RP_INVIERNO = ['trigo','cebada','avena','centeno','colza','canola','arveja','garbanzo','vicia'];
+var RP_SEGUNDA  = ['segunda','2a','2ª','2da'];
+
+function rpEsInvierno(nombre){
+  var n = String(nombre||'').toLowerCase();
+  return RP_INVIERNO.some(function(c){ return n.indexOf(c)>=0; });
+}
+function rpEsDeSegunda(nombre){
+  var n = String(nombre||'').toLowerCase();
+  return RP_SEGUNDA.some(function(c){ return n.indexOf(c)>=0; });
+}
+// Sugiere el socio de verano para un cultivo de invierno (el primero "de segunda").
+function rpSocioSugerido(nombreInvierno){
+  var cand = RP.cultivos.filter(function(c){ return rpEsDeSegunda(c) && !rpEsInvierno(c); });
+  return cand.length ? cand[0] : '';
+}
+
+// Superficie física: descuenta las hectáreas compartidas por doble cultivo.
+function rpSuperficie(){
+  var has = RP.has || {}, doble = RP.doble || {};
+  var nombres = RP.cultivos;
+  var sembrado = nombres.reduce(function(a,n){ return a + (has[n]||0); }, 0);
+  var restante = {};
+  nombres.forEach(function(n){ restante[n] = has[n]||0; });
+  var solape = 0, pares = [];
+  nombres.forEach(function(w){
+    var p = doble[w];
+    if(!p || p===w || !(has[w]>0)) return;
+    var comp = Math.min(has[w], restante[p]||0);
+    if(comp>0){ solape += comp; restante[p] -= comp; pares.push({inv:w, ver:p, ha:comp}); }
+  });
+  return { sembrado: sembrado, fisica: sembrado - solape, solape: solape, pares: pares };
+}
+
 function rpRenderPlanteoInputs(){
   var cont = document.getElementById('rp_planteo_inputs');
   if(!cont) return;
   var vs = rpCultivosValidos();
   if(!vs.length){ cont.innerHTML='<div class="rp-vacio">Cargá rindes para poder simular un planteo.</div>'; return; }
   if(!RP.has) RP.has = {};
+  if(!RP.doble) RP.doble = {};
+  // Sugerencia automática: trigo/cebada suelen compartir lote con la soja de segunda.
+  if(!RP.dobleSugerido){
+    RP.dobleSugerido = true;
+    vs.forEach(function(v){
+      if(rpEsInvierno(v.nombre) && RP.doble[v.nombre]===undefined){
+        var socio = rpSocioSugerido(v.nombre);
+        if(socio) RP.doble[v.nombre] = socio;
+      }
+    });
+  }
   var h = '<div class="rp-has-grid">';
   vs.forEach(function(v){
     var val = (RP.has[v.nombre]!=null) ? RP.has[v.nombre] : '';
-    h += '<div class="estr-field"><label>'+v.nombre+' <small>(ha)</small></label>'
-      +  '<input type="text" inputmode="decimal" value="'+val+'" oninput="rpEditarHas('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)" placeholder="0"></div>';
+    var esInv = rpEsInvierno(v.nombre);
+    h += '<div class="estr-field rp-has-item"><label>'+v.nombre+' <small>(ha)</small></label>'
+      +  '<input type="text" inputmode="decimal" value="'+val+'" oninput="rpEditarHas('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)" placeholder="0">';
+    if(esInv){
+      var actual = RP.doble[v.nombre] || '';
+      var opts = '<option value="">Lote propio</option>';
+      RP.cultivos.forEach(function(c){
+        if(c===v.nombre || rpEsInvierno(c)) return;
+        opts += '<option value="'+String(c).replace(/"/g,'&quot;')+'"'+(c===actual?' selected':'')+'>Comparte con '+c+'</option>';
+      });
+      h += '<select class="rp-doble-sel" onchange="rpEditarDoble('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)" title="Doble cultivo: mismas hectáreas que el cultivo de verano">'+opts+'</select>';
+    }
+    h += '</div>';
   });
   h += '</div>';
   cont.innerHTML = h;
 }
+function rpEditarDoble(nombre, socio){
+  if(!RP.doble) RP.doble = {};
+  if(socio) RP.doble[nombre] = socio; else delete RP.doble[nombre];
+  rpRenderPlanteoResultado();
+}
+
 function rpEditarHas(nombre, val){
   if(!RP.has) RP.has = {};
   var t = String(val).trim().replace(',','.');
@@ -9829,6 +9910,7 @@ function rpRenderPlanteoResultado(){
     cont.innerHTML = '<div class="rp-vacio">Cargá las hectáreas de cada cultivo para ver el riesgo de tu planteo.</div>';
     return;
   }
+  var sup = rpSuperficie();
   var w = o.nombres.map(function(n){ return (has[n]||0)/total; });
   var riesgoPlanteo = rpRiesgoCartera(w, o.cov);
   var desvio = riesgoPlanteo - o.riesgo;
@@ -9852,7 +9934,12 @@ function rpRenderPlanteoResultado(){
   var cvar = serieCartera.length>=3 ? rpCVaR(serieCartera,0.1) : null;
 
   var h = '<div class="rp-kpis">';
-  h += '<div class="rp-kpi"><span>Superficie total</span><b>'+rpFmt(total,0)+' ha</b></div>';
+  if(sup.solape>0){
+    h += '<div class="rp-kpi"><span>Superficie del campo</span><b>'+rpFmt(sup.fisica,0)+' ha</b>'
+      +  '<small>'+rpFmt(sup.sembrado,0)+' ha sembradas · '+rpFmt(sup.solape,0)+' en doble cultivo</small></div>';
+  } else {
+    h += '<div class="rp-kpi"><span>Superficie total</span><b>'+rpFmt(total,0)+' ha</b></div>';
+  }
   h += '<div class="rp-kpi"><span>Variabilidad de tu planteo</span><b>'+rpFmt(riesgoPlanteo*100,1)+'%</b></div>';
   h += '<div class="rp-kpi"><span>Mínima posible</span><b>'+rpFmt(o.riesgo*100,1)+'%</b></div>';
   var clsD = desvioRel<=5 ? 'rp-ok' : (desvioRel<=20 ? 'rp-warn' : 'rp-bad');
@@ -9877,7 +9964,14 @@ function rpRenderPlanteoResultado(){
       +  '<td class="'+(Math.abs(dif)>15?'rp-warn':'')+'">'+(dif>=0?'+':'')+rpFmt(dif,1)+'%</td></tr>';
   });
   h += '</tbody></table></div>';
-  h += '<p class="rp-expl" style="margin-top:10px">Un exceso de riesgo chico (menos de 5%) significa que tu planteo ya está bien diversificado. '
+  if(sup.pares.length){
+    h += '<div class="rp-doble-info"><b>Doble cultivo:</b> '
+      +  sup.pares.map(function(p){ return p.inv+' sobre las mismas '+rpFmt(p.ha,0)+' ha que '+p.ver; }).join(' · ')
+      +  '. Por eso la superficie del campo ('+rpFmt(sup.fisica,0)+' ha) es menor que la sembrada ('+rpFmt(sup.sembrado,0)+' ha).</div>';
+  }
+  h += '<p class="rp-expl" style="margin-top:10px">Los porcentajes se calculan sobre las <b>hectáreas sembradas</b>, porque cada cultivo aporta su propio rinde al resultado. '
+    +  'La <b>superficie del campo</b> es la física: en doble cultivo, el trigo y la soja de segunda ocupan el mismo lote. '
+    +  'Un exceso de riesgo chico (menos de 5%) significa que tu planteo ya está bien diversificado. '
     +  'Recordá que el óptimo es sólo estadístico: la rotación, los contratos y el precio también mandan.</p>';
   cont.innerHTML = h;
 }
@@ -9893,7 +9987,8 @@ function rpDatosParaGuardar(){
     version: 1,
     cultivos: RP.cultivos.slice(),
     filas: RP.filas.map(function(f){ return { camp:f.camp, v:f.v.slice() }; }),
-    has: RP.has || {}
+    has: RP.has || {},
+    doble: RP.doble || {}
   };
 }
 
@@ -9902,6 +9997,7 @@ function rpRestaurarDatos(d){
   if(Array.isArray(d.cultivos) && d.cultivos.length) RP.cultivos = d.cultivos.slice();
   if(Array.isArray(d.filas)) RP.filas = d.filas.map(function(f){ return { camp:f.camp||'', v:(f.v||[]).slice() }; });
   RP.has = d.has || {};
+  RP.doble = d.doble || {};
   // asegurar consistencia de anchos
   RP.filas.forEach(function(f){
     while(f.v.length < RP.cultivos.length) f.v.push(null);
