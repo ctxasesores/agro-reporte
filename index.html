@@ -794,9 +794,12 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 @media(max-width:480px){ .ctx-upd-txt{font-size:13px} #ctx-update-banner{width:calc(100vw - 24px)} }
 
 /* ══ Analizador de estrategias de opciones ══ */
-#sec-estrategias .estr-params{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-#sec-estrategias .estr-params label{display:block;font-size:11px;color:var(--gris,#9a9a9a);margin-bottom:4px}
-#sec-estrategias .estr-params input,#sec-estrategias .estr-params select{width:100%;padding:8px 10px;border-radius:8px;border:.5px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px}
+#sec-estrategias .estr-params,.fw .estr-params{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.estr-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.estr-field label{font-size:11px;font-weight:600;color:var(--gris,#9a9a9a);letter-spacing:.2px;line-height:1.3}
+.estr-field input,.estr-field select{width:100%;box-sizing:border-box;height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:14px;font-variant-numeric:tabular-nums;transition:border-color .15s,box-shadow .15s}
+.estr-field input:focus,.estr-field select:focus{outline:none;border-color:var(--oro,#d4a017);box-shadow:0 0 0 3px rgba(212,160,23,.15)}
+.estr-field input::placeholder{color:var(--gris,#9a9a9a);opacity:.5}
 .estr-pata{display:grid;grid-template-columns:80px 100px 1fr 1fr 68px 32px;gap:8px;align-items:center;margin-bottom:6px}
 .estr-teo{font-size:12.5px;color:var(--oro-l,#e8c45a);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .estr-pata-head{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris,#9a9a9a);margin-bottom:2px}
@@ -825,7 +828,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .estr-griegas-grid b{display:block;font-size:16px;color:var(--oro-l,#e8c45a);font-variant-numeric:tabular-nums;margin:2px 0}
 .estr-griegas-grid small{font-size:9.5px;color:var(--gris,#9a9a9a)}
 @media(max-width:640px){
-  #sec-estrategias .estr-params,.estr-resumen,.estr-griegas-grid{grid-template-columns:repeat(2,1fr)}
+  #sec-estrategias .estr-params,.fw .estr-params,.estr-resumen,.estr-griegas-grid{grid-template-columns:repeat(2,1fr)}
   .estr-pata{grid-template-columns:52px 74px 1fr 1fr 52px 26px;gap:5px}
 }
 
@@ -862,6 +865,24 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 .estr-simple .gex-item>span{flex:none;text-align:center}
 .estr-gex-feedback{margin:12px 2px;padding:9px 13px;border-radius:8px;background:rgba(106,184,148,.12);border:.5px solid rgba(106,184,148,.4);color:#8fd3b0;font-size:12px;font-weight:600}
 .estr-guia-nota{font-size:11px;color:var(--gris,#9a9a9a);line-height:1.6;margin:12px 2px 2px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;border-left:2px solid rgba(212,160,23,.4)}
+
+/* Ventana flotante manipulable */
+.fw{position:fixed;background:var(--negro-s,#1a3349);border:1px solid rgba(212,160,23,.3);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden}
+.fw-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,0,0,.2);cursor:move;border-bottom:1px solid var(--border,rgba(255,255,255,.1));flex-shrink:0}
+.fw-title{font-size:13px;font-weight:700;color:var(--oro-l,#e8c45a)}
+.fw-actions{display:flex;gap:6px}
+.fw-min,.fw-close{width:26px;height:26px;border-radius:6px;border:none;background:rgba(255,255,255,.08);color:var(--txt,#e8e0d4);cursor:pointer;font-size:14px;line-height:1}
+.fw-close:hover{background:#c0392b}.fw-min:hover{background:rgba(255,255,255,.16)}
+.fw-body{flex:1;overflow:auto;padding:16px}
+.fw-resize{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,var(--oro,#d4a017) 50%);opacity:.5}
+.fw-mini{height:auto!important}
+.fw-mini .fw-body,.fw-mini .fw-resize{display:none}
+@media(max-width:760px){ .fw{inset:0!important;width:auto!important;height:auto!important;border-radius:0} }
+.fw-launch{width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:12px;border:1px solid rgba(212,160,23,.3);background:linear-gradient(180deg,rgba(212,160,23,.08),rgba(212,160,23,.03));color:var(--txt,#e8e0d4);cursor:pointer;text-align:left;transition:all .15s}
+.fw-launch:hover{border-color:rgba(212,160,23,.55);background:linear-gradient(180deg,rgba(212,160,23,.14),rgba(212,160,23,.05))}
+.fw-launch-txt{flex:1;font-size:14px;line-height:1.4}
+.fw-launch-txt small{color:var(--gris,#9a9a9a);font-size:11.5px;font-weight:400}
+.fw-launch-arrow{font-size:18px;color:var(--oro-l,#e8c45a);flex-shrink:0}
 </style>
 </head>
 <body>
@@ -1866,12 +1887,12 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 
       <!-- ══ ANALIZADOR DE ESTRATEGIAS DE OPCIONES (P&L) ══ -->
       <div class="section" id="sec-estrategias" style="margin-top:28px">
-        <div class="section-title" onclick="toggleAcc('acc-estrategias','icon-estrategias');estrInitSiHaceFalta()" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
-          <span>Analizador de estrategias de opciones</span>
-          <span id="icon-estrategias" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
-        </div>
-        <div id="acc-estrategias" style="display:none;margin-top:12px">
-          <div class="card" style="padding:16px">
+        <button class="fw-launch" onclick="abrirAnalizadorOpciones()">
+          <span class="fw-launch-txt"><b>Analizador de estrategias de opciones</b><br><small>P&amp;L al vencimiento y hoy, griegas y generador de ejemplos</small></span>
+          <span class="fw-launch-arrow">↗</span>
+        </button>
+        <div id="acc-estrategias" style="display:none">
+          <div class="card" id="estr-contenido" style="padding:16px">
             <div class="tasas-nota" style="margin-bottom:12px">
               Armá una cartera de opciones y futuros y mirá su resultado (P&amp;L) al vencimiento y hoy. Diagnóstico informativo, no es recomendación de inversión.
             </div>
@@ -1879,7 +1900,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
             <!-- Guía de referencia: matriz dirección × volatilidad con generador -->
             <div class="estr-guia">
               <button class="estr-guia-toggle" type="button" onclick="estrToggleGuia()">
-                <span>📖 Guía: ¿qué estrategia según mi visión de mercado y volatilidad?</span>
+                <span>Guía: ¿qué estrategia según mi visión de mercado y volatilidad?</span>
                 <span id="estr-guia-ico">▼</span>
               </button>
               <div id="estr-guia-body" style="display:none">
@@ -1916,14 +1937,24 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 
             <!-- Parámetros globales (editables a mano) -->
             <div class="estr-params">
-              <div><label>Producto</label>
+              <div class="estr-field">
+                <label for="estr_producto">Producto</label>
                 <select id="estr_producto" onchange="estrRefrescar()">
                   <option value="Soja">Soja</option><option value="Maiz">Maíz</option><option value="Trigo">Trigo</option>
                 </select>
               </div>
-              <div><label>Futuro subyacente (F)</label><input type="number" id="estr_F" step="0.5" oninput="estrRender()" placeholder="Precio del futuro"></div>
-              <div><label>Días al vencimiento</label><input type="number" id="estr_dte" step="1" min="0" value="60" oninput="estrRender()"></div>
-              <div><label>Volatilidad anual (%)</label><input type="number" id="estr_vol" step="0.5" min="0" value="19" oninput="estrRender()"></div>
+              <div class="estr-field">
+                <label for="estr_F">Futuro subyacente (F)</label>
+                <input type="text" inputmode="decimal" id="estr_F" oninput="estrRender()" placeholder="Precio del futuro">
+              </div>
+              <div class="estr-field">
+                <label for="estr_dte">Días al vencimiento</label>
+                <input type="text" inputmode="numeric" id="estr_dte" value="60" oninput="estrRender()" placeholder="60">
+              </div>
+              <div class="estr-field">
+                <label for="estr_vol">Volatilidad anual (%)</label>
+                <input type="text" inputmode="decimal" id="estr_vol" value="19" oninput="estrRender()" placeholder="19">
+              </div>
             </div>
 
             <!-- Patas de la estrategia -->
@@ -7845,8 +7876,14 @@ function estrPayoffHoy(p, S){
 // Rango de precios para el eje X: alrededor de F, cubriendo todos los strikes.
 function estrRangoPrecios(){
   var F = parseFloat(document.getElementById('estr_F').value) || 0;
-  var strikes = ESTR.patas.filter(function(p){return p.tipo!=='F'&&p.strike>0;}).map(function(p){return p.strike;});
-  var refs = strikes.concat(F>0?[F]:[]);
+  // Referencias del eje X: strikes de opciones + precios de entrada de futuros + F.
+  // (si solo hay futuros, sin esto el gráfico quedaba vacío)
+  var refs = [];
+  ESTR.patas.forEach(function(p){
+    if(p.tipo==='F'){ var ent=estrPrecioEntradaFut(p); if(ent>0) refs.push(ent); }
+    else if(p.strike>0){ refs.push(p.strike); }
+  });
+  if(F>0) refs.push(F);
   if(!refs.length) return null;
   var min = Math.min.apply(null,refs), max = Math.max.apply(null,refs);
   var span = Math.max(max-min, max*0.15, 20);
@@ -8277,8 +8314,13 @@ function estrInitSiHaceFalta(){
     if (!tabsEl || !bodyEl) return;
 
     if (!opcData.loaded) {
-      if (!opcData.loading) cargarOpciones();
-      infoEl.innerHTML = '<i>Cargando opciones…</i>'; bodyEl.innerHTML = ''; return;
+      // Solo disparamos la carga una vez: si falla, no reintentamos en bucle
+      // (cargarOpciones llama a renderOpciones al terminar → sería recursión infinita).
+      if (!opcData.loading && !opcData.intentada) { opcData.intentada = true; cargarOpciones(); }
+      infoEl.innerHTML = (opcData.intentada && !opcData.loading)
+        ? '<i>No se pudieron cargar las opciones.</i>'
+        : '<i>Cargando opciones…</i>';
+      bodyEl.innerHTML = ''; return;
     }
     if (!opcData.ops.length) {
       tabsEl.innerHTML=''; infoEl.innerHTML=''; 
@@ -8923,4 +8965,142 @@ function estrInitSiHaceFalta(){
   setTimeout(sync, 800);
 })();
 
+</script>
+
+<script>
+/* ============================================================
+   VENTANA FLOTANTE MANIPULABLE (CTX)
+   - Desktop: arrastrable (por la barra de título) y redimensionable
+     (esquina inferior derecha). Minimizar / cerrar.
+   - Móvil: pantalla completa (sin arrastrar/redimensionar).
+   Reutilizable: envuelve cualquier contenido existente del DOM.
+   ============================================================ */
+var FloatWin = (function(){
+  var abiertas = {};   // id -> elemento ventana
+  var zTop = 1000;
+
+  function esMovil(){ return window.matchMedia && window.matchMedia('(max-width: 760px)').matches; }
+
+  // Abre (o trae al frente) una ventana con un id lógico.
+  // opts: { titulo, contenidoEl (nodo a mover dentro), ancho, alto }
+  function abrir(id, opts){
+    opts = opts || {};
+    if(abiertas[id]){ traerAlFrente(abiertas[id]); return abiertas[id]; }
+
+    var movil = esMovil();
+    var win = document.createElement('div');
+    win.className = 'fw' + (movil ? ' fw-movil' : '');
+    win.dataset.fwid = id;
+    win.style.zIndex = (++zTop);
+
+    var w = opts.ancho || 720, h = opts.alto || 560;
+    if(!movil){
+      // centrar con leve offset por cada ventana abierta
+      var off = Object.keys(abiertas).length * 24;
+      win.style.width = w + 'px';
+      win.style.height = h + 'px';
+      win.style.left = Math.max(10, (window.innerWidth - w)/2 + off) + 'px';
+      win.style.top = Math.max(10, (window.innerHeight - h)/2 + off) + 'px';
+    }
+
+    win.innerHTML =
+      '<div class="fw-bar">' +
+        '<span class="fw-title">'+(opts.titulo||'')+'</span>' +
+        '<div class="fw-actions">' +
+          '<button class="fw-min" title="Minimizar">–</button>' +
+          '<button class="fw-close" title="Cerrar">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="fw-body"></div>' +
+      (movil ? '' : '<div class="fw-resize" title="Redimensionar"></div>');
+
+    document.body.appendChild(win);
+    var body = win.querySelector('.fw-body');
+
+    // mover el contenido real adentro (y recordar de dónde vino para devolverlo)
+    if(opts.contenidoEl){
+      win._origen = opts.contenidoEl.parentNode;
+      win._origenNext = opts.contenidoEl.nextSibling;
+      win._contenido = opts.contenidoEl;
+      body.appendChild(opts.contenidoEl);
+      opts.contenidoEl.style.display = '';
+    }
+
+    // ---- interacciones ----
+    win.addEventListener('mousedown', function(){ traerAlFrente(win); });
+    win.querySelector('.fw-close').addEventListener('click', function(e){ e.stopPropagation(); cerrar(id); });
+    win.querySelector('.fw-min').addEventListener('click', function(e){ e.stopPropagation(); win.classList.toggle('fw-mini'); });
+
+    if(!movil){
+      _hacerArrastrable(win, win.querySelector('.fw-bar'));
+      _hacerRedimensionable(win, win.querySelector('.fw-resize'));
+    }
+
+    abiertas[id] = win;
+    return win;
+  }
+
+  function traerAlFrente(win){ win.style.zIndex = (++zTop); }
+
+  function cerrar(id){
+    var win = abiertas[id];
+    if(!win) return;
+    // devolver el contenido a su lugar original (para no perderlo)
+    if(win._contenido && win._origen){
+      win._contenido.style.display = 'none';
+      if(win._origenNext) win._origen.insertBefore(win._contenido, win._origenNext);
+      else win._origen.appendChild(win._contenido);
+    }
+    win.remove();
+    delete abiertas[id];
+  }
+
+  function estaAbierta(id){ return !!abiertas[id]; }
+
+  // ---- Arrastre por la barra de título ----
+  function _hacerArrastrable(win, handle){
+    var sx, sy, ox, oy, drag=false;
+    handle.addEventListener('mousedown', function(e){
+      if(e.target.closest('.fw-actions')) return;
+      drag=true; sx=e.clientX; sy=e.clientY;
+      ox=parseInt(win.style.left,10); oy=parseInt(win.style.top,10);
+      document.body.style.userSelect='none';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', function(e){
+      if(!drag) return;
+      var nx=ox+(e.clientX-sx), ny=oy+(e.clientY-sy);
+      // mantener dentro de la ventana visible
+      nx=Math.max(-win.offsetWidth+80, Math.min(nx, window.innerWidth-80));
+      ny=Math.max(0, Math.min(ny, window.innerHeight-40));
+      win.style.left=nx+'px'; win.style.top=ny+'px';
+    });
+    window.addEventListener('mouseup', function(){ drag=false; document.body.style.userSelect=''; });
+  }
+
+  // ---- Redimensionar desde la esquina ----
+  function _hacerRedimensionable(win, handle){
+    var sx, sy, ow, oh, rz=false;
+    handle.addEventListener('mousedown', function(e){
+      rz=true; sx=e.clientX; sy=e.clientY; ow=win.offsetWidth; oh=win.offsetHeight;
+      document.body.style.userSelect='none'; e.preventDefault(); e.stopPropagation();
+    });
+    window.addEventListener('mousemove', function(e){
+      if(!rz) return;
+      win.style.width = Math.max(340, ow+(e.clientX-sx))+'px';
+      win.style.height = Math.max(240, oh+(e.clientY-sy))+'px';
+    });
+    window.addEventListener('mouseup', function(){ rz=false; document.body.style.userSelect=''; });
+  }
+
+  return { abrir:abrir, cerrar:cerrar, estaAbierta:estaAbierta, traerAlFrente:traerAlFrente };
+})();
+
+
+function abrirAnalizadorOpciones(){
+  var cont = document.getElementById('estr-contenido');
+  if(!cont) return;
+  FloatWin.abrir('analizador-opciones', { titulo:'Analizador de estrategias de opciones', contenidoEl:cont, ancho:780, alto:620 });
+  if(typeof estrInitSiHaceFalta==='function') estrInitSiHaceFalta();
+}
 </script>
