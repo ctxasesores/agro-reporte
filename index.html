@@ -2833,9 +2833,35 @@ async function saveNewPassword() {
 // ── LOAD APP ──
 async function loadApp() {
   initSupabase();
-  // Load cliente profile
-  const {data:cli} = await sb.from('clientes').select('*').eq('id', currentUser.id).single();
+  // Load cliente profile.
+  // IMPORTANTE: distinguir "la consulta falló" (token renovándose, señal floja)
+  // de "no existe el perfil". Antes cualquier error se tomaba como "sin perfil"
+  // y cerraba la sesión → el usuario tenía que volver a loguearse cada vez.
+  let cli = null, cliErr = null, sesionVencida = false;
+  for (let intento = 0; intento < 2; intento++) {
+    const r = await sb.from('clientes').select('*').eq('id', currentUser.id).maybeSingle();
+    cli = r.data; cliErr = r.error;
+    if (!cliErr) break;
+    // Error transitorio: renovamos la sesión y reintentamos una vez.
+    try {
+      const { error: rErr } = await sb.auth.refreshSession();
+      if (rErr) { sesionVencida = true; break; }
+    } catch (e) { sesionVencida = true; break; }
+  }
+  if (sesionVencida) {
+    // La sesión realmente venció: volvemos al login sin mensajes alarmantes.
+    try { await sb.auth.signOut(); } catch (e) {}
+    currentUser = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    return;
+  }
+  if (cliErr) {
+    // Falla de conexión: NO cerramos la sesión.
+    if (confirm('No pudimos conectar con el servidor para cargar tu cuenta. Revisá tu conexión.\n\n¿Reintentar ahora?')) location.reload();
+    return;
+  }
   if (!cli) {
+    // La consulta anduvo bien y el perfil realmente no existe.
     if (sb) await sb.auth.signOut();
     alert('Tu cuenta existe, pero todavía no tiene perfil comercial habilitado. Contactá a CTX para activar tus paneles.');
     location.reload();
@@ -6960,7 +6986,7 @@ function cerrarMacroModal(ev){
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/agro-reporte/sw.js')
+      navigator.serviceWorker.register('/agro-reporte/sw.js', { updateViaCache: 'none' })
         .then(function (reg) {
           console.log('SW registrado:', reg.scope);
           // Si ya hay una versión nueva esperando al cargar, ofrecerla.

@@ -21,7 +21,7 @@
    con el shell anterior en el fallback.
    ============================================================ */
 
-const CACHE_VERSION = 'ctx-v7';
+const CACHE_VERSION = 'ctx-v8';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 // Solo el shell. Nada de datos.
@@ -86,8 +86,15 @@ self.addEventListener('fetch', event => {
   // Distinto origen (fuentes, CDNs): dejar pasar.
   if (!req.url.startsWith(self.location.origin)) return;
 
+  // La página en sí (navegación) se pide revalidando con el servidor:
+  // sin esto, fetch() respeta la caché HTTP del navegador (GitHub Pages
+  // cachea ~10 min, Safari a veces más) y el usuario veía la versión vieja
+  // hasta borrar los datos del sitio. 'no-cache' revalida por ETag: si no
+  // cambió, el servidor responde 304 sin reenviar el archivo (es liviano).
+  const esPagina = req.mode === 'navigate';
+
   event.respondWith(
-    fetch(req)
+    fetch(req, esPagina ? { cache: 'no-cache' } : undefined)
       .then(res => {
         // Guardamos copia fresca del shell para el fallback.
         if (res && res.status === 200 && res.type === 'basic') {
