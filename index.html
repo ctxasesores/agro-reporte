@@ -10257,12 +10257,12 @@ function rpEditarCosto(nombre, val){
   var t = String(val).trim().replace(',','.');
   var n = (t==='') ? null : parseFloat(t);
   RP.costo[nombre] = (n!=null && isFinite(n) && n>=0) ? n : null;
-  rpRenderCostos();
+  rpActualizarSalidaCosto(nombre);   // no reconstruye los inputs → no se pierde el foco
 }
 function rpEditarFuturo(nombre, vto){
   if(!RP.fut) RP.fut = {};
   if(vto) RP.fut[nombre] = vto; else delete RP.fut[nombre];
-  rpRenderCostos();
+  rpActualizarSalidaCosto(nombre);
 }
 
 // Datos del cuadro de precios para un cultivo.
@@ -10322,6 +10322,36 @@ function rpGraficoPrecios(d){
   return svg;
 }
 
+// Parte calculada de la tarjeta de costo (precio, gráfico y lectura).
+// Separada del render completo para poder actualizarla sin tocar los inputs.
+function rpCostoSalida(d){
+  if(!d || d.precioCosto==null) return '';
+  var h = '<div class="rp-precio-linea">Necesitás <b>'+rpFmt(d.precioCosto,0)+' USD/tn</b> para cubrir el costo con un rinde de campaña mala.</div>';
+  var g = rpGraficoPrecios(d);
+  if(g){
+    h += g;
+    if(d.precioFutVol!=null){
+      var margen = d.precioFutVol - d.precioCosto;
+      var cls = margen>=0 ? 'rp-ok' : 'rp-bad';
+      h += '<div class="rp-precio-lectura">Con el futuro castigado por su volatilidad ('
+        +  rpFmt(d.volEscalada*100,1)+'% a '+rpFmt(d.fut.anios*12,0)+' meses) quedarías '
+        +  '<b class="'+cls+'">'+(margen>=0?'+':'')+rpFmt(margen,0)+' USD/tn</b> '
+        +  (margen>=0 ? 'por encima del costo.' : 'por debajo del costo.')+'</div>';
+    }
+  }
+  return h;
+}
+
+// Actualiza solo el resultado de un cultivo, sin redibujar sus inputs.
+function rpActualizarSalidaCosto(nombre){
+  var vs = rpCultivosValidos();
+  var v = vs.find(function(x){ return x.nombre===nombre; });
+  if(!v) return;
+  var cont = document.querySelector('.rp-costo-out[data-cultivo="'+String(nombre).replace(/"/g,'\\"')+'"]');
+  if(!cont) return;
+  cont.innerHTML = rpCostoSalida(rpPrecioCultivo(nombre, v.i));
+}
+
 function rpRenderCostos(){
   var cont = document.getElementById('rp_costos');
   if(!cont) return;
@@ -10361,21 +10391,10 @@ function rpRenderCostos(){
     }
     h += '</div>';
 
-    if(d.precioCosto!=null){
-      h += '<div class="rp-precio-linea">Necesitás <b>'+rpFmt(d.precioCosto,0)+' USD/tn</b> para cubrir el costo con un rinde de campaña mala.</div>';
-      var g = rpGraficoPrecios(d);
-      if(g){
-        h += g;
-        if(d.precioFutVol!=null){
-          var margen = d.precioFutVol - d.precioCosto;
-          var cls = margen>=0 ? 'rp-ok' : 'rp-bad';
-          h += '<div class="rp-precio-lectura">Con el futuro castigado por su volatilidad ('
-            +  rpFmt(d.volEscalada*100,1)+'% a '+rpFmt(d.fut.anios*12,0)+' meses) quedarías '
-            +  '<b class="'+cls+'">'+(margen>=0?'+':'')+rpFmt(margen,0)+' USD/tn</b> '
-            +  (margen>=0 ? 'por encima del costo.' : 'por debajo del costo.')+'</div>';
-        }
-      }
-    }
+    // La parte calculada va en su propio contenedor: así se actualiza sola
+    // sin reconstruir los inputs (si no, se pierde el foco al escribir).
+    h += '<div class="rp-costo-out" data-cultivo="'+String(v.nombre).replace(/"/g,'&quot;')+'">'
+      +  rpCostoSalida(d) + '</div>';
     h += '</div>';
   });
   cont.innerHTML = h;
