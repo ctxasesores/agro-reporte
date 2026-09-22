@@ -970,6 +970,29 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 .rp-doble-info{margin-top:10px;font-size:11.5px;color:var(--txt,#e8e0d4);line-height:1.6;
   padding:9px 13px;background:rgba(212,160,23,.08);border-left:2px solid var(--oro,#d4a017);border-radius:7px}
 .rp-doble-info b{color:var(--oro-l,#e8c45a)}
+
+/* ── Costos por cultivo y precio de indiferencia ── */
+.rp-aviso-costo{font-size:11.5px;color:#d8c47e;background:rgba(201,178,106,.1);border-left:2px solid rgba(201,178,106,.5);
+  border-radius:6px;padding:8px 12px;margin:0 2px 14px;line-height:1.55}
+.rp-costo-card{background:rgba(255,255,255,.03);border:.5px solid var(--border,rgba(255,255,255,.08));
+  border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.rp-costo-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.rp-costo-nom{font-size:13px;font-weight:700;color:var(--txt,#e8e0d4)}
+.rp-costo-p10{font-size:11px;color:var(--gris,#9a9a9a)}
+.rp-costo-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:10px}
+.rp-sin-fut{height:40px;display:flex;align-items:center;font-size:11.5px;color:var(--gris,#9a9a9a);font-style:italic}
+.rp-precio-linea{font-size:12.5px;color:var(--txt,#e8e0d4);margin:4px 0 10px;line-height:1.5}
+.rp-precio-linea b{color:var(--oro-l,#e8c45a);font-size:14px}
+.rp-graf{width:100%;max-width:470px;height:auto;display:block;margin:6px 0}
+.rp-g-lbl{fill:var(--gris,#9a9a9a);font-size:11px;text-anchor:end}
+.rp-g-val{fill:var(--txt,#e8e0d4);font-size:11.5px;font-weight:700}
+.rp-b-costo{fill:#d8c47e}
+.rp-b-fut{fill:var(--oro,#d4a017)}
+.rp-b-vol{fill:#7fb2da}
+.rp-g-ref{stroke:rgba(216,196,126,.5);stroke-width:1;stroke-dasharray:3 3}
+.rp-precio-lectura{font-size:12px;color:var(--gris,#b8c4d0);line-height:1.55;margin-top:6px;
+  padding:8px 12px;background:rgba(255,255,255,.03);border-radius:7px}
+.rp-precio-lectura b{font-size:13px}
 </style>
 </head>
 <body>
@@ -2020,6 +2043,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               <p class="rp-expl">Cargá las hectáreas que pensás sembrar de cada cultivo y compará el riesgo de tu planteo contra la combinación de menor riesgo.</p>
               <div id="rp_planteo_inputs"></div>
               <div id="rp_planteo_res" style="margin-top:16px"></div>
+              <div id="rp_costos" style="margin-top:26px"></div>
             </div>
 
             <!-- Guardar / cargar -->
@@ -7905,6 +7929,16 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
   }
   const tiempoAlVto = (v, hoy = new Date()) => Math.max((v - hoy) / (365*24*3600*1000), 0);
 
+  // ¿El vencimiento todavía está vigente? (no pasó su fecha de ejercicio)
+  // Sin esto aparecían posiciones ya vencidas en el panel de Opciones.
+  function opcVtoVigente(v, hoy = new Date()) {
+    const m = String(v || '').match(/^(\d{1,2})_(\d{4})$/);
+    if (!m) return false;
+    return vencimientoOpcion(Number(m[1]), Number(m[2])) > hoy;
+  }
+
+
+
   const normPdf = x => Math.exp(-0.5*x*x) / Math.sqrt(2*Math.PI);
   function normCdf(x) {
     const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
@@ -8510,13 +8544,19 @@ function estrInitSiHaceFalta(){
     }
 
     // Productos con opciones
-    const prods = [...new Set(opcData.ops.map(o => SUBY[o.subyacente]).filter(Boolean))].sort();
+    const opsVigentes = opcData.ops.filter(o => opcVtoVigente(o.vencimiento));
+    const prods = [...new Set(opsVigentes.map(o => SUBY[o.subyacente]).filter(Boolean))].sort();
+    if (!prods.length) {
+      tabsEl.innerHTML = ''; infoEl.innerHTML = '';
+      bodyEl.innerHTML = '<div class="empty-state">No hay opciones con vencimientos vigentes.</div>';
+      return;
+    }
     if (!_opcProd || !prods.includes(_opcProd)) _opcProd = prods.includes('Soja') ? 'Soja' : prods[0];
     const subyDe = p => Object.keys(SUBY).find(k => SUBY[k] === p);
     const suby = subyDe(_opcProd);
 
     // Vencimientos de ese producto, ordenados
-    const vtos = [...new Set(opcData.ops.filter(o=>o.subyacente===suby).map(o=>o.vencimiento))]
+    const vtos = [...new Set(opsVigentes.filter(o=>o.subyacente===suby).map(o=>o.vencimiento))]
       .sort((a,b)=>{const[ma,aa]=a.split('_').map(Number),[mb,ab]=b.split('_').map(Number);return (aa-ab)||(ma-mb);});
     if (!_opcVto || !vtos.includes(_opcVto)) _opcVto = vtos[0];
 
@@ -8542,7 +8582,7 @@ function estrInitSiHaceFalta(){
       + `· tasa USD <b>${(r*100).toFixed(2)}%</b> <span style="opacity:.65">(máx. paridad TAMAR/DLR`
       + `${tasaInfo.mes ? ', '+tasaInfo.mes : ''})</span>`;
 
-    const rows = opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===_opcVto)
+    const rows = opsVigentes.filter(o => o.subyacente===suby && o.vencimiento===_opcVto)
       .map(o => ({...o, strike:Number(o.strike), prima: o.settlement_price ?? o.last_price}))
       .sort((a,b) => (a.tipo_opcion===b.tipo_opcion ? a.strike-b.strike : (a.tipo_opcion==='C'?-1:1)));
 
@@ -8889,6 +8929,35 @@ function estrInitSiHaceFalta(){
     document.body.appendChild(ov);
     // arranca la secuencia una vez montado en el DOM (getTotalLength necesita layout)
     requestAnimationFrame(() => bstdAnimar(ov.querySelector('.bstd-wrap')));
+  };
+
+
+  // Futuros VIGENTES de un producto, con su precio, volatilidad histórica anual
+  // y el tiempo al vencimiento en años. Lo consume el módulo de riesgo productivo.
+  window.ctxFuturosVigentes = function (producto) {
+    try {
+      if (typeof opcData === 'undefined' || !opcData.loaded) return [];
+      const suby = Object.keys(SUBY).find(k => SUBY[k] === producto);
+      if (!suby) return [];
+      const vtos = [...new Set(
+        Object.keys(opcData.fut)
+          .filter(k => k.indexOf(suby + '|') === 0)
+          .map(k => k.split('|')[1])
+      )].filter(v => opcVtoVigente(v));
+      const MES = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      return vtos.map(v => {
+        const [m, a] = v.split('_').map(Number);
+        const t = tiempoAlVto(vencimientoOpcion(m, a));
+        return {
+          vto: v,
+          label: MES[m] + '-' + String(a).slice(2),
+          precio: opcData.fut[suby + '|' + v],
+          volAnual: volHistDe(producto, v),
+          anios: t
+        };
+      }).filter(x => x.precio != null && x.precio > 0)
+        .sort((x, y) => x.anios - y.anios);
+    } catch (e) { return []; }
   };
 
   window._opcSetProd = p => { _opcProd = p; _opcVto = null; renderOpciones(); };
@@ -10014,7 +10083,9 @@ function rpDatosParaGuardar(){
     cultivos: RP.cultivos.slice(),
     filas: RP.filas.map(function(f){ return { camp:f.camp, v:f.v.slice() }; }),
     has: RP.has || {},
-    doble: RP.doble || {}
+    doble: RP.doble || {},
+    costo: RP.costo || {},
+    fut: RP.fut || {}
   };
 }
 
@@ -10024,6 +10095,8 @@ function rpRestaurarDatos(d){
   if(Array.isArray(d.filas)) RP.filas = d.filas.map(function(f){ return { camp:f.camp||'', v:(f.v||[]).slice() }; });
   RP.has = d.has || {};
   RP.doble = d.doble || {};
+  RP.costo = d.costo || {};
+  RP.fut = d.fut || {};
   // asegurar consistencia de anchos
   RP.filas.forEach(function(f){
     while(f.v.length < RP.cultivos.length) f.v.push(null);
@@ -10159,6 +10232,153 @@ function rpRenderTodo(){
   rpRenderOptimo();
   rpRenderPlanteoInputs();
   rpRenderPlanteoResultado();
+  rpRenderCostos();
+}
+
+
+/* ============================================================
+   COSTOS POR CULTIVO Y PRECIO DE INDIFERENCIA
+   - costo (USD/ha) ÷ P10 (tn/ha) = precio que hay que obtener
+     para cubrir el costo en una campaña mala.
+   - Se compara contra el futuro elegido y contra ese futuro
+     castigado por su volatilidad escalada al plazo (√t).
+   ============================================================ */
+
+function rpProductoFuturo(nombreCultivo){
+  var n = String(nombreCultivo||'').toLowerCase();
+  if(n.indexOf('soja')>=0)  return 'Soja';
+  if(n.indexOf('maiz')>=0 || n.indexOf('maíz')>=0) return 'Maiz';
+  if(n.indexOf('trigo')>=0) return 'Trigo';
+  return null;   // el resto no tiene futuro en A3
+}
+
+function rpEditarCosto(nombre, val){
+  if(!RP.costo) RP.costo = {};
+  var t = String(val).trim().replace(',','.');
+  var n = (t==='') ? null : parseFloat(t);
+  RP.costo[nombre] = (n!=null && isFinite(n) && n>=0) ? n : null;
+  rpRenderCostos();
+}
+function rpEditarFuturo(nombre, vto){
+  if(!RP.fut) RP.fut = {};
+  if(vto) RP.fut[nombre] = vto; else delete RP.fut[nombre];
+  rpRenderCostos();
+}
+
+// Datos del cuadro de precios para un cultivo.
+function rpPrecioCultivo(nombre, ci){
+  var costo = (RP.costo||{})[nombre];
+  var serie = rpSerie(ci);
+  if(rpCount(serie) < 2) return null;
+  var r = rpRiesgoIndividual(serie);
+  var p10tn = r.p10/10;                       // qq/ha → tn/ha
+  if(!(p10tn>0)) return null;
+  var out = { nombre:nombre, p10tn:p10tn, costo:costo };
+  out.precioCosto = (costo>0) ? costo/p10tn : null;   // USD/tn a cubrir
+
+  var prod = rpProductoFuturo(nombre);
+  out.producto = prod;
+  if(prod && typeof ctxFuturosVigentes==='function'){
+    out.futuros = ctxFuturosVigentes(prod);
+    var elegido = (RP.fut||{})[nombre];
+    out.fut = out.futuros.find(function(f){ return f.vto===elegido; }) || null;
+    if(out.fut){
+      out.precioFut = out.fut.precio;
+      // volatilidad escalada al plazo: σ·√t (10% anual a 6 meses ≈ 7,07%)
+      if(out.fut.volAnual!=null && out.fut.anios>0){
+        out.volEscalada = out.fut.volAnual*Math.sqrt(out.fut.anios);
+        out.precioFutVol = out.precioFut*(1-out.volEscalada);
+      }
+    }
+  }
+  return out;
+}
+
+/* ---------- Gráfico simple (SVG, barras horizontales) ---------- */
+function rpGraficoPrecios(d){
+  var barras = [];
+  if(d.precioCosto!=null)   barras.push({ lbl:'Costo ÷ P10', val:d.precioCosto, cls:'rp-b-costo' });
+  if(d.precioFut!=null)     barras.push({ lbl:'Futuro '+d.fut.label, val:d.precioFut, cls:'rp-b-fut' });
+  if(d.precioFutVol!=null)  barras.push({ lbl:'Futuro − volatilidad', val:d.precioFutVol, cls:'rp-b-vol' });
+  if(barras.length<2) return '';
+
+  var max = Math.max.apply(null, barras.map(function(b){ return b.val; }))*1.12;
+  var W=440, alto=26, gap=12, H=barras.length*(alto+gap)+10, xLbl=142, x0=xLbl+8, x1=W-58;
+  var esc = function(v){ return x0 + (v/max)*(x1-x0); };
+
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" class="rp-graf">';
+  barras.forEach(function(b,i){
+    var y = i*(alto+gap)+6;
+    svg += '<text x="'+xLbl+'" y="'+(y+alto*0.68)+'" class="rp-g-lbl">'+b.lbl+'</text>';
+    svg += '<rect x="'+x0+'" y="'+y+'" width="'+Math.max(2,esc(b.val)-x0)+'" height="'+alto+'" rx="4" class="'+b.cls+'"/>';
+    svg += '<text x="'+(esc(b.val)+6)+'" y="'+(y+alto*0.68)+'" class="rp-g-val">'+rpFmt(b.val,0)+'</text>';
+  });
+  // línea del costo como referencia vertical
+  if(d.precioCosto!=null && barras.length>1){
+    var xc = esc(d.precioCosto);
+    svg += '<line x1="'+xc+'" y1="0" x2="'+xc+'" y2="'+H+'" class="rp-g-ref"/>';
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+function rpRenderCostos(){
+  var cont = document.getElementById('rp_costos');
+  if(!cont) return;
+  var vs = rpCultivosValidos();
+  if(!vs.length){ cont.innerHTML=''; return; }
+
+  var h = '<div class="rp-sub">Costos y precio necesario</div>';
+  h += '<p class="rp-expl">Cargá el costo de producción por hectárea de cada cultivo. '
+    +  'Dividido por el <b>P10</b> (el rinde de una campaña mala) da el <b>precio que necesitás obtener</b> para cubrirlo aun en un año flojo. '
+    +  'En soja, maíz y trigo podés compararlo contra un futuro vigente.</p>';
+  h += '<div class="rp-aviso-costo">El costo debería incluir lo necesario para desarrollar cada cultivo, '
+    +  'pero no necesariamente los costos asociados a la comercialización.</div>';
+
+  vs.forEach(function(v){
+    var d = rpPrecioCultivo(v.nombre, v.i);
+    if(!d) return;
+    var costoVal = (d.costo!=null) ? d.costo : '';
+    h += '<div class="rp-costo-card">';
+    h += '<div class="rp-costo-head">'
+      +  '<span class="rp-costo-nom">'+v.nombre+'</span>'
+      +  '<span class="rp-costo-p10">P10: '+rpFmt(d.p10tn,2)+' tn/ha</span>'
+      +  '</div>';
+    h += '<div class="rp-costo-inputs">';
+    h += '<div class="estr-field"><label>Costo <small>(USD/ha)</small></label>'
+      +  '<input type="text" inputmode="decimal" value="'+costoVal+'" placeholder="0" '
+      +  'oninput="rpEditarCosto('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)"></div>';
+    if(d.producto && d.futuros && d.futuros.length){
+      var sel = (RP.fut||{})[v.nombre] || '';
+      var opts = '<option value="">— Elegí un futuro —</option>' + d.futuros.map(function(f){
+        return '<option value="'+f.vto+'"'+(f.vto===sel?' selected':'')+'>'+f.label+' · '+rpFmt(f.precio,0)+' USD/tn</option>';
+      }).join('');
+      h += '<div class="estr-field"><label>Futuro de referencia <small>('+d.producto+')</small></label>'
+        +  '<select onchange="rpEditarFuturo('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)">'+opts+'</select></div>';
+    } else if(d.producto){
+      h += '<div class="estr-field"><label>Futuro de referencia</label>'
+        +  '<div class="rp-sin-fut">Sin futuros vigentes cargados</div></div>';
+    }
+    h += '</div>';
+
+    if(d.precioCosto!=null){
+      h += '<div class="rp-precio-linea">Necesitás <b>'+rpFmt(d.precioCosto,0)+' USD/tn</b> para cubrir el costo con un rinde de campaña mala.</div>';
+      var g = rpGraficoPrecios(d);
+      if(g){
+        h += g;
+        if(d.precioFutVol!=null){
+          var margen = d.precioFutVol - d.precioCosto;
+          var cls = margen>=0 ? 'rp-ok' : 'rp-bad';
+          h += '<div class="rp-precio-lectura">Con el futuro castigado por su volatilidad ('
+            +  rpFmt(d.volEscalada*100,1)+'% a '+rpFmt(d.fut.anios*12,0)+' meses) quedarías '
+            +  '<b class="'+cls+'">'+(margen>=0?'+':'')+rpFmt(margen,0)+' USD/tn</b> '
+            +  (margen>=0 ? 'por encima del costo.' : 'por debajo del costo.')+'</div>';
+        }
+      }
+    }
+    h += '</div>';
+  });
+  cont.innerHTML = h;
 }
 
 // Muestra la sección solo si el cliente tiene Agricultura PRO.
