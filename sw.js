@@ -21,7 +21,7 @@
    con el shell anterior en el fallback.
    ============================================================ */
 
-const CACHE_VERSION = 'ctx-v8';
+const CACHE_VERSION = 'ctx-v9';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 // Solo el shell. Nada de datos.
@@ -86,15 +86,30 @@ self.addEventListener('fetch', event => {
   // Distinto origen (fuentes, CDNs): dejar pasar.
   if (!req.url.startsWith(self.location.origin)) return;
 
-  // La página en sí (navegación) se pide revalidando con el servidor:
-  // sin esto, fetch() respeta la caché HTTP del navegador (GitHub Pages
-  // cachea ~10 min, Safari a veces más) y el usuario veía la versión vieja
-  // hasta borrar los datos del sitio. 'no-cache' revalida por ETag: si no
-  // cambió, el servidor responde 304 sin reenviar el archivo (es liviano).
+  // La página en sí (navegación) se pide revalidando con el servidor: sin esto,
+  // fetch() respeta la cache HTTP del navegador (GitHub Pages cachea ~10 min) y
+  // el usuario ve la version vieja. 'no-cache' revalida por ETag (304, liviano).
+  //
+  // OJO Safari: pedir una navegacion con init {cache} puede rechazar. Si eso
+  // pasa, reintentamos con el pedido normal ANTES de caer al fallback de cache
+  // (si no, serviriamos el shell viejo justamente cuando queremos el nuevo).
   const esPagina = req.mode === 'navigate';
+  const pedirALaRed = () => {
+    if (!esPagina) return fetch(req);
+    // Plan B para navegadores que rechazan el init {cache} en una navegacion:
+    // armamos un pedido nuevo con la misma URL, que si acepta 'no-cache'.
+    // Igual revalida por ETag, asi que si no cambio nada responde 304.
+    const alterno = () => fetch(new Request(req.url, {
+      cache: 'no-cache', credentials: 'same-origin'
+    }));
+    let p;
+    try { p = fetch(req, { cache: 'no-cache' }); }
+    catch (e) { return alterno(); }
+    return p.catch(() => alterno());
+  };
 
   event.respondWith(
-    fetch(req, esPagina ? { cache: 'no-cache' } : undefined)
+    pedirALaRed()
       .then(res => {
         // Guardamos copia fresca del shell para el fallback.
         if (res && res.status === 200 && res.type === 'basic') {

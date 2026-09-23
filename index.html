@@ -6990,21 +6990,25 @@ function cerrarMacroModal(ev){
 
   // Diagnóstico de versión: escribí ctxVersion() en la consola del navegador.
   window.ctxVersion = function () {
-    if (!('serviceWorker' in navigator)) { console.log('Este navegador no soporta service worker.'); return; }
+    if (!('serviceWorker' in navigator)) { console.log('[CTX] este navegador no soporta service worker'); return; }
     navigator.serviceWorker.getRegistration().then(function (reg) {
-      var info = {
-        controlada_por_SW: !!navigator.serviceWorker.controller,
-        hay_version_esperando: !!(reg && reg.waiting),
-        scope: reg ? reg.scope : '(sin registro)'
-      };
-      if (!navigator.serviceWorker.controller) { console.log('[CTX]', info); return; }
+      var controlada = !!navigator.serviceWorker.controller;
+      var esperando  = !!(reg && reg.waiting);
+      function mostrar(version) {
+        // Una sola línea plana: se lee sin desplegar nada.
+        console.log('[CTX] versión: ' + (version || 'desconocida') +
+                    ' | controlada por SW: ' + controlada +
+                    ' | hay versión esperando: ' + esperando);
+      }
+      if (!controlada) { mostrar(null); return; }
+      var respondio = false;
       var ch = new MessageChannel();
       ch.port1.onmessage = function (e) {
-        info.version_cache = e.data && e.data.version;
-        console.log('[CTX]', info);
+        respondio = true;
+        mostrar(e.data && e.data.version);
       };
       navigator.serviceWorker.controller.postMessage('VERSION', [ch.port2]);
-      setTimeout(function () { console.log('[CTX]', info); }, 700);
+      setTimeout(function () { if (!respondio) mostrar('el SW no respondió (es una versión vieja)'); }, 800);
     });
   };
 
