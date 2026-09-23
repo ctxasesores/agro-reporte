@@ -6988,6 +6988,55 @@ function cerrarMacroModal(ev){
 
   // Cartel de "hay una versión nueva" con botón para aplicarla.
 
+
+  // ── Detección de versión nueva, independiente del service worker ──
+  // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
+  // compara con el build con el que fue servida. Si difieren, avisa.
+  // Esto funciona aunque el service worker no se haya actualizado.
+  var CTX_BUILD = '20260923-2017';
+  var _ultimoChequeoBuild = 0;
+
+  function ctxChequearBuild() {
+    if (Date.now() - _ultimoChequeoBuild < 60000) return;   // máximo 1 vez por minuto
+    _ultimoChequeoBuild = Date.now();
+    fetch('/agro-reporte/version.json?ts=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (j && j.build && j.build !== CTX_BUILD) ctxCartelVersionNueva();
+      })
+      .catch(function () { /* sin conexión: no molestamos */ });
+  }
+
+  function ctxCartelVersionNueva() {
+    if (document.getElementById('ctx-update-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'ctx-update-banner';
+    b.innerHTML = '<span class="ctx-upd-txt">Hay una versión nueva de la app.</span>' +
+                  '<button class="ctx-upd-btn" id="ctx-upd-btn">Actualizar</button>' +
+                  '<button class="ctx-upd-x" id="ctx-upd-x" title="Ahora no">×</button>';
+    document.body.appendChild(b);
+    requestAnimationFrame(function () { b.classList.add('show'); });
+    document.getElementById('ctx-upd-btn').addEventListener('click', function () {
+      this.textContent = 'Actualizando...'; this.disabled = true;
+      // Limpiar la caché del service worker antes de recargar: así no puede
+      // quedar ningún resto de la versión vieja.
+      var listo = function () { location.reload(); };
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })
+          .then(listo).catch(listo);
+      } else listo();
+    });
+    document.getElementById('ctx-upd-x').addEventListener('click', function () {
+      b.classList.remove('show'); setTimeout(function () { b.remove(); }, 300);
+    });
+  }
+
+  // Chequear al abrir y cada vez que volvés a la app.
+  setTimeout(ctxChequearBuild, 2500);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') ctxChequearBuild();
+  });
+
   // Diagnóstico de versión: escribí ctxVersion() en la consola del navegador.
   window.ctxVersion = function () {
     if (!('serviceWorker' in navigator)) { console.log('[CTX] este navegador no soporta service worker'); return; }
@@ -6996,8 +7045,8 @@ function cerrarMacroModal(ev){
       var esperando  = !!(reg && reg.waiting);
       function mostrar(version) {
         // Una sola línea plana: se lee sin desplegar nada.
-        console.log('[CTX] versión: ' + (version || 'desconocida') +
-                    ' | controlada por SW: ' + controlada +
+        console.log('[CTX] build: ' + CTX_BUILD + ' | caché SW: ' + (version || 'desconocida') +
+                    ' | controlada: ' + controlada +
                     ' | hay versión esperando: ' + esperando);
       }
       if (!controlada) { mostrar(null); return; }
@@ -9956,10 +10005,13 @@ function rpEsDeSegunda(nombre){
   var n = String(nombre||'').toLowerCase();
   return RP_SEGUNDA.some(function(c){ return n.indexOf(c)>=0; });
 }
-// Sugiere el socio de verano para un cultivo de invierno (el primero "de segunda").
-function rpSocioSugerido(nombreInvierno){
-  var cand = RP.cultivos.filter(function(c){ return rpEsDeSegunda(c) && !rpEsInvierno(c); });
-  return cand.length ? cand[0] : '';
+// Sugiere sobre qué cultivo de invierno va un cultivo de segunda.
+// La soja y el maíz DE SEGUNDA se siembran sobre el trigo (o cebada) ya cosechado.
+// Ojo: "maíz tardío" NO es maíz de segunda — ese va en lote propio.
+function rpSocioSugerido(nombreSegunda){
+  var inv = RP.cultivos.filter(function(c){ return rpEsInvierno(c); });
+  var trigo = inv.find(function(c){ return String(c).toLowerCase().indexOf('trigo')>=0; });
+  return trigo || (inv.length ? inv[0] : '');
 }
 
 // Superficie física: descuenta las hectáreas compartidas por doble cultivo.
@@ -9970,11 +10022,12 @@ function rpSuperficie(){
   var restante = {};
   nombres.forEach(function(n){ restante[n] = has[n]||0; });
   var solape = 0, pares = [];
-  nombres.forEach(function(w){
-    var p = doble[w];
-    if(!p || p===w || !(has[w]>0)) return;
-    var comp = Math.min(has[w], restante[p]||0);
-    if(comp>0){ solape += comp; restante[p] -= comp; pares.push({inv:w, ver:p, ha:comp}); }
+  // doble[cultivoDeSegunda] = cultivo de invierno sobre cuyo lote se siembra.
+  nombres.forEach(function(seg){
+    var inv = doble[seg];
+    if(!inv || inv===seg || !(has[seg]>0)) return;
+    var comp = Math.min(has[seg], restante[inv]||0);   // ha realmente compartidas
+    if(comp>0){ solape += comp; restante[inv] -= comp; pares.push({segunda:seg, invierno:inv, ha:comp}); }
   });
   return { sembrado: sembrado, fisica: sembrado - solape, solape: solape, pares: pares };
 }
@@ -9990,7 +10043,7 @@ function rpRenderPlanteoInputs(){
   if(!RP.dobleSugerido){
     RP.dobleSugerido = true;
     vs.forEach(function(v){
-      if(rpEsInvierno(v.nombre) && RP.doble[v.nombre]===undefined){
+      if(rpEsDeSegunda(v.nombre) && !rpEsInvierno(v.nombre) && RP.doble[v.nombre]===undefined){
         var socio = rpSocioSugerido(v.nombre);
         if(socio) RP.doble[v.nombre] = socio;
       }
@@ -9999,17 +10052,19 @@ function rpRenderPlanteoInputs(){
   var h = '<div class="rp-has-grid">';
   vs.forEach(function(v){
     var val = (RP.has[v.nombre]!=null) ? RP.has[v.nombre] : '';
-    var esInv = rpEsInvierno(v.nombre);
+    var esSeg = rpEsDeSegunda(v.nombre) && !rpEsInvierno(v.nombre);
     h += '<div class="estr-field rp-has-item"><label>'+v.nombre+' <small>(ha)</small></label>'
       +  '<input type="text" inputmode="decimal" value="'+val+'" oninput="rpEditarHas('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)" placeholder="0">';
-    if(esInv){
+    if(esSeg){
       var actual = RP.doble[v.nombre] || '';
-      var opts = '<option value="">Lote propio</option>';
-      RP.cultivos.forEach(function(c){
-        if(c===v.nombre || rpEsInvierno(c)) return;
-        opts += '<option value="'+String(c).replace(/"/g,'&quot;')+'"'+(c===actual?' selected':'')+'>Comparte con '+c+'</option>';
-      });
-      h += '<select class="rp-doble-sel" onchange="rpEditarDoble('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)" title="Doble cultivo: mismas hectáreas que el cultivo de verano">'+opts+'</select>';
+      var inviernos = RP.cultivos.filter(function(c){ return rpEsInvierno(c); });
+      if(inviernos.length){
+        var opts = '<option value="">Lote propio</option>';
+        inviernos.forEach(function(c){
+          opts += '<option value="'+String(c).replace(/"/g,'&quot;')+'"'+(c===actual?' selected':'')+'>Sobre '+c+'</option>';
+        });
+        h += '<select class="rp-doble-sel" onchange="rpEditarDoble('+JSON.stringify(v.nombre).replace(/"/g,'&quot;')+',this.value)" title="Se siembra sobre el lote del cultivo de invierno ya cosechado">'+opts+'</select>';
+      }
     }
     h += '</div>';
   });
@@ -10097,11 +10152,11 @@ function rpRenderPlanteoResultado(){
   h += '</tbody></table></div>';
   if(sup.pares.length){
     h += '<div class="rp-doble-info"><b>Doble cultivo:</b> '
-      +  sup.pares.map(function(p){ return p.inv+' sobre las mismas '+rpFmt(p.ha,0)+' ha que '+p.ver; }).join(' · ')
+      +  sup.pares.map(function(p){ return p.segunda+' sobre las mismas '+rpFmt(p.ha,0)+' ha de '+p.invierno; }).join(' · ')
       +  '. Por eso la superficie del campo ('+rpFmt(sup.fisica,0)+' ha) es menor que la sembrada ('+rpFmt(sup.sembrado,0)+' ha).</div>';
   }
   h += '<p class="rp-expl" style="margin-top:10px">Los porcentajes se calculan sobre las <b>hectáreas sembradas</b>, porque cada cultivo aporta su propio rinde al resultado. '
-    +  'La <b>superficie del campo</b> es la física: en doble cultivo, el trigo y la soja de segunda ocupan el mismo lote. '
+    +  'La <b>superficie del campo</b> es la física: la soja o el maíz de segunda se siembran sobre el lote del trigo ya cosechado, así que esas hectáreas se cuentan una sola vez. '
     +  'Un exceso de riesgo chico (menos de 5%) significa que tu planteo ya está bien diversificado. '
     +  'Recordá que el óptimo es sólo estadístico: la rotación, los contratos y el precio también mandan.</p>';
   cont.innerHTML = h;

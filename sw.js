@@ -21,7 +21,7 @@
    con el shell anterior en el fallback.
    ============================================================ */
 
-const CACHE_VERSION = 'ctx-v9';
+const CACHE_VERSION = 'ctx-v10';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 // Solo el shell. Nada de datos.
@@ -34,6 +34,7 @@ const SHELL_ASSETS = [
 
 // Todo lo que NUNCA debe cachearse: datos vivos.
 const NUNCA_CACHEAR = [
+  'version.json',        // el chequeo de version nueva: siempre a la red
   'supabase.co',
   'supabase.in',
   'api.anthropic.com',
