@@ -118,4 +118,8 @@ self.addEventListener('fetch', event => {
 /* ---------- Permitir actualizacion forzada desde la app ---------- */
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
+  // Responder que version esta corriendo (para diagnostico desde la consola).
+  if (event.data === 'VERSION' && event.ports && event.ports[0]) {
+    event.ports[0].postMessage({ version: CACHE_VERSION });
+  }
 });

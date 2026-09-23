@@ -6987,6 +6987,27 @@ function cerrarMacroModal(ev){
   /* ---------- 1. Registrar el service worker ---------- */
 
   // Cartel de "hay una versión nueva" con botón para aplicarla.
+
+  // Diagnóstico de versión: escribí ctxVersion() en la consola del navegador.
+  window.ctxVersion = function () {
+    if (!('serviceWorker' in navigator)) { console.log('Este navegador no soporta service worker.'); return; }
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      var info = {
+        controlada_por_SW: !!navigator.serviceWorker.controller,
+        hay_version_esperando: !!(reg && reg.waiting),
+        scope: reg ? reg.scope : '(sin registro)'
+      };
+      if (!navigator.serviceWorker.controller) { console.log('[CTX]', info); return; }
+      var ch = new MessageChannel();
+      ch.port1.onmessage = function (e) {
+        info.version_cache = e.data && e.data.version;
+        console.log('[CTX]', info);
+      };
+      navigator.serviceWorker.controller.postMessage('VERSION', [ch.port2]);
+      setTimeout(function () { console.log('[CTX]', info); }, 700);
+    });
+  };
+
   function mostrarCartelActualizar(worker) {
     if (document.getElementById('ctx-update-banner')) return;  // no duplicar
     var b = document.createElement('div');
@@ -7012,6 +7033,17 @@ function cerrarMacroModal(ev){
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('/agro-reporte/sw.js', { updateViaCache: 'none' })
         .then(function (reg) {
+          // Forzar chequeo de versión nueva en cada apertura. Sin esto, la PWA
+          // instalada (o una pestaña que vuelve del segundo plano) puede quedarse
+          // días con el service worker viejo y mostrar la app desactualizada.
+          try { reg.update(); } catch (e) {}
+          var ultimoChequeo = Date.now();
+          document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState !== 'visible') return;
+            if (Date.now() - ultimoChequeo < 60000) return;   // como máximo 1 vez por minuto
+            ultimoChequeo = Date.now();
+            try { reg.update(); } catch (e) {}
+          });
           console.log('SW registrado:', reg.scope);
           // Si ya hay una versión nueva esperando al cargar, ofrecerla.
           if (reg.waiting && navigator.serviceWorker.controller) mostrarCartelActualizar(reg.waiting);
