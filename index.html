@@ -1934,17 +1934,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
         </div>
 
       <!-- Opciones (Black-76) -->
-      <div class="section" id="sec-opciones">
-        <div class="section-title" onclick="toggleSeccion('sec-opciones','icon-opciones')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
-          <span>Opciones</span>
-          <span id="icon-opciones" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
-        </div>
-        <div class="card" style="padding:16px">
-          <div id="opc-tabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px"></div>
-          <div id="opc-info" class="tasas-nota"></div>
-          <div class="tasas-scroll"><div id="opc-body"></div></div>
-        </div>
-      </div>
+      
 
       <!-- Análisis CTX IA — oculto en desktop; la app móvil lo reubica vía mobOpenAI() -->
         <!-- Análisis CTX IA (acordeón) -->
@@ -2004,7 +1994,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
       <!-- ══ RIESGO PRODUCTIVO (Markowitz sobre rindes) — solo PRO ══ -->
       <div class="section" id="sec-riesgo-prod" style="margin-top:28px;display:none">
         <button class="fw-launch" onclick="abrirRiesgoProductivo()">
-          <span class="fw-launch-txt"><b>Análisis de riesgo productivo</b><br><small>Variabilidad de rindes por cultivo y combinación de hectáreas que minimiza el riesgo</small></span>
+          <span class="fw-launch-txt"><b>Análisis estadístico de riesgo productivo</b><br><small>Variabilidad de rindes por cultivo y combinación de hectáreas que minimiza el riesgo</small></span>
           <span class="fw-launch-arrow">↗</span>
         </button>
         <div id="acc-riesgo-prod" style="display:none">
@@ -2071,106 +2061,121 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
         </div>
       </div>
 
-      <!-- ══ ANALIZADOR DE ESTRATEGIAS DE OPCIONES (P&L) ══ -->
-      <div class="section" id="sec-estrategias" style="margin-top:28px">
-        <button class="fw-launch" onclick="abrirAnalizadorOpciones()">
-          <span class="fw-launch-txt"><b>Analizador de estrategias de opciones</b><br><small>P&amp;L al vencimiento y hoy, griegas y generador de ejemplos</small></span>
-          <span class="fw-launch-arrow">↗</span>
-        </button>
-        <div id="acc-estrategias" style="display:none">
-          <div class="card" id="estr-contenido" style="padding:16px">
-            <div class="tasas-nota" style="margin-bottom:12px">
-              Armá una cartera de opciones y futuros y mirá su resultado (P&amp;L) al vencimiento y hoy. Diagnóstico informativo, no es recomendación de inversión.
-            </div>
+      <!-- Opciones (Black-76) + analizador de estrategias -->
+<div class="section" id="sec-opciones">
+        <div class="section-title" onclick="toggleSeccion('sec-opciones','icon-opciones')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
+          <span>Opciones</span>
+          <span id="icon-opciones" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
+        </div>
+        <div class="card" style="padding:16px">
+          <div id="opc-tabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px"></div>
+          <div id="opc-info" class="tasas-nota"></div>
+          <div class="tasas-scroll"><div id="opc-body"></div></div>
+        </div>
+      
 
-            <!-- Guía de referencia: matriz dirección × volatilidad con generador -->
-            <div class="estr-guia">
-              <button class="estr-guia-toggle" type="button" onclick="estrToggleGuia()">
-                <span>Guía: ¿qué estrategia según mi visión de mercado y volatilidad?</span>
-                <span id="estr-guia-ico">▼</span>
-              </button>
-              <div id="estr-guia-body" style="display:none">
-                <p class="estr-guia-intro">Elegí según hacia dónde creés que va el <b>precio</b> (filas) y si la <b>volatilidad implícita</b> está baja, normal o alta (columnas). Regla de fondo: con volatilidad <b>baja</b> conviene <b>comprar</b> opciones (están baratas); con volatilidad <b>alta</b>, <b>venderlas</b> (están caras). Tocá <b>Generar</b> para armar el ejemplo con los strikes reales.</p>
-                <div class="estr-matriz-wrap">
-                  <table class="estr-matriz">
-                    <thead><tr><th></th><th>Volatilidad baja</th><th>Volatilidad normal</th><th>Volatilidad alta</th></tr></thead>
-                    <tbody>
-                      <tr>
-                        <th class="estr-dir bajista">Bajista</th>
-                        <td><div class="gex-item"><span>Comprar put</span><button class="gex-btn" onclick="gexGenerar('comprar_put')">Generar</button></div><div class="gex-item"><span>Bear put spread</span><button class="gex-btn" onclick="gexGenerar('bear_put_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (puts)</span><button class="gex-btn" onclick="gexGenerar('butterfly_put')">Generar</button></div></td>
-                        <td class="estr-simple"><div class="gex-item"><span>Vender futuro</span><button class="gex-btn" onclick="gexGenerar('vender_futuro')">Generar</button></div></td>
-                        <td><div class="gex-item"><span>Vender call</span><button class="gex-btn" onclick="gexGenerar('vender_call')">Generar</button></div><div class="gex-item"><span>Bear call spread</span><button class="gex-btn" onclick="gexGenerar('bear_call_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (calls)</span><button class="gex-btn" onclick="gexGenerar('butterfly_call')">Generar</button></div></td>
-                      </tr>
-                      <tr>
-                        <th class="estr-dir neutral">Neutral</th>
-                        <td><div class="gex-item"><span>Comprar straddle</span><button class="gex-btn" onclick="gexGenerar('comprar_straddle')">Generar</button></div><div class="gex-item"><span>Comprar strangle</span><button class="gex-btn" onclick="gexGenerar('comprar_strangle')">Generar</button></div><div class="gex-item"><span>Backspread</span><button class="gex-btn" onclick="gexGenerar('backspread')">Generar</button></div></td>
-                        <td class="estr-simple"><div class="gex-item"><span>No operar</span><button class="gex-btn" onclick="gexGenerar('no_operar')">Generar</button></div></td>
-                        <td><div class="gex-item"><span>Vender straddle</span><button class="gex-btn" onclick="gexGenerar('vender_straddle')">Generar</button></div><div class="gex-item"><span>Vender strangle</span><button class="gex-btn" onclick="gexGenerar('vender_strangle')">Generar</button></div><div class="gex-item"><span>Ratio spread</span><button class="gex-btn" onclick="gexGenerar('ratio_spread')">Generar</button></div></td>
-                      </tr>
-                      <tr>
-                        <th class="estr-dir alcista">Alcista</th>
-                        <td><div class="gex-item"><span>Comprar call</span><button class="gex-btn" onclick="gexGenerar('comprar_call')">Generar</button></div><div class="gex-item"><span>Bull call spread</span><button class="gex-btn" onclick="gexGenerar('bull_call_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (calls)</span><button class="gex-btn" onclick="gexGenerar('butterfly_call')">Generar</button></div></td>
-                        <td class="estr-simple"><div class="gex-item"><span>Comprar futuro</span><button class="gex-btn" onclick="gexGenerar('comprar_futuro')">Generar</button></div></td>
-                        <td><div class="gex-item"><span>Vender put</span><button class="gex-btn" onclick="gexGenerar('vender_put')">Generar</button></div><div class="gex-item"><span>Bull put spread</span><button class="gex-btn" onclick="gexGenerar('bull_put_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (puts)</span><button class="gex-btn" onclick="gexGenerar('butterfly_put')">Generar</button></div></td>
-                      </tr>
-                    </tbody>
-                  </table>
+  <div class="section" id="sec-estrategias" style="margin-top:28px">
+          <button class="fw-launch" onclick="abrirAnalizadorOpciones()">
+            <span class="fw-launch-txt"><b>Analizador de estrategias de opciones</b><br><small>P&amp;L al vencimiento y hoy, griegas y generador de ejemplos</small></span>
+            <span class="fw-launch-arrow">↗</span>
+          </button>
+          <div id="acc-estrategias" style="display:none">
+            <div class="card" id="estr-contenido" style="padding:16px">
+              <div class="tasas-nota" style="margin-bottom:12px">
+                Armá una cartera de opciones y futuros y mirá su resultado (P&amp;L) al vencimiento y hoy. Diagnóstico informativo, no es recomendación de inversión.
+              </div>
+
+              <!-- Guía de referencia: matriz dirección × volatilidad con generador -->
+              <div class="estr-guia">
+                <button class="estr-guia-toggle" type="button" onclick="estrToggleGuia()">
+                  <span>Guía: ¿qué estrategia según mi visión de mercado y volatilidad?</span>
+                  <span id="estr-guia-ico">▼</span>
+                </button>
+                <div id="estr-guia-body" style="display:none">
+                  <p class="estr-guia-intro">Elegí según hacia dónde creés que va el <b>precio</b> (filas) y si la <b>volatilidad implícita</b> está baja, normal o alta (columnas). Regla de fondo: con volatilidad <b>baja</b> conviene <b>comprar</b> opciones (están baratas); con volatilidad <b>alta</b>, <b>venderlas</b> (están caras). Tocá <b>Generar</b> para armar el ejemplo con los strikes reales.</p>
+                  <div class="estr-matriz-wrap">
+                    <table class="estr-matriz">
+                      <thead><tr><th></th><th>Volatilidad baja</th><th>Volatilidad normal</th><th>Volatilidad alta</th></tr></thead>
+                      <tbody>
+                        <tr>
+                          <th class="estr-dir bajista">Bajista</th>
+                          <td><div class="gex-item"><span>Comprar put</span><button class="gex-btn" onclick="gexGenerar('comprar_put')">Generar</button></div><div class="gex-item"><span>Bear put spread</span><button class="gex-btn" onclick="gexGenerar('bear_put_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (puts)</span><button class="gex-btn" onclick="gexGenerar('butterfly_put')">Generar</button></div></td>
+                          <td class="estr-simple"><div class="gex-item"><span>Vender futuro</span><button class="gex-btn" onclick="gexGenerar('vender_futuro')">Generar</button></div></td>
+                          <td><div class="gex-item"><span>Vender call</span><button class="gex-btn" onclick="gexGenerar('vender_call')">Generar</button></div><div class="gex-item"><span>Bear call spread</span><button class="gex-btn" onclick="gexGenerar('bear_call_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (calls)</span><button class="gex-btn" onclick="gexGenerar('butterfly_call')">Generar</button></div></td>
+                        </tr>
+                        <tr>
+                          <th class="estr-dir neutral">Neutral</th>
+                          <td><div class="gex-item"><span>Comprar straddle</span><button class="gex-btn" onclick="gexGenerar('comprar_straddle')">Generar</button></div><div class="gex-item"><span>Comprar strangle</span><button class="gex-btn" onclick="gexGenerar('comprar_strangle')">Generar</button></div><div class="gex-item"><span>Backspread</span><button class="gex-btn" onclick="gexGenerar('backspread')">Generar</button></div></td>
+                          <td class="estr-simple"><div class="gex-item"><span>No operar</span><button class="gex-btn" onclick="gexGenerar('no_operar')">Generar</button></div></td>
+                          <td><div class="gex-item"><span>Vender straddle</span><button class="gex-btn" onclick="gexGenerar('vender_straddle')">Generar</button></div><div class="gex-item"><span>Vender strangle</span><button class="gex-btn" onclick="gexGenerar('vender_strangle')">Generar</button></div><div class="gex-item"><span>Ratio spread</span><button class="gex-btn" onclick="gexGenerar('ratio_spread')">Generar</button></div></td>
+                        </tr>
+                        <tr>
+                          <th class="estr-dir alcista">Alcista</th>
+                          <td><div class="gex-item"><span>Comprar call</span><button class="gex-btn" onclick="gexGenerar('comprar_call')">Generar</button></div><div class="gex-item"><span>Bull call spread</span><button class="gex-btn" onclick="gexGenerar('bull_call_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (calls)</span><button class="gex-btn" onclick="gexGenerar('butterfly_call')">Generar</button></div></td>
+                          <td class="estr-simple"><div class="gex-item"><span>Comprar futuro</span><button class="gex-btn" onclick="gexGenerar('comprar_futuro')">Generar</button></div></td>
+                          <td><div class="gex-item"><span>Vender put</span><button class="gex-btn" onclick="gexGenerar('vender_put')">Generar</button></div><div class="gex-item"><span>Bull put spread</span><button class="gex-btn" onclick="gexGenerar('bull_put_spread')">Generar</button></div><div class="gex-item"><span>Mariposa (puts)</span><button class="gex-btn" onclick="gexGenerar('butterfly_put')">Generar</button></div></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div id="estr_gex_feedback" class="estr-gex-feedback" style="display:none"></div>
+                  <p class="estr-guia-nota">⚠ Vender opciones "desnudas" (naked) cobra prima pero expone a pérdidas grandes. Armarlas como spreads limita el riesgo. Al generar, la estrategia se carga abajo para ver su P&amp;L y griegas.</p>
                 </div>
-                <div id="estr_gex_feedback" class="estr-gex-feedback" style="display:none"></div>
-                <p class="estr-guia-nota">⚠ Vender opciones "desnudas" (naked) cobra prima pero expone a pérdidas grandes. Armarlas como spreads limita el riesgo. Al generar, la estrategia se carga abajo para ver su P&amp;L y griegas.</p>
               </div>
+
+              <!-- Parámetros globales (editables a mano) -->
+              <div class="estr-params">
+                <div class="estr-field">
+                  <label for="estr_producto">Producto</label>
+                  <select id="estr_producto" onchange="estrRefrescar()">
+                    <option value="Soja">Soja</option><option value="Maiz">Maíz</option><option value="Trigo">Trigo</option>
+                  </select>
+                </div>
+                <div class="estr-field">
+                  <label for="estr_F">Futuro subyacente (F)</label>
+                  <input type="text" inputmode="decimal" id="estr_F" oninput="estrRender()" placeholder="Precio del futuro">
+                </div>
+                <div class="estr-field">
+                  <label for="estr_dte">Días al vencimiento</label>
+                  <input type="text" inputmode="numeric" id="estr_dte" value="60" oninput="estrRender()" placeholder="60">
+                </div>
+                <div class="estr-field">
+                  <label for="estr_vol">Volatilidad anual (%)</label>
+                  <input type="text" inputmode="decimal" id="estr_vol" value="19" oninput="estrRender()" placeholder="19">
+                </div>
+              </div>
+
+              <!-- Patas de la estrategia -->
+              <div id="estr_patas"></div>
+              <button class="estr-add" type="button" onclick="estrAgregarPata()">+ Agregar pata</button>
+
+              <!-- Resumen de posición -->
+              <div id="estr_resumen" class="estr-resumen"></div>
+
+              <!-- Gráfico de P&L -->
+              <div class="estr-graf-wrap">
+                <div class="estr-graf-tabs">
+                  <button class="estr-gtab on" id="estr_gtab_venc" onclick="estrSetVista('venc')">Al vencimiento</button>
+                  <button class="estr-gtab" id="estr_gtab_hoy" onclick="estrSetVista('hoy')">Teórico hoy</button>
+                </div>
+                <!-- Selector de días para la curva teórica (Current Theoretical P&L) -->
+                <div class="estr-dte-slider" id="estr_dte_slider" style="display:none">
+                  <label>Días al vencimiento para la curva teórica: <b id="estr_dte_view_val">60</b></label>
+                  <input type="range" id="estr_dte_view" min="0" max="240" value="60" step="1" oninput="estrDteView()">
+                  <div class="estr-dte-marks"><span>Vencimiento (0)</span><span id="estr_dte_max">hoy</span></div>
+                </div>
+                <canvas id="estr_canvas" height="300"></canvas>
+                <div id="estr_graf_leyenda" class="estr-leyenda"></div>
+              </div>
+
+              <!-- Griegas de posición -->
+              <div id="estr_griegas" class="estr-griegas"></div>
             </div>
-
-            <!-- Parámetros globales (editables a mano) -->
-            <div class="estr-params">
-              <div class="estr-field">
-                <label for="estr_producto">Producto</label>
-                <select id="estr_producto" onchange="estrRefrescar()">
-                  <option value="Soja">Soja</option><option value="Maiz">Maíz</option><option value="Trigo">Trigo</option>
-                </select>
-              </div>
-              <div class="estr-field">
-                <label for="estr_F">Futuro subyacente (F)</label>
-                <input type="text" inputmode="decimal" id="estr_F" oninput="estrRender()" placeholder="Precio del futuro">
-              </div>
-              <div class="estr-field">
-                <label for="estr_dte">Días al vencimiento</label>
-                <input type="text" inputmode="numeric" id="estr_dte" value="60" oninput="estrRender()" placeholder="60">
-              </div>
-              <div class="estr-field">
-                <label for="estr_vol">Volatilidad anual (%)</label>
-                <input type="text" inputmode="decimal" id="estr_vol" value="19" oninput="estrRender()" placeholder="19">
-              </div>
-            </div>
-
-            <!-- Patas de la estrategia -->
-            <div id="estr_patas"></div>
-            <button class="estr-add" type="button" onclick="estrAgregarPata()">+ Agregar pata</button>
-
-            <!-- Resumen de posición -->
-            <div id="estr_resumen" class="estr-resumen"></div>
-
-            <!-- Gráfico de P&L -->
-            <div class="estr-graf-wrap">
-              <div class="estr-graf-tabs">
-                <button class="estr-gtab on" id="estr_gtab_venc" onclick="estrSetVista('venc')">Al vencimiento</button>
-                <button class="estr-gtab" id="estr_gtab_hoy" onclick="estrSetVista('hoy')">Teórico hoy</button>
-              </div>
-              <!-- Selector de días para la curva teórica (Current Theoretical P&L) -->
-              <div class="estr-dte-slider" id="estr_dte_slider" style="display:none">
-                <label>Días al vencimiento para la curva teórica: <b id="estr_dte_view_val">60</b></label>
-                <input type="range" id="estr_dte_view" min="0" max="240" value="60" step="1" oninput="estrDteView()">
-                <div class="estr-dte-marks"><span>Vencimiento (0)</span><span id="estr_dte_max">hoy</span></div>
-              </div>
-              <canvas id="estr_canvas" height="300"></canvas>
-              <div id="estr_graf_leyenda" class="estr-leyenda"></div>
-            </div>
-
-            <!-- Griegas de posición -->
-            <div id="estr_griegas" class="estr-griegas"></div>
           </div>
         </div>
       </div>
+
+      
 
       <!-- Nueva operación -->
 
@@ -2898,6 +2903,8 @@ async function loadApp() {
     return;
   }
   currentCliente = cli;
+  // El módulo PRO de riesgo productivo se evalúa apenas hay perfil.
+  if (typeof window.rpAplicarGatePro === 'function') window.rpAplicarGatePro();
 
   // Load operaciones y precios en paralelo
   const [opsRes, preciosRes, cosechaRes] = await Promise.all([
@@ -7012,7 +7019,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20260925-1233';
+  var CTX_BUILD = '20260925-1255';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -9878,7 +9885,7 @@ function abrirRiesgoProductivo(){
   var cont = document.getElementById('rp-contenido');
   if(!cont) return;
   FloatWin.abrir('riesgo-productivo', {
-    titulo: 'Análisis de riesgo productivo',
+    titulo: 'Análisis estadístico de riesgo productivo',
     contenidoEl: cont, ancho: 900, alto: 640
   });
   rpInitSiHaceFalta();
@@ -10513,9 +10520,27 @@ function rpRenderCostos(){
 // Muestra la sección solo si el cliente tiene Agricultura PRO.
 function rpAplicarGatePro(){
   var sec = document.getElementById('sec-riesgo-prod');
-  if(!sec) return;
-  var pro = (typeof isAgriculturaPro==='function') ? isAgriculturaPro() : false;
+  if(!sec) return false;
+  // Si el perfil del cliente todavía no cargó, NO decidimos: devolvemos false
+  // para reintentar. Antes se evaluaba una sola vez a los 1,2 s y, si la carga
+  // demoraba, el módulo quedaba oculto aunque el cliente fuera PRO.
+  if (typeof currentCliente === 'undefined' || !currentCliente) return false;
+  var pro = (typeof isAgriculturaPro === 'function') ? isAgriculturaPro() : false;
   sec.style.display = pro ? '' : 'none';
+  return true;
 }
-document.addEventListener('DOMContentLoaded', function(){ setTimeout(rpAplicarGatePro, 1200); });
+window.rpAplicarGatePro = rpAplicarGatePro;
+
+// Reintenta hasta que el perfil esté disponible (máximo ~30 s).
+function rpVigilarGatePro(){
+  var intentos = 0;
+  var iv = setInterval(function(){
+    intentos++;
+    if (rpAplicarGatePro() || intentos > 60) clearInterval(iv);
+  }, 500);
+}
+document.addEventListener('DOMContentLoaded', rpVigilarGatePro);
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState === 'visible') rpAplicarGatePro();
+});
 </script>
