@@ -1818,7 +1818,10 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 
       <!-- Operaciones -->
       <div class="section" id="sec-operaciones">
-        <div class="section-title">Operaciones</div>
+        <div class="section-title" onclick="toggleSeccion('sec-operaciones','icon-operaciones')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
+          <span>Operaciones</span>
+          <span id="icon-operaciones" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
+        </div>
         <div class="ops-filters" id="d-filters"></div>
         <div class="card ops-table-wrap">
           <table class="ops-table">
@@ -1932,7 +1935,10 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 
       <!-- Opciones (Black-76) -->
       <div class="section" id="sec-opciones">
-        <div class="section-title">Opciones</div>
+        <div class="section-title" onclick="toggleSeccion('sec-opciones','icon-opciones')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding-right:4px">
+          <span>Opciones</span>
+          <span id="icon-opciones" style="font-size:13px;color:var(--gris);transition:transform .25s">▼</span>
+        </div>
         <div class="card" style="padding:16px">
           <div id="opc-tabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px"></div>
           <div id="opc-info" class="tasas-nota"></div>
@@ -5985,6 +5991,19 @@ async function refreshData() {
 function showLoading(s) {
   document.getElementById('loadingScreen').style.display = s?'flex':'none';
 }
+function toggleSeccion(secId, iconId) {
+  const sec = document.getElementById(secId);
+  if (!sec) return;
+  const icon = document.getElementById(iconId);
+  const hijos = Array.prototype.slice.call(sec.children).slice(1);   // todo menos el título
+  const estabaOculto = hijos.length > 0 && hijos[0].dataset.ctxOculto === '1';
+  hijos.forEach(function (el) {
+    if (estabaOculto) { el.style.display = el.dataset.ctxDisplay || ''; delete el.dataset.ctxOculto; }
+    else { el.dataset.ctxDisplay = el.style.display || ''; el.style.display = 'none'; el.dataset.ctxOculto = '1'; }
+  });
+  if (icon) icon.style.transform = estabaOculto ? '' : 'rotate(180deg)';
+}
+
 function toggleAcc(id, iconId) {
   const el   = document.getElementById(id);
   const icon = document.getElementById(iconId);
@@ -6993,7 +7012,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20260923-2017';
+  var CTX_BUILD = '20260925-1233';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
