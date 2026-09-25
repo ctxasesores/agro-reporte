@@ -2043,9 +2043,12 @@ function mostrarToast(id, msg, type) {
   let _universoCache  = null;
 
   async function gestionCampanias(payload) {
+    // agente-agro exige el token del admin (clientes.es_admin), no la clave pública.
+    let token = '';
+    try { const { data } = await sb.auth.getSession(); token = data?.session?.access_token || ''; } catch (e) {}
     const res = await fetch(FUNCTIONS_URL + '/agente-agro', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPA_KEY, 'apikey':SUPA_KEY },
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(token || SUPA_KEY), 'apikey':SUPA_KEY },
       body: JSON.stringify({ dominio: 'gestion_campanias', ...payload }),
     });
     return res.json();

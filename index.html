@@ -2554,6 +2554,9 @@ let activeTagFilter = [];   // tags seleccionados para filtrar (intersección Y)
 let currentAuthMode = 'login';
 let authListenerReady = false;
 let passwordRecoveryMode = false;
+// v20260925: access_token de la sesión para Edge Functions que actúan en nombre
+// del usuario (agente-agro). Se mantiene al día con onAuthStateChange.
+let _ctxAccessToken = '';
 let campaignTabs = [];
 let activeCampaign = '';
 const AGRI_PRO_ONLY_TYPES = ['PAF','FIX','Call','Put'];
@@ -2562,7 +2565,8 @@ const AGRI_PRO_ONLY_TYPES = ['PAF','FIX','Call','Put'];
 function initSupabase() {
   if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
   if (!authListenerReady) {
-    sb.auth.onAuthStateChange((event) => {
+    sb.auth.onAuthStateChange((event, session) => {
+      _ctxAccessToken = (event === 'SIGNED_OUT') ? '' : (session?.access_token || _ctxAccessToken);
       if (event === 'PASSWORD_RECOVERY') {
         passwordRecoveryMode = true;
         closeForgotPasswordModal();
@@ -2571,6 +2575,25 @@ function initSupabase() {
     });
     authListenerReady = true;
   }
+}
+
+// Headers para agente-agro: mandan el token del usuario, no la clave pública.
+// El servidor deriva cliente, código y nivel PRO desde ese token.
+async function ctxAuthHeaders() {
+  try {
+    initSupabase();
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.access_token) _ctxAccessToken = data.session.access_token;
+  } catch (e) { /* sin sesión: el servidor responde 401 y la UI lo muestra */ }
+  return ctxAuthHeadersSync();
+}
+// Versión sincrónica (para cierres de página, donde no se puede esperar).
+function ctxAuthHeadersSync() {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + (_ctxAccessToken || SUPA_KEY)
+  };
 }
 
 document.addEventListener('keydown', e => {
@@ -7034,7 +7057,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20260925-1305';
+  var CTX_BUILD = '20260925-1900';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -7660,10 +7683,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
     try {
       const resp = await fetch(FN_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
-        },
+        headers: await ctxAuthHeaders(),
         body: JSON.stringify({
           panel: 'agricultura',
           mensaje,
@@ -7850,10 +7870,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
     try {
       const resp = await fetch(FN_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
-        },
+        headers: await ctxAuthHeaders(),
         body: JSON.stringify({
           dominio: 'mercado',
           messages: mensajesApi,
@@ -7900,10 +7917,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
       if (typeof currentCliente === 'undefined' || !currentCliente?.id) return;
       const resp = await fetch(FN_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
-        },
+        headers: await ctxAuthHeaders(),
         body: JSON.stringify({
           dominio: 'leer_memoria',
           panel: 'mercado',
@@ -7932,10 +7946,8 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
       if (historialMercado.length < 2) return;
       fetch(FN_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
-        },
+        keepalive: true, // que el pedido sobreviva al cierre de la pestaña
+        headers: ctxAuthHeadersSync(),
         body: JSON.stringify({
           dominio: 'curador',
           panel: 'mercado',
@@ -7985,10 +7997,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
     try {
       const res = await fetch(FN_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(SB_ANON ? { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON } : {}),
-        },
+        headers: await ctxAuthHeaders(),
         body: JSON.stringify({ dominio: 'insights_mercado' }),
       });
       const data = await res.json();

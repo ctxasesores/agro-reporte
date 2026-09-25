@@ -557,6 +557,21 @@ const FUNCTIONS_URL = `${SUPA_URL}/functions/v1`;
 var currentCliente = null;
 var currentUser    = null;
 
+// agente-agro exige el token de sesión del usuario (misma sesión que la app,
+// comparten origen). Sin sesión, el servidor responde 401.
+var _mgSb = null;
+async function mgAuthHeaders() {
+  var token = '';
+  try {
+    if (window.supabase) {
+      _mgSb = _mgSb || window.supabase.createClient(SUPA_URL, SUPA_KEY);
+      var r = await _mgSb.auth.getSession();
+      token = (r && r.data && r.data.session) ? r.data.session.access_token : '';
+    }
+  } catch (e) {}
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token || SUPA_KEY), 'apikey': SUPA_KEY };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   setupContext();
   checkAccess();
@@ -668,11 +683,7 @@ async function cargarInsightsMercado() {
   try {
     var res = await fetch(`${FUNCTIONS_URL}/agente-agro`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPA_KEY}`,
-        'apikey': SUPA_KEY
-      },
+      headers: await mgAuthHeaders(),
       body: JSON.stringify({ dominio: 'insights_mercado' })
     });
     var data = await res.json();
@@ -814,11 +825,7 @@ async function sendMessage() {
   try {
     var res = await fetch(`${FUNCTIONS_URL}/agente-agro`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPA_KEY}`,
-        'apikey': SUPA_KEY
-      },
+      headers: await mgAuthHeaders(),
       body: JSON.stringify({
         dominio: 'mercado',
         messages: chatHistory,

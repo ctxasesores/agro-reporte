@@ -1025,6 +1025,16 @@ function initScenarioSupabase(){
   return scenarioSb;
 }
 
+// agente-agro exige el token de sesión del usuario; el nivel PRO lo valida el servidor.
+async function getScenarioAccessToken(){
+  try{
+    var client = initScenarioSupabase();
+    if(!client) return '';
+    var res = await client.auth.getSession();
+    return res && res.data && res.data.session ? res.data.session.access_token : '';
+  }catch(e){ return ''; }
+}
+
 async function getScenarioSessionUser(){
   var client = initScenarioSupabase();
   if(!client) return null;
@@ -2352,7 +2362,7 @@ render();
     try{
       var resp = await fetch(FN_URL, {
         method:'POST',
-        headers:{ 'Content-Type':'application/json', 'apikey': SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY },
+        headers:{ 'Content-Type':'application/json', 'apikey': SUPA_KEY, 'Authorization':'Bearer '+((await getScenarioAccessToken()) || SUPA_KEY) },
         body: JSON.stringify({
           dominio: 'tambo',
           cliente_id: currentClienteId,
