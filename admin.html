@@ -6,6 +6,7 @@
 <title>Context | Panel Administrador</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="kpi-financiero.js?v=20260928-1400"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -227,6 +228,7 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('pipeline',this)">🌐 Pipeline externo</a>
       <a class="nav-item" onclick="showSection('bcra',this)">🏦 BCRA / Dólar</a>
       <a class="nav-item" onclick="showSection('campanias',this)">🌾 Campañas</a>
+      <a class="nav-item" onclick="showSection('financiero',this)">📊 Datos financieros</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
     <div class="sidebar-footer">
@@ -679,6 +681,16 @@ tr:hover td { background:#f9faf6; }
     </div>
 
     <!-- ══ SECCIÓN: CAMPAÑAS ══ -->
+    <div class="section" id="sec-financiero">
+      <h2 class="tool-section-title">📊 Datos financieros</h2>
+      <p class="tool-section-sub">Flujo mensual, deuda, bienes de uso y ejercicio de cada cliente. Es el mismo tablero que el cliente ve en KPIs → Financiero: lo que cargues acá lo ve él, y al revés.</p>
+      <div class="tool-panel" style="margin-bottom:16px">
+        <label class="modal-label" for="fin-admin-cliente" style="display:block;margin-bottom:6px">Cliente</label>
+        <select class="modal-select" id="fin-admin-cliente" style="min-width:280px;max-width:100%" onchange="finAdminMontar()"></select>
+      </div>
+      <div id="fin-admin-root"></div>
+    </div>
+
     <div class="section" id="sec-campanias">
       <h2 class="tool-section-title">🌾 Campañas</h2>
       <p class="tool-section-sub">La campaña activa filtra qué vencimientos de futuros ve el cliente en el panel de Mercado y en el Asesor IA. Excluir un vencimiento aplica a todos sus mercados (ROS/MIN/BA) a la vez. Esto no afecta qué se sincroniza desde A3 — solo qué se muestra.</p>
@@ -1918,6 +1930,7 @@ function showSection(name, el) {
     pipeline:     ['Pipeline externo','Fuentes de datos que alimentan el contexto del Asesor IA'],
     bcra:         ['BCRA / Dólar','Actualizá variables macroeconómicas y tipos de cambio'],
     campanias:    ['Campañas','Elegí la campaña activa y los vencimientos que se muestran al cliente'],
+    financiero:   ['Datos financieros','Cargá y revisá el tablero financiero de cada cliente'],
     usuarios:     ['Gestión de usuarios','Creá y administrá los accesos de cada cliente'],
   };
   const t = titles[name] || ['',''];
@@ -1929,6 +1942,38 @@ function showSection(name, el) {
   if (name === 'usuarios')      cargarClientes();
   if (name === 'pipeline')      cargarEstadoPipeline();
   if (name === 'campanias')     cargarCampanias();
+  if (name === 'financiero')    finAdminIniciar();
+}
+
+// ── Datos financieros por cliente (kpi-financiero.js) ──
+let _finAdminClientes = null;
+async function finAdminIniciar() {
+  const sel = document.getElementById('fin-admin-cliente');
+  if (!sel) return;
+  initSupabase();
+  if (!_finAdminClientes) {
+    sel.innerHTML = '';
+    sel.add(new Option('Cargando clientes…', ''));
+    const { data, error } = await sb.from('clientes').select('id,nombre_empresa,codigo').order('nombre_empresa', { ascending: true });
+    sel.innerHTML = '';
+    if (error) { sel.add(new Option('No se pudieron cargar los clientes', '')); return; }
+    _finAdminClientes = data || [];
+    sel.add(new Option('Elegí un cliente…', ''));
+    _finAdminClientes.forEach(c => sel.add(new Option(`${c.nombre_empresa || c.codigo} (${c.codigo || 's/código'})`, c.id)));
+  }
+  finAdminMontar();
+}
+function finAdminMontar() {
+  const id = document.getElementById('fin-admin-cliente')?.value;
+  const root = document.getElementById('fin-admin-root');
+  if (!root) return;
+  if (!window.CtxFin) { root.textContent = 'No se pudo cargar el módulo financiero (kpi-financiero.js).'; return; }
+  if (!id) {
+    root.innerHTML = '<div class="tool-status" style="display:block">Elegí un cliente para ver y cargar sus datos financieros.</div>';
+    return;
+  }
+  const c = (_finAdminClientes || []).find(x => x.id === id);
+  window.CtxFin.montar(root, { sb, clienteId: id, clienteNombre: c ? (c.nombre_empresa || c.codigo) : '', tema: 'claro', puedeEditar: true });
 }
 
 // EXPORT

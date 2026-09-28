@@ -188,6 +188,13 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 
 /* ── PAGE BODY ── */
 .page-body { padding:24px 28px; flex:1; background:var(--negro-b); }
+/* KPIs · pestañas Financiero / Cartera / Unidades de negocio */
+.kpi-tab-bar { display:flex; gap:3px; background:var(--negro-s); padding:4px; border-radius:8px; margin-bottom:18px; width:fit-content; max-width:100%; overflow-x:auto; }
+.kpi-tab { padding:8px 15px; border-radius:5px; font-size:12px; font-weight:600; color:var(--gris); cursor:pointer; border:none; background:none; font-family:inherit; white-space:nowrap; min-height:34px; }
+.kpi-tab.active { background:var(--negro-m); color:var(--texto); }
+.kpi-tab:hover:not(.active) { color:var(--texto); }
+.kpi-pane { display:none; }
+.kpi-pane.active { display:block; }
 .dashboard-stage { min-height:100vh; }
 .dashboard-view { display:none; }
 .dashboard-view.active { display:block; }
@@ -1525,7 +1532,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
     <nav class="sidebar-nav">
       <a class="nav-item active" id="nav-kpis" onclick="switchDashboard('kpis',this)" title="KPIs">
         <span class="nav-icon">◎</span>
-        <span class="nav-label"><span class="nav-main">KPIs</span><span class="nav-sub">Unidades de negocio</span></span>
+        <span class="nav-label"><span class="nav-main">KPIs</span><span class="nav-sub">Financiero · cartera · unidades</span></span>
       </a>
       <a class="nav-item" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
         <span class="nav-icon">◈</span>
@@ -2187,6 +2194,15 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 
     <div class="dashboard-view active" id="view-kpis">
       <div class="page-body">
+        <div class="kpi-tab-bar" role="tablist" aria-label="Secciones de KPIs">
+          <button class="kpi-tab active" role="tab" aria-selected="true" data-kpi-tab="financiero" onclick="setKpiTab('financiero')">Financiero</button>
+          <button class="kpi-tab" role="tab" aria-selected="false" data-kpi-tab="cartera" onclick="setKpiTab('cartera')">Cartera</button>
+          <button class="kpi-tab" role="tab" aria-selected="false" data-kpi-tab="unidades" onclick="setKpiTab('unidades')">Unidades de negocio</button>
+        </div>
+        <div class="kpi-pane active" id="kpi-pane-financiero" role="tabpanel">
+          <div id="fin-root"></div>
+        </div>
+        <div class="kpi-pane" id="kpi-pane-cartera" role="tabpanel">
         <div class="section" id="sec-kpis-detalle-producto">
           <div class="section-title" id="kpi-detail-title">Detalle por producto · Todas las campañas</div>
           <div class="kpi-filter-row">
@@ -2224,8 +2240,10 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
             </div>
           </div>
         </div>
+        </div>
+        <div class="kpi-pane" id="kpi-pane-unidades" role="tabpanel">
         <div class="section" id="sec-unidades-negocio">
-          <div class="section-title">KPIs</div>
+          <div class="section-title">Unidades de negocio</div>
           <div class="card business-dashboard-card">
             <div class="business-dashboard-head">
               <div>
@@ -2237,6 +2255,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
             <div class="business-summary-grid" id="business-summary-grid"></div>
             <div class="business-units-grid" id="business-units-grid"></div>
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -2524,6 +2543,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
   </div><!-- /main-content -->
 </div><!-- /appShell -->
 
+<script src="kpi-financiero.js?v=20260928-1400"></script>
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
@@ -2587,6 +2607,33 @@ async function ctxAuthHeaders() {
   } catch (e) { /* sin sesión: el servidor responde 401 y la UI lo muestra */ }
   return ctxAuthHeadersSync();
 }
+// ── KPIs · pestañas y tablero financiero (kpi-financiero.js) ──
+let kpiTabActiva = 'financiero';
+function setKpiTab(tab) {
+  kpiTabActiva = tab;
+  document.querySelectorAll('#view-kpis .kpi-tab').forEach(b => {
+    const on = b.dataset.kpiTab === tab;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('#view-kpis .kpi-pane').forEach(p => p.classList.toggle('active', p.id === `kpi-pane-${tab}`));
+  if (tab === 'financiero') ctxFinMontar();
+  if (tab === 'unidades') renderBusinessUnits(true);
+}
+function ctxFinMontar(forzar) {
+  const root = document.getElementById('fin-root');
+  if (!root || !currentCliente?.id) return Promise.resolve();
+  if (!window.CtxFin) {
+    root.innerHTML = '<div class="card" style="padding:18px;font-size:13px;color:var(--gris)">No se pudo cargar el tablero financiero. Tocá Actualizar o recargá la página.</div>';
+    return Promise.resolve();
+  }
+  initSupabase();
+  return window.CtxFin.montar(root, {
+    sb, clienteId: currentCliente.id, clienteNombre: currentCliente.nombre_empresa || '',
+    tema: 'oscuro', puedeEditar: true, forzar: !!forzar
+  });
+}
+
 // Versión sincrónica (para cierres de página, donde no se puede esperar).
 function ctxAuthHeadersSync() {
   return {
@@ -3511,6 +3558,7 @@ function switchDashboard(view, el) {
   document.getElementById(`view-${view}`)?.classList.add('active');
   if (view === 'kpis') {
     renderBusinessUnits();
+    if (kpiTabActiva === 'financiero') ctxFinMontar();
   }
   if (view === 'ganaderia') {
     const modoGan = getDashboardMode('ganaderia', state);
@@ -3790,6 +3838,7 @@ async function refreshActiveDashboard() {
     if (view === 'kpis') {
       await refreshBusinessRemoteState(true);
       renderBusinessUnits(true);
+      if (kpiTabActiva === 'financiero') await ctxFinMontar(true);
     } else if (view === 'agricultura') {
       await refreshData();
     } else if (view === 'ganaderia') {
@@ -7057,7 +7106,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20260925-1900';
+  var CTX_BUILD = '20260928-1400';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {

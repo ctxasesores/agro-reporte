@@ -21,13 +21,14 @@
    con el shell anterior en el fallback.
    ============================================================ */
 
-const CACHE_VERSION = 'ctx-v14';
+const CACHE_VERSION = 'ctx-v16';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 // Solo el shell. Nada de datos.
 const SHELL_ASSETS = [
   './',
   './index.html',
+  './kpi-financiero.js',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
