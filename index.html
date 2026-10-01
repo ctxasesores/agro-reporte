@@ -740,6 +740,18 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .bst-esc{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13px;line-height:1.5;color:var(--gris)}
 .bst-esc i{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1px solid var(--oro);color:var(--oro-l);
   display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:12px}
+/* Frontera eficiente del Booster: los pares DUPLO/CIERRE que no están dominados */
+.bst-fr{margin:18px 0 4px}
+.bst-fr-t{font-size:11px;letter-spacing:.7px;color:var(--gris);text-transform:uppercase;margin-bottom:8px}
+.bst-fr table{width:100%;border-collapse:collapse;font-size:13px}
+.bst-fr th{font-size:10.5px;letter-spacing:.5px;color:var(--gris);text-transform:uppercase;
+  text-align:right;padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.14);font-weight:600}
+.bst-fr th:first-child{text-align:left}
+.bst-fr td{padding:7px 8px;text-align:right;border-bottom:1px solid rgba(255,255,255,.06);font-variant-numeric:tabular-nums}
+.bst-fr td:first-child{text-align:left;color:var(--gris)}
+.bst-fr tr.on td{background:rgba(212,160,23,.12);color:var(--oro-l);font-weight:700}
+.bst-fr tr.on td:first-child{color:var(--oro-l);border-left:2px solid var(--oro)}
+.bst-fr-n{font-size:12px;line-height:1.5;color:var(--gris);margin-top:8px}
 .bstd-wrap{position:relative;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
   border-radius:14px;padding:14px 10px 6px;margin:16px 0}
 .bstd{width:100%;height:auto;display:block;overflow:visible}
@@ -5085,7 +5097,7 @@ function buildTasasContentHTML(vencMap, useTNA, prod) {
     const pm = String(bst.pos.split('_')[0]).padStart(2,'0'), pa = String(bst.pos.split('_')[1]).slice(2);
     vaMaxHTML = `<div class="tasas-vamax booster">
       ${rocketBtn}
-      <div style="flex:1"><div class="t">Booster</div><div class="p">POSICIÓN <b>${pm}/${pa}</b>${bst.sintetico?' <span style="color:var(--gris)">· strike sintético</span>':(bst.teorico?' <span style="color:var(--gris)">· prima teórica</span>':'')}</div></div>
+      <div style="flex:1"><div class="t">Booster</div><div class="p">POSICIÓN <b>${pm}/${pa}</b> · CIERRE <b>${f0(bst.cierre)}</b> <span style="color:var(--gris)">· ✕ ${(bst.probCierre*100).toFixed(0)}%</span>${bst.sintetico?' <span style="color:var(--gris)">· sintético</span>':''}</div></div>
       <div class="v">${f0(bst.duplo)}<span class="u">U$S / tn.</span></div>
       <button class="tasas-help" onclick="boosterDetalle('${prod}')" title="Cómo funciona la estrategia">?</button>
     </div>`;
@@ -7106,7 +7118,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20260928-1400';
+  var CTX_BUILD = '20260930-2230';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -8816,28 +8828,108 @@ function estrInitSiHaceFalta(){
   // ══════════════════ BOOSTER ══════════════════
   // Lanzamiento (venta) de un CALL y un PUT sobre la posición de COSECHA.
   // Las primas cobradas son el "plus" sobre el futuro.
-  //   R1  simetría con sesgo permitido a la suba:  (Kc - F) >= (F - Kp)
-  //   R2  las primas deben alcanzar el DUPLO:      F + primaC + primaP >= Kc
-  //   R3  DUPLO = Kc  ·  CIERRE = Kp
-  // Entre los pares válidos se elige el de MAYOR PLUS (suma de primas).
+  //   R1  DUPLO = Kc > F  ·  CIERRE = Kp < F
+  //   R2  las primas deben financiar el DUPLO:  F + primaC + primaP > Kc
+  //   R3  el CIERRE no puede ser demasiado probable:  P(✕) <= BST_TOPE_PX
+  // Entre los pares válidos se elige el DUPLO más alto; a igual DUPLO, el de
+  // CIERRE más bajo (menor excedente).
+  //
+  // POR QUÉ EXISTE R3 (auditoría 30/09/2026):
+  // Con la regla anterior — simetría (Kc-F) >= (F-Kp) más "DUPLO más alto
+  // posible" — la selección era una solución de esquina. La prima del PUT se
+  // maximiza cuando Kp se acerca a F, y un DUPLO más alto se financia con más
+  // prima: el óptimo empujaba el CIERRE contra el forward. Con datos reales de
+  // A3 daba CIERRE a 1,9% del futuro en soja y P(✕) de 30% a 41% en los tres
+  // productos. El diagrama vende el escenario ✕ como la rama remota; no lo era.
+  // La simetría nunca era la restricción activa (quedaba con holgura), así que
+  // se reemplazó por un tope directo sobre la probabilidad del escenario malo.
+  // Sobre la frontera eficiente, un escalón de DUPLO (4 USD) compra una caída
+  // de P(✕) del ~40% al 6-24%: es el punto que domina y es el que R3 elige.
+  //
   // Uso informativo. No es recomendación de inversión.
   const MES_COSECHA = { Soja: 5, Trigo: 1, Maiz: 4 };   // mayo / enero / abril
+
+  // Tope de probabilidad del escenario ✕ (terminar debajo del CIERRE, con el
+  // volumen comprometido sin precio fijado). Es el único parámetro de apetencia
+  // de riesgo del Booster: cambiarlo acá cambia la selección en todo el panel.
+  //
+  // CALIBRACIÓN (curva del 29/09/2026). Las fronteras eficientes dan estos
+  // P(✕) por producto:  soja 49/31/3/2%  ·  maíz 51/16/2%  ·  trigo 47/24/4%.
+  // Con 25% la selección es soja 3%, maíz 16%, trigo 24%: en los tres casos se
+  // ceden a lo sumo dos escalones de DUPLO (8 USD) contra el máximo, y a cambio
+  // el escenario malo deja de ser una moneda al aire. Trigo queda a un punto
+  // del tope, así que un movimiento de mercado puede bajarlo un escalón más;
+  // la tabla de frontera del modal hace visible ese salto en vez de dejarlo
+  // como un cambio inexplicable.
+  const BST_TOPE_PX = 0.25;
+  // El productor VENDE las dos opciones: cobra bid, no ajuste. Sin este
+  // descuento el panel publica un DUPLO que en la mesa no se cierra.
+  const BST_HAIRCUT = 0.07;
 
   function posicionCosecha(prod) {
     const mes = MES_COSECHA[prod];
     const suby = Object.keys(SUBY).find(k => SUBY[k] === prod);
     if (!mes || !suby) return null;
     const hoy = Date.now();
-    return [...new Set(opcData.ops.filter(o => o.subyacente === suby).map(o => o.vencimiento))]
-      .filter(v => +v.split('_')[0] === mes)
+    // Los vencimientos salen de los FUTUROS, no de las opciones: el Booster es
+    // OTC y su escalera puede ser entera sintética, así que alcanza con que
+    // exista el futuro de la posición de cosecha.
+    return [...new Set(Object.keys(opcData.fut)
+        .filter(k => k.startsWith(suby + '|'))
+        .map(k => k.split('|')[1]))]
+      .filter(v => /^\d{1,2}_\d{4}$/.test(v) && +v.split('_')[0] === mes)
       .map(v => { const [m,a] = v.split('_').map(Number); return { v, t: vencimientoOpcion(m,a).getTime() }; })
       .filter(x => x.t > hoy)
       .sort((a,b) => a.t - b.t)
       .map(x => x.v)[0] || null;
   }
 
+  // Probabilidad (risk-neutral, Black-76) de terminar debajo de K: el escenario ✕.
+  function bstProbBajo(F, K, t, sig) {
+    if (!(F > 0) || !(K > 0) || !(t > 0) || !(sig > 0)) return null;
+    const d2 = (Math.log(F / K) - 0.5 * sig * sig * t) / (sig * Math.sqrt(t));
+    return normCdf(-d2);
+  }
+
+  // ── Saneamiento de los ajustes de A3 ──
+  // Los settlement de series ilíquidas vienen viejos y violan no-arbitraje. En
+  // las tres cadenas de cosecha del 29/09/2026 había 31 violaciones: calls por
+  // debajo de su valor intrínseco (soja C328 a 9,40 con intrínseco 30,70),
+  // calls que crecen con el strike y puts que decrecen. Una prima así entra al
+  // optimizador como plata gratis. Se descarta toda la que no pase:
+  //   · prima >= valor intrínseco descontado
+  //   · monotonía: el call decrece con el strike, el put crece
+  // Lo descartado no se pierde: cae a prima teórica como un strike sintético.
+  function bstSanear(items, F, tipo, df) {
+    const malos = new Set();
+    // 1) prima por debajo del valor intrínseco descontado
+    items.forEach(it => {
+      if (it.prima == null) return;
+      const intr = df * Math.max(tipo === 'C' ? F - it.strike : it.strike - F, 0);
+      if (it.prima < intr - 1e-9) malos.add(it.strike);
+    });
+    // 2) monotonía, recorriendo en el sentido en que la prima debe DECRECER
+    //    (call: strike creciente · put: strike decreciente). Se compara contra
+    //    la última aceptada, así una sola prima vieja no arrastra a las que siguen.
+    const orden = items.filter(it => it.prima != null && !malos.has(it.strike))
+      .sort((a, b) => tipo === 'C' ? a.strike - b.strike : b.strike - a.strike);
+    let ult = null;
+    orden.forEach(it => {
+      if (ult != null && it.prima > ult + 1e-9) { malos.add(it.strike); return; }
+      ult = it.prima;
+    });
+    return items.map(it => (it.prima != null && malos.has(it.strike))
+      ? { ...it, prima: null, descartada: true } : it);
+  }
+
   window.calcularBooster = function (prod) {
-    if (!opcData.loaded) { if (!opcData.loading) cargarOpciones(); return null; }
+    // El guard `intentada` evita el loop: si a3_precios falla, cargarOpciones()
+    // termina con loaded:false y llama a refrescarTasas(), que vuelve a entrar
+    // acá. Sin esto se reconsulta indefinidamente (justo sin señal en el campo).
+    if (!opcData.loaded) {
+      if (!opcData.loading && !opcData.intentada) { opcData.intentada = true; cargarOpciones(); }
+      return null;
+    }
     const pos = posicionCosecha(prod);
     if (!pos) return null;
     const suby = Object.keys(SUBY).find(k => SUBY[k] === prod);
@@ -8849,77 +8941,158 @@ function estrInitSiHaceFalta(){
     const t = tiempoAlVto(vto);
     if (t <= 0) return null;
     const r = tasaUsdUnica().r;
-    // Volatilidad: histórica del futuro. Si la serie todavía no cargó, se usa como
-    // respaldo la implícita de la opción listada más cercana al dinero con prima
-    // operada, para que el Booster no quede sin calcular por un tema de orden de carga.
-    let vh = volHistDe(prod, pos);
-    if (vh == null) {
-      const cand = opcData.ops
-        .filter(o => o.subyacente===suby && o.vencimiento===pos && (o.settlement_price ?? o.last_price) > 0)
-        .map(o => ({ o, dist: Math.abs(Number(o.strike) - F) }))
-        .sort((a,b) => a.dist - b.dist);
-      for (const c of cand) {
-        const iv = volImplicita(Number(c.o.settlement_price ?? c.o.last_price), F, Number(c.o.strike), t, r, c.o.tipo_opcion);
-        if (iv != null) { vh = iv; break; }
-      }
-    }
+    const df = Math.exp(-r * t);
 
     // ── Escalera de strikes de 4 en 4 dólares ──
-    // El Booster es una operación OTC: puede pactarse en strikes que A3 no lista
-    // (o que el colector todavía no captura). Se completa la escalera y se valúan
-    // esas primas con Black-76 + volatilidad histórica.
-    // Origen de cada prima:  mkt = operada en mercado · teo = strike listado sin
-    // volumen · sint = strike sintético (no listado).
+    // El Booster es OTC: puede pactarse en strikes que A3 no lista. Se completa
+    // la escalera (±18% del futuro) y se valúa todo con el mismo modelo.
+    // Los strikes listados de SOJ/MAI/TRI.ROS son todos múltiplos de 4, así que
+    // la escalera coincide con la grilla real del mercado.
     const PASO = 4;
+    const esc_lo = Math.floor((F * 0.82) / PASO) * PASO;
+    const esc_hi = Math.ceil((F * 1.18) / PASO) * PASO;
     function escalera(listados) {
-      const lo = Math.floor((F * 0.82) / PASO) * PASO;
-      const hi = Math.ceil((F * 1.18) / PASO) * PASO;
       const m = new Map();
       listados.forEach(o => {
         const k = Number(o.strike);
         const mkt = o.settlement_price ?? o.last_price;
-        m.set(k, { strike: k, prima: (mkt != null && Number(mkt) > 0) ? Number(mkt) : null, listado: true });
+        const prima = (mkt != null && Number(mkt) > 0) ? Number(mkt) : null;
+        // Si A3 trae más de una fila para el mismo strike, gana la que TIENE
+        // precio: antes la última sobreescribía a la primera y podía borrarlo.
+        const ya = m.get(k);
+        if (ya && ya.prima != null && prima == null) return;
+        m.set(k, { strike: k, prima, listado: true });
       });
-      for (let k = lo; k <= hi; k += PASO) if (!m.has(k)) m.set(k, { strike: k, prima: null, listado: false });
+      for (let k = esc_lo; k <= esc_hi; k += PASO) if (!m.has(k)) m.set(k, { strike: k, prima: null, listado: false });
       return [...m.values()].sort((a, b) => a.strike - b.strike);
     }
-    const primaDe = (it, tipo) => {
-      if (it.prima != null) return { v: it.prima, src: 'mkt', strike: it.strike };
-      if (vh == null) return null;
-      const px = black76(F, it.strike, t, r, vh, tipo);
-      return px > 0.01 ? { v: px, src: it.listado ? 'teo' : 'sint', strike: it.strike } : null;
+
+    let calls = escalera(opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===pos && o.tipo_opcion==='C'));
+    let puts  = escalera(opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===pos && o.tipo_opcion==='P'));
+    calls = bstSanear(calls, F, 'C', df);
+    puts  = bstSanear(puts,  F, 'P', df);
+    const descartadas = calls.filter(x => x.descartada).length + puts.filter(x => x.descartada).length;
+
+    // ── Base de valuación ÚNICA ──
+    // Antes se mezclaban dos escalas: precio de mercado para el strike listado y
+    // Black-76 a volatilidad histórica para el sintético. Con datos reales la
+    // histórica está 25-40% por debajo de la implícita (soja 9,7% vs 13,3% en
+    // puts), así que los sintéticos salían sistemáticamente más baratos y el
+    // optimizador prefería las patas listadas: dos monedas en la misma suma.
+    // Ahora se estima UNA volatilidad por tipo —la mediana de las implícitas
+    // OTM que pasaron el saneamiento, que es donde el mercado realmente opera—
+    // y se valúan TODAS las patas con ella. Si no hay implícitas usables se cae
+    // a la volatilidad histórica del futuro.
+    const volDe = (items, tipo) => {
+      const ivs = items
+        .filter(it => it.prima != null && (tipo === 'C' ? it.strike > F : it.strike < F))
+        .map(it => volImplicita(it.prima, F, it.strike, t, r, tipo))
+        .filter(v => v != null && v > 0)
+        .sort((a, b) => a - b);
+      return ivs.length ? ivs[Math.floor(ivs.length / 2)] : null;
+    };
+    const vh = volHistDe(prod, pos);
+    // Plausibilidad de la volatilidad ajustada. Una serie ilíquida cotizada
+    // casi en cero pasa el saneamiento (no viola el intrínseco ni la monotonía)
+    // pero implica una volatilidad absurda: en una prueba, puts a 0,10 daban
+    // 2,3% anual y un P(✕) de 1%. El riesgo de equivocarse acá es asimétrico
+    // —una vol demasiado BAJA subestima la probabilidad del escenario malo, que
+    // es justo la métrica que gobierna la selección— así que:
+    //   · si la implícita queda por debajo de la mitad de la histórica, no se
+    //     cree y se usa la histórica;
+    //   · si queda por encima, se conserva (distribución más ancha = más
+    //     prudente), con un techo absoluto para que un dato roto no explote.
+    const VOL_PISO_ABS = 0.03, VOL_TECHO_ABS = 1.50;
+    const volUsable = (iv) => {
+      if (iv == null || !(iv > 0)) return null;
+      if (vh > 0 && iv < 0.5 * vh) return null;        // implausiblemente baja
+      if (iv < VOL_PISO_ABS || iv > VOL_TECHO_ABS) return null;
+      return iv;
+    };
+    const ivC = volUsable(volDe(calls, 'C'));
+    const ivP = volUsable(volDe(puts,  'P'));
+    const volC = ivC ?? vh;
+    const volP = ivP ?? vh;
+    if (!(volC > 0) || !(volP > 0)) return null;
+    const baseC = ivC != null ? 'iv' : 'hist';
+    const baseP = ivP != null ? 'iv' : 'hist';
+
+    // Prima NETA de venta: el productor cobra bid, no ajuste.
+    const primaDe = (K, tipo) => {
+      const px = black76(F, K, t, r, tipo === 'C' ? volC : volP, tipo);
+      if (!(px > 0)) return null;
+      const neta = px * (1 - BST_HAIRCUT);
+      return neta > 0.01 ? neta : null;
     };
 
-    const calls = escalera(opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===pos && o.tipo_opcion==='C'));
-    const puts  = escalera(opcData.ops.filter(o => o.subyacente===suby && o.vencimiento===pos && o.tipo_opcion==='P'));
-    let mejor = null;
-    calls.forEach(c => {
-      const Kc = c.strike, pc = primaDe(c, 'C');
-      if (!pc) return;
-      puts.forEach(p => {
-        const Kp = p.strike;
-        if (Kp >= Kc) return;
-        if (!(Kp < F)) return;             // CIERRE siempre por debajo del FORWARD
-        if (!((Kc - F) >= (F - Kp))) return;                 // R1
-        const pp = primaDe(p, 'P');
-        if (!pp) return;
-        const plus = pc.v + pp.v;
-        const excedente = (F + plus) - Kc;
-        if (!(excedente > 0)) return;                        // R2: el excedente debe ser > 0
-        const asimetria = (Kc - F) - (F - Kp);               // >= 0 por R1 (0 = simetría exacta)
-        const score = excedente + asimetria;
-        // R4: se prioriza el DUPLO más alto posible, aun a costa de la simetría.
-        // A igual DUPLO, gana el de menor excedente (F + primas más cerca del strike).
-        const gana = !mejor || (Kc > mejor.duplo) || (Kc === mejor.duplo && excedente < mejor.excedente);
-        if (gana)
-          mejor = { duplo: Kc, cierre: Kp, plus, primaC: pc, primaP: pp,
-                    F, pos, vto, t, r, vh, prod, score, excedente, asimetria,
-                    dias: Math.round(t * 365),
-                    teorico:   (pc.src !== 'mkt' || pp.src !== 'mkt'),
-                    sintetico: (pc.src === 'sint' || pp.src === 'sint') };
+    // ── Selección ──
+    // Para cada CIERRE candidato se busca el DUPLO más alto que las primas
+    // financian. Se descartan los CIERRE cuyo P(✕) pasa el tope (R3).
+    const strikes = [];
+    for (let k = esc_lo; k <= esc_hi; k += PASO) strikes.push(k);
+    const listadoC = new Set(calls.filter(x => x.listado).map(x => x.strike));
+    const listadoP = new Set(puts.filter(x => x.listado).map(x => x.strike));
+
+    const candidatos = [];
+    strikes.filter(Kp => Kp < F).forEach(Kp => {
+      const px = bstProbBajo(F, Kp, t, volP);
+      if (px == null) return;
+      const pp = primaDe(Kp, 'P');
+      if (pp == null) return;
+      let top = null;
+      strikes.filter(Kc => Kc > F).forEach(Kc => {
+        const pc = primaDe(Kc, 'C');
+        if (pc == null) return;
+        const excedente = (F + pc + pp) - Kc;
+        if (!(excedente > 0)) return;                       // R2
+        if (!top || Kc > top.duplo) top = { duplo: Kc, primaC: pc, excedente };
       });
+      if (top) candidatos.push({ cierre: Kp, probCierre: px, primaP: pp, ...top,
+                                 plus: top.primaC + pp });
     });
-    return mejor;
+    if (!candidatos.length) return null;
+
+    // Frontera eficiente: pares que no están dominados (ninguno ofrece a la vez
+    // más DUPLO y menos riesgo). Es lo que se muestra en el modal de detalle.
+    const frontera = [];
+    candidatos.slice()
+      .sort((a, b) => (b.duplo - a.duplo) || (a.probCierre - b.probCierre))
+      .forEach(c => {
+        if (!frontera.length || c.probCierre < frontera[frontera.length - 1].probCierre - 1e-9)
+          frontera.push(c);
+      });
+
+    // R3 + R4: el DUPLO más alto que respeta el tope de P(✕); a igual DUPLO,
+    // el CIERRE más bajo (que es el de menor excedente).
+    let mejor = null;
+    candidatos.forEach(c => {
+      if (c.probCierre > BST_TOPE_PX) return;               // R3
+      if (!mejor || c.duplo > mejor.duplo ||
+          (c.duplo === mejor.duplo && c.excedente < mejor.excedente)) mejor = c;
+    });
+    // Si el tope deja todo afuera se devuelve el de menor riesgo, marcado: es
+    // mejor mostrar el par más defensivo que no mostrar nada.
+    const topeVacio = !mejor;
+    if (!mejor) mejor = candidatos.reduce((a, b) => b.probCierre < a.probCierre ? b : a);
+
+    return {
+      duplo: mejor.duplo, cierre: mejor.cierre, plus: mejor.plus,
+      primaC: { v: mejor.primaC, strike: mejor.duplo,  src: listadoC.has(mejor.duplo)  ? 'list' : 'sint' },
+      primaP: { v: mejor.primaP, strike: mejor.cierre, src: listadoP.has(mejor.cierre) ? 'list' : 'sint' },
+      F, pos, vto, t, r, prod,
+      excedente: mejor.excedente,
+      probCierre: mejor.probCierre,
+      volC, volP, baseC, baseP, vh, haircut: BST_HAIRCUT, topePx: BST_TOPE_PX,
+      dias: Math.round(t * 365),
+      frontera: frontera.map(c => ({ duplo: c.duplo, cierre: c.cierre,
+                                     probCierre: c.probCierre, excedente: c.excedente,
+                                     elegido: c.cierre === mejor.cierre })),
+      descartadas, topeVacio,
+      // El DUPLO topeado por el borde de la escalera no es un máximo económico
+      // sino del rango de búsqueda: hay que avisarlo.
+      topeEscalera: mejor.duplo === esc_hi,
+      sintetico: !listadoC.has(mejor.duplo) || !listadoP.has(mejor.cierre),
+    };
   };
   // Diagrama animado de la estrategia (recorrido del precio + bifurcación x1/x2)
   // Curvas reales de la animación original (Booster 2026), revertidas para que se
@@ -9070,23 +9243,66 @@ function estrInitSiHaceFalta(){
       posicion: b.pos,
       expiracion: b.vto.toISOString().slice(0, 10),
       dias: b.dias,
-      insumos: { futuro: r4(b.F), vol_historica: r4(b.vh), tasa_usd: r4(b.r), modelo: 'black76', paso_strike: 4 },
-      call: { strike: b.duplo,  prima: r4(b.primaC.v), origen: b.primaC.src },
-      put:  { strike: b.cierre, prima: r4(b.primaP.v), origen: b.primaP.src },
+      insumos: {
+        futuro: r4(b.F), tasa_usd: r4(b.r), modelo: 'black76', paso_strike: 4,
+        vol_call: r4(b.volC), base_vol_call: b.baseC,     // iv = implícita de mercado · hist = histórica
+        vol_put:  r4(b.volP), base_vol_put:  b.baseP,
+        vol_historica: b.vh != null ? r4(b.vh) : null,
+        haircut_venta: b.haircut, tope_prob_cierre: b.topePx,
+        primas_descartadas: b.descartadas,               // ajustes de A3 que violaban no-arbitraje
+      },
+      call: { strike: b.duplo,  prima: r4(b.primaC.v), strike_listado: b.primaC.src === 'list' },
+      put:  { strike: b.cierre, prima: r4(b.primaP.v), strike_listado: b.primaP.src === 'list' },
       resultado: {
         duplo: b.duplo, cierre: b.cierre, plus: r4(b.plus),
         futuro_mas_plus: r4(b.F + b.plus),
-        excedente: r4(b.excedente), asimetria: r4(b.asimetria), score: r4(b.score),
+        excedente: r4(b.excedente),
+        prob_cierre: r4(b.probCierre),
+        duplo_sobre_futuro: r4(b.duplo / b.F - 1),
+        cierre_bajo_futuro: r4(b.cierre / b.F - 1),
+        tope_escalera: b.topeEscalera,
+        tope_sin_candidatos: b.topeVacio,
       },
+      frontera: b.frontera.map(x => ({
+        duplo: x.duplo, cierre: x.cierre,
+        prob_cierre: r4(x.probCierre), excedente: r4(x.excedente), elegido: x.elegido,
+      })),
     };
   };
+
+  // Tabla de la frontera eficiente. Son los únicos pares que tiene sentido
+  // comparar: para cada CIERRE, el DUPLO más alto que las primas financian,
+  // quedándose solo con los que no están dominados. Se muestra para que el
+  // productor vea el canje —cuánto DUPLO cuesta bajar el riesgo del ✕— sin
+  // tener que operar ningún control: el panel diagnostica, no ejecuta.
+  function bstFronteraHTML(b, f1, pct) {
+    if (!b.frontera || b.frontera.length < 2) return '';
+    const filas = b.frontera.map(x => `<tr class="${x.elegido ? 'on' : ''}">
+        <td>${x.elegido ? 'Elegido' : ''}</td>
+        <td>${f1(x.duplo)}</td>
+        <td>+${((x.duplo / b.F - 1) * 100).toLocaleString('es-AR', { maximumFractionDigits:1 })}%</td>
+        <td>${f1(x.cierre)}</td>
+        <td>${pct(x.probCierre)}</td>
+      </tr>`).join('');
+    return `<div class="bst-fr">
+      <div class="bst-fr-t">Alternativas de la posición</div>
+      <table>
+        <thead><tr><th></th><th>Duplo</th><th>Sobre fut.</th><th>Cierre</th><th>Prob. ✕</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <div class="bst-fr-n">Un DUPLO más alto siempre se paga con un CIERRE más cerca del futuro, o sea con
+      más probabilidad de quedar comprometido sin precio. Se destaca la combinación que mantiene esa
+      probabilidad por debajo del ${pct(b.topePx)}.</div>
+    </div>`;
+  }
 
   window.boosterDetalle = function (prod) {
     const b = window.calcularBooster(prod);
     if (!b) return;
     const f1 = n => Number(n).toLocaleString('es-AR', { maximumFractionDigits:1 });
     const fecha = d => d.toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'});
-    const src = x => x.src === 'teo' ? ' <span style="color:var(--gris);font-size:11px">teórica</span>' : '';
+    const pct = n => (n * 100).toLocaleString('es-AR', { maximumFractionDigits:0 }) + '%';
+    const pct1 = n => (n * 100).toLocaleString('es-AR', { maximumFractionDigits:1 }) + '%';
     const ov = document.createElement('div');
     ov.className = 'bst-ov';
     ov.onclick = e => { if (e.target === ov) ov.remove(); };
@@ -9098,12 +9314,25 @@ function estrInitSiHaceFalta(){
       <div class="bst-row"><span>Expiración de la estrategia</span><b>${fecha(b.vto)}</b></div>
       <div class="bst-row"><span>Días</span><b>${b.dias}</b></div>
       <div class="bst-row"><span>Futuro subyacente</span><b>${f1(b.F)} U$S/tn</b></div>
-      ${b.sintetico ? '<div class="tasas-nota" style="margin:10px 0 0">Operación <b>OTC</b>: al menos uno de los strikes no cotiza en A3 y su prima se valuó con Black-76 sobre la volatilidad histórica del futuro (' + (b.vh!=null?(b.vh*100).toFixed(1)+'%':'s/d') + ' anual).</div>' : ''}
+      <div class="bst-row"><span>Volatilidad usada</span><b>${pct1(b.volC)} call · ${pct1(b.volP)} put</b></div>
+      <div class="tasas-nota" style="margin:10px 0 0">
+        Las primas se valúan con <b>Black-76</b> sobre la volatilidad ${b.baseC==='iv'?'<b>implícita del mercado</b> de la posición':'histórica del futuro'},
+        con un descuento de venta del ${pct(b.haircut)} (el productor cobra la punta compradora, no el ajuste).
+        ${b.descartadas ? '<br>Se descartaron <b>'+b.descartadas+'</b> primas de A3 por quedar debajo del valor intrínseco o romper la progresión de la cadena.' : ''}
+        ${b.sintetico ? '<br>Operación <b>OTC</b>: al menos uno de los strikes no cotiza en A3.' : ''}
+        ${b.topeEscalera ? '<br><b>Atención:</b> el DUPLO quedó en el borde de la escalera de strikes (±18% del futuro); podría haber uno más alto fuera de ese rango.' : ''}
+      </div>
       <div class="bst-big">
         <div><span>Duplo</span><b>${f1(b.duplo)}</b><small>U$S / tn.</small></div>
         <div><span>Cierre</span><b>${f1(b.cierre)}</b><small>U$S / tn.</small></div>
       </div>
+      <div class="bst-row"><span>DUPLO sobre el futuro</span><b>+${pct1(b.duplo/b.F-1)}</b></div>
+      <div class="bst-row"><span>Plus cobrado (primas netas)</span><b>${f1(b.plus)} U$S/tn</b></div>
+      <div class="bst-row"><span>Excedente sobre el DUPLO</span><b>${f1(b.excedente)} U$S/tn</b></div>
+      <div class="bst-row"><span>Probabilidad del escenario ✕</span><b style="color:${b.probCierre>b.topePx?'var(--rojo)':'var(--texto)'}">${pct(b.probCierre)}</b></div>
+      ${b.topeVacio ? '<div class="tasas-nota" style="margin:10px 0 0;color:var(--oro-l)">Ninguna combinación de la posición queda por debajo del tope de '+pct(b.topePx)+' para el escenario ✕. Se muestra la más defensiva disponible.</div>' : ''}
       ${bstDiagrama(b)}
+      ${bstFronteraHTML(b, f1, pct)}
       <p style="font-size:14px;line-height:1.6;margin:18px 0 8px">El día de contratación el precio cerrado es sensiblemente superior a los valores del forward. Ese precio contratado es el <b>DUPLO</b>. El volumen contratado dependerá del precio de la posición el día de expiración.</p>
       <div class="bst-esc"><i>✕</i><div>Si el precio baja hasta el <b>CIERRE</b>, el volumen es el pactado originalmente y queda comprometido <b>sin precio fijado</b>.</div></div>
       <div class="bst-esc"><i>x1</i><div>Si el precio está por debajo del <b>DUPLO</b>, el volumen es el pactado originalmente al precio del DUPLO.</div></div>
