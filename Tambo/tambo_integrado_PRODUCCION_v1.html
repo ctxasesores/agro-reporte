@@ -316,7 +316,7 @@ label .u{margin-left:4px}
         <div class="action-stack">
           <div>
             <label for="scenario_name">Nombre del escenario</label>
-            <input type="text" id="scenario_name" value="Base cliente" oninput="if(typeof mtSyncNombre==='function')mtSyncNombre()" placeholder="Ej. Cuenca oeste - mixto invierno">
+            <input type="text" id="scenario_name" value="Base cliente" oninput="if(typeof mtSyncNombre==='function')mtSyncNombre(); if(typeof actualizarVinculoUI==='function')actualizarVinculoUI();" placeholder="Ej. Cuenca oeste - mixto invierno">
           </div>
           <div class="save-row">
             <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
@@ -324,9 +324,11 @@ label .u{margin-left:4px}
             <button class="btn" type="button" onclick="applyPresets()">Aplicar presets</button>
             <button class="btn" type="button" onclick="nuevoEscenario()">Nuevo escenario</button>
             <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
+            <button class="btn" type="button" id="btn_renombrar" style="display:none" onclick="renombrarAnalisis()">Renombrar</button>
             <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
           </div>
           <div class="status-msg" id="save_status"></div>
+          <div class="meta-note" id="vinculo_msg"></div>
           <div class="meta-note" id="last_saved">Escenario nuevo</div>
         </div>
       </div>
@@ -701,6 +703,11 @@ var currentClienteId = '';
 var currentClienteNombre = 'Cliente';
 var currentUserId = 'anonimo';
 var currentAnalisisId = null;
+// Nombre con el que se guardó o cargó el escenario vinculado al formulario.
+// Si el usuario cambia el nombre, "Guardar" crea un escenario nuevo en vez de
+// renombrar el anterior (que es lo que hacía antes, y hacía desaparecer de la
+// lista el escenario previo).
+var currentAnalisisNombre = '';
 var scenarioSb = null;
 var scenarioSyncPromise = null;
 var savedAnalisisCache = [];
@@ -1083,6 +1090,10 @@ function getSavedAnalisisForCurrentClient(){
   });
 }
 
+// Reemplazada en guardar() por un chequeo que mira la intención (creaNuevo) y
+// no solo el vínculo: con la regla nueva, renombrar estando vinculado también
+// crea un escenario, y esta versión lo dejaba pasar. Se conserva por si algún
+// otro punto la necesita.
 function wouldCreateSecondScenario(){
   var saved = getSavedAnalisisForCurrentClient();
   if(!saved.length) return false;
@@ -1308,12 +1319,52 @@ async function nuevoEscenario(){
   // Desvincula del escenario en edición: el próximo guardado crea uno nuevo
   // (no pisa el anterior). No borra nada de lo ya guardado.
   currentAnalisisId = null;
+  currentAnalisisNombre = '';
   var nombreEl = document.getElementById('scenario_name');
   if(nombreEl) nombreEl.value = '';
   document.getElementById('last_saved').textContent = 'Escenario nuevo (sin guardar)';
+  actualizarVinculoUI();
   setStatus('Cargá los datos y guardá con un nombre nuevo', 'ok');
   setTimeout(function(){ setStatus('', ''); }, 2600);
   if(nombreEl) nombreEl.focus();
+}
+
+// ── VÍNCULO CON EL ESCENARIO GUARDADO ───────────────────────
+// Tres estados, visibles para el usuario:
+//   · sin vínculo             → "Guardar" crea un escenario nuevo
+//   · vinculado, mismo nombre → "Guardar" actualiza ese escenario
+//   · vinculado, nombre distinto → "Guardar" crea uno nuevo y deja intacto el
+//     anterior; para renombrar de verdad está el botón "Renombrar"
+function estadoVinculo(){
+  var el = document.getElementById('scenario_name');
+  var nombre = el ? (el.value || '').trim() : '';
+  if(!currentAnalisisId) return { tipo:'nuevo', nombre:nombre };
+  if(nombre && nombre !== currentAnalisisNombre) return { tipo:'renombrado', nombre:nombre, anterior:currentAnalisisNombre };
+  return { tipo:'vinculado', nombre:nombre || currentAnalisisNombre };
+}
+
+function actualizarVinculoUI(){
+  var el = document.getElementById('vinculo_msg');
+  var btn = document.getElementById('btn_renombrar');
+  var v = estadoVinculo();
+  if(btn) btn.style.display = (v.tipo === 'renombrado') ? '' : 'none';
+  if(!el) return;
+  var repetido = '';
+  if(v.tipo !== 'vinculado' && v.nombre){
+    try{
+      var otros = getSavedAnalisisForCurrentClient().filter(function(it){
+        return it.id !== currentAnalisisId && String(it.nombre||'').trim() === v.nombre;
+      });
+      if(otros.length) repetido = ' Ojo: ya tenés otro escenario llamado así.';
+    }catch(e){ /* la lista es secundaria */ }
+  }
+  if(v.tipo === 'nuevo'){
+    el.textContent = 'Escenario nuevo: al guardar se crea uno aparte.' + repetido;
+  } else if(v.tipo === 'renombrado'){
+    el.textContent = 'Cambiaste el nombre: al guardar se crea un escenario nuevo y «' + v.anterior + '» queda intacto.' + repetido;
+  } else {
+    el.textContent = 'Editando «' + v.nombre + '»: al guardar se actualiza ese escenario.';
+  }
 }
 
 async function guardar(){
@@ -1322,19 +1373,32 @@ async function guardar(){
     setStatus('Ingresá un nombre de escenario', 'err');
     return;
   }
+  var v = estadoVinculo();
+  // Un nombre distinto del vinculado significa variante nueva, no renombre.
+  var creaNuevo = (v.tipo !== 'vinculado');
+
   if(!isTamboPro()){
     setStatus('Verificando escenarios guardados...', '');
     await syncAnalisisFromSupabase(true);
-    if(wouldCreateSecondScenario()){
+    // El gate de ESTANDAR tiene que mirar la INTENCIÓN, no solo el vínculo: con
+    // la regla nueva, renombrar estando vinculado también crea un escenario, y
+    // sin este chequeo se colaba el segundo.
+    if(creaNuevo && getSavedAnalisisForCurrentClient().length){
+      // Si lo que quería era renombrar, no tiene sentido mandarlo a borrar nada:
+      // el botón "Renombrar" hace exactamente eso y no crea un segundo escenario.
+      if(v.tipo === 'renombrado'){
+        setStatus('Tambo ESTANDAR admite un solo escenario. Para cambiarle el nombre al que tenés, usá "Renombrar".', 'err');
+        return;
+      }
       showSingleScenarioPopup();
       setStatus('Tambo ESTANDAR admite un solo escenario. Editá o borrá el existente.', 'err');
       return;
     }
   }
   var saved = readSavedAnalisis();
-  var existing = saved.find(function(item){ return item.id === currentAnalisisId; }) || null;
+  var existing = creaNuevo ? null : (saved.find(function(item){ return item.id === currentAnalisisId; }) || null);
   var payload = enrichSavedScenario({
-    id: currentAnalisisId || ('tambo_' + Date.now()),
+    id: creaNuevo ? ('tambo_' + Date.now()) : currentAnalisisId,
     remote_id: existing && existing.remote_id ? existing.remote_id : '',
     cliente_id: currentClienteId,
     cliente_nombre: currentClienteNombre,
@@ -1349,12 +1413,52 @@ async function guardar(){
     var remoteId = await upsertRemoteAnalisis(payload);
     if(remoteId) payload.remote_id = remoteId;
     currentAnalisisId = payload.id;
+    currentAnalisisNombre = scenarioName;
     await syncAnalisisFromSupabase(true);
     document.getElementById('last_saved').textContent = 'Ult. guardado: ' + new Date(payload.updated_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    setStatus('Escenario guardado correctamente', 'ok');
-    setTimeout(function(){ setStatus('', ''); }, 2200);
+    setStatus(creaNuevo
+      ? ('Escenario nuevo guardado: ' + scenarioName + (v.tipo==='renombrado' ? ' · «'+v.anterior+'» quedó intacto' : ''))
+      : ('Actualizado: ' + scenarioName), 'ok');
+    actualizarVinculoUI();
+    setTimeout(function(){ setStatus('', ''); }, 3200);
   }catch(e){
     setStatus('Error al guardar: ' + e.message, 'err');
+  }
+}
+
+// Renombrar el escenario vinculado, en lugar de crear una variante.
+async function renombrarAnalisis(){
+  var el = document.getElementById('scenario_name');
+  var nombre = el ? (el.value || '').trim() : '';
+  if(!currentAnalisisId){ setStatus('No hay un escenario guardado vinculado', 'err'); return; }
+  if(!nombre){ setStatus('Ingresá un nombre de escenario', 'err'); return; }
+  if(nombre === currentAnalisisNombre){ setStatus('El nombre no cambió', 'err'); return; }
+  if(!confirm('¿Renombrar «' + currentAnalisisNombre + '» a «' + nombre + '»?\n\nNo se crea un escenario nuevo: se le cambia el nombre al que estás editando.')) return;
+  setStatus('Renombrando...', '');
+  var saved = readSavedAnalisis();
+  var existing = saved.find(function(item){ return item.id === currentAnalisisId; }) || null;
+  var payload = enrichSavedScenario({
+    id: currentAnalisisId,
+    remote_id: existing && existing.remote_id ? existing.remote_id : '',
+    cliente_id: currentClienteId,
+    cliente_nombre: currentClienteNombre,
+    usuario_id: currentUserId,
+    modo: REPORT_MODE,
+    nombre: nombre,
+    datos: mtDatosParaGuardar(),
+    outputs: buildSavedOutputs(),
+    updated_at: new Date().toISOString()
+  });
+  try{
+    var remoteId = await upsertRemoteAnalisis(payload);
+    if(remoteId) payload.remote_id = remoteId;
+    currentAnalisisNombre = nombre;
+    await syncAnalisisFromSupabase(true);
+    setStatus('Renombrado: ' + nombre, 'ok');
+    actualizarVinculoUI();
+    setTimeout(function(){ setStatus('', ''); }, 3000);
+  }catch(e){
+    setStatus('Error al renombrar: ' + e.message, 'err');
   }
 }
 
@@ -1398,6 +1502,10 @@ function cargarAnalisis(id){
     return;
   }
   currentAnalisisId = item.id;
+  // El nombre vinculado sale del escenario cargado, no de lo que haya quedado
+  // en el campo: en multi-tambo el nombre no viaja en los datos de cada tambo,
+  // así que se setea explícito más abajo.
+  currentAnalisisNombre = String(item.nombre || '').trim();
   currentClienteId = item.cliente_id || currentClienteId;
   currentClienteNombre = item.cliente_nombre || currentClienteNombre;
   document.getElementById('report_cliente_nombre').textContent = currentClienteNombre;
@@ -1410,7 +1518,10 @@ function cargarAnalisis(id){
   } else {
     deserializeForm(item.datos || {});
   }
+  var nombreEl = document.getElementById('scenario_name');
+  if(nombreEl) nombreEl.value = currentAnalisisNombre;
   document.getElementById('last_saved').textContent = 'Cargado: ' + item.nombre;
+  actualizarVinculoUI();
   setStatus('Escenario cargado para edición', 'ok');
   cerrarHistorial();
 }
@@ -1423,7 +1534,9 @@ async function eliminarAnalisis(id){
     await deleteRemoteAnalisis(target);
     if(currentAnalisisId === id){
       currentAnalisisId = null;
+      currentAnalisisNombre = '';
       document.getElementById('last_saved').textContent = 'Escenario eliminado';
+      actualizarVinculoUI();
     }
     await syncAnalisisFromSupabase(true);
   }catch(error){
@@ -2288,6 +2401,7 @@ render();
   render();
   await syncAnalisisFromSupabase();
   consumePendingOpenRequest();
+  actualizarVinculoUI();
 })();
 </script>
 <script>
