@@ -979,6 +979,8 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 .rp-guardar{margin-top:24px;padding:14px;background:rgba(255,255,255,.03);border:.5px solid var(--border,rgba(255,255,255,.08));border-radius:10px}
 .rp-guardar-fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
 .rp-guardar-fila:last-of-type{margin-bottom:0}
+/* Indicador del vínculo: dice si al guardar se crea o se actualiza un análisis */
+.rp-vinculo{font-size:11.5px;line-height:1.45;color:var(--gris,#8fa3b8);margin:-2px 0 10px}
 .rp-input-nom,.rp-select{flex:1;min-width:180px;box-sizing:border-box;height:36px;padding:0 11px;border-radius:8px;border:1px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px}
 .rp-input-nom:focus,.rp-select:focus{outline:none;border-color:var(--oro,#d4a017)}
 
@@ -2063,10 +2065,12 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
             <!-- Guardar / cargar -->
             <div class="rp-guardar">
               <div class="rp-guardar-fila">
-                <input type="text" id="rp_nombre" placeholder="Nombre del análisis (ej. Campo Norte)" class="rp-input-nom">
+                <input type="text" id="rp_nombre" placeholder="Nombre del análisis (ej. Campo Norte)" class="rp-input-nom" oninput="if(typeof rpActualizarVinculoUI==='function')rpActualizarVinculoUI()">
                 <button class="rp-btn rp-btn-ok" onclick="rpGuardar()">Guardar</button>
+                <button class="rp-btn" id="rp_btn_renombrar" style="display:none" onclick="rpRenombrar()">Renombrar</button>
                 <button class="rp-btn" onclick="rpNuevo()">Nuevo</button>
               </div>
+              <div id="rp_vinculo" class="rp-vinculo"></div>
               <div class="rp-guardar-fila">
                 <select id="rp_guardados" class="rp-select" onchange="if(this.value) rpCargar(this.value)">
                   <option value="">— Análisis guardados —</option>
@@ -7118,7 +7122,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20260930-2230';
+  var CTX_BUILD = '20261001-2015';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -9952,7 +9956,15 @@ function rpMatrizCov(listaShocks){
 var RP = {
   cultivos: ['Soja de primera','Soja de segunda','Maíz temprano','Maíz de segunda','Trigo'],
   filas: [],          // [{camp:'23/24', v:[null,...]}]
-  init: false
+  init: false,
+  localId: null,      // vínculo con el análisis guardado que se está editando
+  // Nombre con el que se guardó o cargó ese análisis. Es lo que distingue
+  // "actualizar el que estoy editando" de "crear una variante": si el usuario
+  // cambia el nombre, guardar NO renombra el anterior, crea uno nuevo.
+  // Antes, cualquier guardado posterior renombraba la fila vinculada y el
+  // análisis previo desaparecía de la lista — por eso parecía que no se podían
+  // guardar más de tres.
+  localNombre: ''
 };
 
 function rpNuevaFila(camp){
@@ -10533,17 +10545,60 @@ function rpEstado(msg, tipo){
   if(msg) setTimeout(function(){ el.style.display='none'; }, 4000);
 }
 
+// ── VÍNCULO CON EL ANÁLISIS GUARDADO ──
+// Tres estados, visibles para el usuario:
+//   · sin vínculo             → "Guardar" crea un análisis nuevo
+//   · vinculado, mismo nombre → "Guardar" actualiza ese análisis
+//   · vinculado, nombre distinto → "Guardar" crea uno nuevo y deja intacto el
+//     anterior; para renombrar de verdad está el botón "Renombrar"
+function rpEstadoVinculo(){
+  var el = document.getElementById('rp_nombre');
+  var nombre = (el && el.value || '').trim();
+  if(!RP.localId) return { tipo:'nuevo', nombre:nombre };
+  if(nombre && nombre !== RP.localNombre) return { tipo:'renombrado', nombre:nombre, anterior:RP.localNombre };
+  return { tipo:'vinculado', nombre:nombre || RP.localNombre };
+}
+
+function rpActualizarVinculoUI(){
+  var el = document.getElementById('rp_vinculo');
+  var btn = document.getElementById('rp_btn_renombrar');
+  var v = rpEstadoVinculo();
+  if(btn) btn.style.display = (v.tipo === 'renombrado') ? '' : 'none';
+  if(!el) return;
+  var repetido = '';
+  if(v.tipo !== 'vinculado' && v.nombre){
+    var otros = (RP.guardados||[]).filter(function(it){
+      return String(it.origen_local_id||'') !== String(RP.localId||'')
+          && String(it.nombre_escenario||'').trim() === v.nombre;
+    });
+    if(otros.length) repetido = ' Ojo: ya tenés otro análisis llamado así.';
+  }
+  if(v.tipo === 'nuevo'){
+    el.textContent = 'Análisis nuevo: al guardar se crea uno aparte.' + repetido;
+  } else if(v.tipo === 'renombrado'){
+    el.textContent = 'Cambiaste el nombre: al guardar se crea un análisis nuevo y «' + v.anterior + '» queda intacto.' + repetido;
+  } else {
+    el.textContent = 'Editando «' + v.nombre + '»: al guardar se actualiza ese análisis.';
+  }
+}
+
 async function rpGuardar(){
   var nombreEl = document.getElementById('rp_nombre');
   var nombre = (nombreEl && nombreEl.value || '').trim();
   if(!nombre){ rpEstado('Poné un nombre al análisis antes de guardar.','err'); if(nombreEl) nombreEl.focus(); return; }
   if(typeof sb==='undefined' || !sb){ rpEstado('Sin conexión para guardar.','err'); return; }
+
+  var v = rpEstadoVinculo();
+  // Un nombre distinto del vinculado significa variante nueva, no renombre.
+  var creaNuevo = (v.tipo !== 'vinculado');
+
   try{
     var u = await sb.auth.getUser();
     var uid = u && u.data && u.data.user && u.data.user.id;
     if(!uid){ rpEstado('Tenés que estar logueado para guardar.','err'); return; }
     var cliId = (typeof currentClienteId!=='undefined' && currentClienteId) ? currentClienteId : uid;
 
+    var localId = creaNuevo ? ('rp_' + Date.now()) : RP.localId;
     var payload = {
       user_id: uid, cliente_id: cliId,
       modulo: 'agricultura_riesgo', modo: 'PRO',
@@ -10552,27 +10607,62 @@ async function rpGuardar(){
       datos: rpDatosParaGuardar(),
       outputs: rpOutputsResumen(),
       fuente: 'dashboard',
-      origen_local_id: RP.localId || ('rp_' + Date.now()),
-      activo: true,
-      updated_at: new Date().toISOString()
+      origen_local_id: localId,
+      activo: true
+      // updated_at NO se manda: lo pone el trigger set_updated_at_timestamp en
+      // los UPDATE y el default de la tabla en los INSERT. Mandarlo desde el
+      // cliente dejaba filas con updated_at anterior a created_at, y la lista
+      // ordena por updated_at.
     };
-    RP.localId = payload.origen_local_id;
-
-    // ¿ya existe uno con este origen_local_id? → actualizar; si no, insertar
-    var ex = await sb.from('escenarios_productivos').select('id')
-      .eq('user_id', uid).eq('modulo','agricultura_riesgo')
-      .eq('origen_local_id', payload.origen_local_id).maybeSingle();
 
     var res;
-    if(ex.data && ex.data.id){
-      res = await sb.from('escenarios_productivos').update(payload).eq('id', ex.data.id);
-    } else {
+    if(creaNuevo){
       res = await sb.from('escenarios_productivos').insert(payload);
+    } else {
+      var ex = await sb.from('escenarios_productivos').select('id')
+        .eq('user_id', uid).eq('modulo','agricultura_riesgo')
+        .eq('origen_local_id', localId).maybeSingle();
+      if(ex.data && ex.data.id){
+        res = await sb.from('escenarios_productivos').update(payload).eq('id', ex.data.id);
+      } else {
+        // El vínculo apuntaba a algo que ya no está (lo borraron desde otra
+        // pestaña): se inserta en vez de perder el guardado.
+        res = await sb.from('escenarios_productivos').insert(payload);
+      }
     }
     if(res.error) throw res.error;
-    rpEstado('Guardado: '+nombre,'ok');
-    rpListar();
+    RP.localId = localId;
+    RP.localNombre = nombre;
+    rpEstado(creaNuevo
+      ? ('Análisis nuevo guardado: '+nombre+(v.tipo==='renombrado' ? ' · «'+v.anterior+'» quedó intacto' : ''))
+      : ('Actualizado: '+nombre), 'ok');
+    await rpListar();
+    rpActualizarVinculoUI();
   }catch(e){ rpEstado('No se pudo guardar: '+(e.message||e),'err'); }
+}
+
+// Renombrar el análisis vinculado, en lugar de crear una variante.
+async function rpRenombrar(){
+  var nombreEl = document.getElementById('rp_nombre');
+  var nombre = (nombreEl && nombreEl.value || '').trim();
+  if(!RP.localId){ rpEstado('No hay un análisis guardado vinculado.','err'); return; }
+  if(!nombre){ rpEstado('Poné un nombre al análisis.','err'); return; }
+  if(nombre === RP.localNombre){ rpEstado('El nombre no cambió.','err'); return; }
+  if(!confirm('¿Renombrar «'+RP.localNombre+'» a «'+nombre+'»?\n\nNo se crea un análisis nuevo: se le cambia el nombre al que estás editando.')) return;
+  if(typeof sb==='undefined' || !sb){ rpEstado('Sin conexión para guardar.','err'); return; }
+  try{
+    var u = await sb.auth.getUser();
+    var uid = u && u.data && u.data.user && u.data.user.id;
+    if(!uid){ rpEstado('Tenés que estar logueado para guardar.','err'); return; }
+    var res = await sb.from('escenarios_productivos')
+      .update({ nombre_escenario: nombre, datos: rpDatosParaGuardar(), outputs: rpOutputsResumen() })
+      .eq('user_id', uid).eq('modulo','agricultura_riesgo').eq('origen_local_id', RP.localId);
+    if(res.error) throw res.error;
+    RP.localNombre = nombre;
+    rpEstado('Renombrado: '+nombre,'ok');
+    await rpListar();
+    rpActualizarVinculoUI();
+  }catch(e){ rpEstado('No se pudo renombrar: '+(e.message||e),'err'); }
 }
 
 async function rpListar(){
@@ -10594,6 +10684,7 @@ async function rpListar(){
           var f = new Date(it.updated_at).toLocaleDateString('es-AR');
           return '<option value="'+it.id+'">'+(it.nombre_escenario||'(sin nombre)')+' · '+f+'</option>';
         }).join('');
+    rpActualizarVinculoUI();
   }catch(e){ /* silencioso: la lista es secundaria */ }
 }
 
@@ -10604,9 +10695,13 @@ async function rpCargar(id){
     if(res.error) throw res.error;
     if(!res.data){ rpEstado('No se encontró el análisis.','err'); return; }
     RP.localId = res.data.origen_local_id || null;
+    // El nombre vinculado sale del análisis cargado, no de lo que haya quedado
+    // escrito en el campo: si no, el primer "Guardar" posterior lo renombraría.
+    RP.localNombre = String(res.data.nombre_escenario || '').trim();
     var n = document.getElementById('rp_nombre');
-    if(n) n.value = res.data.nombre_escenario || '';
+    if(n) n.value = RP.localNombre;
     rpRestaurarDatos(res.data.datos || {});
+    rpActualizarVinculoUI();
     rpEstado('Cargado: '+(res.data.nombre_escenario||''),'ok');
   }catch(e){ rpEstado('No se pudo cargar: '+(e.message||e),'err'); }
 }
@@ -10620,15 +10715,22 @@ async function rpEliminar(){
   try{
     var res = await sb.from('escenarios_productivos').delete().eq('id', id);
     if(res.error) throw res.error;
+    // Si se borró el que estaba vinculado, el formulario queda desvinculado:
+    // el próximo guardado tiene que crear uno nuevo, no fallar.
+    if(it && String(it.origen_local_id||'') === String(RP.localId||'')){
+      RP.localId = null; RP.localNombre = '';
+    }
     rpEstado('Eliminado.','ok');
-    sel.value=''; rpListar();
+    sel.value=''; await rpListar(); rpActualizarVinculoUI();
   }catch(e){ rpEstado('No se pudo eliminar: '+(e.message||e),'err'); }
 }
 
 function rpNuevo(){
   RP.localId = null;
+  RP.localNombre = '';
   var n = document.getElementById('rp_nombre'); if(n) n.value='';
   var sel = document.getElementById('rp_guardados'); if(sel) sel.value='';
+  rpActualizarVinculoUI();
   rpEstado('Análisis nuevo: al guardar se crea uno aparte.','ok');
 }
 
