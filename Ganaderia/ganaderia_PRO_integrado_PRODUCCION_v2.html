@@ -277,16 +277,18 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
     <div class="report-actions">
       <div class="sim-name-wrap">
         <label for="campania">Escenario</label>
-        <input type="text" id="campania" placeholder="Escenario base 25/26">
+        <input type="text" id="campania" placeholder="Escenario base 25/26" oninput="actualizarVinculoUI()">
         <input type="hidden" id="sel_cliente">
       </div>
       <button class="btn" type="button" onclick="abrirAyuda()">Ayuda</button>
       <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
+      <button class="btn" type="button" id="btn_renombrar" style="display:none" onclick="renombrarAnalisis()">Renombrar</button>
       <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
       <button class="btn btn-icon" type="button" onclick="nuevoAnalisis()" title="Nuevo escenario">＋</button>
     </div>
   </div>
   <div class="save-row">
+    <span id="vinculo_msg" class="meta-note"></span>
     <span id="status_msg" class="status-msg"></span>
     <span id="last_saved" class="meta-note"></span>
   </div>
@@ -739,6 +741,13 @@ function cerrarAyuda() {
 var st = {cria:false, recria:false, inv:false, feed:false};
 var ESC = [];
 var currentAnalisisId = null;
+// Nombre con el que se guardó o cargó el escenario al que está vinculado el
+// formulario. Es lo que permite distinguir "actualizar lo que estoy editando"
+// de "crear una variante": si el usuario cambia el nombre, guardar NO renombra
+// el escenario anterior, crea uno nuevo. Antes, cualquier guardado posterior
+// renombraba la fila vinculada y el escenario previo desaparecía de la lista,
+// lo que se leía como "no me deja guardar más escenarios".
+var currentAnalisisNombre = '';
 var currentClienteId = '';
 var currentClienteNombre = 'Cliente';
 var currentClienteNivel = 'PRO';   // este es el build PRO; se reconfirma desde el parent
@@ -780,6 +789,7 @@ function initShellContext(){
     if(title) title.textContent = currentClienteNombre;
     var cam = document.getElementById('campania');
     if(cam && !cam.value) cam.value = 'Escenario base ' + new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});
+    actualizarVinculoUI();
   } catch(e){
     setStatus('No se pudo inicializar el contexto del cliente', 'err');
   }
@@ -787,6 +797,8 @@ function initShellContext(){
 
 function onClienteChange(){
   currentAnalisisId = null;
+  currentAnalisisNombre = '';
+  actualizarVinculoUI();
   var last=document.getElementById('last_saved');
   if(last) last.textContent = '';
   setStatus('', '');
@@ -1021,18 +1033,14 @@ async function upsertRemoteAnalisis(item){
     if(existingByOrigin.data && existingByOrigin.data.id) remoteId = existingByOrigin.data.id;
   }
 
-  if(!remoteId){
-    var existingByName = await client
-      .from('escenarios_productivos')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('cliente_id', currentClienteId)
-      .eq('modulo', payload.modulo)
-      .eq('modo', payload.modo)
-      .eq('nombre_escenario', payload.nombre_escenario)
-      .maybeSingle();
-    if(existingByName.data && existingByName.data.id) remoteId = existingByName.data.id;
-  }
+  // NO buscar por nombre. Antes había acá un fallback que, si no encontraba la
+  // fila por origen_local_id, la buscaba por (user, cliente, modulo, modo,
+  // nombre_escenario) y la actualizaba. Como "Nuevo escenario" precarga el
+  // nombre con la fecha del día, dos escenarios creados el mismo día nacían
+  // con el mismo nombre y el segundo SOBREESCRIBÍA al primero en silencio.
+  // Se ve en los datos: los escenarios de ganadería estaban todos en días
+  // distintos (20/5, 4/6, 11/6, 3/8, 21/9) porque los del mismo día se
+  // pisaban entre ellos. La identidad de un escenario es solo origen_local_id.
 
   if(remoteId){
     var updateRes = await client
@@ -1217,6 +1225,48 @@ function buildSavedOutputs(){
   return outputs;
 }
 
+// ── VÍNCULO CON EL ESCENARIO GUARDADO ───────────────────────
+// Tres estados posibles, y el usuario tiene que poder verlos sin adivinar:
+//   · sin vínculo            → "Guardar" crea un escenario nuevo
+//   · vinculado, mismo nombre → "Guardar" actualiza ese escenario
+//   · vinculado, nombre distinto → "Guardar" crea uno nuevo y deja el anterior
+//     intacto (para renombrar de verdad está el botón "Renombrar")
+function estadoVinculo(){
+  var camEl = document.getElementById('campania');
+  var nombre = camEl ? camEl.value.trim() : '';
+  if(!currentAnalisisId) return { tipo:'nuevo', nombre:nombre };
+  if(nombre && nombre !== currentAnalisisNombre) return { tipo:'renombrado', nombre:nombre, anterior:currentAnalisisNombre };
+  return { tipo:'vinculado', nombre:nombre || currentAnalisisNombre };
+}
+
+function actualizarVinculoUI(){
+  var el = document.getElementById('vinculo_msg');
+  var btn = document.getElementById('btn_renombrar');
+  var v = estadoVinculo();
+  if(btn) btn.style.display = (v.tipo === 'renombrado') ? '' : 'none';
+  if(!el) return;
+  // Aviso de nombre repetido. Ya no es destructivo (la identidad es el
+  // origen_local_id), pero "Nuevo escenario" precarga el nombre con la fecha
+  // del día, así que dos escenarios del mismo día nacen homónimos y después no
+  // se distinguen en la lista.
+  var repetido = '';
+  if(v.tipo !== 'vinculado' && v.nombre){
+    try{
+      var otros = (readSavedAnalisis()||[]).filter(function(it){
+        return it.id !== currentAnalisisId && String(it.campania||'').trim() === v.nombre;
+      });
+      if(otros.length) repetido = ' Ojo: ya tenés otro escenario llamado así.';
+    }catch(e){ /* la lista es secundaria */ }
+  }
+  if(v.tipo === 'nuevo'){
+    el.textContent = 'Escenario nuevo: al guardar se crea uno aparte.' + repetido;
+  } else if(v.tipo === 'renombrado'){
+    el.textContent = 'Cambiaste el nombre: al guardar se crea un escenario nuevo y «' + v.anterior + '» queda intacto.' + repetido;
+  } else {
+    el.textContent = 'Editando «' + v.nombre + '»: al guardar se actualiza ese escenario.';
+  }
+}
+
 // ── GUARDAR ─────────────────────────────────────────────────
 async function guardar(){
   var sel=document.getElementById('sel_cliente');
@@ -1224,14 +1274,18 @@ async function guardar(){
   var clienteId = sel?sel.value:'';
   var campania = camEl?camEl.value.trim():'';
   if(sel && !clienteId){ setStatus('Seleccioná un cliente', 'err'); return; }
-  if(camEl && !campania){ setStatus('Ingresá la campaña', 'err'); return; }
+  if(camEl && !campania){ setStatus('Ponele un nombre al escenario', 'err'); if(camEl) camEl.focus(); return; }
   if(!st.cria&&!st.recria&&!st.inv&&!st.feed){ setStatus('Activá al menos una actividad', 'err'); return; }
+
+  var v = estadoVinculo();
+  // Un nombre distinto del vinculado significa variante nueva, no renombre.
+  var creaNuevo = (v.tipo !== 'vinculado');
 
   setStatus('Guardando...', '');
   var saved = readSavedAnalisis();
-  var existing = saved.find(function(item){ return item.id === currentAnalisisId; }) || null;
+  var existing = creaNuevo ? null : (saved.find(function(item){ return item.id === currentAnalisisId; }) || null);
   var payload = {
-    id: currentAnalisisId || ('sim_' + Date.now()),
+    id: creaNuevo ? ('sim_' + Date.now()) : currentAnalisisId,
     remote_id: existing && existing.remote_id ? existing.remote_id : '',
     cliente_id: clienteId,
     cliente_nombre: currentClienteNombre,
@@ -1249,14 +1303,56 @@ async function guardar(){
     var remoteId = await upsertRemoteAnalisis(payload);
     if(remoteId) payload.remote_id = remoteId;
     currentAnalisisId = payload.id;
+    currentAnalisisNombre = campania;
     await syncAnalisisFromSupabase(true);
     var now = new Date();
-    setStatus('Guardado correctamente', 'ok');
+    setStatus(creaNuevo
+      ? ('Escenario nuevo guardado: ' + campania + (v.tipo==='renombrado' ? ' · «'+v.anterior+'» quedó intacto' : ''))
+      : ('Actualizado: ' + campania), 'ok');
     var last=document.getElementById('last_saved');
     if(last) last.textContent = 'Últ. guardado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    setTimeout(function(){ setStatus('',''); }, 3000);
+    actualizarVinculoUI();
+    setTimeout(function(){ setStatus('',''); }, 4000);
   }catch(e){
     setStatus('Error al guardar: '+e.message, 'err');
+  }
+}
+
+// Renombrar el escenario vinculado, en lugar de crear una variante.
+async function renombrarAnalisis(){
+  var camEl = document.getElementById('campania');
+  var nombre = camEl ? camEl.value.trim() : '';
+  if(!currentAnalisisId){ setStatus('No hay un escenario guardado vinculado', 'err'); return; }
+  if(!nombre){ setStatus('Ponele un nombre al escenario', 'err'); return; }
+  if(nombre === currentAnalisisNombre){ setStatus('El nombre no cambió', 'err'); return; }
+  if(!confirm('¿Renombrar «' + currentAnalisisNombre + '» a «' + nombre + '»?\n\nNo se crea un escenario nuevo: se le cambia el nombre al que estás editando.')) return;
+  setStatus('Renombrando...', '');
+  var saved = readSavedAnalisis();
+  var existing = saved.find(function(item){ return item.id === currentAnalisisId; }) || null;
+  var payload = {
+    id: currentAnalisisId,
+    remote_id: existing && existing.remote_id ? existing.remote_id : '',
+    cliente_id: (document.getElementById('sel_cliente')||{}).value || currentClienteId,
+    cliente_nombre: currentClienteNombre,
+    usuario_id: currentUserId,
+    modo: REPORT_MODE,
+    campania: nombre,
+    actividades: {cria:st.cria, recria:st.recria, inv:st.inv, feed:st.feed},
+    datos: serializarFormulario(),
+    escenarios: serializarEscenarios(),
+    outputs: buildSavedOutputs(),
+    updated_at: new Date().toISOString()
+  };
+  try{
+    var remoteId = await upsertRemoteAnalisis(payload);
+    if(remoteId) payload.remote_id = remoteId;
+    currentAnalisisNombre = nombre;
+    await syncAnalisisFromSupabase(true);
+    setStatus('Renombrado: ' + nombre, 'ok');
+    actualizarVinculoUI();
+    setTimeout(function(){ setStatus('',''); }, 3000);
+  }catch(e){
+    setStatus('Error al renombrar: '+e.message, 'err');
   }
 }
 
@@ -1311,6 +1407,9 @@ async function cargarAnalisis(id){
     var a = data.find(function(item){ return item.id === id; });
     if(!a){ setStatus('No encontrado', 'err'); return; }
     currentAnalisisId = a.id;
+    // El nombre vinculado sale del escenario cargado, no de lo que haya quedado
+    // escrito en el campo: si no, el primer "Guardar" posterior lo renombraría.
+    currentAnalisisNombre = (a.campania || '').trim();
     var sel=document.getElementById('sel_cliente');
     if(sel) sel.value = a.cliente_id || '';
     currentClienteId = a.cliente_id || currentClienteId;
@@ -1321,6 +1420,9 @@ async function cargarAnalisis(id){
     var fecha = new Date(a.updated_at).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     var last=document.getElementById('last_saved');
     if(last) last.textContent = 'Cargado: '+a.campania+' · '+fecha;
+    var camEl = document.getElementById('campania');
+    if(camEl) camEl.value = currentAnalisisNombre;
+    actualizarVinculoUI();
     setStatus('Escenario cargado para edición', 'ok');
     setTimeout(function(){ setStatus('',''); }, 3000);
     cerrarHistorial();
@@ -1350,6 +1452,7 @@ async function eliminarAnalisis(id, btn){
 
 function nuevoAnalisis(){
   currentAnalisisId = null;
+  currentAnalisisNombre = '';
   ['cria','recria','inv','feed'].forEach(function(m){
     var tog = document.getElementById('tog_'+m);
     if(tog){ tog.checked = false; st[m] = false; document.getElementById('f_'+m).style.display = 'none'; }
@@ -1365,6 +1468,7 @@ function nuevoAnalisis(){
   var last=document.getElementById('last_saved');
   if(last) last.textContent = '';
   updateMvpView();
+  actualizarVinculoUI();
   setStatus('Escenario reiniciado', 'ok');
   setTimeout(function(){ setStatus('',''); }, 2000);
 }
