@@ -7236,7 +7236,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261002-1530';
+  var CTX_BUILD = '20261002-1600';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -8231,6 +8231,23 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
     '2027-05-01','2027-05-25','2027-06-21','2027-06-20','2027-07-09','2027-08-16',
     '2027-10-11','2027-11-22','2027-12-08','2027-12-25',
   ]);
+  /* Días no laborables con fines turísticos ("puentes"). La ley 27.399 deja que
+     el Ejecutivo fije hasta tres por año, y puede hacerlo como FERIADO —el
+     mercado cierra— o como DÍA NO LABORABLE, en cuyo caso cada empleador decide
+     y el mercado opera. Para 2026 se fijaron como no laborables, así que NO
+     entran en FERIADOS_AR: contarlos como feriado correría los vencimientos un
+     día hábil contra el reglamento de A3.
+
+     Se dejan listados igual porque son el candidato número uno a desfasar el
+     cálculo si en algún año se decretan como feriado. Si A3 publica que cierra,
+     mover la fecha al Set de arriba y listo.
+
+     Control hecho el 02/10/2026: ninguno de los tres cae lo bastante cerca del
+     inicio de un mes de entrega como para mover un vencimiento vigente, así que
+     la decisión no cambia ningún número de hoy.                              */
+  const NO_LABORABLES_AR = ['2026-03-23', '2026-07-10', '2026-12-07'];
+  // 2027 todavía no está decretado al 02/10/2026.
+
   const iso = d => d.toISOString().slice(0,10);
   const esHabil = d => { const w = d.getUTCDay(); return w!==0 && w!==6 && !FERIADOS_AR.has(iso(d)); };
 
@@ -8296,7 +8313,7 @@ function estrPrimaTeorica(pata){
   var F = parseFloat(document.getElementById('estr_F').value);
   var dte = parseFloat(document.getElementById('estr_dte').value);
   var vol = parseFloat(document.getElementById('estr_vol').value)/100;
-  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica()||{}).r||0) : 0;
+  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica(dte/365)||{}).r||0) : 0;
   if(!(F>0)||!(pata.strike>0)||!(dte>=0)||!(vol>0)) return null;
   var t = dte/365;
   if(pata.tipo==='F') return null; // futuro no tiene prima
@@ -8396,7 +8413,7 @@ function estrPayoffHoy(p, S){
   var dte = (ESTR.vista==='hoy' && slider) ? parseFloat(slider.value)
                                            : parseFloat(document.getElementById('estr_dte').value);
   var vol = parseFloat(document.getElementById('estr_vol').value)/100;
-  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica()||{}).r||0) : 0;
+  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica(dte/365)||{}).r||0) : 0;
   var t = Math.max(dte/365, 0);
   var val = (t>0 && vol>0) ? black76(S, p.strike, t, r, vol, p.tipo)
                            : (p.tipo==='C'?Math.max(S-p.strike,0):Math.max(p.strike-S,0));
@@ -8428,7 +8445,7 @@ function estrGriegasPosicion(){
   var F = parseFloat(document.getElementById('estr_F').value);
   var dte = parseFloat(document.getElementById('estr_dte').value);
   var vol = parseFloat(document.getElementById('estr_vol').value)/100;
-  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica()||{}).r||0) : 0;
+  var r = (typeof tasaUsdUnica==='function') ? ((tasaUsdUnica(dte/365)||{}).r||0) : 0;
   var t = dte/365;
   var tot = { delta:0, gamma:0, vega:0, theta:0 };
   if(!(F>0)||!(t>0)||!(vol>0)) return null;
@@ -8796,19 +8813,68 @@ function estrInitSiHaceFalta(){
   // Tasa USD única para todas las posiciones: la MÁS ALTA de la paridad
   // TAMAR/DLR entre todos los meses de la curva. Evita tasas negativas
   // (inconsistentes) y mantiene un criterio uniforme entre vencimientos.
-  function tasaUsdUnica() {
-    if (!mercadoAux.loaded || mercadoAux.tamar == null || !mercadoAux.spot) return { r:0, mes:null };
+  /* Tasa en dólares implícita en la paridad TAMAR / dólar futuro.
+     r = ((1 + TAMAR·t)·spot/forward − 1)/t   — colocar pesos a TAMAR y comprar
+     dólares a futuro equivale a colocar dólares a esta tasa.
+
+     Dos cosas que antes estaban mal y se corrigieron (auditoría 02/10/2026):
+
+     1) Se tomaba el MÁXIMO de la curva, no el plazo que correspondía. Una
+        opción a 85 días se descontaba con la paridad de un futuro a 18 meses
+        solo porque esa daba más alta. Ahora se interpola en el plazo de cada
+        instrumento y se extrapola plana en las puntas, que es lo que hace
+        cualquier curva cuando se le pide afuera del rango observado.
+
+     2) El piso en cero se aplicaba sin dejar rastro. Se conserva —a propósito,
+        ver abajo— pero ahora `rCruda` devuelve el valor sin pisar, para que el
+        panel y la auditoría puedan mostrar el régimen real.
+
+     POR QUÉ SE CONSERVA EL PISO. Hoy todas las paridades dan negativas: el
+     mercado implica una devaluación por encima de la TAMAR, que es un régimen
+     real y no un error de datos. Pero una r negativa hace df = exp(−r·t) > 1,
+     y eso infla el valor intrínseco descontado contra el que `bstSanear` filtra:
+     aflojaría justo el control que nos protege de los ajustes viejos de A3.
+     Entre equivocarse por descontar de menos (df = 1, efecto de 2-3% sobre
+     primas a seis meses) y aflojar el filtro de no-arbitraje, preferimos lo
+     primero. Si el régimen se vuelve estructural, la decisión se revisa con el
+     dato a la vista en vez de a ciegas.                                      */
+  function tasaUsdUnica(tAnios) {
+    const vacio = { r:0, rCruda:null, mes:null, pisada:false, puntos:0 };
+    if (!mercadoAux.loaded || mercadoAux.tamar == null || !mercadoAux.spot) return vacio;
     const hoy = Date.now();
-    let mejor = null, mejorT = null;
+    const pts = [];
     (mercadoAux.dlrPts || []).forEach(p => {
       const t = (p.t - hoy) / (365*24*3600*1000);
       if (t <= 0.02) return;                       // descarta lo casi vencido (ruido)
-      const r = ((1 + mercadoAux.tamar * t) * mercadoAux.spot / p.px - 1) / t;
-      if (mejor == null || r > mejor) { mejor = r; mejorT = p.t; }
+      if (!(p.px > 0)) return;
+      pts.push({ t: t, ms: p.t, r: ((1 + mercadoAux.tamar * t) * mercadoAux.spot / p.px - 1) / t });
     });
-    if (mejor == null) return { r:0, mes:null };
-    const d = mejorT ? new Date(mejorT) : null;
-    return { r: Math.max(0, mejor), mes: d ? (d.getMonth()+1)+'/'+String(d.getFullYear()).slice(2) : null };
+    if (!pts.length) return vacio;
+    pts.sort((a, b) => a.t - b.t);
+
+    let cruda, usado;
+    if (tAnios != null && isFinite(tAnios) && tAnios > 0) {
+      if (tAnios <= pts[0].t)                      { cruda = pts[0].r;              usado = pts[0]; }
+      else if (tAnios >= pts[pts.length-1].t)      { cruda = pts[pts.length-1].r;   usado = pts[pts.length-1]; }
+      else {
+        let i = 0; while (i < pts.length-1 && pts[i+1].t < tAnios) i++;
+        const a = pts[i], b = pts[i+1];
+        const w = (tAnios - a.t) / (b.t - a.t);
+        cruda = a.r + w * (b.r - a.r);
+        usado = (w < 0.5) ? a : b;                 // solo para etiquetar el mes
+      }
+    } else {
+      // Sin plazo: se usa el punto más cercano a seis meses, que es el centro
+      // de gravedad de lo que opera el panel. Antes era el máximo de la curva,
+      // que no corresponde a ningún instrumento.
+      usado = pts.reduce((m, p) => Math.abs(p.t - 0.5) < Math.abs(m.t - 0.5) ? p : m, pts[0]);
+      cruda = usado.r;
+    }
+    const d = usado && usado.ms ? new Date(usado.ms) : null;
+    return {
+      r: Math.max(0, cruda), rCruda: cruda, pisada: cruda < 0, puntos: pts.length,
+      mes: d ? (d.getMonth()+1)+'/'+String(d.getFullYear()).slice(2) : null,
+    };
   }
 
   // ───────────────────────────── Datos ─────────────────────────────
@@ -8884,7 +8950,7 @@ function estrInitSiHaceFalta(){
     const F   = opcData.fut[suby+'|'+_opcVto];
     const vto = vencimientoOpcion(mes, anio);
     const t   = tiempoAlVto(vto);
-    const tasaInfo = tasaUsdUnica();
+    const tasaInfo = tasaUsdUnica(t);
     const r = tasaInfo.r;
     const fVto = vto.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
 
@@ -8893,25 +8959,49 @@ function estrInitSiHaceFalta(){
       bodyEl.innerHTML = '<div class="empty-state">Falta el futuro subyacente</div>'; return;
     }
     infoEl.innerHTML = `Futuro <b>$${F}</b> · vence <b>${fVto}</b> · ${(t*365).toFixed(0)} días `
-      + `· tasa USD <b>${(r*100).toFixed(2)}%</b> <span style="opacity:.65">(máx. paridad TAMAR/DLR`
-      + `${tasaInfo.mes ? ', '+tasaInfo.mes : ''})</span>`;
+      + `· tasa USD <b>${(r*100).toFixed(2)}%</b> <span style="opacity:.65">(paridad TAMAR/DLR al plazo de la opción`
+      + `${tasaInfo.mes ? ', interpolada sobre ' + tasaInfo.mes : ''})</span>`
+      + (tasaInfo.pisada
+          ? ` <span style="color:#e0a63a" title="La paridad implica una devaluación por encima de la TAMAR. Se descuenta con 0% a propósito: una tasa negativa inflaría el valor intrínseco y aflojaría el filtro de no-arbitraje.">⚠ paridad real ${(tasaInfo.rCruda*100).toFixed(2)}%, se usa 0%</span>`
+          : '');
 
     const rows = opsVigentes.filter(o => o.subyacente===suby && o.vencimiento===_opcVto)
       .map(o => ({...o, strike:Number(o.strike), prima: o.settlement_price ?? o.last_price}))
       .sort((a,b) => (a.tipo_opcion===b.tipo_opcion ? a.strike-b.strike : (a.tipo_opcion==='C'?-1:1)));
 
+    // ── Saneamiento de no-arbitraje (el mismo que usa el Booster) ──
+    // Los ajustes de A3 traen series viejas que violan no-arbitraje: primas por
+    // debajo del intrínseco y cadenas no monótonas. Acá NO se ocultan, porque el
+    // panel existe para mostrar lo que publica el mercado: se marcan, y la prima
+    // marcada no se usa para despejar volatilidad implícita (una prima imposible
+    // da una vol imposible, y de ahí salen griegas de fantasía).
+    const dfOpc = Math.exp(-r * t);
+    const violan = new Set();
+    ['C','P'].forEach(tp => {
+      const chain = rows.filter(o => o.tipo_opcion === tp)
+        .map(o => ({ strike: o.strike, prima: (o.prima != null ? Number(o.prima) : null) }));
+      // Tolerancia de tick: una prima de 0,30 contra una de 0,20 no es una
+      // oportunidad de arbitraje, es el mínimo movimiento de precio.
+      const tolTick = ult => Math.max(0.05 * ult, 0.25);
+      bstSanear(chain, F, tp, dfOpc, tolTick).forEach(it => {
+        if (it.descartada) violan.add(tp + '|' + it.strike);
+      });
+    });
+
     const f2 = n => n==null ? '—' : Number(n).toFixed(2);
     let html = `<table class="tasas-table" style="min-width:640px">
       <thead><tr><th>Tipo</th><th>Strike</th><th>Prima</th><th>Volatilidad</th><th>Teórico</th>
       <th>Delta</th><th>Gamma</th><th>Vega</th><th>Theta/día</th></tr></thead><tbody>`;
-    let conHist = 0;
+    let conHist = 0, conViol = 0;
     const vh = volHistDe(_opcProd, _opcVto);   // vol histórica del futuro subyacente
     rows.forEach(o => {
       const tipoTxt = o.tipo_opcion==='C' ? 'Call' : 'Put';
       const prima = o.prima != null ? Number(o.prima) : null;
+      const viola = violan.has(o.tipo_opcion + '|' + o.strike);
+      if (viola) conViol++;
       // Volatilidad implícita si el mercado operó y la prima es coherente;
       // si no, se valúa con la volatilidad HISTÓRICA del futuro.
-      const iv = prima != null ? volImplicita(prima, F, o.strike, t, r, o.tipo_opcion) : null;
+      const iv = (prima != null && !viola) ? volImplicita(prima, F, o.strike, t, r, o.tipo_opcion) : null;
       const sigma = iv != null ? iv : vh;
       const esHist = (iv == null && sigma != null);
       if (esHist) conHist++;
@@ -8925,7 +9015,7 @@ function estrInitSiHaceFalta(){
       html += `<tr>
         <td style="color:${o.tipo_opcion==='C'?'var(--verde-l)':'var(--oro-l)'};font-weight:700">${tipoTxt}</td>
         <td style="font-weight:${itm?'700':'400'}">${o.strike}${itm?' <span style="font-size:9px;opacity:.6">ITM</span>':''}</td>
-        <td style="color:var(--oro-l);font-weight:700">${prima!=null?'$'+f2(prima):'—'}</td>
+        <td style="color:${viola?'#e0714f':'var(--oro-l)'};font-weight:700"${viola?` title="Este ajuste de A3 viola no-arbitraje: o está por debajo del valor intrínseco, o rompe la monotonía de la cadena. No se usa para calcular volatilidad ni griegas."`:''}>${prima!=null?(viola?`<s style="opacity:.8">$${f2(prima)}</s> <span style="font-size:9px">⚠</span>`:'$'+f2(prima)):'—'}</td>
         <td style="font-weight:700">${volTxt}</td>
         <td style="color:${esHist?'var(--gris)':'var(--texto)'};font-weight:${esHist?'400':'700'}">${px!=null?'$'+f2(px):'—'}</td>
         <td>${g?g.delta.toFixed(3):'—'}</td>
@@ -8935,8 +9025,13 @@ function estrInitSiHaceFalta(){
       </tr>`;
     });
     html += '</tbody></table>';
+    if (conViol) html += `<div class="tasas-nota" style="margin-top:10px;border-left:2px solid #e0714f;padding-left:9px">`
+      + `<b>${conViol}</b> ajuste(s) de A3 <b>violan no-arbitraje</b> y están tachados: la prima queda por debajo del valor `
+      + `intrínseco descontado, o rompe la monotonía de la cadena (un call no puede valer más caro cuanto más alto el strike, `
+      + `ni un put más barato). Suele ser un ajuste viejo de una serie que no operó. `
+      + `Esas primas <b>no se usan</b> para despejar volatilidad ni griegas —se valúan con la histórica— y el Booster las descarta igual.</div>`;
     if (conHist) html += `<div class="tasas-nota" style="margin-top:10px">`
-      + `<b>${conHist}</b> opción(es) sin prima operada (o con prima por debajo del valor intrínseco): `
+      + `<b>${conHist}</b> opción(es) sin prima operada (o con prima descartada): `
       + `se valúan con la <b>volatilidad histórica</b> del futuro`
       + `${vh!=null ? ' ('+(vh*100).toFixed(1)+'% anual, últimas 120 ruedas)' : ''}. `
       + `Se muestran en gris para distinguirlas de las que sí tienen precio de mercado.</div>`;
@@ -9018,7 +9113,13 @@ function estrInitSiHaceFalta(){
   //   · prima >= valor intrínseco descontado
   //   · monotonía: el call decrece con el strike, el put crece
   // Lo descartado no se pierde: cae a prima teórica como un strike sintético.
-  function bstSanear(items, F, tipo, df) {
+  // `tolMono(ultimaAceptada)` da el margen que se le perdona a la monotonía.
+  // El Booster no perdona nada (default): está eligiendo con qué valuar y una
+  // prima dudosa se reemplaza por modelo sin costo. El panel de Opciones sí
+  // perdona el ruido de tick, porque ahí la marca es un aviso al usuario y
+  // gritar por 0,10 sobre una prima de 0,20 enseña a ignorar el aviso.
+  function bstSanear(items, F, tipo, df, tolMono) {
+    const tol = tolMono || (() => 1e-9);
     const malos = new Set();
     // 1) prima por debajo del valor intrínseco descontado
     items.forEach(it => {
@@ -9033,7 +9134,7 @@ function estrInitSiHaceFalta(){
       .sort((a, b) => tipo === 'C' ? a.strike - b.strike : b.strike - a.strike);
     let ult = null;
     orden.forEach(it => {
-      if (ult != null && it.prima > ult + 1e-9) { malos.add(it.strike); return; }
+      if (ult != null && it.prima > ult + tol(ult)) { malos.add(it.strike); return; }
       ult = it.prima;
     });
     return items.map(it => (it.prima != null && malos.has(it.strike))
@@ -9058,7 +9159,8 @@ function estrInitSiHaceFalta(){
     const vto = vencimientoOpcion(mes, anio);
     const t = tiempoAlVto(vto);
     if (t <= 0) return null;
-    const r = tasaUsdUnica().r;
+    const tasaInfo = tasaUsdUnica(t);
+    const r = tasaInfo.r;
     const df = Math.exp(-r * t);
 
     // ── Escalera de strikes de 4 en 4 dólares ──
@@ -9201,6 +9303,7 @@ function estrInitSiHaceFalta(){
       excedente: mejor.excedente,
       probCierre: mejor.probCierre,
       volC, volP, baseC, baseP, vh, haircut: BST_HAIRCUT, topePx: BST_TOPE_PX,
+      tasaCruda: tasaInfo.rCruda, tasaPisada: tasaInfo.pisada,
       dias: Math.round(t * 365),
       frontera: frontera.map(c => ({ duplo: c.duplo, cierre: c.cierre,
                                      probCierre: c.probCierre, excedente: c.excedente,
@@ -9363,6 +9466,10 @@ function estrInitSiHaceFalta(){
       dias: b.dias,
       insumos: {
         futuro: r4(b.F), tasa_usd: r4(b.r), modelo: 'black76', paso_strike: 4,
+        // Paridad TAMAR/DLR al plazo de la opción, antes del piso en cero. Si
+        // `tasa_pisada` es true, el descuento se hizo con 0% a propósito.
+        tasa_usd_cruda: b.tasaCruda != null ? r4(b.tasaCruda) : null,
+        tasa_pisada: !!b.tasaPisada,
         vol_call: r4(b.volC), base_vol_call: b.baseC,     // iv = implícita de mercado · hist = histórica
         vol_put:  r4(b.volP), base_vol_put:  b.baseP,
         vol_historica: b.vh != null ? r4(b.vh) : null,
@@ -9414,9 +9521,58 @@ function estrInitSiHaceFalta(){
     </div>`;
   }
 
+  /* Registro de la valuación ────────────────────────────────────────────────
+     Se guarda lo que el panel le mostró al productor, con sus insumos. Es
+     trazabilidad de asesoramiento: si dentro de seis meses pregunta por qué tal
+     día le marcamos DUPLO 368 y CIERRE 296, la respuesta tiene que estar
+     guardada y no reconstruida con los precios de hoy.
+
+     Se escribe al abrir el detalle —un acto explícito del productor—, no en
+     cada render del banner. Una fila por producto, posición y día: el upsert
+     pisa la del día, que es la que vale.
+
+     Nunca puede romper el panel: si la tabla no está migrada todavía o el
+     cliente no está identificado, se sale en silencio. Un registro de auditoría
+     que tira abajo la pantalla que audita no sirve para nada.                */
+  const _bstRegistradas = new Set();
+  function bstRegistrar(prod) {
+    try {
+      if (typeof sb === 'undefined' || !sb) return;
+      const cli = (typeof currentCliente !== 'undefined' && currentCliente) ? currentCliente.id : null;
+      if (!cli) return;
+      const a = window.boosterAuditoria(prod);
+      if (!a) return;
+      const dia = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' });
+      const clave = cli + '|' + prod + '|' + a.posicion + '|' + dia;
+      if (_bstRegistradas.has(clave)) return;      // ya se escribió en esta sesión
+      _bstRegistradas.add(clave);
+      const i = a.insumos, res = a.resultado;
+      sb.from('booster_valuaciones').upsert({
+        cliente_id: cli, dia: dia,
+        producto: a.producto, posicion: a.posicion,
+        expiracion: a.expiracion, dias: a.dias,
+        futuro: i.futuro, tasa_usd: i.tasa_usd,
+        vol_call: i.vol_call, vol_put: i.vol_put,
+        base_vol_call: i.base_vol_call, base_vol_put: i.base_vol_put,
+        vol_historica: i.vol_historica, primas_descartadas: i.primas_descartadas,
+        duplo: res.duplo, cierre: res.cierre, plus: res.plus,
+        excedente: res.excedente, prob_cierre: res.prob_cierre,
+        tope_escalera: res.tope_escalera,
+        auditoria: a,
+      }, { onConflict: 'cliente_id,producto,posicion,dia' })
+        .then(function (r) {
+          // Si la tabla todavía no existe, se desactiva para lo que queda de
+          // sesión en vez de reintentar en cada apertura.
+          if (r && r.error) _bstRegistroOff = true;
+        }, function () { _bstRegistroOff = true; });
+    } catch (e) { /* el registro nunca interrumpe el panel */ }
+  }
+  let _bstRegistroOff = false;
+
   window.boosterDetalle = function (prod) {
     const b = window.calcularBooster(prod);
     if (!b) return;
+    if (!_bstRegistroOff) bstRegistrar(prod);
     const f1 = n => Number(n).toLocaleString('es-AR', { maximumFractionDigits:1 });
     const fecha = d => d.toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'});
     const pct = n => (n * 100).toLocaleString('es-AR', { maximumFractionDigits:0 }) + '%';
@@ -10469,9 +10625,14 @@ function rpSocioSugerido(nombreSegunda){
 }
 
 // Superficie física: descuenta las hectáreas compartidas por doble cultivo.
-function rpSuperficie(){
+// `soloEstos` limita la cuenta a un subconjunto de cultivos, para los paneles
+// que no trabajan con el planteo entero (el resultado económico y el stress
+// test climático dejan afuera a los cultivos sin costo, sin futuro o sin serie).
+// Un solape solo se descuenta si los DOS cultivos del par entraron al cálculo.
+function rpSuperficie(soloEstos){
   var has = RP.has || {}, doble = RP.doble || {};
-  var nombres = RP.cultivos;
+  var nombres = soloEstos ? RP.cultivos.filter(function(n){ return soloEstos.indexOf(n)>=0; })
+                          : RP.cultivos;
   var sembrado = nombres.reduce(function(a,n){ return a + (has[n]||0); }, 0);
   var restante = {};
   nombres.forEach(function(n){ restante[n] = has[n]||0; });
@@ -10480,6 +10641,7 @@ function rpSuperficie(){
   nombres.forEach(function(seg){
     var inv = doble[seg];
     if(!inv || inv===seg || !(has[seg]>0)) return;
+    if(nombres.indexOf(inv) < 0) return;        // el socio quedó fuera del subconjunto
     var comp = Math.min(has[seg], restante[inv]||0);   // ha realmente compartidas
     if(comp>0){ solape += comp; restante[inv] -= comp; pares.push({segunda:seg, invierno:inv, ha:comp}); }
   });
@@ -11123,7 +11285,10 @@ function rpOls(X, y){
     }
   }
   var beta = [], inv = [];
-  for(a=0;a<p;a++){ beta.push(M[a][2*p]); inv.push(M[a][p+a]); }
+  for(a=0;a<p;a++){
+    beta.push(M[a][2*p]);
+    inv.push(M[a].slice(p, 2*p));      // fila completa de (X'X)⁻¹
+  }
   var sse = 0;
   for(i=0;i<n;i++){
     var pred = 0;
@@ -11132,14 +11297,39 @@ function rpOls(X, y){
   }
   if(n <= p) return null;
   var s2 = sse/(n-p);
-  var se = inv.map(function(v){ return Math.sqrt(Math.max(s2*v, 0)); });
-  return { beta:beta, se:se, n:n, p:p, s2:s2 };
+  var se = [];
+  for(a=0;a<p;a++) se.push(Math.sqrt(Math.max(s2*inv[a][a], 0)));
+  return { beta:beta, se:se, inv:inv, n:n, p:p, s2:s2 };
+}
+
+// Error estándar de una combinación lineal de coeficientes, c'β.
+// Hace falta para comparar dos pendientes del mismo ajuste: la varianza de la
+// diferencia NO es la suma de varianzas, porque los dos coeficientes están
+// correlacionados y ignorar la covarianza infla o desinfla el test.
+function rpSeContraste(fit, c){
+  if(!fit || !fit.inv) return NaN;
+  var v = 0;
+  for(var a=0;a<c.length;a++)
+    for(var b=0;b<c.length;b++)
+      v += c[a]*c[b]*fit.inv[a][b];
+  return Math.sqrt(Math.max(fit.s2*v, 0));
 }
 
 // Desde cuántas campañas conviene controlar la tendencia. Con series cortas la
 // tendencia no se identifica y el control solo cuesta potencia; con series
 // largas, no controlarla es lo que rompe el cálculo.
 var RP_ENSO_MIN_TEND = 20;
+
+// Desde cuántas campañas se prueba el modelo ASIMÉTRICO, con una pendiente
+// para el lado Niña y otra para el lado Niño. Por debajo de esto no se intenta:
+// con 13 campañas el error de cada punta casi se duplica (de ±4,4 a ±8,7 puntos)
+// porque una sola campaña extrema carga toda la información de su lado, y una
+// asimetría grande se detecta menos de una vez de cada cinco. Con 35 campañas
+// la detección sube al 63% en el caso extremo y ahí sí paga el costo.
+// Además se exigen campañas suficientes de cada lado: una serie de 35 con 30
+// Niñas y 5 Niños tiene el largo pero no el balance.
+var RP_ENSO_MIN_ASIM = 30;
+var RP_ENSO_MIN_LADO = 10;
 
 // Regresión del shock relativo sobre el índice climático, por cultivo, con
 // encogimiento. Devuelve null si no hay suficientes campañas con dato.
@@ -11202,7 +11392,42 @@ function rpEnsoRegresion(){
     if(!fit) return;
 
     var b = fit.beta[1], seB = fit.se[1];
+
+    /* ── Modelo asimétrico (bisagra en cero) ──────────────────────────────
+       shock = a + bNiña·min(x,0) + bNiño·max(x,0) [+ tendencia]
+       Una sequía suele pegar más fuerte de lo que ayuda un año húmedo, así que
+       el supuesto lineal probablemente sea falso. Lo que no se puede es
+       estimarlo con cualquier serie: hace falta largo Y balance entre lados.
+       Se calcula aparte y solo se muestra si la diferencia entre las dos
+       pendientes resiste un test; si no, el panel sigue informando el modelo
+       simétrico y dice que se probó.                                        */
+    var asim = null;
+    var nNeg = xs.filter(function(x){ return x < 0; }).length;
+    var nPos = xs.length - nNeg;
+    if(xs.length >= RP_ENSO_MIN_ASIM && nNeg >= RP_ENSO_MIN_LADO && nPos >= RP_ENSO_MIN_LADO){
+      var Xa = xs.map(function(x,k){
+        var fila = [1, Math.min(x,0), Math.max(x,0)];
+        if(usaTend) fila.push((ts[k]-mt)/10);
+        return fila;
+      });
+      var fa = rpOls(Xa, ys);
+      if(fa){
+        var bNeg = fa.beta[1], bPos = fa.beta[2];
+        var seDif = rpSeContraste(fa, usaTend ? [0,1,-1,0] : [0,1,-1]);
+        var tDif  = (isFinite(seDif) && seDif > 0) ? (bNeg - bPos)/seDif : NaN;
+        asim = {
+          bNeg: bNeg, bPos: bPos, seNeg: fa.se[1], sePos: fa.se[2],
+          nNeg: nNeg, nPos: nPos,
+          // efecto a índice −1 y a índice +1, en shock de rinde
+          efNina: -bNeg, efNino: bPos,
+          seDif: seDif, tDif: tDif,
+          distinta: isFinite(tDif) && Math.abs(tDif) > 1.96
+        };
+      }
+    }
+
     out.push({
+      asim: asim,
       nombre:c.nombre, i:c.i,
       // La grilla se carga en qq/ha; acá se pasa a tn/ha porque el stress test
       // y la columna de media se muestran en toneladas.
@@ -11235,7 +11460,9 @@ function rpEnsoRegresion(){
   });
   return { cultivos:out, enso:enso, nConOni:idx.length, bProm:bProm,
            indice:RP_INDICE, conTend:out.some(function(o){ return o.conTend; }),
-           tendProm: tendencias.length ? rpMedia(tendencias) : null };
+           tendProm: tendencias.length ? rpMedia(tendencias) : null,
+           asimProbada: out.some(function(o){ return o.asim; }),
+           asimDetectada: out.some(function(o){ return o.asim && o.asim.distinta; }) };
 }
 
 // Producción del planteo cargado bajo un ONI dado (tn), y la peor campaña real.
@@ -11259,7 +11486,8 @@ function rpEnsoStress(reg){
     });
     if(completo && (!peor || tn < peor.tn)) peor = { camp:f.camp, tn:tn };
   });
-  return { haTot:haTot, base:base, bajo:bajo, peor:peor, usados:usados };
+  return { haTot:haTot, base:base, bajo:bajo, peor:peor, usados:usados,
+           sup: rpSuperficie(usados.map(function(c){ return c.nombre; })) };
 }
 
 function rpRenderEnso(){
@@ -11348,12 +11576,21 @@ function rpRenderEnso(){
       +  (c.ventana!==c.ventanaPref ? ' <span style="color:var(--gris-l)">*</span>' : '')
       +  '</td>'
       +  '<td>'+c.n+'</td>'
-      +  '<td style="font-weight:700">'+(c.firme?pc(ef):'—')+'</td>'
+      // Si el modelo asimétrico detectó que las dos puntas son distintas, se
+      // muestran por separado: ahí el espejo deja de ser una simplificación
+      // razonable y pasa a ser una afirmación falsa sobre estos datos.
+      +  '<td style="font-weight:700">'
+         + (c.asim && c.asim.distinta ? pc(c.asim.efNina)+' <span style="color:var(--oro-l)" title="Estimada por separado: con esta serie la respuesta a Niña y a Niño son distintas.">†</span>'
+            : (c.firme?pc(ef):'—'))
+      +  '</td>'
       // El modelo es lineal en el ONI, así que el efecto de un Niño típico es
       // el espejo exacto del de una Niña. Se muestra igual porque el productor
       // piensa en años, no en pendientes; la nota de abajo aclara que es
       // simétrico por construcción y no una segunda medición.
-      +  '<td style="font-weight:700">'+(c.firme?pc(-ef):'—')+'</td>'
+      +  '<td style="font-weight:700">'
+         + (c.asim && c.asim.distinta ? pc(c.asim.efNino)+' <span style="color:var(--oro-l)">†</span>'
+            : (c.firme?pc(-ef):'—'))
+      +  '</td>'
       +  '<td><div class="rp-enso-bar" title="'+ttl+'">'
         +  '<span class="tick" style="left:0"></span><span class="tick" style="left:25%"></span>'
         +  '<span class="tick" style="left:75%"></span><span class="tick" style="left:calc(100% - 1px)"></span>'
@@ -11390,10 +11627,27 @@ function rpRenderEnso(){
     +  'el trigo define rendimiento en set-nov y para esa fecha el verano todavía no pasó, mientras que un cultivo de segunda florece en feb-mar. '
     +  'Medirlos a todos con la misma ventana es medir a varios con el clima de un momento que no vivieron. '
     +  'Las cuatro ventanas están cargadas desde el 90/91 para los dos índices; un asterisco significa que en esta serie esa ventana no está disponible en todas las campañas con rinde y se usó dic-feb, para no mezclar ventanas dentro de la misma serie.</p>';
-  h += '<p class="rp-expl">Las columnas de Niña y Niño son <b>espejo una de la otra por construcción</b>: el modelo supone que el efecto crece parejo con el '+IX+', así que lo que una Niña saca, un Niño lo pone. '
-    +  'Probablemente la realidad sea asimétrica —una sequía suele pegar más fuerte de lo que ayuda un año húmedo— pero medir las dos puntas por separado necesita más campañas de las que hay: '
-    +  'con una serie de este largo, aun una asimetría grande se detecta menos de una vez de cada cinco, y el error de cada punta se duplica. '
-    +  'Con 35 campañas o más empieza a valer la pena estimarlas por separado.</p>';
+  // ── asimetría Niña / Niño ──
+  if(reg.asimDetectada){
+    var asims = reg.cultivos.filter(function(c){ return c.asim && c.asim.distinta; });
+    h += '<p class="rp-expl"><b>Las dos puntas se midieron por separado y salieron distintas.</b> '
+      +  'Con '+reg.nConOni+' campañas ya hay datos para estimar una pendiente para el lado Niña y otra para el lado Niño en vez de suponerlas espejo. '
+      +  'Donde la diferencia resiste el test, la tabla muestra cada punta con su propio número y lo marca con †: '
+      +  asims.map(function(c){
+           return '<b>'+c.nombre+'</b> '+pc(c.asim.efNina)+' con Niña contra '+pc(c.asim.efNino)+' con Niño';
+         }).join(' · ')
+      +  '. En los demás cultivos se probó la asimetría y no se distingue del ruido, así que siguen con el modelo simétrico.</p>';
+  } else if(reg.asimProbada){
+    h += '<p class="rp-expl">Las columnas de Niña y Niño son <b>espejo una de la otra</b>: el modelo supone que el efecto crece parejo con el '+IX+'. '
+      +  'Con '+reg.nConOni+' campañas el panel <b>probó estimarlas por separado</b> —una pendiente para cada lado— y la diferencia no se distingue del ruido en ningún cultivo, '
+      +  'así que informa la versión simétrica, que es más precisa. Probablemente la asimetría exista igual: una sequía suele pegar más fuerte de lo que ayuda un año húmedo, '
+      +  'pero con estos datos no se puede afirmar cuánto.</p>';
+  } else {
+    h += '<p class="rp-expl">Las columnas de Niña y Niño son <b>espejo una de la otra por construcción</b>: el modelo supone que el efecto crece parejo con el '+IX+', así que lo que una Niña saca, un Niño lo pone. '
+      +  'Probablemente la realidad sea asimétrica —una sequía suele pegar más fuerte de lo que ayuda un año húmedo— pero medir las dos puntas por separado necesita más campañas de las que hay: '
+      +  'con una serie de este largo, aun una asimetría grande se detecta menos de una vez de cada cinco, y el error de cada punta se duplica. '
+      +  'Desde '+RP_ENSO_MIN_ASIM+' campañas, con al menos '+RP_ENSO_MIN_LADO+' de cada lado, el panel las estima solo.</p>';
+  }
 
   // ── stress test del planteo ──
   var st = rpEnsoStress(reg);
@@ -11464,8 +11718,13 @@ function rpRenderEnso(){
         +  '</div>'
         +  '</div>';
     }
-    h += '<p class="rp-expl">Sobre las <b>'+rpFmt(st.haTot,0)+' ha</b> cargadas en tu planteo. '
-      +  'El panel evalúa la asignación que vos elegiste; no propone una cartera climática. '
+    h += '<p class="rp-expl">Sobre las <b>'+rpFmt(st.haTot,0)+' ha sembradas</b> de tu planteo'
+      +  (st.sup && st.sup.solape>0
+           ? ', que son <b>'+rpFmt(st.sup.fisica,0)+' ha de campo</b> porque '
+             + st.sup.pares.map(function(p){ return p.segunda+' va sobre el lote de '+p.invierno; }).join(' y ')
+             + '. Las toneladas se cuentan sobre lo sembrado, que es lo que se cosecha'
+           : '')
+      +  '. El panel evalúa la asignación que vos elegiste; no propone una cartera climática. '
       +  'Medir un planteo fijo necesita muchos menos datos que optimizar uno, y es lo único que una serie de este largo sustenta.</p>';
   }
 
@@ -11609,12 +11868,17 @@ function rpResultadoPlanteo(){
       vto: d.fut ? d.fut.label : ''
     });
   });
-  if(!filas.length) return { filas:filas, faltan:faltan, total:null, tnTotal:0, haTotal:0 };
+  if(!filas.length) return { filas:filas, faltan:faltan, total:null, tnTotal:0, haTotal:0, sup:null };
+  // El RESULTADO suma bien las hectáreas repetidas: si sobre el mismo lote va
+  // trigo y después soja de segunda, se cobran los dos rindes y se pagan los dos
+  // costos. Lo que no se puede decir es que el campo tenga esas hectáreas. Por eso
+  // el dinero se calcula sobre lo sembrado y la superficie se informa física.
   return {
     filas: filas, faltan: faltan,
     total:   filas.reduce(function(s,f){ return s + f.aporte; }, 0),
     tnTotal: filas.reduce(function(s,f){ return s + f.tn; }, 0),
-    haTotal: filas.reduce(function(s,f){ return s + f.ha; }, 0)
+    haTotal: filas.reduce(function(s,f){ return s + f.ha; }, 0),
+    sup:     rpSuperficie(filas.map(function(f){ return f.nombre; }))
   };
 }
 
@@ -11639,8 +11903,19 @@ function rpRenderResultadoPlanteo(){
     +  (neg ? 'Es lo que te falta para cubrir el costo' : 'Es lo que queda por encima del costo')
     +  ' si el rinde sale en el P10 y el precio se castiga por la volatilidad del futuro.</div>';
 
-  h += '<div class="rp-res-sub">' + rpFmt(r.haTotal,0) + ' ha · ' + rpFmt(r.tnTotal,0)
+  var hayDoble = r.sup && r.sup.solape > 0;
+  h += '<div class="rp-res-sub">'
+    +  (hayDoble
+         ? rpFmt(r.sup.fisica,0) + ' ha de campo · ' + rpFmt(r.haTotal,0) + ' ha sembradas'
+         : rpFmt(r.haTotal,0) + ' ha')
+    +  ' · ' + rpFmt(r.tnTotal,0)
     +  ' tn con rinde de campaña mala · ' + rpFmt(r.total/r.tnTotal,1) + ' USD/tn promedio</div>';
+  if(hayDoble){
+    h += '<div class="rp-doble-info"><b>Doble cultivo:</b> '
+      +  r.sup.pares.map(function(p){ return p.segunda+' sobre las mismas '+rpFmt(p.ha,0)+' ha de '+p.invierno; }).join(' · ')
+      +  '. El resultado en dólares <b>sí</b> suma las dos cosechas, porque sobre ese lote se levantan los dos cultivos y se pagan los dos costos; '
+      +  'lo que no se duplica es el campo, y por eso la superficie física ('+rpFmt(r.sup.fisica,0)+' ha) va separada de la sembrada ('+rpFmt(r.sup.sembrado,0)+' ha).</div>';
+  }
 
   h += '<div class="rp-tabla-wrap"><table class="rp-tabla rp-tabla-riesgo"><thead><tr>'
     +  '<th style="text-align:left">Cultivo</th><th>ha</th>'

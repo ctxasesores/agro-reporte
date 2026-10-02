@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  const FIN_VERSION = '2026-09-28.1';
+  const FIN_VERSION = '2026-10-02.1';
 
   /* ───────────── Estructura de carga ───────────── */
   const RUBROS = [
@@ -55,9 +55,9 @@
     serv_fs:     { nombre: 'Servicio de deuda / flujo sostenible', corto: 'Deuda / flujo sostenible', tipo: 'menor', verde: 0.70, amarillo: 1.00,
                    regla: 'Verde hasta 70% · amarillo 70% a 100% · rojo más de 100%',
                    que: 'Cuánto del flujo que queda después de impuestos, reposición y retiros se va en pagar deuda (capital + intereses).' },
-    calce_dol:   { nombre: 'Calce dolarizado (USD + dólar link)', corto: 'Calce dolarizado', tipo: 'calce', rojo: 0.80, techo: 1.20,
-                   regla: 'Rojo menos de 0,8x · verde 0,8x a 1,2x · más de 1,2x es informativo (largo en USD)',
-                   que: '% de ventas dolarizadas dividido % de costos directos dolarizados. Menos de 1 = una devaluación sube más los costos que las ventas.' },
+    calce_dol:   { nombre: 'Cobertura dolarizada (USD + dólar link)', corto: 'Cobertura dolarizada', tipo: 'calce', rojo: 0.80, techo: 1.20,
+                   regla: 'Rojo menos de 0,8x · verde 0,8x a 1,2x · más de 1,2x es informativo (largo en USD) · amarillo si el faltante viene del margen y no del descalce',
+                   que: 'Ventas dolarizadas dividido costos dolarizados —directos y de estructura— en la misma moneda. Es el cociente que tiene el mismo signo que la exposición: más de 1 significa que una devaluación mejora el resultado en pesos; menos de 1, que lo empeora.' },
     int_rb:      { nombre: 'Intereses / resultado bruto', corto: 'Intereses / resultado bruto', tipo: 'menor', verde: 0.10, amarillo: 0.25,
                    regla: 'Verde hasta 10% · amarillo 10% a 25% · rojo más de 25%',
                    que: 'Cuánto del margen productivo consume el costo financiero.' },
@@ -359,19 +359,56 @@
       return o;
     };
 
-    // Calce por moneda
+    /* Calce por moneda ─────────────────────────────────────────────────────
+       El COSTO de cada fila son TODOS los costos de esa moneda: directos más
+       estructura. Antes el porcentaje se calculaba solo sobre costos directos
+       mientras la exposición sí restaba estructura, así que las dos mitades de
+       la misma fila describían universos distintos: la identidad
+       `%ventas · ventasTotales − %costos · costosTotales = exposición`
+       no cerraba, y el desvío llegaba a cientos de miles de dólares.
+
+       Se publican dos cocientes, porque miden cosas distintas y conviene no
+       confundirlas:
+
+       · COBERTURA = ventas en la moneda ÷ costos en la moneda.
+         Cuántos dólares de venta hay por cada dólar de costo en esa moneda.
+         Tiene el MISMO SIGNO que la exposición —cobertura > 1 ⟺ exposición > 0—
+         y por eso es el que gobierna el semáforo: el resultado en pesos es
+         R = (ventas−costos en ARS) + TC·(ventas−costos en USD), así que la
+         derivada respecto del tipo de cambio ES la exposición en USD. Si da más
+         de 1, una devaluación mejora el resultado.
+
+       · CALCE ESTRUCTURAL = % de ventas en la moneda ÷ % de costos en la moneda.
+         Es el indicador del compendio. Mide si la estructura de costos acompaña
+         a la de ventas, neto del margen, pero NO responde si una devaluación
+         ayuda: equivale a la cobertura multiplicada por costosTotales/ventasTotales,
+         así que una empresa rentable lo ve siempre por debajo de su cobertura.
+         Se conserva como contexto, no como semáforo.
+
+       Las dos versiones (ARS y USD) se calculan por separado porque el tipo de
+       cambio cambia mes a mes: pesificar y después dividir no da lo mismo que
+       dividir en dólares. Cada vista usa la de su propia moneda y así la
+       identidad cierra exactamente en pantalla.                             */
     const V = sumMon('ventasMon'), C = sumMon('costosMon'), E = sumMon('estructuraMon'), S = sumMon('servicioMon');
     const Vu = sumMon('ventasMon', true), Cu = sumMon('costosMon', true), Eu = sumMon('estructuraMon', true), Su = sumMon('servicioMon', true);
-    const vTot = totalMon(V), cTot = totalMon(C);
+    const CE = vacioMon(), CEu = vacioMon();
+    MONEDAS.forEach(k => { CE[k] = C[k] + E[k]; CEu[k] = Cu[k] + Eu[k]; });
+    const vTot = totalMon(V), ceTot = totalMon(CE);
+    const vTotU = totalMon(Vu), ceTotU = totalMon(CEu);
+    const parte = (num, den) => den > 0 ? num / den : null;
+    const razon = (num, den) => den > 0 ? num / den : null;
     const filaMoneda = (clave, nombre, pick) => {
-      const v = pick(V), c = pick(C), e = pick(E), s = pick(S);
-      const pv = vTot > 0 ? v / vTot : null;
-      const pc = cTot > 0 ? c / cTot : null;
+      const v = pick(V), ce = pick(CE), s = pick(S);
+      const vu = pick(Vu), ceu = pick(CEu), su = pick(Su);
+      const pv = { ARS: parte(v, vTot),  USD: parte(vu, vTotU) };
+      const pc = { ARS: parte(ce, ceTot), USD: parte(ceu, ceTotU) };
+      const calceDe = m => (pv[m] != null && pc[m]) ? pv[m] / pc[m] : null;
       return {
         clave, nombre, pctVentas: pv, pctCostos: pc,
-        calce: pv != null && pc ? pv / pc : null,
-        exposicion: { ARS: v - c - e, USD: pick(Vu) - pick(Cu) - pick(Eu) },
-        exposicionPostDeuda: { ARS: v - c - e - s, USD: pick(Vu) - pick(Cu) - pick(Eu) - pick(Su) },
+        cobertura: { ARS: razon(v, ce), USD: razon(vu, ceu) },
+        calce:     { ARS: calceDe('ARS'), USD: calceDe('USD') },
+        exposicion: { ARS: v - ce, USD: vu - ceu },
+        exposicionPostDeuda: { ARS: v - ce - s, USD: vu - ceu - su },
       };
     };
     const moneda = [
@@ -398,7 +435,12 @@
     ind.capex_total_dep = { valor: anual.dep > 0 ? (anual.capexMant + anual.capexCrec) / anual.dep : null, estado: anual.dep > 0 ? 'info' : 'na', lectura: anual.dep > 0 ? ((anual.capexMant + anual.capexCrec) / anual.dep >= 1 ? 'Repone y expande' : 'Por debajo del desgaste') : 'Sin bienes de uso' };
     ind.dep_ebitda = { valor: anual.ebitda > 0 && anual.dep > 0 ? anual.dep / anual.ebitda : null, estado: anual.ebitda > 0 && anual.dep > 0 ? 'info' : 'na', lectura: anual.ebitda > 0 ? 'Intensidad de capital' : 'EBITDA negativo' };
     const dol = moneda[3];
-    ind.calce_dol = evaluar('calce_dol', dol.calce, { sinCostos: !(dol.pctCostos > 0) });
+    // El semáforo mira la COBERTURA en dólares, que es la que tiene el mismo
+    // signo que la exposición al tipo de cambio. El calce estructural queda
+    // disponible en la fila para mostrarlo al lado, pero no decide el color.
+    ind.calce_dol = evaluar('calce_dol', dol.cobertura.USD,
+      { sinCostos: !(dol.pctCostos.USD > 0), estructural: dol.calce.USD });
+    ind.calce_estr_dol = { valor: dol.calce.USD, estado: 'info', lectura: 'Estructura, neto del margen' };
     const mesesNeg = meses.filter(m => m.post < 0).length;
     ind.meses_neg = evaluar('meses_neg', mesesNeg);
 
@@ -484,7 +526,18 @@
     if (flags.sinBienes) return { valor: null, estado: 'na', lectura: 'Sin bienes de uso cargados' };
     if (clave === 'calce_dol') {
       if (valor == null) return { valor: null, estado: 'na', lectura: flags.sinCostos ? 'Sin costos dolarizados' : 'Sin ventas cargadas' };
-      if (valor < u.rojo) return { valor, estado: 'rojo', lectura: 'Corto en USD' };
+      if (valor < u.rojo) {
+        // Una empresa que vende y gasta todo en dólares pero pierde plata tiene
+        // cobertura menor a 1 sin tener ningún descalce de moneda: lo que le
+        // falta es margen. Eso se distingue mirando el calce estructural, que
+        // en ese caso da cerca de 1. Marcarlo rojo sería culpar al dólar de un
+        // problema de rentabilidad y mandar a cubrir lo que no hay que cubrir.
+        const estr = flags.estructural;
+        if (estr != null && estr >= u.rojo && estr <= u.techo) {
+          return { valor, estado: 'amarillo', lectura: 'Estructura calzada: el faltante es de margen' };
+        }
+        return { valor, estado: 'rojo', lectura: 'Corto en USD' };
+      }
       if (valor <= u.techo) return { valor, estado: 'verde', lectura: 'Calzado' };
       return { valor, estado: 'info', lectura: 'Largo en USD' };
     }
@@ -937,8 +990,9 @@
       {
         label: UMBRALES.calce_dol.nombre, ind: ind.calce_dol,
         valor: fmtX(ind.calce_dol.valor),
-        sub: r.moneda[3].pctVentas != null
-          ? `Ventas dolarizadas ${fmtPct(r.moneda[3].pctVentas)} · costos directos dolarizados ${fmtPct(r.moneda[3].pctCostos)}.`
+        sub: r.moneda[3].pctVentas[M] != null
+          ? `Ventas dolarizadas ${fmtPct(r.moneda[3].pctVentas[M])} · costos dolarizados ${fmtPct(r.moneda[3].pctCostos[M])} (directos y estructura). `
+            + `Calce estructural ${fmtX(r.moneda[3].calce[M])}.`
           : 'Sin ventas cargadas.',
       },
     ];
@@ -960,21 +1014,29 @@
     const num = v => fmtMonto(v, '');
     const tablaMoneda = `
       <div class="fin-tabla-wrap fin-solo-ancho"><table class="fin-tabla">
-        <thead><tr><th>Moneda</th><th>% ventas</th><th>% costos</th><th>Calce</th><th>Exposición</th><th>Tras deuda</th></tr></thead>
+        <thead><tr><th>Moneda</th><th>% ventas</th><th>% costos</th>
+          <th title="Ventas ÷ costos en esa moneda. Más de 1 = una devaluación mejora el resultado.">Cobertura</th>
+          <th title="% de ventas ÷ % de costos. Mide si la estructura acompaña, neto del margen.">Calce estr.</th>
+          <th>Exposición</th><th>Tras deuda</th></tr></thead>
         <tbody>${r.moneda.map(f => `
           <tr class="${f.clave === 'DOL' ? 'fuerte' : ''}">
-            <td>${esc(f.nombre)}</td><td>${fmtPct(f.pctVentas)}</td><td>${fmtPct(f.pctCostos)}</td><td>${fmtX(f.calce)}</td>
+            <td>${esc(f.nombre)}</td><td>${fmtPct(f.pctVentas[M])}</td><td>${fmtPct(f.pctCostos[M])}</td>
+            <td class="${f.cobertura[M] != null && f.cobertura[M] < 1 ? 'neg' : ''}">${fmtX(f.cobertura[M])}</td>
+            <td>${fmtX(f.calce[M])}</td>
             <td class="${f.exposicion[M] < 0 ? 'neg' : ''}">${num(f.exposicion[M])}</td>
             <td class="${f.exposicionPostDeuda[M] < 0 ? 'neg' : ''}">${num(f.exposicionPostDeuda[M])}</td>
           </tr>`).join('')}
         </tbody></table></div>
       <div class="fin-solo-angosto fin-mon-lista">${r.moneda.map(f => `
         <div class="fin-mon-item ${f.clave === 'DOL' ? 'fuerte' : ''}">
-          <div class="fin-mon-nombre"><span>${esc(f.nombre)}</span><span>${fmtX(f.calce)}</span></div>
-          <div class="fin-mon-det">Ventas ${fmtPct(f.pctVentas)} · costos ${fmtPct(f.pctCostos)}</div>
+          <div class="fin-mon-nombre"><span>${esc(f.nombre)}</span><span>${fmtX(f.cobertura[M])}</span></div>
+          <div class="fin-mon-det">Ventas ${fmtPct(f.pctVentas[M])} · costos ${fmtPct(f.pctCostos[M])} · calce estr. ${fmtX(f.calce[M])}</div>
           <div class="fin-mon-det">Exposición ${mon(f.exposicion[M])} · tras deuda ${mon(f.exposicionPostDeuda[M])}</div>
         </div>`).join('')}</div>
-      <div class="fin-nota">Exposición = ventas − costos directos − estructura en esa moneda. "Tras deuda" también resta capital e intereses en esa moneda.
+      <div class="fin-nota"><b>Cobertura</b> = ventas ÷ costos de esa moneda, con los costos directos y los de estructura adentro. Es la que manda el semáforo porque tiene el mismo signo que la exposición:
+      más de 1 significa que una devaluación mejora el resultado en pesos, menos de 1 que lo empeora.
+      <b>Calce estructural</b> = % de ventas ÷ % de costos. Mide otra cosa: si la estructura de costos acompaña a la de ventas, descontado el margen. Una empresa rentable lo ve siempre por debajo de su cobertura, y por eso no decide el color.
+      <b>Exposición</b> = ventas − costos directos − estructura en esa moneda; "tras deuda" también resta capital e intereses.
       El semáforo mira el dolarizado (USD + dólar link): el dólar link se cancela en pesos pero sigue al oficial.</div>`;
 
     const l = (txt, v, cls, tag) => `<div class="l ${cls || ''}"><span>${txt}${tag ? `<span class="fin-tag">${tag}</span>` : ''}</span><span>${mon(v)}</span></div>`;

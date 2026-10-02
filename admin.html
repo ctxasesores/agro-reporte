@@ -6,7 +6,7 @@
 <title>Context | Panel Administrador</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="kpi-financiero.js?v=20260928-1400"></script>
+<script src="kpi-financiero.js?v=20261002-1800"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -229,6 +229,7 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('bcra',this)">🏦 BCRA / Dólar</a>
       <a class="nav-item" onclick="showSection('campanias',this)">🌾 Campañas</a>
       <a class="nav-item" onclick="showSection('enso',this)">🌊 Índice climático ENSO</a>
+      <a class="nav-item" onclick="showSection('booster',this)">🚀 Valuaciones del Booster</a>
       <a class="nav-item" onclick="showSection('financiero',this)">📊 Datos financieros</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
@@ -787,6 +788,32 @@ tr:hover td { background:#f9faf6; }
         <h3 style="font-size:14px;margin:0 0 4px">Serie cargada</h3>
         <p class="field-hint" style="margin:0 0 14px">Las campañas que el cliente tenga cargadas y no figuren acá quedan fuera del cálculo, sin romper nada: el panel las muestra como «sin dato».</p>
         <div id="enso-tabla"><div class="tool-empty">Cargando…</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-booster">
+      <h2 class="tool-section-title">🚀 Valuaciones del Booster</h2>
+      <p class="tool-section-sub">Lo que el panel le mostró a cada cliente, con los insumos de ese día. Sirve para reconstruir una conversación sin tener que recalcular con los precios de hoy, que ya son otros.</p>
+
+      <div class="tool-panel">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div>
+            <label class="modal-label" for="bval-cliente" style="display:block;margin-bottom:5px">Cliente</label>
+            <select class="modal-select" id="bval-cliente" onchange="cargarBoosterVal()" style="min-width:200px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div>
+            <label class="modal-label" for="bval-desde" style="display:block;margin-bottom:5px">Desde</label>
+            <input type="date" class="modal-input" id="bval-desde" onchange="cargarBoosterVal()" style="max-width:170px">
+          </div>
+          <button class="btn" onclick="cargarBoosterVal()">Actualizar</button>
+        </div>
+        <div id="bval-status" class="tool-status"></div>
+      </div>
+
+      <div class="tool-panel" style="margin-top:16px">
+        <div id="bval-tabla"><div class="tool-empty">Cargando…</div></div>
       </div>
     </div>
 
@@ -2030,6 +2057,7 @@ function showSection(name, el) {
     bcra:         ['BCRA / Dólar','Actualizá variables macroeconómicas y tipos de cambio'],
     campanias:    ['Campañas','Elegí la campaña activa y los vencimientos que se muestran al cliente'],
     enso:         ['Índice climático ENSO','Valor del ONI y evento por campaña, que usa el análisis condicional por clima'],
+    booster:      ['Valuaciones del Booster','Qué DUPLO y qué CIERRE vio cada cliente, con los insumos de ese día'],
     financiero:   ['Datos financieros','Cargá y revisá el tablero financiero de cada cliente'],
     usuarios:     ['Gestión de usuarios','Creá y administrá los accesos de cada cliente'],
   };
@@ -2044,6 +2072,97 @@ function showSection(name, el) {
   if (name === 'campanias')     cargarCampanias();
   if (name === 'financiero')    finAdminIniciar();
   if (name === 'enso')          cargarEnso();
+  if (name === 'booster')       cargarBoosterVal();
+}
+
+// ── Valuaciones del Booster (tabla booster_valuaciones) ──
+// Solo lectura, y solo para admins: la política RLS de la tabla da SELECT
+// únicamente a private.is_admin(). El cliente escribe lo suyo y no lo lee.
+let _bvalClientes = null;
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function cargarBoosterVal() {
+  const cont = document.getElementById('bval-tabla');
+  const st   = document.getElementById('bval-status');
+  if (!cont) return;
+  initSupabase();
+  cont.innerHTML = '<div class="tool-empty">Cargando…</div>';
+
+  // Combo de clientes, una sola vez
+  const sel = document.getElementById('bval-cliente');
+  if (sel && !_bvalClientes) {
+    const { data } = await sb.from('clientes').select('id,nombre,codigo').order('nombre');
+    _bvalClientes = data || [];
+    sel.innerHTML = '<option value="">Todos</option>'
+      + _bvalClientes.map(c => `<option value="${c.id}">${esc(c.nombre || c.codigo || c.id.slice(0,8))}</option>`).join('');
+  }
+  const porCliente = sel ? sel.value : '';
+  const desde = document.getElementById('bval-desde');
+  const desdeVal = desde && desde.value ? desde.value : null;
+
+  let q = sb.from('booster_valuaciones')
+    .select('id,cliente_id,dia,producto,posicion,expiracion,dias,futuro,tasa_usd,vol_call,vol_put,base_vol_call,base_vol_put,primas_descartadas,duplo,cierre,plus,excedente,prob_cierre,tope_escalera')
+    .order('dia', { ascending: false }).limit(300);
+  if (porCliente) q = q.eq('cliente_id', porCliente);
+  if (desdeVal)   q = q.gte('dia', desdeVal);
+  const { data, error } = await q;
+
+  if (error) {
+    // El caso más probable es que la migración todavía no esté aplicada.
+    const falta = /does not exist|schema cache|relation/i.test(error.message || '');
+    cont.innerHTML = `<div class="tool-empty">${falta
+      ? 'La tabla <b>booster_valuaciones</b> todavía no existe. Corré la migración <code>booster_valuaciones.sql</code> y volvé a entrar.'
+      : 'No se pudo leer: ' + esc(error.message)}</div>`;
+    if (st) st.textContent = '';
+    return;
+  }
+  if (!data || !data.length) {
+    cont.innerHTML = '<div class="tool-empty">Todavía no hay valuaciones registradas. Se escribe una por cliente, producto y día, cuando el productor abre el detalle del Booster.</div>';
+    if (st) st.textContent = '';
+    return;
+  }
+
+  const nom = id => {
+    const c = (_bvalClientes || []).find(x => x.id === id);
+    return c ? (c.nombre || c.codigo) : id.slice(0, 8);
+  };
+  const f1  = v => v == null ? '—' : Number(v).toLocaleString('es-AR', { maximumFractionDigits: 1 });
+  const pct = (v, d) => v == null ? '—' : (Number(v) * 100).toLocaleString('es-AR', { maximumFractionDigits: d == null ? 0 : d }) + '%';
+  const TOPE = 0.25;   // BST_TOPE_PX del motor: por encima de esto el panel avisa
+
+  if (st) st.textContent = `${data.length} valuación(es)${porCliente ? '' : ' de todos los clientes'}.`;
+  cont.innerHTML =
+      '<div class="table-wrap"><table class="data-table"><thead><tr>'
+    + '<th>Día</th><th>Cliente</th><th>Producto</th><th>Posición</th>'
+    + '<th>Futuro</th><th>DUPLO</th><th>CIERRE</th><th>Plus</th><th>Excedente</th>'
+    + '<th>P(✕)</th><th>Vol usada</th><th>Descartadas</th>'
+    + '</tr></thead><tbody>'
+    + data.map(r => {
+        const alto = r.prob_cierre != null && Number(r.prob_cierre) > TOPE;
+        const base = b => b === 'iv' ? 'mercado' : b === 'hist' ? 'histórica' : (b || '—');
+        return `<tr>
+          <td style="white-space:nowrap">${r.dia}</td>
+          <td>${esc(nom(r.cliente_id))}</td>
+          <td style="font-weight:600">${esc(r.producto)}</td>
+          <td style="white-space:nowrap">${esc(String(r.posicion).replace('_', '/'))}</td>
+          <td>${f1(r.futuro)}</td>
+          <td style="color:var(--oro);font-weight:700">${f1(r.duplo)}</td>
+          <td style="font-weight:700">${f1(r.cierre)}</td>
+          <td>${f1(r.plus)}</td>
+          <td>${f1(r.excedente)}</td>
+          <td style="${alto ? 'color:#e0714f;font-weight:700' : ''}"${alto ? ' title="Por encima del tope de 25% que usa el motor para elegir el par"' : ''}>${pct(r.prob_cierre)}</td>
+          <td style="font-size:12px;white-space:nowrap">${pct(r.vol_call, 1)} <small style="color:var(--gris)">${base(r.base_vol_call)}</small></td>
+          <td style="text-align:center">${r.primas_descartadas != null ? r.primas_descartadas : '—'}</td>
+        </tr>`;
+      }).join('')
+    + '</tbody></table></div>'
+    + '<p class="field-hint" style="margin:12px 0 0">Se registra una fila por cliente, producto y posición cada día en que el productor abre el detalle del Booster. '
+    + 'La columna <b>P(✕)</b> es la probabilidad de terminar debajo del CIERRE: si aparece en rojo, esa valuación salió por encima del tope de riesgo del motor y conviene mirar por qué. '
+    + '<b>Descartadas</b> son las primas de A3 que violaban no-arbitraje ese día y se reemplazaron por modelo.</p>';
 }
 
 // ── Índice climático ENSO (tabla enso_oni) ──
