@@ -7186,7 +7186,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261002-0745';
+  var CTX_BUILD = '20261002-0800';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10844,27 +10844,33 @@ function rpOutputsResumen(){
    ============================================================ */
 
 // Índice ONI del trimestre dic-ene-feb por campaña, que es la ventana que
-// cubre floración y llenado de los cultivos de verano. El evento usa el
-// criterio de PERSISTENCIA de NOAA (cinco trimestres consecutivos), por eso
-// 19/20 figura Neutro aunque su ONI puntual sea +0,5.
+// cubre floración y llenado de los cultivos de verano. Valores del archivo
+// oni.ascii.txt del Climate Prediction Center (NOAA); la campaña YY/YY+1 toma
+// el DJF del año YY+1.
+//
+// El `evento` sale de la lista oficial de episodios de NOAA, que aplica un
+// criterio de PERSISTENCIA sobre el pico y por eso puede no coincidir con el
+// valor puntual de DJF: 16/17 figura Niña con un DJF de -0,08 porque el
+// episodio sí persistió. Esa diferencia no afecta el cálculo — la regresión
+// usa el VALOR del ONI, no la etiqueta, que solo colorea la tira.
 //
 // La serie viva está en la tabla `enso_oni` de Supabase y se administra desde
 // el panel de admin (Índice climático ENSO). Esto de abajo es el RESPALDO que
 // se usa si la consulta falla o todavía no cargó: así el análisis no queda en
 // blanco por un problema de red. rpCargarOni() la reemplaza al arrancar.
 var RP_ONI = {
-  '91/92':[ 1.7,'Niño'],  '92/93':[ 0.3,'Neutro'], '93/94':[ 0.1,'Neutro'],
-  '94/95':[ 1.0,'Niño'],  '95/96':[-0.9,'Niña'],   '96/97':[-0.5,'Neutro'],
-  '97/98':[ 2.4,'Niño'],  '98/99':[-1.5,'Niña'],   '99/00':[-1.7,'Niña'],
-  '00/01':[-0.7,'Niña'],  '01/02':[-0.1,'Neutro'], '02/03':[ 0.9,'Niño'],
-  '03/04':[ 0.4,'Neutro'],'04/05':[ 0.6,'Niño'],   '05/06':[-0.9,'Niña'],
-  '06/07':[ 0.7,'Niño'],  '07/08':[-1.6,'Niña'],   '08/09':[-0.8,'Niña'],
-  '09/10':[ 1.5,'Niño'],  '10/11':[-1.4,'Niña'],   '11/12':[-0.8,'Niña'],
-  '12/13':[-0.4,'Neutro'],'13/14':[-0.4,'Neutro'], '14/15':[ 0.5,'Niño'],
-  '15/16':[ 2.5,'Niño'],  '16/17':[-0.3,'Neutro'], '17/18':[-0.9,'Niña'],
-  '18/19':[ 0.7,'Niño'],  '19/20':[ 0.5,'Neutro'], '20/21':[-1.0,'Niña'],
-  '21/22':[-1.0,'Niña'],  '22/23':[-0.7,'Niña'],   '23/24':[ 1.8,'Niño'],
-  '24/25':[-0.6,'Niña']
+  '90/91':[ 0.35,'Neutro'],'91/92':[ 1.54,'Niño'],  '92/93':[ 0.13,'Neutro'],
+  '93/94':[ 0.07,'Neutro'],'94/95':[ 0.88,'Niño'],  '95/96':[-0.88,'Niña'],
+  '96/97':[-0.41,'Neutro'],'97/98':[ 2.22,'Niño'],  '98/99':[-1.51,'Niña'],
+  '99/00':[-1.47,'Niña'],  '00/01':[-0.76,'Niña'],  '01/02':[-0.15,'Neutro'],
+  '02/03':[ 0.90,'Niño'],  '03/04':[ 0.34,'Neutro'],'04/05':[ 0.62,'Niño'],
+  '05/06':[-0.86,'Niña'],  '06/07':[ 0.62,'Niño'],  '07/08':[-1.76,'Niña'],
+  '08/09':[-0.89,'Niña'],  '09/10':[ 1.47,'Niño'],  '10/11':[-1.29,'Niña'],
+  '11/12':[-0.71,'Niña'],  '12/13':[-0.24,'Neutro'],'13/14':[-0.24,'Neutro'],
+  '14/15':[ 0.73,'Niño'],  '15/16':[ 2.50,'Niño'],  '16/17':[-0.08,'Niña'],
+  '17/18':[-0.71,'Niña'],  '18/19':[ 0.99,'Niño'],  '19/20':[ 0.71,'Niño'],
+  '20/21':[-0.99,'Niña'],  '21/22':[-0.76,'Niña'],  '22/23':[-0.55,'Niña'],
+  '23/24':[ 1.84,'Niño'],  '24/25':[-0.46,'Neutro'],'25/26':[-0.39,'Neutro']
 };
 
 // Trae la serie viva de enso_oni. Si falla, queda la tabla de respaldo.
