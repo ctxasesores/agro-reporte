@@ -695,19 +695,15 @@ tr:hover td { background:#f9faf6; }
     <!-- ══ SECCIÓN: ÍNDICE CLIMÁTICO ENSO ══ -->
     <div class="section" id="sec-enso">
       <h2 class="tool-section-title">🌊 Índice climático ENSO</h2>
-      <p class="tool-section-sub">El valor del <b>ONI</b> de diciembre-enero-febrero por campaña, que es la ventana que cubre floración y llenado de los cultivos de verano. Lo usa el análisis condicional por clima del panel de riesgo productivo: el cliente no clasifica nada a mano, se resuelve contra esta tabla desde la etiqueta de su campaña.</p>
+      <p class="tool-section-sub">Los índices climáticos del Pacífico por campaña, en las cuatro ventanas trimestrales que cubren el período crítico de cada cultivo. Los usa el análisis condicional por clima del panel de riesgo productivo: el cliente no clasifica nada a mano, se resuelve contra esta tabla desde la etiqueta de su campaña.</p>
 
       <div class="tool-panel">
         <h3 style="font-size:14px;margin:0 0 4px">Cargar o corregir una campaña</h3>
-        <p class="field-hint" style="margin:0 0 14px">El <b>ONI</b> es el valor del archivo del Climate Prediction Center; la campaña 23/24 toma el DJF de 2024. El <b>evento</b> sale de la lista oficial de episodios de NOAA, que aplica un criterio de <b>persistencia</b> sobre el pico y por eso puede no coincidir con el valor puntual: 16/17 figura Niña con un DJF de −0,08 porque el episodio sí persistió. Esa diferencia no afecta el cálculo — el panel usa el valor del ONI, no la etiqueta, que solo colorea la tira de campañas.</p>
+        <p class="field-hint" style="margin:0 0 14px">Los valores salen de los archivos <b>oni.ascii.txt</b> y <b>RONI.ascii.txt</b> del Climate Prediction Center. La campaña 23/24 toma SON y NDJ de 2023, y DJF y JFM de 2024. El <b>evento</b> sale de la lista oficial de episodios de NOAA, que aplica un criterio de <b>persistencia</b> sobre el pico y por eso puede no coincidir con el valor puntual: 16/17 figura Niña con un DJF de −0,08 porque el episodio sí persistió. Esa diferencia no afecta el cálculo — el panel usa el valor del índice, no la etiqueta, que solo colorea la tira de campañas.</p>
         <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
           <div>
             <label class="modal-label" for="enso-campania" style="display:block;margin-bottom:5px">Campaña</label>
             <input type="text" class="modal-input" id="enso-campania" placeholder="23/24" style="max-width:110px">
-          </div>
-          <div>
-            <label class="modal-label" for="enso-oni" style="display:block;margin-bottom:5px">ONI (dic-ene-feb)</label>
-            <input type="number" step="0.1" min="-4" max="4" class="modal-input" id="enso-oni" placeholder="-0,6" style="max-width:130px">
           </div>
           <div>
             <label class="modal-label" for="enso-evento" style="display:block;margin-bottom:5px">Evento NOAA</label>
@@ -723,6 +719,67 @@ tr:hover td { background:#f9faf6; }
           </div>
           <button class="btn" onclick="guardarEnso()">Guardar campaña</button>
         </div>
+
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.3px;margin-bottom:8px">ONI <span style="font-weight:400;color:var(--gris)">· anomalía de Niño 3.4. Índice por defecto del panel y base del listado oficial de episodios. El DJF es obligatorio.</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div>
+              <label class="modal-label" for="enso-son" style="display:block;margin-bottom:5px">SON <small style="color:var(--gris)">set-nov · trigo</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-son" placeholder="—" style="max-width:100px">
+            </div>
+            <div>
+              <label class="modal-label" for="enso-ndj" style="display:block;margin-bottom:5px">NDJ <small style="color:var(--gris)">nov-ene · maíz</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-ndj" placeholder="—" style="max-width:100px">
+            </div>
+            <div>
+              <label class="modal-label" for="enso-oni" style="display:block;margin-bottom:5px">DJF <small style="color:var(--gris)">dic-feb · soja 1ª</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-oni" placeholder="-0,46" style="max-width:100px">
+            </div>
+            <div>
+              <label class="modal-label" for="enso-jfm" style="display:block;margin-bottom:5px">JFM <small style="color:var(--gris)">ene-mar · 2ª</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-jfm" placeholder="—" style="max-width:100px">
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.3px;margin-bottom:8px">RONI <span style="font-weight:400;color:var(--gris)">· Niño 3.4 menos la anomalía media del trópico. Opcional: el cliente puede elegirlo en el panel. Si queda vacío, el selector de RONI no tiene con qué calcular esa campaña.</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div>
+              <label class="modal-label" for="enso-roni-son" style="display:block;margin-bottom:5px">SON <small style="color:var(--gris)">set-nov · trigo</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-roni-son" placeholder="—" style="max-width:100px">
+            </div>
+            <div>
+              <label class="modal-label" for="enso-roni-ndj" style="display:block;margin-bottom:5px">NDJ <small style="color:var(--gris)">nov-ene · maíz</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-roni-ndj" placeholder="—" style="max-width:100px">
+            </div>
+            <div>
+              <label class="modal-label" for="enso-roni" style="display:block;margin-bottom:5px">DJF <small style="color:var(--gris)">dic-feb · soja 1ª</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-roni" placeholder="—" style="max-width:100px">
+            </div>
+            <div>
+              <label class="modal-label" for="enso-roni-jfm" style="display:block;margin-bottom:5px">JFM <small style="color:var(--gris)">ene-mar · 2ª</small></label>
+              <input type="number" step="0.01" min="-4" max="4" class="modal-input" id="enso-roni-jfm" placeholder="—" style="max-width:100px">
+            </div>
+          </div>
+          <p class="field-hint" style="margin:9px 0 0">El RONI separa mejor «Pacífico cálido» de «planeta cálido», pero en esta serie <b>deriva unos −0,25 por década</b> mientras el ONI no deriva. Por eso el panel controla la tendencia de la campaña antes de interpretar cualquiera de los dos, y por eso el ONI sigue siendo el que viene elegido.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:14px;
+                    padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="enso-pron" onchange="ensoTogglePron()">
+            Es un <b>pronóstico</b>, no un dato observado
+          </label>
+          <div>
+            <label class="modal-label" for="enso-pron-fecha" style="display:block;margin-bottom:5px">Fecha del pronóstico</label>
+            <input type="date" class="modal-input" id="enso-pron-fecha" disabled style="max-width:170px">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="modal-label" for="enso-pron-fuente" style="display:block;margin-bottom:5px">Fuente</label>
+            <input type="text" class="modal-input" id="enso-pron-fuente" disabled placeholder="CPC ENSO Diagnostic Discussion" style="width:100%">
+          </div>
+        </div>
+        <p class="field-hint" style="margin:10px 0 0">Una campaña marcada como pronóstico <b>no entra a la regresión histórica</b> del panel: alimenta solo el escenario «campaña que viene» del stress test, que se muestra aparte y con la fecha a la vista. Es lo que permite que el productor vea su planteo bajo el evento que se espera, en vez de solo bajo los que ya pasaron.</p>
         <div id="enso-status" class="tool-status"></div>
       </div>
 
@@ -2006,7 +2063,7 @@ async function cargarEnso() {
   initSupabase();
   cont.innerHTML = '<div class="tool-empty">Cargando…</div>';
   const { data, error } = await sb.from('enso_oni')
-    .select('campania,oni,evento,nota,updated_at')
+    .select('campania,oni,son,ndj,jfm,roni,roni_son,roni_ndj,roni_jfm,evento,nota,updated_at,es_pronostico,pronostico_fecha,pronostico_fuente')
     .order('campania', { ascending: false });
   if (error) {
     cont.innerHTML = `<div class="tool-empty">No se pudo cargar la serie: ${error.message}</div>`;
@@ -2021,28 +2078,54 @@ async function cargarEnso() {
   _ensoCache.forEach(r => { if (cuenta[r.evento] != null) cuenta[r.evento]++; });
   const ultima = _ensoCache
     .map(r => r.updated_at).filter(Boolean).sort().slice(-1)[0];
+  const sinRoni = _ensoCache.filter(r => !r.es_pronostico && r.roni == null).length;
 
   cont.innerHTML =
       `<div style="font-size:12px;color:var(--gris);margin-bottom:12px">`
     + `${_ensoCache.length} campañas · Niño ${cuenta['Niño']} · Niña ${cuenta['Niña']} · Neutro ${cuenta['Neutro']}`
     + (ultima ? ` · última actualización ${new Date(ultima).toLocaleDateString('es-AR')}` : '')
+    + (sinRoni ? ` · <span style="color:#e0a63a">${sinRoni} sin RONI</span>` : ' · RONI completo')
     + `</div>`
     + '<div class="table-wrap"><table class="data-table"><thead><tr>'
-    + '<th>Campaña</th><th>ONI</th><th>Evento</th><th>Nota</th><th>Actualizada</th><th></th>'
+    + '<th>Campaña</th><th>SON<br><small>trigo</small></th><th>NDJ<br><small>maíz</small></th>'
+    + '<th>DJF<br><small>soja 1ª</small></th><th>JFM<br><small>2ª</small></th>'
+    + '<th>RONI<br><small>dic-feb</small></th>'
+    + '<th>Evento</th><th>Nota</th><th>Actualizada</th><th></th>'
     + '</tr></thead><tbody>'
     + _ensoCache.map(r => {
-        const oni = Number(r.oni);
         const color = r.evento === 'Niño' ? '#d9512c' : r.evento === 'Niña' ? '#3a8fd0' : 'var(--gris)';
-        return `<tr>
-          <td style="font-weight:600">${r.campania}</td>
-          <td style="color:${color};font-weight:700">${oni > 0 ? '+' : ''}${oni.toFixed(1).replace('.', ',')}</td>
+        const num = v => v == null ? '<span style="color:var(--gris)">—</span>'
+                      : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2).replace('.', ',')}`;
+        const pron = r.es_pronostico
+          ? ` <span style="font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:#e0a63a;border:1px solid rgba(224,166,58,.4);border-radius:20px;padding:1px 7px">pronóstico</span>`
+          : '';
+        const plano = v => v == null ? '—' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2).replace('.', ',')}`;
+        const ttlRoni = `RONI · SON ${plano(r.roni_son)} · NDJ ${plano(r.roni_ndj)} · JFM ${plano(r.roni_jfm)}`;
+        return `<tr${r.es_pronostico ? ' style="background:rgba(212,160,23,.06)"' : ''}>
+          <td style="font-weight:600;white-space:nowrap">${r.campania}${pron}</td>
+          <td>${num(r.son)}</td>
+          <td>${num(r.ndj)}</td>
+          <td style="color:${color};font-weight:700">${num(r.oni)}</td>
+          <td>${num(r.jfm)}</td>
+          <td title="${ttlRoni}" style="border-left:1px solid rgba(255,255,255,.07)">${num(r.roni)}</td>
           <td>${r.evento}</td>
-          <td style="font-size:12px;color:var(--gris);max-width:360px">${r.nota ? r.nota.replace(/</g,'&lt;') : ''}</td>
-          <td style="font-size:12px;color:var(--gris)">${r.updated_at ? new Date(r.updated_at).toLocaleDateString('es-AR') : ''}</td>
+          <td style="font-size:12px;color:var(--gris);max-width:300px">${r.nota ? r.nota.replace(/</g,'&lt;') : ''}</td>
+          <td style="font-size:12px;color:var(--gris);white-space:nowrap">${
+            r.es_pronostico && r.pronostico_fecha
+              ? 'prev. ' + new Date(r.pronostico_fecha + 'T12:00:00Z').toLocaleDateString('es-AR')
+              : (r.updated_at ? new Date(r.updated_at).toLocaleDateString('es-AR') : '')}</td>
           <td><button class="btn btn-sm" onclick="editarEnso('${r.campania}')">Editar</button></td>
         </tr>`;
       }).join('')
     + '</tbody></table></div>';
+}
+
+function ensoTogglePron() {
+  const on = document.getElementById('enso-pron').checked;
+  ['enso-pron-fecha','enso-pron-fuente'].forEach(id => { document.getElementById(id).disabled = !on; });
+  if (on && !document.getElementById('enso-pron-fecha').value) {
+    document.getElementById('enso-pron-fecha').value = new Date().toISOString().slice(0, 10);
+  }
 }
 
 function editarEnso(campania) {
@@ -2050,8 +2133,19 @@ function editarEnso(campania) {
   if (!r) return;
   document.getElementById('enso-campania').value = r.campania;
   document.getElementById('enso-oni').value      = r.oni;
+  document.getElementById('enso-son').value      = r.son ?? '';
+  document.getElementById('enso-ndj').value      = r.ndj ?? '';
+  document.getElementById('enso-jfm').value      = r.jfm ?? '';
+  document.getElementById('enso-roni').value     = r.roni ?? '';
+  document.getElementById('enso-roni-son').value = r.roni_son ?? '';
+  document.getElementById('enso-roni-ndj').value = r.roni_ndj ?? '';
+  document.getElementById('enso-roni-jfm').value = r.roni_jfm ?? '';
   document.getElementById('enso-evento').value   = r.evento;
   document.getElementById('enso-nota').value     = r.nota || '';
+  document.getElementById('enso-pron').checked        = !!r.es_pronostico;
+  document.getElementById('enso-pron-fecha').value    = r.pronostico_fecha || '';
+  document.getElementById('enso-pron-fuente').value   = r.pronostico_fuente || '';
+  ensoTogglePron();
   document.getElementById('enso-campania').scrollIntoView({ behavior: 'smooth', block: 'center' });
   const st = document.getElementById('enso-status');
   if (st) st.textContent = `Editando ${r.campania}. Guardar la reemplaza.`;
@@ -2059,19 +2153,59 @@ function editarEnso(campania) {
 
 async function guardarEnso() {
   const st  = document.getElementById('enso-status');
+  const val = id => {
+    const t = String(document.getElementById(id).value).trim().replace(',', '.');
+    return t === '' ? null : parseFloat(t);
+  };
   const campania = ensoNormCampania(document.getElementById('enso-campania').value);
-  const oni      = parseFloat(String(document.getElementById('enso-oni').value).replace(',', '.'));
+  const oni      = val('enso-oni');
   const evento   = document.getElementById('enso-evento').value;
   const nota     = document.getElementById('enso-nota').value.trim();
+  const esPron   = document.getElementById('enso-pron').checked;
+  const pronFecha  = document.getElementById('enso-pron-fecha').value || null;
+  const pronFuente = document.getElementById('enso-pron-fuente').value.trim();
+
   if (!campania) { if (st) st.textContent = '✗ La campaña tiene que tener la forma 23/24.'; return; }
-  if (!isFinite(oni) || oni < -4 || oni > 4) { if (st) st.textContent = '✗ El ONI tiene que ser un número entre −4 y 4.'; return; }
+  if (oni == null || !isFinite(oni) || oni < -4 || oni > 4) {
+    if (st) st.textContent = '✗ El DJF tiene que ser un número entre −4 y 4.'; return;
+  }
+  // Las ventanas son opcionales, pero si se cargan tienen que ser válidas:
+  // un valor fuera de rango acá se arrastra a la regresión de un cultivo.
+  const vent = {
+    son: val('enso-son'), ndj: val('enso-ndj'), jfm: val('enso-jfm'),
+    roni: val('enso-roni'), roni_son: val('enso-roni-son'),
+    roni_ndj: val('enso-roni-ndj'), roni_jfm: val('enso-roni-jfm')
+  };
+  for (const k of Object.keys(vent)) {
+    const v = vent[k];
+    if (v != null && (!isFinite(v) || v < -4 || v > 4)) {
+      if (st) st.textContent = `✗ ${k.toUpperCase().replace('_',' ')} tiene que ser un número entre −4 y 4, o quedar vacío.`; return;
+    }
+  }
+  if (esPron && !pronFecha) { if (st) st.textContent = '✗ Un pronóstico necesita su fecha: sin ella no se sabe qué tan viejo es.'; return; }
+  // Cargar ventanas de RONI sin su DJF deja al panel sin el valor de referencia
+  // de la campaña: la tira y la etiqueta quedarían vacías con RONI elegido.
+  if (vent.roni == null && (vent.roni_son != null || vent.roni_ndj != null || vent.roni_jfm != null)) {
+    if (st) st.textContent = '✗ Si cargás ventanas de RONI, cargá también su DJF: es el valor de referencia de la campaña.'; return;
+  }
+
   if (st) st.textContent = '⏳ Guardando…';
   initSupabase();
-  const { error } = await sb.from('enso_oni')
-    .upsert({ campania, oni, evento, nota: nota || null }, { onConflict: 'campania' });
+  const { error } = await sb.from('enso_oni').upsert({
+    campania, oni, son: vent.son, ndj: vent.ndj, jfm: vent.jfm,
+    roni: vent.roni, roni_son: vent.roni_son, roni_ndj: vent.roni_ndj, roni_jfm: vent.roni_jfm,
+    evento, nota: nota || null,
+    es_pronostico: esPron,
+    pronostico_fecha:  esPron ? pronFecha : null,
+    pronostico_fuente: esPron ? (pronFuente || null) : null
+  }, { onConflict: 'campania' });
   if (error) { if (st) st.textContent = `✗ No se pudo guardar: ${error.message}`; return; }
   if (st) st.textContent = `✓ ${campania} guardada`;
-  ['enso-campania','enso-oni','enso-nota'].forEach(id => { document.getElementById(id).value = ''; });
+  ['enso-campania','enso-oni','enso-son','enso-ndj','enso-jfm',
+   'enso-roni','enso-roni-son','enso-roni-ndj','enso-roni-jfm','enso-nota','enso-pron-fuente']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('enso-pron').checked = false;
+  ensoTogglePron();
   await cargarEnso();
 }
 

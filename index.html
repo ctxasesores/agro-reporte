@@ -1047,6 +1047,16 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
   background:rgba(127,168,196,.12);color:var(--gris);border:1px solid rgba(127,168,196,.25)}
 .rp-enso-chip.firme{background:rgba(212,160,23,.15);color:var(--oro-l);border-color:rgba(212,160,23,.3)}
 
+/* Selector de índice climático */
+.rp-enso-sel{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:10px 0 2px}
+.rp-enso-sel .k{font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:var(--gris)}
+.rp-enso-sel button{font:inherit;font-size:11.5px;font-weight:700;letter-spacing:.3px;cursor:pointer;
+  padding:4px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.04);color:var(--gris-l)}
+.rp-enso-sel button:hover{border-color:rgba(212,160,23,.35);color:var(--txt)}
+.rp-enso-sel button.on{background:rgba(212,160,23,.16);border-color:rgba(212,160,23,.45);color:var(--oro-l)}
+.rp-enso-sel .n{flex:1 1 260px;min-width:0;font-size:10.5px;line-height:1.45;color:var(--gris)}
+
 .rp-enso-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}
 .rp-enso-kpi{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:11px 12px}
 .rp-enso-kpi.peor{border-color:rgba(217,81,44,.35)}
@@ -1057,6 +1067,25 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 .rp-enso-kpi .d.baja{color:#f08a63}
 .rp-enso-kpi .d.sube{color:var(--verde-l)}
 .rp-enso-kpi .d.cero{color:var(--gris)}
+
+/* Escenario de pronóstico: se separa visualmente de los tres observados
+   porque descansa en una previsión. El borde punteado es la señal de que
+   esto no es una campaña medida. */
+.rp-enso-pron{margin-top:12px;border:1px dashed rgba(212,160,23,.45);border-radius:10px;
+  padding:13px 14px;background:rgba(212,160,23,.05)}
+.rp-enso-pron-k{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--oro-l);font-weight:700}
+.rp-enso-pron-fila{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;margin-top:5px}
+.rp-enso-pron-v{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.8px;
+  color:var(--oro-l);min-width:0}
+.rp-enso-pron-v.baja{color:#f08a63}
+.rp-enso-pron-v.sube{color:var(--verde-l)}
+.rp-enso-pron-v small{font-size:11px;font-weight:600;color:var(--gris);margin-left:3px;letter-spacing:0}
+.rp-enso-pron-d{font-size:11.5px;color:var(--gris);line-height:1.5;flex:1;min-width:160px}
+.rp-enso-pron-d b{color:var(--texto)}
+.rp-enso-pron-n{font-size:11px;color:var(--gris-l);line-height:1.5;margin-top:9px;
+  padding-top:9px;border-top:1px solid rgba(255,255,255,.08)}
+.rp-enso-pron-n b{color:var(--gris)}
+.rp-enso-pron-n b.rp-bad{color:#e58f8f}
 
 .rp-enso-met{border-left:2px solid var(--oro-d);padding:2px 0 2px 13px;margin-top:18px}
 .rp-enso-met .t{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--oro-l);font-weight:700;margin-bottom:7px}
@@ -7207,7 +7236,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261002-0820';
+  var CTX_BUILD = '20261002-1530';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10858,18 +10887,28 @@ function rpOutputsResumen(){
      debajo de la observación más baja: se extrapola, no se mide;
    · corte por ambiente         — divide la muestra otra vez.
 
-   SUPUESTOS: el modelo es lineal en el ONI, así que Niña y Niño salen
+   SUPUESTOS: el modelo es lineal en el índice, así que Niña y Niño salen
    simétricos (una sequía probablemente pegue más fuerte de lo que ayuda
    un año húmedo, y eso no se captura). El efecto de cada cultivo se
    encoge hacia el promedio de los cultivos en proporción a su propia
    precisión, para que uno con pocos datos no muestre una sensibilidad
-   espectacular que es ruido.
+   espectacular que es ruido. Desde 20 campañas la regresión incluye la
+   campaña como segundo regresor: el rinde sube por tecnología y eso no
+   es clima, así que el efecto que se informa es "a igualdad de año".
    ============================================================ */
 
-// Índice ONI del trimestre dic-ene-feb por campaña, que es la ventana que
-// cubre floración y llenado de los cultivos de verano. Valores del archivo
-// oni.ascii.txt del Climate Prediction Center (NOAA); la campaña YY/YY+1 toma
-// el DJF del año YY+1.
+// Índices climáticos por campaña, en cuatro ventanas trimestrales cada uno.
+// Valores de los archivos oni.ascii.txt y RONI.ascii.txt del Climate Prediction
+// Center (NOAA). La campaña YY/YY+1 toma SON y NDJ del año YY, y DJF y JFM del
+// año YY+1.
+//
+//   ONI   anomalía de temperatura del Pacífico central (Niño 3.4). Índice
+//         estándar y base del listado oficial de episodios.
+//   RONI  el mismo Niño 3.4 menos la anomalía media de todo el trópico,
+//         ajustado por varianza. Separa mejor "Pacífico cálido" de "planeta
+//         cálido", pero deriva -0,25 por década en esta serie, y por eso el
+//         panel controla la tendencia antes de interpretar cualquiera de los
+//         dos. No tiene listado oficial de episodios.
 //
 // El `evento` sale de la lista oficial de episodios de NOAA, que aplica un
 // criterio de PERSISTENCIA sobre el pico y por eso puede no coincidir con el
@@ -10881,20 +10920,97 @@ function rpOutputsResumen(){
 // el panel de admin (Índice climático ENSO). Esto de abajo es el RESPALDO que
 // se usa si la consulta falla o todavía no cargó: así el análisis no queda en
 // blanco por un problema de red. rpCargarOni() la reemplaza al arrancar.
+// campaña: [ONI DJF, evento, ONI SON, ONI NDJ, ONI JFM, RONI DJF, RONI SON, RONI NDJ, RONI JFM]
+// Las cuatro ventanas de los dos índices están completas desde el 90/91, así
+// que ningún cultivo tiene que caer a DJF por falta de dato.
 var RP_ONI = {
-  '90/91':[ 0.35,'Neutro'],'91/92':[ 1.54,'Niño'],  '92/93':[ 0.13,'Neutro'],
-  '93/94':[ 0.07,'Neutro'],'94/95':[ 0.88,'Niño'],  '95/96':[-0.88,'Niña'],
-  '96/97':[-0.41,'Neutro'],'97/98':[ 2.22,'Niño'],  '98/99':[-1.51,'Niña'],
-  '99/00':[-1.47,'Niña'],  '00/01':[-0.76,'Niña'],  '01/02':[-0.15,'Neutro'],
-  '02/03':[ 0.90,'Niño'],  '03/04':[ 0.34,'Neutro'],'04/05':[ 0.62,'Niño'],
-  '05/06':[-0.86,'Niña'],  '06/07':[ 0.62,'Niño'],  '07/08':[-1.76,'Niña'],
-  '08/09':[-0.89,'Niña'],  '09/10':[ 1.47,'Niño'],  '10/11':[-1.29,'Niña'],
-  '11/12':[-0.71,'Niña'],  '12/13':[-0.24,'Neutro'],'13/14':[-0.24,'Neutro'],
-  '14/15':[ 0.73,'Niño'],  '15/16':[ 2.50,'Niño'],  '16/17':[-0.08,'Niña'],
-  '17/18':[-0.71,'Niña'],  '18/19':[ 0.99,'Niño'],  '19/20':[ 0.71,'Niño'],
-  '20/21':[-0.99,'Niña'],  '21/22':[-0.76,'Niña'],  '22/23':[-0.55,'Niña'],
-  '23/24':[ 1.84,'Niño'],  '24/25':[-0.46,'Neutro'],'25/26':[-0.39,'Neutro']
+  '90/91':[0.35,'Neutro',0.27,0.34,0.26,0.57,0.27,0.43,0.53],
+  '91/92':[1.54,'Niño',0.83,1.43,1.50,2.12,1.20,1.97,2.08],
+  '92/93':[0.13,'Neutro',-0.22,-0.05,0.31,0.55,0.10,0.35,0.70],
+  '93/94':[0.07,'Neutro',0.20,0.19,0.00,0.33,0.46,0.42,0.24],
+  '94/95':[0.88,'Niño',0.66,0.97,0.65,1.17,0.97,1.28,0.86],
+  '95/96':[-0.88,'Niña',-0.97,-1.01,-0.70,-0.87,-0.93,-0.99,-0.75],
+  '96/97':[-0.41,'Neutro',-0.33,-0.41,-0.26,-0.21,-0.25,-0.29,-0.03],
+  '97/98':[2.22,'Niño',2.24,2.37,1.91,2.13,2.22,2.28,1.82],
+  '98/99':[-1.51,'Niña',-1.12,-1.47,-1.25,-1.56,-1.33,-1.61,-1.28],
+  '99/00':[-1.47,'Niña',-1.13,-1.53,-1.26,-1.50,-1.06,-1.56,-1.31],
+  '00/01':[-0.76,'Niña',-0.54,-0.78,-0.54,-0.79,-0.55,-0.82,-0.62],
+  '01/02':[-0.15,'Neutro',-0.26,-0.32,0.07,-0.16,-0.18,-0.32,0.01],
+  '02/03':[0.90,'Niño',0.99,1.08,0.59,0.85,1.18,1.13,0.47],
+  '03/04':[0.34,'Neutro',0.23,0.29,0.27,0.23,0.17,0.22,0.12],
+  '04/05':[0.62,'Niño',0.61,0.71,0.55,0.54,0.70,0.69,0.40],
+  '05/06':[-0.86,'Niña',-0.27,-0.82,-0.80,-0.90,-0.18,-0.81,-0.87],
+  '06/07':[0.62,'Niño',0.71,0.88,0.19,0.60,0.73,0.89,0.16],
+  '07/08':[-1.76,'Niña',-1.38,-1.72,-1.61,-1.73,-1.33,-1.65,-1.62],
+  '08/09':[-0.89,'Niña',-0.36,-0.79,-0.84,-0.96,-0.38,-0.86,-0.92],
+  '09/10':[1.47,'Niño',0.92,1.50,1.21,1.44,0.86,1.50,1.11],
+  '10/11':[-1.29,'Niña',-1.54,-1.48,-1.06,-1.42,-1.61,-1.55,-1.21],
+  '11/12':[-0.71,'Niña',-0.94,-0.92,-0.56,-0.77,-0.91,-0.96,-0.60],
+  '12/13':[-0.24,'Neutro',0.28,-0.03,-0.28,-0.55,0.21,-0.27,-0.57],
+  '13/14':[-0.24,'Neutro',-0.14,-0.11,-0.21,-0.43,-0.22,-0.27,-0.38],
+  '14/15':[0.73,'Niño',0.51,0.80,0.65,0.54,0.35,0.62,0.47],
+  '15/16':[2.50,'Niño',2.28,2.59,2.21,2.14,2.03,2.25,1.81],
+  '16/17':[-0.08,'Niña',-0.51,-0.37,0.08,-0.60,-0.96,-0.89,-0.44],
+  '17/18':[-0.71,'Niña',-0.44,-0.76,-0.67,-1.08,-0.82,-1.14,-1.04],
+  '18/19':[0.99,'Niño',0.82,1.05,0.94,0.68,0.62,0.78,0.64],
+  '19/20':[0.71,'Niño',0.51,0.75,0.66,0.14,0.15,0.22,0.10],
+  '20/21':[-0.99,'Niña',-1.00,-1.06,-0.85,-1.32,-1.37,-1.39,-1.18],
+  '21/22':[-0.76,'Niña',-0.77,-0.83,-0.68,-1.18,-1.08,-1.22,-1.13],
+  '22/23':[-0.55,'Niña',-0.89,-0.70,-0.33,-0.86,-1.10,-0.99,-0.68],
+  '23/24':[1.84,'Niño',1.74,1.99,1.53,1.13,1.30,1.40,0.78],
+  '24/25':[-0.46,'Neutro',-0.19,-0.43,-0.22,-1.10,-0.76,-1.05,-0.85],
+  '25/26':[-0.39,'Neutro',-0.57,-0.60,-0.21,-0.91,-0.93,-1.04,-0.76]
 };
+
+// Índice activo. El ONI es el que manda por defecto y hay una razón medida:
+// el RONI deriva −0,25 por década en las cuatro ventanas (el ONI, nada), y
+// una serie larga regresada contra un índice que deriva confunde la tendencia
+// tecnológica del rinde con un efecto climático. Ver RP_INDICE_NOTA.
+var RP_INDICE = 'oni';
+var RP_INDICE_NOMBRE = { oni:'ONI', roni:'RONI' };
+function rpSetIndice(v){
+  if(v!==RP_INDICE){ RP_INDICE = v; if(typeof rpRenderEnso==='function') rpRenderEnso(); }
+}
+// Umbral de clasificación cuando el índice es el RONI: el listado de episodios
+// de la NOAA está definido sobre el ONI, no sobre el RONI, así que no se puede
+// reusar la etiqueta oficial. Se clasifica por umbral ±0,5 en la ventana DJF y
+// el panel lo dice. La regresión no usa la etiqueta, usa el valor.
+function rpEventoDe(v){
+  if(v==null || !isFinite(v)) return 's/d';
+  return v >= 0.5 ? 'Niño' : (v <= -0.5 ? 'Niña' : 'Neutro');
+}
+
+// Año de siembra de una campaña 'YY/YY'. Hace falta para el control de
+// tendencia: el orden de las filas de la grilla no sirve como reloj, porque el
+// cliente puede cargarlas desordenadas o salteadas. 90..99 son los noventa;
+// 00..89, los dos mil.
+function rpAnioCamp(clave){
+  var m = String(clave||'').match(/^(\d{2})\//);
+  if(!m) return null;
+  var yy = Number(m[1]);
+  return yy >= 90 ? 1900+yy : 2000+yy;
+}
+
+// Pronóstico de la campaña que viene. Se llena desde enso_oni (fila marcada
+// es_pronostico) y alimenta un escenario aparte del stress test. Nunca entra
+// a la regresión histórica: es un valor previsto, no observado.
+var RP_ONI_PRONOSTICO = null;
+
+// Ventana estacional que usa cada cultivo, según su período crítico.
+//   SON  set-oct-nov   espigazón y llenado del trigo
+//   NDJ  nov-dic-ene   floración del maíz temprano
+//   DJF  dic-ene-feb   floración y llenado de la soja de primera
+//   JFM  ene-feb-mar   floración de los cultivos de segunda
+// Medir el trigo con DJF es medirlo con el clima de un momento en que ya está
+// cosechado, y por eso su respuesta puede salir "no concluyente" aunque exista.
+function rpVentanaCultivo(nombre){
+  var n = String(nombre||'').toLowerCase();
+  if(n.indexOf('segunda')>=0 || n.indexOf('2da')>=0 || n.indexOf('tardi')>=0) return 'jfm';
+  if(n.indexOf('trigo')>=0 || n.indexOf('cebada')>=0) return 'son';
+  if(n.indexOf('maíz')>=0 || n.indexOf('maiz')>=0)   return 'ndj';
+  return 'djf';   // soja de primera, girasol, sorgo y cualquier otro
+}
+var RP_VENTANA_NOMBRE = { son:'set-nov', ndj:'nov-ene', djf:'dic-feb', jfm:'ene-mar' };
 
 // Trae la serie viva de enso_oni. Si falla, queda la tabla de respaldo.
 // Se pide una sola vez por sesión; el admin es quien la mantiene.
@@ -10903,17 +11019,26 @@ async function rpCargarOni(){
   if(_rpOniPedida || typeof sb==='undefined' || !sb) return;
   _rpOniPedida = true;
   try{
-    var res = await sb.from('enso_oni').select('campania,oni,evento');
+    var res = await sb.from('enso_oni')
+      .select('campania,oni,son,ndj,jfm,roni,roni_son,roni_ndj,roni_jfm,evento,es_pronostico,pronostico_fecha,pronostico_fuente');
     if(res.error || !res.data || !res.data.length) return;   // se conserva el respaldo
-    var tabla = {};
+    var tabla = {}, pron = null;
     res.data.forEach(function(r){
       var k = rpNormCamp(r.campania);
-      if(k) tabla[k] = [Number(r.oni), r.evento];
+      if(!k) return;
+      var num = function(v){ return (v==null) ? null : Number(v); };
+      if(r.es_pronostico){
+        pron = { camp:k, evento:r.evento, fecha:r.pronostico_fecha, fuente:r.pronostico_fuente,
+                 oni:  { djf:num(r.oni),  son:num(r.son),      ndj:num(r.ndj),      jfm:num(r.jfm) },
+                 roni: { djf:num(r.roni), son:num(r.roni_son), ndj:num(r.roni_ndj), jfm:num(r.roni_jfm) } };
+        return;                       // fuera de la serie histórica
+      }
+      tabla[k] = [num(r.oni), r.evento, num(r.son), num(r.ndj), num(r.jfm),
+                  num(r.roni), num(r.roni_son), num(r.roni_ndj), num(r.roni_jfm)];
     });
-    if(Object.keys(tabla).length){
-      RP_ONI = tabla;
-      if(typeof rpRenderEnso === 'function') rpRenderEnso();
-    }
+    if(Object.keys(tabla).length) RP_ONI = tabla;
+    RP_ONI_PRONOSTICO = pron;
+    if(typeof rpRenderEnso === 'function') rpRenderEnso();
   }catch(e){ /* queda el respaldo embebido */ }
 }
 
@@ -10926,51 +11051,172 @@ function rpNormCamp(s){
   return a + '/' + b;
 }
 
-// Serie ENSO alineada con RP.filas.
+// Serie ENSO alineada con RP.filas, resuelta contra el índice activo.
+// `oni` es el DJF del índice elegido —el valor de referencia de la campaña y el
+// que colorea la tira— y `v` trae las cuatro ventanas para que cada cultivo use
+// la suya. `ev` es la etiqueta: con ONI es la del listado de episodios de la
+// NOAA; con RONI, que no tiene listado oficial, sale del umbral ±0,5.
 function rpEnsoSerie(){
+  var roni = (RP_INDICE === 'roni');
   return RP.filas.map(function(f){
     var k = rpNormCamp(f.camp);
     var e = k ? RP_ONI[k] : null;
-    return { camp:f.camp, clave:k, oni: e?e[0]:null, ev: e?e[1]:'s/d' };
+    var n = function(j){ return (e && e[j]!=null && isFinite(e[j])) ? e[j] : null; };
+    var v = roni ? { djf:n(5), son:n(6), ndj:n(7), jfm:n(8) }
+                 : { djf:n(0), son:n(2), ndj:n(3), jfm:n(4) };
+    return {
+      camp:f.camp, clave:k,
+      oni: v.djf,
+      ev:  roni ? rpEventoDe(v.djf) : (e ? e[1] : 's/d'),
+      v:   v
+    };
   });
 }
 
-// Regresión del shock relativo sobre el ONI, por cultivo, con encogimiento.
-// Devuelve null si no hay suficientes campañas con ONI conocido.
+// Elige la ventana que va a usar un cultivo. Prefiere la de su período
+// crítico, pero solo si está cargada en TODAS las campañas que tienen rinde:
+// mezclar ventanas entre campañas sería regresar contra un regresor que
+// cambia de significado a mitad de la serie. Si no alcanza, cae a DJF, que
+// es la que está completa desde el 90/91.
+function rpVentanaUsada(enso, idx, serie, pref){
+  if(pref === 'djf') return 'djf';
+  var completa = idx.every(function(i){
+    var hayRinde = (serie[i] != null && isFinite(serie[i]));
+    return !hayRinde || enso[i].v[pref] != null;
+  });
+  return completa ? pref : 'djf';
+}
+
+// Mínimos cuadrados con varios regresores. Devuelve los coeficientes y sus
+// errores estándar. Se resuelve por eliminación sobre las ecuaciones normales:
+// con dos o tres columnas eso es exacto de sobra y no hace falta traer una
+// librería al bundle.
+function rpOls(X, y){
+  var n = y.length, p = X[0].length, i, a, b, r, c;
+  var A = [], bv = [];
+  for(a=0;a<p;a++){
+    A.push([]);
+    for(b=0;b<p;b++){ var s=0; for(i=0;i<n;i++) s += X[i][a]*X[i][b]; A[a].push(s); }
+    var sb=0; for(i=0;i<n;i++) sb += X[i][a]*y[i]; bv.push(sb);
+  }
+  // [A | I | bv] → [I | A⁻¹ | beta]
+  var M = [];
+  for(a=0;a<p;a++){
+    var fila = A[a].slice();
+    for(b=0;b<p;b++) fila.push(a===b?1:0);
+    fila.push(bv[a]);
+    M.push(fila);
+  }
+  var W = 2*p+1;
+  for(i=0;i<p;i++){
+    var piv = i;
+    for(r=i+1;r<p;r++) if(Math.abs(M[r][i]) > Math.abs(M[piv][i])) piv = r;
+    if(Math.abs(M[piv][i]) < 1e-12) return null;      // regresores colineales
+    var tmp = M[i]; M[i] = M[piv]; M[piv] = tmp;
+    var d = M[i][i];
+    for(c=i;c<W;c++) M[i][c] /= d;
+    for(r=0;r<p;r++){
+      if(r===i) continue;
+      var f = M[r][i];
+      if(!f) continue;
+      for(c=i;c<W;c++) M[r][c] -= f*M[i][c];
+    }
+  }
+  var beta = [], inv = [];
+  for(a=0;a<p;a++){ beta.push(M[a][2*p]); inv.push(M[a][p+a]); }
+  var sse = 0;
+  for(i=0;i<n;i++){
+    var pred = 0;
+    for(a=0;a<p;a++) pred += X[i][a]*beta[a];
+    sse += (y[i]-pred)*(y[i]-pred);
+  }
+  if(n <= p) return null;
+  var s2 = sse/(n-p);
+  var se = inv.map(function(v){ return Math.sqrt(Math.max(s2*v, 0)); });
+  return { beta:beta, se:se, n:n, p:p, s2:s2 };
+}
+
+// Desde cuántas campañas conviene controlar la tendencia. Con series cortas la
+// tendencia no se identifica y el control solo cuesta potencia; con series
+// largas, no controlarla es lo que rompe el cálculo.
+var RP_ENSO_MIN_TEND = 20;
+
+// Regresión del shock relativo sobre el índice climático, por cultivo, con
+// encogimiento. Devuelve null si no hay suficientes campañas con dato.
+//
+// Cuando la serie es larga se agrega la campaña como segundo regresor. El
+// motivo es concreto: el rinde sube por mejora tecnológica unos puntos por
+// década, y si el índice también se mueve en el tiempo, la regresión simple le
+// atribuye al clima una parte de esa mejora. Medido por simulación sobre un
+// cultivo con tendencia tecnológica y SIN efecto climático real, la regresión
+// simple contra el RONI y 35 campañas marca efecto "firme" entre el 9% y el
+// 12% de las veces cuando debería marcarlo el 5%; con la campaña dentro del
+// modelo baja al 5% y, además, la potencia sube (con el ONI y 35 campañas,
+// del 99% al 100%; con el RONI, del 92% al 99,8%). El control no es un lujo
+// estadístico: es lo que hace que los dos índices se puedan usar.
 function rpEnsoRegresion(){
   var enso = rpEnsoSerie();
-  var idx = [];                         // índices de filas con ONI
+  var idx = [];                         // índices de filas con índice conocido
   enso.forEach(function(e,i){ if(e.oni!=null) idx.push(i); });
   if(idx.length < 6) return null;
   var oni = idx.map(function(i){ return enso[i].oni; });
   var mo = rpMedia(oni);
   var sxx = oni.reduce(function(s,o){ return s + (o-mo)*(o-mo); }, 0);
-  if(!(sxx > 0)) return null;           // sin variación de ONI no hay nada que estimar
+  if(!(sxx > 0)) return null;           // sin variación del índice no hay nada que estimar
 
-  var out = [];
+  var conTend = idx.length >= RP_ENSO_MIN_TEND;
+  var out = [], tendencias = [];
   rpCultivosValidos().forEach(function(c){
     var sh = rpShocks(c.serie);
-    var xs=[], ys=[];
-    idx.forEach(function(i,k){
-      if(sh[i]!=null && isFinite(sh[i])){ xs.push(oni[k]); ys.push(sh[i]); }
+    // Cada cultivo se mide con la ventana de su período crítico.
+    var vent = rpVentanaUsada(enso, idx, c.serie, rpVentanaCultivo(c.nombre));
+    var xs=[], ys=[], ts=[], sinAnio=false;
+    idx.forEach(function(i){
+      var x = enso[i].v[vent];
+      if(x!=null && sh[i]!=null && isFinite(sh[i])){
+        var a = rpAnioCamp(enso[i].clave);
+        if(a==null) sinAnio = true;
+        xs.push(x); ys.push(sh[i]); ts.push(a);
+      }
     });
     if(xs.length < 5) return;           // muy pocas campañas para este cultivo
-    var mx = rpMedia(xs), my = rpMedia(ys);
+    var mx = rpMedia(xs);
     var sxxC = xs.reduce(function(s,x){ return s+(x-mx)*(x-mx); }, 0);
     if(!(sxxC > 0)) return;
-    var b = xs.reduce(function(s,x,k){ return s+(x-mx)*(ys[k]-my); }, 0) / sxxC;
-    var a = my - b*mx;
-    var sse = ys.reduce(function(s,y,k){ var r=y-(a+b*xs[k]); return s+r*r; }, 0);
-    var seB = (xs.length>2) ? Math.sqrt(sse/(xs.length-2)/sxxC) : NaN;
+
+    // La campaña entra centrada y en décadas, para que el coeficiente de
+    // tendencia se lea como "puntos de rinde por década". Si alguna etiqueta no
+    // da año, no se controla la tendencia en ese cultivo: mejor sin control que
+    // con un reloj inventado.
+    var mt = rpMedia(ts);
+    var usaTend = conTend && !sinAnio && xs.length >= RP_ENSO_MIN_TEND;
+    var X = xs.map(function(x,k){
+      return usaTend ? [1, x, (ts[k]-mt)/10] : [1, x];
+    });
+    var fit = rpOls(X, ys);
+    if(!fit && usaTend){                // colineal: se cae a la simple
+      usaTend = false;
+      X = xs.map(function(x){ return [1, x]; });
+      fit = rpOls(X, ys);
+    }
+    if(!fit) return;
+
+    var b = fit.beta[1], seB = fit.se[1];
     out.push({
       nombre:c.nombre, i:c.i,
       // La grilla se carga en qq/ha; acá se pasa a tn/ha porque el stress test
       // y la columna de media se muestran en toneladas.
       media: rpMedia(c.serie.filter(function(x){return x!=null&&isFinite(x);}))/10,
+      ventana: vent, ventanaPref: rpVentanaCultivo(c.nombre),
       n:xs.length, b:b, seB:seB, t:(isFinite(seB)&&seB>0)? b/seB : NaN,
       lo: b - 1.96*seB, hi: b + 1.96*seB,
-      firme: isFinite(seB) && seB>0 && Math.abs(b/seB) > 1.96
+      firme: isFinite(seB) && seB>0 && Math.abs(b/seB) > 1.96,
+      conTend: usaTend,
+      bTend:  usaTend ? fit.beta[2] : null,
+      seTend: usaTend ? fit.se[2]   : null,
+      tendFirme: usaTend && fit.se[2] > 0 && Math.abs(fit.beta[2]/fit.se[2]) > 1.96
     });
+    if(usaTend) tendencias.push(fit.beta[2]);
   });
   if(!out.length) return null;
 
@@ -10987,7 +11233,9 @@ function rpEnsoRegresion(){
     o.peso = w;
     o.bEnc = w*o.b + (1-w)*bProm;
   });
-  return { cultivos:out, enso:enso, nConOni:idx.length, bProm:bProm };
+  return { cultivos:out, enso:enso, nConOni:idx.length, bProm:bProm,
+           indice:RP_INDICE, conTend:out.some(function(o){ return o.conTend; }),
+           tendProm: tendencias.length ? rpMedia(tendencias) : null };
 }
 
 // Producción del planteo cargado bajo un ONI dado (tn), y la peor campaña real.
@@ -11034,9 +11282,22 @@ function rpRenderEnso(){
   var DOM = 0.25;                                   // dominio de la barra: ±25%
   var pos = function(v){ return Math.max(0, Math.min(100, (v+DOM)/(2*DOM)*100)); };
 
+  var IX = RP_INDICE_NOMBRE[reg.indice];            // ONI o RONI, para los textos
+
   var h = '<div class="rp-sub">Análisis condicional por clima · ENSO</div>';
   h += '<p class="rp-expl">El modelo histórico sigue siendo el que manda: usa todas las campañas y es el que alimenta la combinación de menor riesgo. '
     +  'Esta capa le agrega una pregunta: <b>cuánto se corre el rinde de cada cultivo según el estado del Pacífico</b>, y qué le pasa a tu planteo si la campaña viene Niña.</p>';
+
+  // ── selector de índice ──
+  h += '<div class="rp-enso-sel">'
+    +  '<span class="k">Índice</span>'
+    +  '<button type="button" class="'+(reg.indice==='oni'?'on':'')+'" onclick="rpSetIndice(\'oni\')">ONI</button>'
+    +  '<button type="button" class="'+(reg.indice==='roni'?'on':'')+'" onclick="rpSetIndice(\'roni\')">RONI</button>'
+    +  '<span class="n">'
+    +  (reg.indice==='oni'
+        ? 'Anomalía de temperatura del Pacífico central (Niño 3.4). Es el índice estándar y el que define el listado de episodios de la NOAA.'
+        : 'Igual que el ONI pero descontándole el calentamiento promedio de todo el trópico, para que un Pacífico apenas más cálido que el resto no cuente como Niño.')
+    +  '</span></div>';
 
   // ── tira de campañas ──
   h += '<div class="rp-enso-tira-wrap"><div class="rp-enso-tira">';
@@ -11053,27 +11314,39 @@ function rpRenderEnso(){
     +  '<span><i class="neutro"></i>Neutro</span>'
     +  '<span><i class="nina"></i>Niña · Pacífico frío</span>'
     +  '<span><i class="sd"></i>Sin dato</span></div>';
-  h += '<p class="rp-expl">El número es el <b>índice ONI</b> de diciembre-enero-febrero, la ventana que cubre floración y llenado de los cultivos de verano. '
-    +  'Se resuelve solo desde la etiqueta de la campaña; no hay nada que clasificar a mano. Las campañas sin dato quedan fuera del cálculo.</p>';
+  h += '<p class="rp-expl">El número es el <b>índice '+IX+'</b> de diciembre-enero-febrero, la ventana que cubre floración y llenado de los cultivos de verano. '
+    +  'Se resuelve solo desde la etiqueta de la campaña; no hay nada que clasificar a mano. Las campañas sin dato quedan fuera del cálculo. '
+    +  (reg.indice==='oni'
+        ? 'La etiqueta Niño/Niña es la del <b>listado oficial de episodios</b> de la NOAA, que pide cinco trimestres encadenados por encima de ±0,5: por eso alguna campaña puede figurar Niña con un DJF de −0,08, porque el episodio sí persistió.'
+        : 'La NOAA no publica un listado de episodios para el RONI, así que acá la etiqueta sale del <b>umbral ±0,5 sobre el propio RONI</b> y no es comparable con la clasificación oficial. El cálculo no la usa: la regresión va contra el valor, no contra la etiqueta.')
+    +  '</p>';
 
   // ── sensibilidad por cultivo ──
   h += '<div class="rp-sub" style="margin-top:20px">Sensibilidad de cada cultivo</div>';
   h += '<div class="rp-tabla-wrap"><table class="rp-tabla rp-tabla-riesgo"><thead><tr>'
     +  '<th style="text-align:left">Cultivo</th>'
     +  '<th>Media<small>tn/ha</small></th>'
+    +  '<th>Ventana<small>período crítico</small></th>'
     +  '<th>Campañas<small>con dato</small></th>'
-    +  '<th>Niña típica<small>ONI −1</small></th>'
-    +  '<th>Niño típico<small>ONI +1</small></th>'
+    +  '<th>Niña típica<small>'+IX+' −1</small></th>'
+    +  '<th>Niño típico<small>'+IX+' +1</small></th>'
     +  '<th style="min-width:190px">Intervalo 95% · Niña<small>−25% · 0 · +25%</small></th>'
     +  '<th>Evidencia</th></tr></thead><tbody>';
   reg.cultivos.forEach(function(c){
     // efecto a ONI −1: el encogido para mostrar, el crudo para el intervalo
     var ef = -c.bEnc, lo = -c.hi, hi = -c.lo;
     var izq = Math.min(pos(lo), pos(hi)), der = Math.max(pos(lo), pos(hi));
-    var ttl = c.nombre+': '+pc(ef)+' a ONI −1 · intervalo '+pc(lo)+' a '+pc(hi)+' · '+c.n+' campañas';
+    var ttl = c.nombre+': '+pc(ef)+' a '+IX+' −1 · intervalo '+pc(lo)+' a '+pc(hi)+' · '+c.n+' campañas'
+            + (c.conTend ? ' · neto de una tendencia de '+pc(c.bTend)+' por década' : '');
     h += '<tr class="'+(c.firme?'':'rp-enso-flojo')+'">'
       +  '<td class="rp-nom">'+c.nombre+'</td>'
       +  '<td>'+rpFmt(c.media,1)+'</td>'
+      +  '<td'+(c.ventana!==c.ventanaPref
+            ? ' title="Su período crítico es '+RP_VENTANA_NOMBRE[c.ventanaPref]+', pero esa ventana no está cargada en todas las campañas con rinde, así que se usa dic-feb para no mezclar."'
+            : '')+'>'
+      +  RP_VENTANA_NOMBRE[c.ventana]
+      +  (c.ventana!==c.ventanaPref ? ' <span style="color:var(--gris-l)">*</span>' : '')
+      +  '</td>'
       +  '<td>'+c.n+'</td>'
       +  '<td style="font-weight:700">'+(c.firme?pc(ef):'—')+'</td>'
       // El modelo es lineal en el ONI, así que el efecto de un Niño típico es
@@ -11094,10 +11367,30 @@ function rpRenderEnso(){
       +  '</tr>';
   });
   h += '</tbody></table></div>';
-  h += '<p class="rp-expl">El efecto se estima con una regresión del shock de rinde sobre el valor del ONI, usando las '+reg.nConOni+' campañas con dato. '
+  h += '<p class="rp-expl">El efecto se estima con una regresión del shock de rinde sobre el valor del '+IX+', usando las '+reg.nConOni+' campañas con dato. '
     +  'No se parten las campañas en tres grupos: con series de este largo quedarían 4 o 5 por grupo y el efecto dejaría de ser medible. '
     +  'El punto es la estimación y la línea el intervalo de confianza; <b>cuando cruza el cero el panel lo dice</b> en lugar de mostrar un número que no se sostiene.</p>';
-  h += '<p class="rp-expl">Las columnas de Niña y Niño son <b>espejo una de la otra por construcción</b>: el modelo supone que el efecto crece parejo con el ONI, así que lo que una Niña saca, un Niño lo pone. '
+
+  // ── control de tendencia ──
+  if(reg.conTend){
+    h += '<p class="rp-expl"><b>El efecto está medido neto de la tendencia de la serie.</b> '
+      +  'Con '+reg.nConOni+' campañas el rinde no es plano: sube por mejora genética y de manejo'
+      +  (reg.tendProm!=null ? ' —acá, alrededor de <b>'+pc(reg.tendProm)+' por década</b> en promedio de los cultivos—' : '')
+      +  ' y esa suba no es clima. Si el índice también se corre con los años, una regresión simple le atribuye al Pacífico una parte de la mejora tecnológica. '
+      +  'Por eso la campaña entra como segundo regresor y lo que se muestra es el efecto climático <b>a igualdad de año</b>. '
+      +  'Sobre un cultivo simulado con tendencia tecnológica y sin ningún efecto climático real, la regresión sin este control marca efecto «firme» hasta en 1 de cada 8 casos; con el control, en 1 de cada 20, que es lo que corresponde. '
+      +  'Y no se paga con precisión: controlando la tendencia el efecto verdadero se detecta <b>más</b> seguido, no menos.</p>';
+  } else {
+    h += '<p class="rp-expl">Con '+reg.nConOni+' campañas <b>no se controla la tendencia de la serie</b>: por debajo de '+RP_ENSO_MIN_TEND+' campañas la tendencia y el clima no se pueden separar con confianza y meterla al modelo solo resta precisión. '
+      +  'La contrapartida es que si el rinde de la serie viene subiendo por mejora tecnológica, parte de esa suba puede quedar mezclada con el efecto climático. '
+      +  'Con '+RP_ENSO_MIN_TEND+' campañas o más el panel la separa solo.</p>';
+  }
+
+  h += '<p class="rp-expl">Cada cultivo se mide con la ventana de su <b>período crítico</b>, no con una sola para todos: '
+    +  'el trigo define rendimiento en set-nov y para esa fecha el verano todavía no pasó, mientras que un cultivo de segunda florece en feb-mar. '
+    +  'Medirlos a todos con la misma ventana es medir a varios con el clima de un momento que no vivieron. '
+    +  'Las cuatro ventanas están cargadas desde el 90/91 para los dos índices; un asterisco significa que en esta serie esa ventana no está disponible en todas las campañas con rinde y se usó dic-feb, para no mezclar ventanas dentro de la misma serie.</p>';
+  h += '<p class="rp-expl">Las columnas de Niña y Niño son <b>espejo una de la otra por construcción</b>: el modelo supone que el efecto crece parejo con el '+IX+', así que lo que una Niña saca, un Niño lo pone. '
     +  'Probablemente la realidad sea asimétrica —una sequía suele pegar más fuerte de lo que ayuda un año húmedo— pero medir las dos puntas por separado necesita más campañas de las que hay: '
     +  'con una serie de este largo, aun una asimetría grande se detecta menos de una vez de cada cinco, y el error de cada punta se duplica. '
     +  'Con 35 campañas o más empieza a valer la pena estimarlas por separado.</p>';
@@ -11126,6 +11419,51 @@ function rpRenderEnso(){
         +  '<div class="d baja">'+pc(difP)+' vs media histórica</div></div>';
     }
     h += '</div>';
+
+    // Escenario de pronóstico: la campaña que se está decidiendo todavía no
+    // tiene ONI observado, y es justo la que importa. Va separado y marcado,
+    // porque descansa en una previsión y no en la serie.
+    var pr = RP_ONI_PRONOSTICO;
+    // El pronóstico puede estar publicado en un índice y no en el otro. Si falta
+    // el del índice activo se usa el que haya y se avisa, en lugar de ocultar
+    // la campaña que justamente se está decidiendo.
+    var prV = null, prIX = IX, prPrestado = false;
+    if(pr){
+      if(pr[reg.indice] && pr[reg.indice].djf != null){ prV = pr[reg.indice]; }
+      else if(pr.oni && pr.oni.djf != null){ prV = pr.oni;  prIX = 'ONI';  prPrestado = true; }
+      else if(pr.roni && pr.roni.djf != null){ prV = pr.roni; prIX = 'RONI'; prPrestado = true; }
+    }
+    if(pr && prV){
+      // cada cultivo entra con el valor de SU ventana en el pronóstico
+      var tnPr = st.usados.reduce(function(s,c){
+        var x = prV[c.ventana];
+        if(x==null) x = prV.djf;
+        return s + (RP.has[c.nombre]||0)*c.media*(1 + c.bEnc*x);
+      }, 0);
+      var difPr = tnPr/st.base - 1;
+      var clsPr = Math.abs(difPr)<0.0005 ? 'cero' : (difPr<0 ? 'baja' : 'sube');
+      var fecha = pr.fecha ? new Date(pr.fecha+'T12:00:00Z').toLocaleDateString('es-AR') : null;
+      var dias  = pr.fecha ? Math.round((Date.now()-new Date(pr.fecha+'T12:00:00Z').getTime())/86400000) : null;
+      h += '<div class="rp-enso-pron">'
+        +  '<div class="rp-enso-pron-k">Campaña '+pr.camp+' · según pronóstico</div>'
+        +  '<div class="rp-enso-pron-fila">'
+        +  '<div class="rp-enso-pron-v '+clsPr+'">'+rpFmt(tnPr,0)+'<small>tn</small></div>'
+        +  '<div class="rp-enso-pron-d"><b>'+pc(difPr)+'</b> contra la media histórica de tu planteo<br>'
+        +  prIX+' previsto '+(prV.djf>=0?'+':'')+rpFmt(prV.djf,1)+' · '+(pr.evento||'')
+        +  '</div></div>'
+        +  '<div class="rp-enso-pron-n">Esto <b>no es una campaña observada</b>: sale de un pronóstico'
+        +  (pr.fuente ? ' de '+pr.fuente : '')
+        +  (fecha ? ' con fecha '+fecha : '')
+        +  (dias!=null && dias>45 ? ' <b class="rp-bad">— tiene '+dias+' días, conviene actualizarlo</b>' : '')
+        +  '. Los pronósticos de ENSO cambian mes a mes y el de la campaña entrante es el que más se mueve.'
+        +  (prPrestado
+             ? ' <b>El pronóstico cargado está en '+prIX+' y la sensibilidad de arriba está medida en '+IX+'</b>, '
+               + 'así que este escenario mezcla dos escalas y hay que leerlo como un orden de magnitud. '
+               + 'Cargando el pronóstico en '+IX+' desde el panel de administración, el número queda consistente.'
+             : '')
+        +  '</div>'
+        +  '</div>';
+    }
     h += '<p class="rp-expl">Sobre las <b>'+rpFmt(st.haTot,0)+' ha</b> cargadas en tu planteo. '
       +  'El panel evalúa la asignación que vos elegiste; no propone una cartera climática. '
       +  'Medir un planteo fijo necesita muchos menos datos que optimizar uno, y es lo único que una serie de este largo sustenta.</p>';
@@ -11140,8 +11478,15 @@ function rpRenderEnso(){
     +  '<li><b>CVaR 10%, P10 y mínimo por evento.</b> Con 5 campañas el percentil 10 cae debajo de la observación más baja: se extrapola en vez de medirse.</li>'
     +  '<li><b>Corte por ambiente.</b> Divide la muestra otra vez y deja celdas de una o dos campañas.</li>'
     +  '</ul>'
-    +  '<p>Dos supuestos: el modelo es <b>lineal en el ONI</b>, así que Niña y Niño salen simétricos aunque una sequía probablemente pegue más fuerte de lo que ayuda un año húmedo. '
+    +  '<p>Dos supuestos: el modelo es <b>lineal en el '+IX+'</b>, así que Niña y Niño salen simétricos aunque una sequía probablemente pegue más fuerte de lo que ayuda un año húmedo. '
     +  'Y el efecto de cada cultivo está <b>encogido hacia el promedio</b> de los cultivos en proporción a su precisión, para que uno con pocos datos no muestre una sensibilidad que es ruido.</p>'
+    +  '<p><b>Por qué el ONI está por defecto y no el RONI.</b> El RONI es conceptualmente mejor: le descuenta al Pacífico el calentamiento del resto del trópico, '
+    +  'y con eso campañas como la 24/25 o la 25/26 pasan de Neutro a Niña, que es más parecido a lo que se vivió en el lote. '
+    +  'El problema es medible: en esta serie el RONI <b>deriva unos −0,25 por década</b> en las cuatro ventanas, mientras que el ONI no muestra ninguna deriva. '
+    +  'Un regresor que deriva contra un rinde que sube por tecnología produce efectos climáticos que no existen. '
+    +  'Con el control de tendencia activado ese problema desaparece y los dos índices quedan parejos, así que el selector es una elección real y no una trampa; '
+    +  'el ONI queda por defecto porque es el que define la clasificación oficial de episodios y el que usa el resto de la cadena. '
+    +  'Mirar los dos y comparar es mejor que elegir uno a ciegas: si el efecto aparece con ambos, es más creíble que si aparece solo con uno.</p>'
     +  '</div>';
 
   cont.innerHTML = h;
