@@ -981,6 +981,69 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 .rp-guardar-fila:last-of-type{margin-bottom:0}
 /* Indicador del vínculo: dice si al guardar se crea o se actualiza un análisis */
 .rp-vinculo{font-size:11.5px;line-height:1.45;color:var(--gris,#8fa3b8);margin:-2px 0 10px}
+
+/* ── Capa condicional por clima (ENSO) ──
+   Escala divergente cálido/frío: la convención de los mapas de NOAA, que es la
+   que el productor ya reconoce. Validada sobre la superficie del panel. */
+.rp-enso-tira-wrap{overflow-x:auto;padding-bottom:4px}
+.rp-enso-tira{display:flex;gap:3px;min-width:max-content}
+.rp-enso-camp{flex:0 0 auto;width:58px;border-radius:7px;padding:6px 4px 7px;text-align:center;
+  border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03)}
+.rp-enso-camp .et{font-size:10px;font-weight:600;color:var(--texto);font-variant-numeric:tabular-nums}
+.rp-enso-camp .oni{font-size:13.5px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.rp-enso-camp .ev{font-size:8px;letter-spacing:.4px;text-transform:uppercase;color:var(--gris);margin-top:1px}
+.rp-enso-camp.nino{border-color:rgba(217,81,44,.5);background:rgba(217,81,44,.13)}
+.rp-enso-camp.nino .oni{color:#f08a63}
+.rp-enso-camp.nina{border-color:rgba(58,143,208,.5);background:rgba(58,143,208,.13)}
+.rp-enso-camp.nina .oni{color:#78b6e4}
+.rp-enso-camp.neutro .oni{color:var(--gris)}
+.rp-enso-camp.sd{border-style:dashed;opacity:.6}
+.rp-enso-camp.sd .oni{color:var(--gris-l)}
+.rp-enso-leyenda{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:10.5px;color:var(--gris)}
+.rp-enso-leyenda i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.rp-enso-leyenda i.nino{background:#d9512c}
+.rp-enso-leyenda i.nina{background:#3a8fd0}
+.rp-enso-leyenda i.neutro{background:#52677d}
+.rp-enso-leyenda i.sd{border:1px dashed var(--gris-l)}
+
+/* Barra de error: la posición respecto del cero ES el signo, así que el color
+   no necesita cargarlo. Gris = el intervalo cruza el cero. */
+.rp-enso-bar{position:relative;height:20px;min-width:180px}
+.rp-enso-bar .eje{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.16)}
+.rp-enso-bar .tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.055)}
+.rp-enso-bar .ic{position:absolute;top:9px;height:2px;background:var(--oro-d);border-radius:1px}
+.rp-enso-bar .tope{position:absolute;top:5px;width:1px;height:10px;background:var(--oro-d)}
+.rp-enso-bar .pt{position:absolute;top:5px;width:10px;height:10px;border-radius:50%;
+  background:var(--oro-l);border:2px solid var(--negro-s);margin-left:-5px}
+.rp-enso-flojo td{color:var(--gris)}
+.rp-enso-flojo .rp-enso-bar .ic,.rp-enso-flojo .rp-enso-bar .tope{background:var(--gris-l)}
+.rp-enso-flojo .rp-enso-bar .pt{background:var(--gris)}
+
+/* "Firme" no es verde a propósito: un efecto bien medido puede ser una mala
+   noticia. El chip informa calidad de evidencia, no si conviene. */
+.rp-enso-chip{display:inline-block;border-radius:99px;padding:2px 9px;font-size:9.5px;letter-spacing:.4px;
+  text-transform:uppercase;font-weight:700;white-space:nowrap;
+  background:rgba(127,168,196,.12);color:var(--gris);border:1px solid rgba(127,168,196,.25)}
+.rp-enso-chip.firme{background:rgba(212,160,23,.15);color:var(--oro-l);border-color:rgba(212,160,23,.3)}
+
+.rp-enso-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}
+.rp-enso-kpi{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:11px 12px}
+.rp-enso-kpi.peor{border-color:rgba(217,81,44,.35)}
+.rp-enso-kpi .k{font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:var(--gris)}
+.rp-enso-kpi .v{font-size:23px;font-weight:700;color:var(--oro-l);margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.rp-enso-kpi .v small{font-size:10.5px;font-weight:600;color:var(--gris);margin-left:3px;letter-spacing:0}
+.rp-enso-kpi .d{font-size:10.5px;margin-top:2px;font-variant-numeric:tabular-nums}
+.rp-enso-kpi .d.baja{color:#f08a63}
+.rp-enso-kpi .d.sube{color:var(--verde-l)}
+.rp-enso-kpi .d.cero{color:var(--gris)}
+
+.rp-enso-met{border-left:2px solid var(--oro-d);padding:2px 0 2px 13px;margin-top:18px}
+.rp-enso-met .t{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--oro-l);font-weight:700;margin-bottom:7px}
+.rp-enso-met ul{list-style:none;display:flex;flex-direction:column;gap:6px;margin:0;padding:0}
+.rp-enso-met li{font-size:11.5px;color:var(--gris);line-height:1.55;padding-left:14px;position:relative}
+.rp-enso-met li::before{content:'✕';position:absolute;left:0;color:var(--rojo);font-size:9px;top:2px}
+.rp-enso-met li b,.rp-enso-met p b{color:var(--texto);font-weight:600}
+.rp-enso-met p{font-size:11.5px;color:var(--gris);line-height:1.6;margin-top:10px}
 .rp-input-nom,.rp-select{flex:1;min-width:180px;box-sizing:border-box;height:36px;padding:0 11px;border-radius:8px;border:1px solid var(--border2,rgba(255,255,255,.14));background:var(--bg2,#0f2236);color:var(--txt,#e8e0d4);font-size:13px}
 .rp-input-nom:focus,.rp-select:focus{outline:none;border-color:var(--oro,#d4a017)}
 
@@ -2060,6 +2123,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               <div id="rp_planteo_inputs"></div>
               <div id="rp_planteo_res" style="margin-top:16px"></div>
               <div id="rp_costos" style="margin-top:26px"></div>
+              <div id="rp_enso" style="margin-top:26px"></div>
             </div>
 
             <!-- Guardar / cargar -->
@@ -7122,7 +7186,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261001-2015';
+  var CTX_BUILD = '20261002-0715';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10747,6 +10811,300 @@ function rpOutputsResumen(){
 }
 
 /* ---------- Render conjunto ---------- */
+/* ============================================================
+   CAPA CONDICIONAL POR CLIMA (ENSO)
+   ------------------------------------------------------------
+   Complementa el modelo histórico; no lo reemplaza. Responde cuánto
+   se corre el rinde de cada cultivo según el estado del Pacífico, y
+   qué le pasa al planteo cargado si la campaña viene Niña.
+
+   POR QUÉ UNA REGRESIÓN Y NO TRES GRUPOS (evaluación del 01/10/2026):
+   Partir las campañas en Niño/Niña/Neutro deja 4 o 5 por grupo con las
+   series que maneja el panel (mediana 12-14 campañas) y el efecto deja
+   de ser medible: por simulación, con 14 campañas y un efecto real del
+   15%, la comparación de medias lo detecta el 9% de las veces y la
+   regresión sobre el ONI continuo el 93%. Diez veces más. La regresión
+   usa TODAS las campañas y estima un parámetro en lugar de tres medias.
+
+   LO QUE DELIBERADAMENTE NO SE CALCULA, y por qué:
+   · correlaciones por evento   — con 5 campañas Niña, una correlación
+     real de 0,50 se estima con un IC de [-0,46 , 0,94];
+   · optimización por evento    — el peso de mínima varianza de dos
+     cultivos con esa submuestra tiene un error de ±51 puntos;
+   · CVaR/P10/mínimo por evento — con 5 campañas el percentil 10 cae
+     debajo de la observación más baja: se extrapola, no se mide;
+   · corte por ambiente         — divide la muestra otra vez.
+
+   SUPUESTOS: el modelo es lineal en el ONI, así que Niña y Niño salen
+   simétricos (una sequía probablemente pegue más fuerte de lo que ayuda
+   un año húmedo, y eso no se captura). El efecto de cada cultivo se
+   encoge hacia el promedio de los cultivos en proporción a su propia
+   precisión, para que uno con pocos datos no muestre una sensibilidad
+   espectacular que es ruido.
+   ============================================================ */
+
+// Índice ONI del trimestre dic-ene-feb por campaña, que es la ventana que
+// cubre floración y llenado de los cultivos de verano. El evento usa el
+// criterio de PERSISTENCIA de NOAA (cinco trimestres consecutivos), por eso
+// 19/20 figura Neutro aunque su ONI puntual sea +0,5.
+//
+// La serie viva está en la tabla `enso_oni` de Supabase y se administra desde
+// el panel de admin (Índice climático ENSO). Esto de abajo es el RESPALDO que
+// se usa si la consulta falla o todavía no cargó: así el análisis no queda en
+// blanco por un problema de red. rpCargarOni() la reemplaza al arrancar.
+var RP_ONI = {
+  '91/92':[ 1.7,'Niño'],  '92/93':[ 0.3,'Neutro'], '93/94':[ 0.1,'Neutro'],
+  '94/95':[ 1.0,'Niño'],  '95/96':[-0.9,'Niña'],   '96/97':[-0.5,'Neutro'],
+  '97/98':[ 2.4,'Niño'],  '98/99':[-1.5,'Niña'],   '99/00':[-1.7,'Niña'],
+  '00/01':[-0.7,'Niña'],  '01/02':[-0.1,'Neutro'], '02/03':[ 0.9,'Niño'],
+  '03/04':[ 0.4,'Neutro'],'04/05':[ 0.6,'Niño'],   '05/06':[-0.9,'Niña'],
+  '06/07':[ 0.7,'Niño'],  '07/08':[-1.6,'Niña'],   '08/09':[-0.8,'Niña'],
+  '09/10':[ 1.5,'Niño'],  '10/11':[-1.4,'Niña'],   '11/12':[-0.8,'Niña'],
+  '12/13':[-0.4,'Neutro'],'13/14':[-0.4,'Neutro'], '14/15':[ 0.5,'Niño'],
+  '15/16':[ 2.5,'Niño'],  '16/17':[-0.3,'Neutro'], '17/18':[-0.9,'Niña'],
+  '18/19':[ 0.7,'Niño'],  '19/20':[ 0.5,'Neutro'], '20/21':[-1.0,'Niña'],
+  '21/22':[-1.0,'Niña'],  '22/23':[-0.7,'Niña'],   '23/24':[ 1.8,'Niño'],
+  '24/25':[-0.6,'Niña']
+};
+
+// Trae la serie viva de enso_oni. Si falla, queda la tabla de respaldo.
+// Se pide una sola vez por sesión; el admin es quien la mantiene.
+var _rpOniPedida = false;
+async function rpCargarOni(){
+  if(_rpOniPedida || typeof sb==='undefined' || !sb) return;
+  _rpOniPedida = true;
+  try{
+    var res = await sb.from('enso_oni').select('campania,oni,evento');
+    if(res.error || !res.data || !res.data.length) return;   // se conserva el respaldo
+    var tabla = {};
+    res.data.forEach(function(r){
+      var k = rpNormCamp(r.campania);
+      if(k) tabla[k] = [Number(r.oni), r.evento];
+    });
+    if(Object.keys(tabla).length){
+      RP_ONI = tabla;
+      if(typeof rpRenderEnso === 'function') rpRenderEnso();
+    }
+  }catch(e){ /* queda el respaldo embebido */ }
+}
+
+// Normaliza la etiqueta de campaña a 'YY/YY'. Acepta las formas que usan los
+// clientes: 12/13 · 14-15 · '91/92 · 2012/2013 · 2012/13.
+function rpNormCamp(s){
+  var m = String(s==null?'':s).match(/(\d{2,4})\s*[\/\-]\s*(\d{2,4})/);
+  if(!m) return null;
+  var a = m[1].slice(-2), b = m[2].slice(-2);
+  return a + '/' + b;
+}
+
+// Serie ENSO alineada con RP.filas.
+function rpEnsoSerie(){
+  return RP.filas.map(function(f){
+    var k = rpNormCamp(f.camp);
+    var e = k ? RP_ONI[k] : null;
+    return { camp:f.camp, clave:k, oni: e?e[0]:null, ev: e?e[1]:'s/d' };
+  });
+}
+
+// Regresión del shock relativo sobre el ONI, por cultivo, con encogimiento.
+// Devuelve null si no hay suficientes campañas con ONI conocido.
+function rpEnsoRegresion(){
+  var enso = rpEnsoSerie();
+  var idx = [];                         // índices de filas con ONI
+  enso.forEach(function(e,i){ if(e.oni!=null) idx.push(i); });
+  if(idx.length < 6) return null;
+  var oni = idx.map(function(i){ return enso[i].oni; });
+  var mo = rpMedia(oni);
+  var sxx = oni.reduce(function(s,o){ return s + (o-mo)*(o-mo); }, 0);
+  if(!(sxx > 0)) return null;           // sin variación de ONI no hay nada que estimar
+
+  var out = [];
+  rpCultivosValidos().forEach(function(c){
+    var sh = rpShocks(c.serie);
+    var xs=[], ys=[];
+    idx.forEach(function(i,k){
+      if(sh[i]!=null && isFinite(sh[i])){ xs.push(oni[k]); ys.push(sh[i]); }
+    });
+    if(xs.length < 5) return;           // muy pocas campañas para este cultivo
+    var mx = rpMedia(xs), my = rpMedia(ys);
+    var sxxC = xs.reduce(function(s,x){ return s+(x-mx)*(x-mx); }, 0);
+    if(!(sxxC > 0)) return;
+    var b = xs.reduce(function(s,x,k){ return s+(x-mx)*(ys[k]-my); }, 0) / sxxC;
+    var a = my - b*mx;
+    var sse = ys.reduce(function(s,y,k){ var r=y-(a+b*xs[k]); return s+r*r; }, 0);
+    var seB = (xs.length>2) ? Math.sqrt(sse/(xs.length-2)/sxxC) : NaN;
+    out.push({
+      nombre:c.nombre, i:c.i, media:rpMedia(c.serie.filter(function(x){return x!=null&&isFinite(x);})),
+      n:xs.length, b:b, seB:seB, t:(isFinite(seB)&&seB>0)? b/seB : NaN,
+      lo: b - 1.96*seB, hi: b + 1.96*seB,
+      firme: isFinite(seB) && seB>0 && Math.abs(b/seB) > 1.96
+    });
+  });
+  if(!out.length) return null;
+
+  // Encogimiento hacia el efecto común (James-Stein): varianza entre cultivos
+  // descontando el error de medición. Si el ruido explica toda la dispersión,
+  // todos los cultivos colapsan al promedio.
+  var bs = out.map(function(o){ return o.b; });
+  var bProm = rpMedia(bs);
+  var varObs = out.length>1 ? bs.reduce(function(s,x){ return s+(x-bProm)*(x-bProm); },0)/(out.length-1) : 0;
+  var varErr = rpMedia(out.map(function(o){ return isFinite(o.seB)? o.seB*o.seB : 0; }));
+  var varEntre = Math.max(0, varObs - varErr);
+  out.forEach(function(o){
+    var w = (varEntre>0 && isFinite(o.seB)) ? varEntre/(varEntre + o.seB*o.seB) : 0;
+    o.peso = w;
+    o.bEnc = w*o.b + (1-w)*bProm;
+  });
+  return { cultivos:out, enso:enso, nConOni:idx.length, bProm:bProm };
+}
+
+// Producción del planteo cargado bajo un ONI dado (tn), y la peor campaña real.
+function rpEnsoStress(reg){
+  var has = RP.has || {};
+  var usados = reg.cultivos.filter(function(c){ return (has[c.nombre]||0) > 0; });
+  if(!usados.length) return null;
+  var haTot = usados.reduce(function(s,c){ return s + has[c.nombre]; }, 0);
+  var base  = usados.reduce(function(s,c){ return s + has[c.nombre]*c.media; }, 0);
+  var bajo  = function(oni){
+    return usados.reduce(function(s,c){ return s + has[c.nombre]*c.media*(1 + c.bEnc*oni); }, 0);
+  };
+  // Peor campaña observada: solo las que tienen dato en todos los cultivos sembrados
+  var peor = null;
+  RP.filas.forEach(function(f, i){
+    var tn = 0, completo = true;
+    usados.forEach(function(c){
+      var v = f.v[c.i];
+      if(v==null || !isFinite(v)) { completo = false; return; }
+      tn += has[c.nombre]*v;
+    });
+    if(completo && (!peor || tn < peor.tn)) peor = { camp:f.camp, tn:tn };
+  });
+  return { haTot:haTot, base:base, bajo:bajo, peor:peor, usados:usados };
+}
+
+function rpRenderEnso(){
+  var cont = document.getElementById('rp_enso');
+  if(!cont) return;
+  var reg = rpEnsoRegresion();
+  if(!reg){
+    var enso0 = rpEnsoSerie();
+    var reconocidas = enso0.filter(function(e){ return e.oni!=null; }).length;
+    cont.innerHTML = '<div class="rp-sub">Análisis condicional por clima · ENSO</div>'
+      + '<div class="rp-vacio">'
+      + (reconocidas===0
+          ? 'No se pudo reconocer ninguna campaña contra la tabla de índices climáticos. Revisá que las etiquetas tengan la forma 23/24 o 2023/24.'
+          : 'Se necesitan al menos 6 campañas con índice climático conocido (hay '+reconocidas+') y 5 por cultivo.')
+      + '</div>';
+    return;
+  }
+
+  var pc = function(x,d){ return (x>=0?'+':'−') + rpFmt(Math.abs(x*100), d==null?1:d) + '%'; };
+  var DOM = 0.25;                                   // dominio de la barra: ±25%
+  var pos = function(v){ return Math.max(0, Math.min(100, (v+DOM)/(2*DOM)*100)); };
+
+  var h = '<div class="rp-sub">Análisis condicional por clima · ENSO</div>';
+  h += '<p class="rp-expl">El modelo histórico sigue siendo el que manda: usa todas las campañas y es el que alimenta la combinación de menor riesgo. '
+    +  'Esta capa le agrega una pregunta: <b>cuánto se corre el rinde de cada cultivo según el estado del Pacífico</b>, y qué le pasa a tu planteo si la campaña viene Niña.</p>';
+
+  // ── tira de campañas ──
+  h += '<div class="rp-enso-tira-wrap"><div class="rp-enso-tira">';
+  reg.enso.forEach(function(e){
+    var cls = e.ev==='Niño'?'nino':e.ev==='Niña'?'nina':e.ev==='Neutro'?'neutro':'sd';
+    h += '<div class="rp-enso-camp '+cls+'">'
+      +  '<div class="et">'+e.camp+'</div>'
+      +  '<div class="oni">'+(e.oni==null?'—':(e.oni>0?'+':'')+rpFmt(e.oni,1))+'</div>'
+      +  '<div class="ev">'+e.ev+'</div></div>';
+  });
+  h += '</div></div>';
+  h += '<div class="rp-enso-leyenda">'
+    +  '<span><i class="nino"></i>Niño · Pacífico cálido</span>'
+    +  '<span><i class="neutro"></i>Neutro</span>'
+    +  '<span><i class="nina"></i>Niña · Pacífico frío</span>'
+    +  '<span><i class="sd"></i>Sin dato</span></div>';
+  h += '<p class="rp-expl">El número es el <b>índice ONI</b> de diciembre-enero-febrero, la ventana que cubre floración y llenado de los cultivos de verano. '
+    +  'Se resuelve solo desde la etiqueta de la campaña; no hay nada que clasificar a mano. Las campañas sin dato quedan fuera del cálculo.</p>';
+
+  // ── sensibilidad por cultivo ──
+  h += '<div class="rp-sub" style="margin-top:20px">Sensibilidad de cada cultivo</div>';
+  h += '<div class="rp-tabla-wrap"><table class="rp-tabla rp-tabla-riesgo"><thead><tr>'
+    +  '<th style="text-align:left">Cultivo</th>'
+    +  '<th>Media<small>tn/ha</small></th>'
+    +  '<th>Campañas<small>con dato</small></th>'
+    +  '<th>Niña típica<small>ONI −1</small></th>'
+    +  '<th style="min-width:190px">Intervalo de confianza 95%<small>−25% · 0 · +25%</small></th>'
+    +  '<th>Evidencia</th></tr></thead><tbody>';
+  reg.cultivos.forEach(function(c){
+    // efecto a ONI −1: el encogido para mostrar, el crudo para el intervalo
+    var ef = -c.bEnc, lo = -c.hi, hi = -c.lo;
+    var izq = Math.min(pos(lo), pos(hi)), der = Math.max(pos(lo), pos(hi));
+    var ttl = c.nombre+': '+pc(ef)+' a ONI −1 · intervalo '+pc(lo)+' a '+pc(hi)+' · '+c.n+' campañas';
+    h += '<tr class="'+(c.firme?'':'rp-enso-flojo')+'">'
+      +  '<td class="rp-nom">'+c.nombre+'</td>'
+      +  '<td>'+rpFmt(c.media,1)+'</td>'
+      +  '<td>'+c.n+'</td>'
+      +  '<td style="font-weight:700">'+(c.firme?pc(ef):'—')+'</td>'
+      +  '<td><div class="rp-enso-bar" title="'+ttl+'">'
+        +  '<span class="tick" style="left:0"></span><span class="tick" style="left:25%"></span>'
+        +  '<span class="tick" style="left:75%"></span><span class="tick" style="left:calc(100% - 1px)"></span>'
+        +  '<span class="eje"></span>'
+        +  '<span class="ic" style="left:'+izq+'%;width:'+(der-izq)+'%"></span>'
+        +  '<span class="tope" style="left:'+izq+'%"></span><span class="tope" style="left:'+der+'%"></span>'
+        +  '<span class="pt" style="left:'+pos(ef)+'%"></span>'
+      +  '</div></td>'
+      +  '<td>'+(c.firme ? '<span class="rp-enso-chip firme">Firme</span>'
+                         : '<span class="rp-enso-chip">No concluyente</span>')+'</td>'
+      +  '</tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<p class="rp-expl">El efecto se estima con una regresión del shock de rinde sobre el valor del ONI, usando las '+reg.nConOni+' campañas con dato. '
+    +  'No se parten las campañas en tres grupos: con series de este largo quedarían 4 o 5 por grupo y el efecto dejaría de ser medible. '
+    +  'El punto es la estimación y la línea el intervalo de confianza; <b>cuando cruza el cero el panel lo dice</b> en lugar de mostrar un número que no se sostiene.</p>';
+
+  // ── stress test del planteo ──
+  var st = rpEnsoStress(reg);
+  h += '<div class="rp-sub" style="margin-top:20px">Qué le pasa a tu planteo</div>';
+  if(!st){
+    h += '<div class="rp-vacio">Cargá las hectáreas en «Simulá tu planteo» para ver el efecto del clima sobre tu propia combinación.</div>';
+  } else {
+    var escenarios = [
+      ['Niña típica', -1], ['Neutro', 0], ['Niño típico', 1]
+    ];
+    h += '<div class="rp-enso-kpis">';
+    escenarios.forEach(function(e){
+      var tn = st.bajo(e[1]), dif = tn/st.base - 1;
+      var cls = Math.abs(dif)<0.0005 ? 'cero' : (dif<0 ? 'baja' : 'sube');
+      h += '<div class="rp-enso-kpi"><div class="k">'+e[0]+'</div>'
+        +  '<div class="v">'+rpFmt(tn,0)+'<small>tn</small></div>'
+        +  '<div class="d '+cls+'">'+pc(dif)+' vs media histórica</div></div>';
+    });
+    if(st.peor){
+      var difP = st.peor.tn/st.base - 1;
+      h += '<div class="rp-enso-kpi peor"><div class="k">Peor campaña ('+st.peor.camp+')</div>'
+        +  '<div class="v">'+rpFmt(st.peor.tn,0)+'<small>tn</small></div>'
+        +  '<div class="d baja">'+pc(difP)+' vs media histórica</div></div>';
+    }
+    h += '</div>';
+    h += '<p class="rp-expl">Sobre las <b>'+rpFmt(st.haTot,0)+' ha</b> cargadas en tu planteo. '
+      +  'El panel evalúa la asignación que vos elegiste; no propone una cartera climática. '
+      +  'Medir un planteo fijo necesita muchos menos datos que optimizar uno, y es lo único que una serie de este largo sustenta.</p>';
+  }
+
+  // ── método ──
+  h += '<div class="rp-enso-met">'
+    +  '<div class="t">Lo que este cálculo no muestra, y por qué</div>'
+    +  '<ul>'
+    +  '<li><b>Correlaciones por evento.</b> Con 5 campañas Niña, una correlación real de 0,50 se estima con un intervalo de −0,46 a 0,94: no responde si los cultivos fallan juntos, lo simula.</li>'
+    +  '<li><b>Cartera óptima por evento.</b> El peso de mínima varianza de dos cultivos con esa submuestra tiene un error de ±51 puntos porcentuales.</li>'
+    +  '<li><b>CVaR 10%, P10 y mínimo por evento.</b> Con 5 campañas el percentil 10 cae debajo de la observación más baja: se extrapola en vez de medirse.</li>'
+    +  '<li><b>Corte por ambiente.</b> Divide la muestra otra vez y deja celdas de una o dos campañas.</li>'
+    +  '</ul>'
+    +  '<p>Dos supuestos: el modelo es <b>lineal en el ONI</b>, así que Niña y Niño salen simétricos aunque una sequía probablemente pegue más fuerte de lo que ayuda un año húmedo. '
+    +  'Y el efecto de cada cultivo está <b>encogido hacia el promedio</b> de los cultivos en proporción a su precisión, para que uno con pocos datos no muestre una sensibilidad que es ruido.</p>'
+    +  '</div>';
+
+  cont.innerHTML = h;
+}
+
 function rpRenderTodo(){
   rpRenderRiesgo();
   rpRenderCorrelaciones();
@@ -10754,6 +11112,8 @@ function rpRenderTodo(){
   rpRenderPlanteoInputs();
   rpRenderPlanteoResultado();
   rpRenderCostos();
+  rpRenderEnso();
+  rpCargarOni();        // trae la serie viva y, si cambia algo, repinta
 }
 
 

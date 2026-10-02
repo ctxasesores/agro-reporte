@@ -228,6 +228,7 @@ tr:hover td { background:#f9faf6; }
       <a class="nav-item" onclick="showSection('pipeline',this)">🌐 Pipeline externo</a>
       <a class="nav-item" onclick="showSection('bcra',this)">🏦 BCRA / Dólar</a>
       <a class="nav-item" onclick="showSection('campanias',this)">🌾 Campañas</a>
+      <a class="nav-item" onclick="showSection('enso',this)">🌊 Índice climático ENSO</a>
       <a class="nav-item" onclick="showSection('financiero',this)">📊 Datos financieros</a>
       <a class="nav-item" onclick="showSection('usuarios',this)">⊕ Usuarios</a>
     </nav>
@@ -689,6 +690,47 @@ tr:hover td { background:#f9faf6; }
         <select class="modal-select" id="fin-admin-cliente" style="min-width:280px;max-width:100%" onchange="finAdminMontar()"></select>
       </div>
       <div id="fin-admin-root"></div>
+    </div>
+
+    <!-- ══ SECCIÓN: ÍNDICE CLIMÁTICO ENSO ══ -->
+    <div class="section" id="sec-enso">
+      <h2 class="tool-section-title">🌊 Índice climático ENSO</h2>
+      <p class="tool-section-sub">El valor del <b>ONI</b> de diciembre-enero-febrero por campaña, que es la ventana que cubre floración y llenado de los cultivos de verano. Lo usa el análisis condicional por clima del panel de riesgo productivo: el cliente no clasifica nada a mano, se resuelve contra esta tabla desde la etiqueta de su campaña.</p>
+
+      <div class="tool-panel">
+        <h3 style="font-size:14px;margin:0 0 4px">Cargar o corregir una campaña</h3>
+        <p class="field-hint" style="margin:0 0 14px">El <b>evento</b> sigue el criterio oficial de NOAA, que exige <b>persistencia</b>: cinco trimestres consecutivos superando ±0,5. No es lo mismo que mirar el ONI de un solo trimestre. El caso 19/20 lo muestra: su ONI puntual es +0,5 pero no fue un evento Niño, y por eso figura Neutro.</p>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div>
+            <label class="modal-label" for="enso-campania" style="display:block;margin-bottom:5px">Campaña</label>
+            <input type="text" class="modal-input" id="enso-campania" placeholder="23/24" style="max-width:110px">
+          </div>
+          <div>
+            <label class="modal-label" for="enso-oni" style="display:block;margin-bottom:5px">ONI (dic-ene-feb)</label>
+            <input type="number" step="0.1" min="-4" max="4" class="modal-input" id="enso-oni" placeholder="-0,6" style="max-width:130px">
+          </div>
+          <div>
+            <label class="modal-label" for="enso-evento" style="display:block;margin-bottom:5px">Evento NOAA</label>
+            <select class="modal-select" id="enso-evento" style="min-width:140px">
+              <option value="Niño">Niño</option>
+              <option value="Neutro" selected>Neutro</option>
+              <option value="Niña">Niña</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label class="modal-label" for="enso-nota" style="display:block;margin-bottom:5px">Nota (opcional)</label>
+            <input type="text" class="modal-input" id="enso-nota" placeholder="Ej. no persistió los cinco trimestres" style="width:100%">
+          </div>
+          <button class="btn" onclick="guardarEnso()">Guardar campaña</button>
+        </div>
+        <div id="enso-status" class="tool-status"></div>
+      </div>
+
+      <div class="tool-panel" style="margin-top:16px">
+        <h3 style="font-size:14px;margin:0 0 4px">Serie cargada</h3>
+        <p class="field-hint" style="margin:0 0 14px">Las campañas que el cliente tenga cargadas y no figuren acá quedan fuera del cálculo, sin romper nada: el panel las muestra como «sin dato».</p>
+        <div id="enso-tabla"><div class="tool-empty">Cargando…</div></div>
+      </div>
     </div>
 
     <div class="section" id="sec-campanias">
@@ -1930,6 +1972,7 @@ function showSection(name, el) {
     pipeline:     ['Pipeline externo','Fuentes de datos que alimentan el contexto del Asesor IA'],
     bcra:         ['BCRA / Dólar','Actualizá variables macroeconómicas y tipos de cambio'],
     campanias:    ['Campañas','Elegí la campaña activa y los vencimientos que se muestran al cliente'],
+    enso:         ['Índice climático ENSO','Valor del ONI y evento por campaña, que usa el análisis condicional por clima'],
     financiero:   ['Datos financieros','Cargá y revisá el tablero financiero de cada cliente'],
     usuarios:     ['Gestión de usuarios','Creá y administrá los accesos de cada cliente'],
   };
@@ -1943,6 +1986,93 @@ function showSection(name, el) {
   if (name === 'pipeline')      cargarEstadoPipeline();
   if (name === 'campanias')     cargarCampanias();
   if (name === 'financiero')    finAdminIniciar();
+  if (name === 'enso')          cargarEnso();
+}
+
+// ── Índice climático ENSO (tabla enso_oni) ──
+// La lee el análisis condicional por clima del panel de riesgo productivo.
+// Escritura solo para admins; la lectura está abierta a cualquier autenticado
+// porque todos los clientes la necesitan para calcular.
+let _ensoCache = [];
+
+function ensoNormCampania(s) {
+  const m = String(s ?? '').match(/(\d{2,4})\s*[\/\-]\s*(\d{2,4})/);
+  return m ? `${m[1].slice(-2)}/${m[2].slice(-2)}` : null;
+}
+
+async function cargarEnso() {
+  const cont = document.getElementById('enso-tabla');
+  if (!cont) return;
+  initSupabase();
+  cont.innerHTML = '<div class="tool-empty">Cargando…</div>';
+  const { data, error } = await sb.from('enso_oni')
+    .select('campania,oni,evento,nota,updated_at')
+    .order('campania', { ascending: false });
+  if (error) {
+    cont.innerHTML = `<div class="tool-empty">No se pudo cargar la serie: ${error.message}</div>`;
+    return;
+  }
+  _ensoCache = data || [];
+  if (!_ensoCache.length) {
+    cont.innerHTML = '<div class="tool-empty">Todavía no hay campañas cargadas.</div>';
+    return;
+  }
+  const cuenta = { 'Niño':0, 'Niña':0, 'Neutro':0 };
+  _ensoCache.forEach(r => { if (cuenta[r.evento] != null) cuenta[r.evento]++; });
+  const ultima = _ensoCache
+    .map(r => r.updated_at).filter(Boolean).sort().slice(-1)[0];
+
+  cont.innerHTML =
+      `<div style="font-size:12px;color:var(--gris);margin-bottom:12px">`
+    + `${_ensoCache.length} campañas · Niño ${cuenta['Niño']} · Niña ${cuenta['Niña']} · Neutro ${cuenta['Neutro']}`
+    + (ultima ? ` · última actualización ${new Date(ultima).toLocaleDateString('es-AR')}` : '')
+    + `</div>`
+    + '<div class="table-wrap"><table class="data-table"><thead><tr>'
+    + '<th>Campaña</th><th>ONI</th><th>Evento</th><th>Nota</th><th>Actualizada</th><th></th>'
+    + '</tr></thead><tbody>'
+    + _ensoCache.map(r => {
+        const oni = Number(r.oni);
+        const color = r.evento === 'Niño' ? '#d9512c' : r.evento === 'Niña' ? '#3a8fd0' : 'var(--gris)';
+        return `<tr>
+          <td style="font-weight:600">${r.campania}</td>
+          <td style="color:${color};font-weight:700">${oni > 0 ? '+' : ''}${oni.toFixed(1).replace('.', ',')}</td>
+          <td>${r.evento}</td>
+          <td style="font-size:12px;color:var(--gris);max-width:360px">${r.nota ? r.nota.replace(/</g,'&lt;') : ''}</td>
+          <td style="font-size:12px;color:var(--gris)">${r.updated_at ? new Date(r.updated_at).toLocaleDateString('es-AR') : ''}</td>
+          <td><button class="btn btn-sm" onclick="editarEnso('${r.campania}')">Editar</button></td>
+        </tr>`;
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+function editarEnso(campania) {
+  const r = _ensoCache.find(x => x.campania === campania);
+  if (!r) return;
+  document.getElementById('enso-campania').value = r.campania;
+  document.getElementById('enso-oni').value      = r.oni;
+  document.getElementById('enso-evento').value   = r.evento;
+  document.getElementById('enso-nota').value     = r.nota || '';
+  document.getElementById('enso-campania').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const st = document.getElementById('enso-status');
+  if (st) st.textContent = `Editando ${r.campania}. Guardar la reemplaza.`;
+}
+
+async function guardarEnso() {
+  const st  = document.getElementById('enso-status');
+  const campania = ensoNormCampania(document.getElementById('enso-campania').value);
+  const oni      = parseFloat(String(document.getElementById('enso-oni').value).replace(',', '.'));
+  const evento   = document.getElementById('enso-evento').value;
+  const nota     = document.getElementById('enso-nota').value.trim();
+  if (!campania) { if (st) st.textContent = '✗ La campaña tiene que tener la forma 23/24.'; return; }
+  if (!isFinite(oni) || oni < -4 || oni > 4) { if (st) st.textContent = '✗ El ONI tiene que ser un número entre −4 y 4.'; return; }
+  if (st) st.textContent = '⏳ Guardando…';
+  initSupabase();
+  const { error } = await sb.from('enso_oni')
+    .upsert({ campania, oni, evento, nota: nota || null }, { onConflict: 'campania' });
+  if (error) { if (st) st.textContent = `✗ No se pudo guardar: ${error.message}`; return; }
+  if (st) st.textContent = `✓ ${campania} guardada`;
+  ['enso-campania','enso-oni','enso-nota'].forEach(id => { document.getElementById(id).value = ''; });
+  await cargarEnso();
 }
 
 // ── Datos financieros por cliente (kpi-financiero.js) ──
