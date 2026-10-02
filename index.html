@@ -982,6 +982,27 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
 /* Indicador del vínculo: dice si al guardar se crea o se actualiza un análisis */
 .rp-vinculo{font-size:11.5px;line-height:1.45;color:var(--gris,#8fa3b8);margin:-2px 0 10px}
 
+/* ── Resultado del planteo en campaña mala: es la conclusión de toda la
+   sección de costos, así que manda visualmente sobre las tarjetas de abajo. */
+.rp-res{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;padding:18px 18px 16px;margin:14px 0 18px}
+.rp-res-k{font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--gris);font-weight:700}
+.rp-res-v{font-size:clamp(34px,8vw,52px);font-weight:700;line-height:1.05;margin:6px 0 4px;
+  font-variant-numeric:tabular-nums;letter-spacing:-1.5px}
+.rp-res-v.pos{color:var(--verde-l)}
+.rp-res-v.neg{color:#f08a63}
+.rp-res-d{font-size:12.5px;color:var(--gris);line-height:1.55;max-width:62ch}
+.rp-res-sub{font-size:11.5px;color:var(--gris-l);margin-top:10px;padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.08);font-variant-numeric:tabular-nums}
+.rp-res .rp-tabla-wrap{margin-top:12px}
+.rp-res-vacio{font-size:12.5px;color:var(--gris);line-height:1.6;margin-top:8px;max-width:64ch}
+.rp-res-faltan{font-size:11px;color:var(--gris-l);line-height:1.5;margin-top:10px}
+/* Segunda barra de costo: mismo tono que la del P10 pero atenuado, para que
+   las dos se lean como una familia (el costo) y la del P10 mande, que es la
+   exigente. Color tomado de .rp-b-costo (#d8c47e). */
+.rp-b-costo-med{fill:rgba(216,196,126,.42)}
+.rp-precio-linea.media{color:var(--gris);font-size:11.5px;margin-top:2px}
+
 /* ── Capa condicional por clima (ENSO) ──
    Escala divergente cálido/frío: la convención de los mapas de NOAA, que es la
    que el productor ya reconoce. Validada sobre la superficie del panel. */
@@ -7186,7 +7207,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261002-0800';
+  var CTX_BUILD = '20261002-0820';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10487,6 +10508,8 @@ function rpEditarHas(nombre, val){
   var n = (t==='') ? null : parseFloat(t);
   RP.has[nombre] = (n!=null && isFinite(n) && n>=0) ? n : null;
   rpRenderPlanteoResultado();
+  rpActualizarResultado();
+  if(typeof rpRenderEnso==='function') rpRenderEnso();   // el stress test usa las hectáreas
 }
 
 function rpRenderPlanteoResultado(){
@@ -10940,7 +10963,10 @@ function rpEnsoRegresion(){
     var sse = ys.reduce(function(s,y,k){ var r=y-(a+b*xs[k]); return s+r*r; }, 0);
     var seB = (xs.length>2) ? Math.sqrt(sse/(xs.length-2)/sxxC) : NaN;
     out.push({
-      nombre:c.nombre, i:c.i, media:rpMedia(c.serie.filter(function(x){return x!=null&&isFinite(x);})),
+      nombre:c.nombre, i:c.i,
+      // La grilla se carga en qq/ha; acá se pasa a tn/ha porque el stress test
+      // y la columna de media se muestran en toneladas.
+      media: rpMedia(c.serie.filter(function(x){return x!=null&&isFinite(x);}))/10,
       n:xs.length, b:b, seB:seB, t:(isFinite(seB)&&seB>0)? b/seB : NaN,
       lo: b - 1.96*seB, hi: b + 1.96*seB,
       firme: isFinite(seB) && seB>0 && Math.abs(b/seB) > 1.96
@@ -10981,7 +11007,7 @@ function rpEnsoStress(reg){
     usados.forEach(function(c){
       var v = f.v[c.i];
       if(v==null || !isFinite(v)) { completo = false; return; }
-      tn += has[c.nombre]*v;
+      tn += has[c.nombre]*v/10;      // qq/ha → tn/ha
     });
     if(completo && (!peor || tn < peor.tn)) peor = { camp:f.camp, tn:tn };
   });
@@ -11155,11 +11181,13 @@ function rpEditarCosto(nombre, val){
   var n = (t==='') ? null : parseFloat(t);
   RP.costo[nombre] = (n!=null && isFinite(n) && n>=0) ? n : null;
   rpActualizarSalidaCosto(nombre);   // no reconstruye los inputs → no se pierde el foco
+  rpActualizarResultado();
 }
 function rpEditarFuturo(nombre, vto){
   if(!RP.fut) RP.fut = {};
   if(vto) RP.fut[nombre] = vto; else delete RP.fut[nombre];
   rpActualizarSalidaCosto(nombre);
+  rpActualizarResultado();
 }
 
 // Datos del cuadro de precios para un cultivo.
@@ -11169,9 +11197,15 @@ function rpPrecioCultivo(nombre, ci){
   if(rpCount(serie) < 2) return null;
   var r = rpRiesgoIndividual(serie);
   var p10tn = r.p10/10;                       // qq/ha → tn/ha
+  var mediaTn = r.mediaTn;
   if(!(p10tn>0)) return null;
-  var out = { nombre:nombre, p10tn:p10tn, costo:costo };
-  out.precioCosto = (costo>0) ? costo/p10tn : null;   // USD/tn a cubrir
+  var out = { nombre:nombre, p10tn:p10tn, mediaTn:mediaTn, costo:costo };
+  // Precio de indiferencia: el costo dividido por el rinde da los USD/tn que
+  // hay que conseguir para cubrirlo. Con el P10 es el precio que hace falta en
+  // una campaña mala; con la media, el de una campaña normal. La diferencia
+  // entre los dos es, en la práctica, el colchón que da un buen año.
+  out.precioCosto      = (costo>0) ? costo/p10tn  : null;   // campaña mala
+  out.precioCostoMedia = (costo>0 && mediaTn>0) ? costo/mediaTn : null;
 
   var prod = rpProductoFuturo(nombre);
   out.producto = prod;
@@ -11191,10 +11225,108 @@ function rpPrecioCultivo(nombre, ci){
   return out;
 }
 
+/* ---------- Resultado del planteo en el escenario adverso ----------
+   Junta las tres piezas que ya se calculan por cultivo y las lleva al nivel
+   de la campaña entera:
+
+     margen por tonelada = futuro castigado por su volatilidad − costo ÷ P10
+     toneladas           = P10 (tn/ha) × hectáreas sembradas del cultivo
+     aporte del cultivo  = margen por tonelada × toneladas
+     resultado           = suma de los aportes
+
+   Es lo que queda arriba (o abajo) del costo si la campaña sale mala por los
+   dos lados a la vez: rinde de P10 y precio castigado por la volatilidad del
+   futuro al plazo que falta. Equivale a  Σ ha × (precio castigado × P10 − costo),
+   porque el precio de indiferencia por el P10 devuelve el costo por hectárea.
+
+   Solo entran los cultivos que tienen las tres cosas: hectáreas, costo y un
+   futuro elegido. Los que faltan se informan, no se asumen en cero.           */
+function rpResultadoPlanteo(){
+  var has = RP.has || {};
+  var vs = rpCultivosValidos();
+  var filas = [], faltan = [];
+  vs.forEach(function(v){
+    var ha = has[v.nombre] || 0;
+    if(!(ha > 0)) return;                       // no sembrado: no participa
+    var d = rpPrecioCultivo(v.nombre, v.i);
+    if(!d){ faltan.push({ nombre:v.nombre, motivo:'sin serie suficiente' }); return; }
+    if(d.precioCosto == null){ faltan.push({ nombre:v.nombre, motivo:'falta el costo' }); return; }
+    if(d.precioFutVol == null){
+      faltan.push({ nombre:v.nombre, motivo: d.producto ? 'falta elegir el futuro' : 'sin futuro de referencia' });
+      return;
+    }
+    var tn = d.p10tn * ha;
+    var margenTn = d.precioFutVol - d.precioCosto;
+    filas.push({
+      nombre: v.nombre, ha: ha, p10tn: d.p10tn, tn: tn,
+      precioCosto: d.precioCosto, precioFutVol: d.precioFutVol,
+      margenTn: margenTn, aporte: margenTn * tn,
+      vto: d.fut ? d.fut.label : ''
+    });
+  });
+  if(!filas.length) return { filas:filas, faltan:faltan, total:null, tnTotal:0, haTotal:0 };
+  return {
+    filas: filas, faltan: faltan,
+    total:   filas.reduce(function(s,f){ return s + f.aporte; }, 0),
+    tnTotal: filas.reduce(function(s,f){ return s + f.tn; }, 0),
+    haTotal: filas.reduce(function(s,f){ return s + f.ha; }, 0)
+  };
+}
+
+function rpRenderResultadoPlanteo(){
+  var r = rpResultadoPlanteo();
+  var h = '<div class="rp-res">';
+  if(r.total == null){
+    h += '<div class="rp-res-k">Resultado del planteo en una campaña mala</div>'
+      +  '<div class="rp-res-vacio">Para calcularlo hace falta, en al menos un cultivo: '
+      +  '<b>hectáreas</b> en «Simulá tu planteo», <b>costo por hectárea</b> y un <b>futuro de referencia</b> elegido.</div>';
+    if(r.faltan.length){
+      h += '<div class="rp-res-faltan">Falta: '
+        + r.faltan.map(function(f){ return f.nombre+' ('+f.motivo+')'; }).join(' · ') + '</div>';
+    }
+    return h + '</div>';
+  }
+  var neg = r.total < 0;
+  h += '<div class="rp-res-k">Resultado del planteo en una campaña mala</div>'
+    +  '<div class="rp-res-v '+(neg?'neg':'pos')+'">'
+    +  (neg ? '−' : '+') + ' US$ ' + rpFmt(Math.abs(r.total), 0) + '</div>'
+    +  '<div class="rp-res-d">'
+    +  (neg ? 'Es lo que te falta para cubrir el costo' : 'Es lo que queda por encima del costo')
+    +  ' si el rinde sale en el P10 y el precio se castiga por la volatilidad del futuro.</div>';
+
+  h += '<div class="rp-res-sub">' + rpFmt(r.haTotal,0) + ' ha · ' + rpFmt(r.tnTotal,0)
+    +  ' tn con rinde de campaña mala · ' + rpFmt(r.total/r.tnTotal,1) + ' USD/tn promedio</div>';
+
+  h += '<div class="rp-tabla-wrap"><table class="rp-tabla rp-tabla-riesgo"><thead><tr>'
+    +  '<th style="text-align:left">Cultivo</th><th>ha</th>'
+    +  '<th>P10<small>tn/ha</small></th><th>Toneladas<small>P10 × ha</small></th>'
+    +  '<th>Costo ÷ P10<small>USD/tn</small></th><th>Futuro castigado<small>USD/tn</small></th>'
+    +  '<th>Margen<small>USD/tn</small></th><th>Aporte<small>USD</small></th></tr></thead><tbody>';
+  r.filas.forEach(function(f){
+    var cls = f.margenTn >= 0 ? 'rp-ok' : 'rp-bad';
+    h += '<tr><td class="rp-nom">'+f.nombre+'</td>'
+      +  '<td>'+rpFmt(f.ha,0)+'</td>'
+      +  '<td>'+rpFmt(f.p10tn,2)+'</td>'
+      +  '<td>'+rpFmt(f.tn,0)+'</td>'
+      +  '<td>'+rpFmt(f.precioCosto,0)+'</td>'
+      +  '<td>'+rpFmt(f.precioFutVol,0)+'</td>'
+      +  '<td class="'+cls+'" style="font-weight:700">'+(f.margenTn>=0?'+':'−')+rpFmt(Math.abs(f.margenTn),0)+'</td>'
+      +  '<td class="'+cls+'" style="font-weight:700">'+(f.aporte>=0?'+':'−')+rpFmt(Math.abs(f.aporte),0)+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  if(r.faltan.length){
+    h += '<div class="rp-res-faltan">Quedaron afuera: '
+      + r.faltan.map(function(f){ return f.nombre+' ('+f.motivo+')'; }).join(' · ')
+      + '. El total de arriba no los incluye.</div>';
+  }
+  return h + '</div>';
+}
+
 /* ---------- Gráfico simple (SVG, barras horizontales) ---------- */
 function rpGraficoPrecios(d){
   var barras = [];
-  if(d.precioCosto!=null)   barras.push({ lbl:'Costo ÷ P10', val:d.precioCosto, cls:'rp-b-costo' });
+  if(d.precioCosto!=null)      barras.push({ lbl:'Costo ÷ P10', val:d.precioCosto, cls:'rp-b-costo' });
+  if(d.precioCostoMedia!=null) barras.push({ lbl:'Costo ÷ rinde medio', val:d.precioCostoMedia, cls:'rp-b-costo-med' });
   if(d.precioFut!=null)     barras.push({ lbl:'Futuro '+d.fut.label, val:d.precioFut, cls:'rp-b-fut' });
   if(d.precioFutVol!=null)  barras.push({ lbl:'Futuro − volatilidad', val:d.precioFutVol, cls:'rp-b-vol' });
   if(barras.length<2) return '';
@@ -11223,7 +11355,11 @@ function rpGraficoPrecios(d){
 // Separada del render completo para poder actualizarla sin tocar los inputs.
 function rpCostoSalida(d){
   if(!d || d.precioCosto==null) return '';
-  var h = '<div class="rp-precio-linea">Necesitás <b>'+rpFmt(d.precioCosto,0)+' USD/tn</b> para cubrir el costo con un rinde de campaña mala.</div>';
+  var h = '<div class="rp-precio-linea">Necesitás <b>'+rpFmt(d.precioCosto,0)+' USD/tn</b> para cubrir el costo con un rinde de campaña mala (P10).</div>';
+  if(d.precioCostoMedia!=null){
+    h += '<div class="rp-precio-linea media">Con un rinde medio de '+rpFmt(d.mediaTn,2)+' tn/ha te alcanza con '
+      +  '<b>'+rpFmt(d.precioCostoMedia,0)+' USD/tn</b>.</div>';
+  }
   var g = rpGraficoPrecios(d);
   if(g){
     h += g;
@@ -11237,6 +11373,14 @@ function rpCostoSalida(d){
     }
   }
   return h;
+}
+
+// Repinta solo el número grande. Va aparte para poder llamarlo desde los
+// tres lugares que lo afectan (costo, futuro y hectáreas) sin reconstruir
+// ningún input: reconstruirlos haría perder el foco mientras se tipea.
+function rpActualizarResultado(){
+  var el = document.getElementById('rp_resultado');
+  if(el) el.innerHTML = rpRenderResultadoPlanteo();
 }
 
 // Actualiza solo el resultado de un cultivo, sin redibujar sus inputs.
@@ -11261,6 +11405,9 @@ function rpRenderCostos(){
     +  'En soja, maíz y trigo podés compararlo contra un futuro vigente.</p>';
   h += '<div class="rp-aviso-costo">El costo debería incluir lo necesario para desarrollar cada cultivo, '
     +  'pero no necesariamente los costos asociados a la comercialización.</div>';
+  // El resultado de la campaña entera va primero: es la conclusión de todo lo
+  // que viene abajo, y es lo que el productor mira.
+  h += '<div id="rp_resultado">'+rpRenderResultadoPlanteo()+'</div>';
 
   vs.forEach(function(v){
     var d = rpPrecioCultivo(v.nombre, v.i);
