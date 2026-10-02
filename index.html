@@ -11031,7 +11031,8 @@ function rpRenderEnso(){
     +  '<th>Media<small>tn/ha</small></th>'
     +  '<th>Campañas<small>con dato</small></th>'
     +  '<th>Niña típica<small>ONI −1</small></th>'
-    +  '<th style="min-width:190px">Intervalo de confianza 95%<small>−25% · 0 · +25%</small></th>'
+    +  '<th>Niño típico<small>ONI +1</small></th>'
+    +  '<th style="min-width:190px">Intervalo 95% · Niña<small>−25% · 0 · +25%</small></th>'
     +  '<th>Evidencia</th></tr></thead><tbody>';
   reg.cultivos.forEach(function(c){
     // efecto a ONI −1: el encogido para mostrar, el crudo para el intervalo
@@ -11043,6 +11044,11 @@ function rpRenderEnso(){
       +  '<td>'+rpFmt(c.media,1)+'</td>'
       +  '<td>'+c.n+'</td>'
       +  '<td style="font-weight:700">'+(c.firme?pc(ef):'—')+'</td>'
+      // El modelo es lineal en el ONI, así que el efecto de un Niño típico es
+      // el espejo exacto del de una Niña. Se muestra igual porque el productor
+      // piensa en años, no en pendientes; la nota de abajo aclara que es
+      // simétrico por construcción y no una segunda medición.
+      +  '<td style="font-weight:700">'+(c.firme?pc(-ef):'—')+'</td>'
       +  '<td><div class="rp-enso-bar" title="'+ttl+'">'
         +  '<span class="tick" style="left:0"></span><span class="tick" style="left:25%"></span>'
         +  '<span class="tick" style="left:75%"></span><span class="tick" style="left:calc(100% - 1px)"></span>'
@@ -11059,6 +11065,10 @@ function rpRenderEnso(){
   h += '<p class="rp-expl">El efecto se estima con una regresión del shock de rinde sobre el valor del ONI, usando las '+reg.nConOni+' campañas con dato. '
     +  'No se parten las campañas en tres grupos: con series de este largo quedarían 4 o 5 por grupo y el efecto dejaría de ser medible. '
     +  'El punto es la estimación y la línea el intervalo de confianza; <b>cuando cruza el cero el panel lo dice</b> en lugar de mostrar un número que no se sostiene.</p>';
+  h += '<p class="rp-expl">Las columnas de Niña y Niño son <b>espejo una de la otra por construcción</b>: el modelo supone que el efecto crece parejo con el ONI, así que lo que una Niña saca, un Niño lo pone. '
+    +  'Probablemente la realidad sea asimétrica —una sequía suele pegar más fuerte de lo que ayuda un año húmedo— pero medir las dos puntas por separado necesita más campañas de las que hay: '
+    +  'con una serie de este largo, aun una asimetría grande se detecta menos de una vez de cada cinco, y el error de cada punta se duplica. '
+    +  'Con 35 campañas o más empieza a valer la pena estimarlas por separado.</p>';
 
   // ── stress test del planteo ──
   var st = rpEnsoStress(reg);
