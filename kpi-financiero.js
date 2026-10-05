@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  const FIN_VERSION = '2026-10-05.3';
+  const FIN_VERSION = '2026-10-05.4';
 
   /* ───────────── Estructura de carga ───────────── */
   const RUBROS = [
@@ -68,9 +68,6 @@
     margen_moneda:{ nombre: 'Margen en pesos y margen dolarizado', corto: 'Margen por moneda', tipo: 'info',
                    regla: 'Informativo: el signo del margen dolarizado decide, solo, si una devaluación ayuda o perjudica',
                    que: 'El margen partido en dos: lo que queda del lado peso (ingresos en pesos − costos en pesos) y lo que queda del lado dólar (ingresos dolarizados − costos dolarizados). Van como montos y no como cociente: cada uno puede ser negativo, y el cociente entre ambos vale lo mismo con todo sano que con todo en pérdida.' },
-    calce_dol:   { nombre: 'Cobertura dolarizada (USD + dólar link)', corto: 'Cobertura dolarizada', tipo: 'calce', rojo: 0.80, techo: 1.20,
-                   regla: 'Rojo menos de 0,8x · verde 0,8x a 1,2x · más de 1,2x es informativo (largo en USD) · amarillo si el faltante viene del margen y no del descalce',
-                   que: 'Ventas dolarizadas dividido costos dolarizados —directos y de estructura— en la misma moneda. Es el cociente que tiene el mismo signo que la exposición: más de 1 significa que una devaluación mejora el resultado en pesos; menos de 1, que lo empeora.' },
     int_rb:      { nombre: 'Intereses / resultado bruto', corto: 'Intereses / resultado bruto', tipo: 'menor', verde: 0.10, amarillo: 0.25,
                    regla: 'Verde hasta 10% · amarillo 10% a 25% · rojo más de 25%',
                    que: 'Cuánto del margen productivo consume el costo financiero.' },
@@ -337,6 +334,10 @@
         periodo: p, etiqueta: etiquetaMes(p), tc, tcUsd, tcFuente: tcs[i].fuente,
         tcEstimado: ['ultimo', 'estimado', 'extrapolado'].includes(tcs[i].fuente),
         conDatos: !!idx[p],
+        // Cada rubro por moneda, ya pesificado. Lo usa el cuadro Mes a mes, que
+        // replica la grilla de carga: una fila por rubro y moneda, una columna
+        // por mes.
+        rubrosMon: RUBROS.reduce((acc, rb) => { acc[rb.clave] = enArs(rb.clave); return acc; }, {}),
         ventasMon: ventas, costosMon: costos, estructuraMon: estructura,
         servicioMon: { ARS: interes.ARS + capital.ARS, USD: interes.USD + capital.USD, DL: interes.DL + capital.DL },
         ventas: totalMon(ventas), costos: totalMon(costos), estructura: totalMon(estructura),
@@ -383,71 +384,6 @@
       anual[f] = meses.reduce((a, m) => a + m[f], 0);
       anualUsd[f] = meses.reduce((a, m) => a + m[f] / m.tcUsd, 0);
     });
-    const sumMon = (campo, enUsd) => {
-      const o = vacioMon();
-      meses.forEach(m => MONEDAS.forEach(k => { o[k] += enUsd ? m[campo][k] / m.tcUsd : m[campo][k]; }));
-      return o;
-    };
-
-    /* Calce por moneda ─────────────────────────────────────────────────────
-       El COSTO de cada fila son TODOS los costos de esa moneda: directos más
-       estructura. Antes el porcentaje se calculaba solo sobre costos directos
-       mientras la exposición sí restaba estructura, así que las dos mitades de
-       la misma fila describían universos distintos: la identidad
-       `%ventas · ventasTotales − %costos · costosTotales = exposición`
-       no cerraba, y el desvío llegaba a cientos de miles de dólares.
-
-       Se publican dos cocientes, porque miden cosas distintas y conviene no
-       confundirlas:
-
-       · COBERTURA = ventas en la moneda ÷ costos en la moneda.
-         Cuántos dólares de venta hay por cada dólar de costo en esa moneda.
-         Tiene el MISMO SIGNO que la exposición —cobertura > 1 ⟺ exposición > 0—
-         y por eso es el que gobierna el semáforo: el resultado en pesos es
-         R = (ventas−costos en ARS) + TC·(ventas−costos en USD), así que la
-         derivada respecto del tipo de cambio ES la exposición en USD. Si da más
-         de 1, una devaluación mejora el resultado.
-
-       · CALCE ESTRUCTURAL = % de ventas en la moneda ÷ % de costos en la moneda.
-         Es el indicador del compendio. Mide si la estructura de costos acompaña
-         a la de ventas, neto del margen, pero NO responde si una devaluación
-         ayuda: equivale a la cobertura multiplicada por costosTotales/ventasTotales,
-         así que una empresa rentable lo ve siempre por debajo de su cobertura.
-         Se conserva como contexto, no como semáforo.
-
-       Las dos versiones (ARS y USD) se calculan por separado porque el tipo de
-       cambio cambia mes a mes: pesificar y después dividir no da lo mismo que
-       dividir en dólares. Cada vista usa la de su propia moneda y así la
-       identidad cierra exactamente en pantalla.                             */
-    const V = sumMon('ventasMon'), C = sumMon('costosMon'), E = sumMon('estructuraMon'), S = sumMon('servicioMon');
-    const Vu = sumMon('ventasMon', true), Cu = sumMon('costosMon', true), Eu = sumMon('estructuraMon', true), Su = sumMon('servicioMon', true);
-    const CE = vacioMon(), CEu = vacioMon();
-    MONEDAS.forEach(k => { CE[k] = C[k] + E[k]; CEu[k] = Cu[k] + Eu[k]; });
-    const vTot = totalMon(V), ceTot = totalMon(CE);
-    const vTotU = totalMon(Vu), ceTotU = totalMon(CEu);
-    const parte = (num, den) => den > 0 ? num / den : null;
-    const razon = (num, den) => den > 0 ? num / den : null;
-    const filaMoneda = (clave, nombre, pick) => {
-      const v = pick(V), ce = pick(CE), s = pick(S);
-      const vu = pick(Vu), ceu = pick(CEu), su = pick(Su);
-      const pv = { ARS: parte(v, vTot),  USD: parte(vu, vTotU) };
-      const pc = { ARS: parte(ce, ceTot), USD: parte(ceu, ceTotU) };
-      const calceDe = m => (pv[m] != null && pc[m]) ? pv[m] / pc[m] : null;
-      return {
-        clave, nombre, pctVentas: pv, pctCostos: pc,
-        cobertura: { ARS: razon(v, ce), USD: razon(vu, ceu) },
-        calce:     { ARS: calceDe('ARS'), USD: calceDe('USD') },
-        exposicion: { ARS: v - ce, USD: vu - ceu },
-        exposicionPostDeuda: { ARS: v - ce - s, USD: vu - ceu - su },
-      };
-    };
-    const moneda = [
-      filaMoneda('ARS', 'ARS', o => o.ARS),
-      filaMoneda('USD', 'USD', o => o.USD),
-      filaMoneda('DL', 'Dólar link', o => o.DL),
-      filaMoneda('DOL', 'Dolarizado', o => o.USD + o.DL),
-    ];
-
     // Indicadores
     const ind = {};
     const deuda = (clave, num, den) => {
@@ -464,7 +400,6 @@
     ind.capex_dep = anual.dep > 0 ? evaluar('capex_dep', anual.capexMant / anual.dep) : evaluar('capex_dep', null, { sinBienes: true });
     ind.capex_total_dep = { valor: anual.dep > 0 ? (anual.capexMant + anual.capexCrec) / anual.dep : null, estado: anual.dep > 0 ? 'info' : 'na', lectura: anual.dep > 0 ? ((anual.capexMant + anual.capexCrec) / anual.dep >= 1 ? 'Repone y expande' : 'Por debajo del desgaste') : 'Sin bienes de uso' };
     ind.dep_ebitda = { valor: anual.ebitda > 0 && anual.dep > 0 ? anual.dep / anual.ebitda : null, estado: anual.ebitda > 0 && anual.dep > 0 ? 'info' : 'na', lectura: anual.ebitda > 0 ? 'Intensidad de capital' : 'EBITDA negativo' };
-    const dol = moneda[3];
 
     /* Cobertura de costos y su sensibilidad al dólar ───────────────────────
        Ingresos totales ÷ costos totales, con cada moneda pesificada a la
@@ -563,9 +498,6 @@
       brecha, brechaFuente: datos.brechaFuente || null, brechaFecha: datos.brechaFecha || null,
     };
 
-    ind.calce_dol = evaluar('calce_dol', dol.cobertura.USD,
-      { sinCostos: !(dol.pctCostos.USD > 0), estructural: dol.calce.USD });
-    ind.calce_estr_dol = { valor: dol.calce.USD, estado: 'info', lectura: 'Estructura, neto del margen' };
     const mesesNeg = meses.filter(m => m.post < 0).length;
     ind.meses_neg = evaluar('meses_neg', mesesNeg);
 
@@ -614,7 +546,7 @@
     }
 
     return {
-      version: FIN_VERSION, config: cfg, periodos, meses, anual, anualUsd, moneda, curvaTc,
+      version: FIN_VERSION, config: cfg, periodos, meses, anual, anualUsd, curvaTc,
       indicadores: ind, caja, avisos, vacio, impuestoCargado, impuestoEstimadoTotal,
       bienesConDep: bienes.length,
     };
@@ -667,23 +599,6 @@
       if (mov >= u.verde)    return { valor, estado: 'verde',    lectura: sube ? 'Aguanta una devaluación grande' : 'Aguanta una caída grande del dólar' };
       if (mov >= u.amarillo) return { valor, estado: 'amarillo', lectura: sube ? 'Una devaluación moderada lo borra' : 'Una caída moderada del dólar lo borra' };
       return { valor, estado: 'rojo', lectura: sube ? 'Un movimiento chico del dólar lo borra' : 'Una caída chica del dólar lo borra' };
-    }
-    if (clave === 'calce_dol') {
-      if (valor == null) return { valor: null, estado: 'na', lectura: flags.sinCostos ? 'Sin costos dolarizados' : 'Sin ventas cargadas' };
-      if (valor < u.rojo) {
-        // Una empresa que vende y gasta todo en dólares pero pierde plata tiene
-        // cobertura menor a 1 sin tener ningún descalce de moneda: lo que le
-        // falta es margen. Eso se distingue mirando el calce estructural, que
-        // en ese caso da cerca de 1. Marcarlo rojo sería culpar al dólar de un
-        // problema de rentabilidad y mandar a cubrir lo que no hay que cubrir.
-        const estr = flags.estructural;
-        if (estr != null && estr >= u.rojo && estr <= u.techo) {
-          return { valor, estado: 'amarillo', lectura: 'Estructura calzada: el faltante es de margen' };
-        }
-        return { valor, estado: 'rojo', lectura: 'Corto en USD' };
-      }
-      if (valor <= u.techo) return { valor, estado: 'verde', lectura: 'Calzado' };
-      return { valor, estado: 'info', lectura: 'Largo en USD' };
     }
     if (valor == null || !isFinite(valor)) return { valor: null, estado: 'na', lectura: 'Sin dato' };
     let estado;
@@ -952,6 +867,20 @@
 .fin-unidad{font-size:11px;color:var(--fin-muted)}
 .fin-desliza{display:none;font-size:11px;color:var(--fin-muted);text-align:center;margin-bottom:6px}
 .fin-solo-angosto{display:none}
+/* Mes a mes con forma de grilla de carga: rubros en filas, meses en columnas.
+   La primera columna queda fija para que al deslizar no se pierda de vista
+   qué fila se está leyendo. */
+.fin-tabla-meses{min-width:max-content}
+.fin-tabla-meses th:first-child,.fin-tabla-meses td.fin-rot{position:sticky;left:0;z-index:1;
+  background:var(--fin-panel,#13263a);text-align:left;white-space:nowrap}
+.fin-tabla-meses td.fin-rot small{display:block;font-size:10px;color:var(--fin-texto2);font-weight:400;margin-top:1px}
+.fin-tabla-meses tr.fin-grupo td{background:rgba(255,255,255,.045);font-size:10px;letter-spacing:.7px;
+  text-transform:uppercase;color:var(--fin-texto2);font-weight:700}
+.fin-tabla-meses tr.fin-grupo td.fin-rot{background:rgba(255,255,255,.045)}
+.fin-tabla-meses tr.fin-fila-der td{font-weight:600}
+.fin-tabla-meses tr.fin-fila-tc td{color:var(--fin-texto2);font-size:12px}
+.fin-tabla-meses td{font-variant-numeric:tabular-nums;white-space:nowrap}
+
 .fin-mon-lista{display:none;flex-direction:column}
 .fin-mon-item{padding:9px 0;border-top:1px solid var(--fin-borde)}
 .fin-mon-item:first-child{border-top:0}
@@ -1105,7 +1034,6 @@
 
   function valorInd(clave, i) {
     if (!i) return '—';
-    if (clave === 'calce_dol') return fmtX(i.valor);
     if (clave === 'meses_neg') return i.valor == null ? '—' : String(i.valor);
     return fmtPct(i.valor);
   }
@@ -1204,26 +1132,6 @@
 
     const num = v => fmtMonto(v, '');
     const tablaMoneda = `
-      <div class="fin-tabla-wrap fin-solo-ancho"><table class="fin-tabla">
-        <thead><tr><th>Moneda</th><th>% ventas</th><th>% costos</th>
-          <th title="Ventas ÷ costos en esa moneda. Más de 1 = una devaluación mejora el resultado.">Cobertura</th>
-          <th title="% de ventas ÷ % de costos. Mide si la estructura acompaña, neto del margen.">Calce estr.</th>
-          <th>Exposición</th><th>Tras deuda</th></tr></thead>
-        <tbody>${r.moneda.map(f => `
-          <tr class="${f.clave === 'DOL' ? 'fuerte' : ''}">
-            <td>${esc(f.nombre)}</td><td>${fmtPct(f.pctVentas[M])}</td><td>${fmtPct(f.pctCostos[M])}</td>
-            <td class="${f.cobertura[M] != null && f.cobertura[M] < 1 ? 'neg' : ''}">${fmtX(f.cobertura[M])}</td>
-            <td>${fmtX(f.calce[M])}</td>
-            <td class="${f.exposicion[M] < 0 ? 'neg' : ''}">${num(f.exposicion[M])}</td>
-            <td class="${f.exposicionPostDeuda[M] < 0 ? 'neg' : ''}">${num(f.exposicionPostDeuda[M])}</td>
-          </tr>`).join('')}
-        </tbody></table></div>
-      <div class="fin-solo-angosto fin-mon-lista">${r.moneda.map(f => `
-        <div class="fin-mon-item ${f.clave === 'DOL' ? 'fuerte' : ''}">
-          <div class="fin-mon-nombre"><span>${esc(f.nombre)}</span><span>${fmtX(f.cobertura[M])}</span></div>
-          <div class="fin-mon-det">Ventas ${fmtPct(f.pctVentas[M])} · costos ${fmtPct(f.pctCostos[M])} · calce estr. ${fmtX(f.calce[M])}</div>
-          <div class="fin-mon-det">Exposición ${mon(f.exposicion[M])} · tras deuda ${mon(f.exposicionPostDeuda[M])}</div>
-        </div>`).join('')}</div>
       ${(() => {
         const d = r.indicadores.moneda_detalle;
         const k = ind.k_quiebre.valor;
@@ -1279,22 +1187,65 @@
         ${l('Flujo después de deuda e inversión', A('post'), 't')}
       </div>`;
 
-    const tablaMeses = `
-      <div class="fin-desliza">← Deslizá para ver todas las columnas →</div>
-      <div class="fin-tabla-wrap"><table class="fin-tabla">
-        <thead><tr><th>Mes</th><th>Tipo de cambio</th><th>Ventas</th><th>Resultado bruto</th><th>EBITDA</th><th>Servicio de deuda</th><th>Flujo después de deuda</th><th>Caja acumulada</th><th>Acción</th></tr></thead>
-        <tbody>${r.meses.map(m => {
-          const d = f => usd ? m[f] / m.tcUsd : m[f];
-          const caja = usd ? m.cajaUsd : m.caja;
-          return `<tr>
-            <td>${esc(m.etiqueta)}</td>
-            <td title="${esc(AYUDA_FUENTE_TC[m.tcFuente] || '')}">${nf(0).format(m.tc)}<span class="fin-tag">${esc(NOMBRE_FUENTE_TC[m.tcFuente] || '')}</span></td>
-            <td>${num(d('ventas'))}</td><td class="${m.rb < 0 ? 'neg' : ''}">${num(d('rb'))}</td>
-            <td class="${m.ebitda < 0 ? 'neg' : ''}">${num(d('ebitda'))}</td><td>${num(d('servicio'))}</td>
-            <td class="${m.post < 0 ? 'neg' : ''}">${num(d('post'))}</td><td class="${caja < 0 ? 'neg' : ''}">${num(caja)}</td>
-            <td style="text-align:left">${badge(m.accion.estado, m.accion.texto)}</td>
-          </tr>`;
-        }).join('')}</tbody></table></div>`;
+    /* Mes a mes, con la misma forma que la grilla de carga: una fila por rubro
+       y moneda, una columna por mes. Así el productor compara lo que ve con lo
+       que cargó sin tener que transponer nada en la cabeza. Abajo van las
+       líneas derivadas, que no se cargan sino que salen de las de arriba.     */
+    const tablaMeses = (() => {
+      const ms = r.meses;
+      const cab = ms.map(m => `<th style="text-align:right">${esc(m.etiqueta)}</th>`).join('');
+      const enM = v => usd ? null : v;      // marcador: la conversión va por mes
+
+      // Fila genérica: valores por mes + total de la fila
+      const fila = (nombre, sub, valores, cls, totalar) => {
+        const vals = valores.map((v, j) => {
+          const x = usd ? v / ms[j].tcUsd : v;
+          return `<td style="text-align:right" class="${x < 0 ? 'neg' : ''}">${x === 0 ? '<span style="opacity:.35">—</span>' : num(x)}</td>`;
+        }).join('');
+        const tot = totalar === false ? '<td></td>' : (() => {
+          const t = valores.reduce((a, v, j) => a + (usd ? v / ms[j].tcUsd : v), 0);
+          return `<td style="text-align:right;font-weight:700" class="${t < 0 ? 'neg' : ''}">${num(t)}</td>`;
+        })();
+        return `<tr class="${cls || ''}"><td class="fin-rot">${esc(nombre)}${sub ? `<small>${esc(sub)}</small>` : ''}</td>${vals}${tot}</tr>`;
+      };
+
+      let filas = `<tr class="fin-fila-tc"><td class="fin-rot">Tipo de cambio<small>ARS por USD</small></td>`
+        + ms.map(m => `<td style="text-align:right" title="${esc(AYUDA_FUENTE_TC[m.tcFuente] || '')}">`
+            + `${nf(0).format(m.tc)}<span class="fin-tag">${esc(NOMBRE_FUENTE_TC[m.tcFuente] || '')}</span></td>`).join('')
+        + '<td></td></tr>';
+
+      let grupo = '';
+      RUBROS.forEach(rb => {
+        if (rb.grupo !== grupo) {
+          grupo = rb.grupo;
+          filas += `<tr class="fin-grupo"><td class="fin-rot">${esc(grupo)}</td><td colspan="${ms.length + 1}"></td></tr>`;
+        }
+        // Una fila por moneda del rubro, y solo si tiene algún movimiento:
+        // mostrar diez filas en cero es ruido, no información.
+        const conDato = rb.monedas.filter(mo => ms.some(m => m.rubrosMon[rb.clave][mo] !== 0));
+        const monedas = conDato.length ? conDato : [rb.monedas[0]];
+        monedas.forEach((mo, i) => {
+          filas += fila(i === 0 ? rb.nombre : '', NOMBRE_MONEDA[mo],
+            ms.map(m => m.rubrosMon[rb.clave][mo]), 'fin-fila-rubro');
+        });
+      });
+
+      filas += `<tr class="fin-grupo"><td class="fin-rot">Resultado y caja</td><td colspan="${ms.length + 1}"></td></tr>`;
+      filas += fila('Resultado bruto', 'ventas − costos directos', ms.map(m => m.rb), 'fin-fila-der');
+      filas += fila('EBITDA', 'menos estructura', ms.map(m => m.ebitda), 'fin-fila-der');
+      filas += fila('Servicio de deuda', 'intereses + capital', ms.map(m => m.servicio), 'fin-fila-der');
+      filas += fila('Flujo después de deuda', '', ms.map(m => m.post), 'fin-fila-der');
+      filas += fila('Caja acumulada', 'saldo al cierre del mes',
+        ms.map(m => usd ? m.cajaUsd * m.tcUsd : m.caja), 'fin-fila-der', false);
+      filas += `<tr class="fin-fila-der"><td class="fin-rot">Situación</td>`
+        + ms.map(m => `<td style="text-align:right">${badge(m.accion.estado, m.accion.texto)}</td>`).join('')
+        + '<td></td></tr>';
+
+      return `<div class="fin-desliza">← Deslizá para ver todos los meses →</div>
+        <div class="fin-tabla-wrap"><table class="fin-tabla fin-tabla-meses">
+          <thead><tr><th style="text-align:left">Rubro</th>${cab}<th style="text-align:right">Total</th></tr></thead>
+          <tbody>${filas}</tbody></table></div>`;
+    })();
 
     const dicc = Object.entries(UMBRALES).map(([k, u]) => `<tr><td><b>${esc(u.nombre)}</b></td><td>${esc(u.que)}</td><td>${esc(u.regla)}</td></tr>`).join('');
 
@@ -1381,13 +1332,8 @@
         <br><b>5 · Cuánto aguanta el margen.</b> El margen total en función del dólar es M_peso + k × M_dólar, con k el multiplicador del tipo de cambio (hoy k = 1). La derivada es M_dólar, así que su <b>signo solo</b> decide si devaluar ayuda o perjudica, sin ningún cociente de por medio. Y el margen se hace cero en k* = −M_peso ÷ M_dólar, que se publica como variación: cuánto tiene que subir o caer el dólar para dejarte sin margen. Si k* no da positivo, no existe movimiento del dólar que lo borre y el panel lo dice.
         <br>Los costos de estos cinco son <b>todos</b>: directos y de estructura, igual que en el resto del bloque de moneda.</div>
 
-        <div class="fin-nota"><b>Las tres medidas de moneda, que no son lo mismo.</b>
-        <b>Exposición</b> = ingresos − costos de esa moneda (directos y estructura); "tras deuda" también resta capital e intereses. Es un <b>monto</b>: por cada peso que suba el dólar, tu resultado se mueve en esa cantidad de veces.
-        <b>Cobertura</b> = ingresos ÷ costos de esa moneda. Es la misma información en forma de ratio, así que sirve para comparar ejercicios o planteos entre sí; tiene el mismo signo que la exposición.
-        <b>Calce estructural</b> = % de ingresos ÷ % de costos. Mide si la estructura de costos acompaña a la de ingresos, descontado el margen; una empresa rentable lo ve siempre por debajo de su cobertura, y por eso no decide ningún color.</div>
-
-        <div class="fin-nota"><b>Por qué el dólar link suma al dolarizado.</b> Se cobra y se paga en pesos, pero el monto sigue al oficial, así que frente a una devaluación se comporta como dólar.
-        Lo que no hace es seguir al MEP: si se abre la brecha, un dólar link vale menos que un dólar, y ese castigo ya está aplicado en todas las filas.</div>
+        <div class="fin-nota"><b>Por qué el dólar link cuenta como dolarizado.</b> Se cobra y se paga en pesos, pero el monto sigue al oficial, así que frente a una devaluación se comporta como dólar y entra en la D de los cinco indicadores.
+        Lo que no hace es seguir al MEP: si se abre la brecha, un dólar link vale menos que un dólar, y ese castigo ya está aplicado en todo el tablero.</div>
 
         <div class="fin-nota">Umbrales versión ${FIN_VERSION}.</div>
       </details>`;
