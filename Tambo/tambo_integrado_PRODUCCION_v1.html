@@ -247,6 +247,15 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
   display:inline-flex;align-items:center;justify-content:center}
 .mt-tab-x:hover{opacity:1;background:rgba(0,0,0,.15)}
 .mt-tab.mt-on .mt-tab-x{opacity:.8}
+.mt-tab-lapiz{font-size:11px;line-height:1;opacity:0;border-radius:50%;width:18px;height:18px;
+  display:inline-flex;align-items:center;justify-content:center;transition:opacity .12s}
+.mt-tab:hover .mt-tab-lapiz{opacity:.6}
+.mt-tab-lapiz:hover{opacity:1 !important;background:rgba(0,0,0,.15)}
+.mt-tab.mt-on .mt-tab-lapiz{opacity:.75}
+.mt-tab-edit{display:inline-flex;align-items:center;padding:8px 14px;border-radius:10px;
+  border:1px solid var(--oro,#d4a017);background:rgba(0,0,0,.3);color:var(--txt,#e8eef5);
+  font-size:13px;font-weight:600;font-family:inherit;width:13ch;min-width:96px;outline:none}
+.mt-tab-edit.mt-on{background:rgba(255,255,255,.92);color:#0f2740}
 .mt-add{border-style:dashed;font-weight:700}
 .mt-cons{margin-left:6px;border-color:var(--oro,#d4a017);color:var(--oro-l,#e8c45a)}
 .mt-cons.mt-on{color:#0f2740}
@@ -2080,11 +2089,67 @@ function mtEliminar(id){
   else mtRenderBarra();
 }
 
+// Renombra desde la pestaña: el nombre se vuelve un input ahí mismo. Enter o
+// salir del campo confirma, Escape cancela. Es el mismo nombre que el campo
+// "Nombre del tambo" de Configuración: los dos escriben en t.nombre.
+function mtRenombrarEnTab(id){
+  var t = MT.tambos.find(function(x){ return x.id === id; });
+  var span = document.querySelector('.mt-tab-txt[data-tid="' + id + '"]');
+  var tab = span ? span.closest('.mt-tab') : null;
+  if(!t || !tab || document.querySelector('.mt-tab-edit')) return;
+
+  // El input REEMPLAZA a la pestaña en vez de meterse adentro: un input dentro
+  // de un <button> hace que la barra espaciadora active el botón (el click lo
+  // despacha el navegador sobre el botón, así que no hay stopPropagation que
+  // valga) y el nombre se cortaba en la primera palabra.
+  var inp = document.createElement('input');
+  inp.className = 'mt-tab-edit' + (tab.classList.contains('mt-on') ? ' mt-on' : '');
+  inp.value = t.nombre || '';
+  inp.maxLength = 40;
+  tab.replaceWith(inp);
+  inp.focus(); inp.select();
+
+  var cerrado = false;
+  var confirmar = function(guardar){
+    if(cerrado) return; cerrado = true;
+    if(guardar){
+      var nuevo = String(inp.value || '').trim();
+      if(nuevo) mtAplicarNombre(id, nuevo);
+    }
+    // Diferido: redibujar la barra desde adentro del propio blur rompe el DOM
+    // que el navegador todavía está recorriendo.
+    setTimeout(mtRenderBarra, 0);
+  };
+  inp.onblur = function(){ confirmar(true); };
+  inp.onkeydown = function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); confirmar(true); }
+    else if(e.key === 'Escape'){ e.preventDefault(); confirmar(false); }
+  };
+}
+
+// Punto único de renombre: deja el nombre en el tambo, en su snapshot y, si es
+// el que se está editando, en el campo visible.
+function mtAplicarNombre(id, nombre){
+  var t = MT.tambos.find(function(x){ return x.id === id; });
+  if(!t) return;
+  t.nombre = nombre;
+  if(t.datos) t.datos.tambo_nombre = nombre;
+  if(id === MT.activo){
+    var campo = document.getElementById('tambo_nombre');
+    if(campo) campo.value = nombre;
+  }
+  if(typeof estSync === 'function') estSync();   // la grilla sigue a los nombres
+}
+
 // Renombra el tambo activo desde su propio campo, no desde el del escenario.
 function mtSyncNombre(){
   var t = MT.tambos.find(function(x){ return x.id === MT.activo; });
   var el = document.getElementById('tambo_nombre');
-  if(t && el){ t.nombre = (el.value || t.nombre).trim() || t.nombre; mtRenderBarra(); }
+  if(!t || !el) return;
+  var nuevo = String(el.value || '').trim();
+  if(!nuevo) return;                      // vacío mientras tipea: no se pisa
+  mtAplicarNombre(t.id, nuevo);
+  mtRenderBarra();
 }
 
 /* ---------- Barra selectora de tambos ---------- */
@@ -2097,9 +2162,12 @@ function mtRenderBarra(){
   var html = '<div class="mt-tabs">';
   MT.tambos.forEach(function(t){
     var on = (t.id === MT.activo) ? ' mt-on' : '';
-    html += '<button class="mt-tab' + on + '" onclick="mtSeleccionar(\'' + t.id + '\')" title="' + t.nombre + '">'
-         + '<span class="mt-tab-txt">' + (t.nombre || 'Tambo') + '</span>'
-         + '<span class="mt-tab-x" onclick="event.stopPropagation();mtEliminar(\'' + t.id + '\')">×</span>'
+    html += '<button class="mt-tab' + on + '" onclick="mtSeleccionar(\'' + t.id + '\')"'
+         + ' ondblclick="event.stopPropagation();mtRenombrarEnTab(\'' + t.id + '\')"'
+         + ' title="' + escTxt(t.nombre) + ' — doble clic para renombrar">'
+         + '<span class="mt-tab-txt" data-tid="' + t.id + '">' + escTxt(t.nombre || 'Tambo') + '</span>'
+         + '<span class="mt-tab-lapiz" onclick="event.stopPropagation();mtRenombrarEnTab(\'' + t.id + '\')" title="Renombrar">✎</span>'
+         + '<span class="mt-tab-x" onclick="event.stopPropagation();mtEliminar(\'' + t.id + '\')" title="Quitar tambo">×</span>'
          + '</button>';
   });
   html += '<button class="mt-tab mt-add" onclick="mtAgregar()" title="Agregar tambo">+ Tambo</button>';
