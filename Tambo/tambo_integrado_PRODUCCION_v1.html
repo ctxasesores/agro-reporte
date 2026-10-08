@@ -112,6 +112,39 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 .neu{color:var(--oro-l)}
 
 .res-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.res-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.res-col.sens{border-color:rgba(212,160,23,.45)}
+
+/* ---- Sensibilidad por subcategoría (Escenarios) ---- */
+.ss-desc{font-size:12px;color:var(--txt-soft,#9fb2c4);line-height:1.5;margin:0 0 10px}
+.ss-empty,.ss-nota{font-size:12px;color:var(--txt-soft,#9fb2c4);line-height:1.5;font-style:italic;
+  padding:10px 12px;background:rgba(255,255,255,.03);border-radius:9px}
+.ss-tabla{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.ss-tabla th:first-child,.ss-tabla td:first-child{width:auto}
+.ss-tabla th:not(:first-child),.ss-tabla td:not(:first-child){width:76px}
+.ss-antes{display:block;font-size:10px;font-weight:400;color:var(--txt-soft,#9fb2c4)}
+.ss-tabla th{text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--txt-soft,#9fb2c4);font-weight:700;padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.12)}
+.ss-tabla td{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.055)}
+.ss-tabla .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ss-tabla tr.ss-cat td{font-size:10px;letter-spacing:.6px;text-transform:uppercase;font-weight:700;
+  color:var(--oro-l,#e8c45a);background:rgba(255,255,255,.035);padding-top:7px;padding-bottom:7px}
+.ss-nom{font-weight:600}
+.ss-nom small{display:block;font-size:10px;font-weight:400;color:var(--txt-soft,#9fb2c4)}
+.ss-dato{color:var(--txt-soft,#9fb2c4)}
+.ss-in{width:100%;max-width:68px;padding:4px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.04);color:var(--txt,#e8eef5);font-size:12px;text-align:right}
+.ss-sube{color:#f0906a;font-weight:700}
+.ss-baja{color:#5fbf8f;font-weight:700}
+.ss-tabla tfoot td{font-weight:700;border-top:1px solid rgba(255,255,255,.18);border-bottom:none;padding-top:8px}
+.ss-impacto{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;
+  margin-top:10px;padding:10px 12px;border-radius:9px;font-size:12.5px;line-height:1.5;
+  background:rgba(255,255,255,.04);border-left:2px solid var(--oro,#d4a017)}
+.ss-impacto.neg{border-left-color:#e0714f}
+.ss-impacto b{color:var(--oro-l,#e8c45a)}
+.ss-reset{padding:5px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:transparent;
+  color:var(--txt-soft,#9fb2c4);font-size:11.5px;cursor:pointer;white-space:nowrap}
+.ss-reset:hover{color:var(--txt,#e8eef5);border-color:rgba(255,255,255,.35)}
 .res-col{border-radius:var(--r-sm);padding:12px}
 .res-col.pes{background:rgba(217,81,44,.12);border:.5px solid rgba(217,81,44,.28)}
 .res-col.base{background:var(--negro-m);border:.5px solid var(--border2)}
@@ -266,9 +299,17 @@ label .u{margin-left:4px}
 .sc-add{padding:5px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,.25);background:transparent;
   color:var(--txt,#e8eef5);font-size:12px;cursor:pointer;font-weight:600}
 .sc-rows{margin-top:10px;display:flex;flex-direction:column;gap:6px}
-.sc-row{display:grid;grid-template-columns:1fr 90px 110px 28px;gap:8px;align-items:center}
-.sc-name,.sc-val,.sc-unit{padding:6px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);
+.sc-row{display:grid;grid-template-columns:1fr 86px 62px 86px 112px 28px;gap:8px;align-items:center}
+.sc-row-hdr{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-soft,#9fb2c4);padding-bottom:2px}
+.sc-row-hdr span{padding-left:2px}
+.sc-name,.sc-val,.sc-unit,.sc-uitem{padding:6px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);
   background:rgba(255,255,255,.04);color:var(--txt,#e8eef5);font-size:12.5px;min-width:0}
+.sc-res{font-size:11.5px;color:var(--oro-l,#e8c45a);padding:0 0 4px 2px;font-variant-numeric:tabular-nums}
+@media(max-width:620px){
+  .sc-row{grid-template-columns:1fr 1fr 28px}
+  .sc-row-hdr{display:none}
+  .sc-row .sc-name{grid-column:1/3}
+}
 .sc-del{font-size:18px;color:#e06060}
 .sc-empty{margin-top:8px;font-size:12px;color:var(--txt-soft,#9fb2c4);font-style:italic}
 .sc-modal-foot{display:flex;justify-content:flex-end;margin-top:8px}
@@ -469,6 +510,10 @@ label .u{margin-left:4px}
               <div><label for="opt_prod">Optimista litros</label><input type="number" id="opt_prod" value="4" step="0.1"></div>
               <div><label for="opt_costo">Optimista costo</label><input type="number" id="opt_costo" value="-4" step="0.1"></div>
             </div>
+
+            <div class="sec-lbl" style="margin-top:16px">Sensibilidad por subcategoría</div>
+            <p class="ss-desc">Un ajuste global de costos mueve todo junto. Acá podés mover <b>un item</b>: si sube el balanceado, cambiás su precio; si cambia la dieta, su cantidad. El precio y la cantidad van por separado porque suben la misma plata por motivos distintos y se corrigen de maneras distintas.</p>
+            <div id="subsens_box"></div>
           </div>
         </section>
 
@@ -1704,6 +1749,7 @@ function mtDatosParaGuardar(){
   var datos = serializeForm();
   if(mtActivo() && MT.tambos.length){
     datos._subcats = (typeof subcatParaGuardar==='function') ? subcatParaGuardar() : {};
+    datos._subsens = (typeof subsensParaGuardar==='function') ? subsensParaGuardar() : {};
     datos._mt = {
       version: 1,
       activo: (MT.activo === MT.CONSOLIDADO) ? MT.CONSOLIDADO : MT.activo,
@@ -2016,8 +2062,20 @@ var COST_CATS = [
   {id:'c_energia',   nombre:'Energía y frío'}
 ];
 
-// subcats vive en memoria como { c_alim:[{id,nombre,valor,unit}], ... }
-// (valor guardado en la unidad elegida; se convierte a $/litro al sumar)
+// subcats vive en memoria como
+//   { c_alim:[{id, nombre, precio, cantidad, unidadItem, unit}], ... }
+//
+// Cada subcategoría se carga como PRECIO × CANTIDAD, que es como el productor
+// conoce sus costos: no sabe cuántos pesos por litro le cuesta el balanceado,
+// sabe que lo paga a $350 el kilo y que consume 0,25 kilos por litro. El valor
+// del renglón es la multiplicación, y eso además es lo que después permite
+// sensibilizar precio y cantidad por separado en Escenarios: una suba del
+// balanceado y un cambio de dieta mueven la misma plata por motivos distintos.
+//
+//   precio      $ por unidad del item (por kilo, por dosis, por jornal…)
+//   unidadItem  cómo se llama esa unidad — solo rotula, no entra al cálculo
+//   cantidad    unidades consumidas, en la base que indica `unit`
+//   unit        base de la cantidad: por litro, por mes o por vaca y mes
 var SUBCATS = {};
 
 function subcatCatById(id){ return COST_CATS.find(function(c){return c.id===id;}); }
@@ -2025,6 +2083,34 @@ function subcatNuevoId(){ return 'sc_' + Date.now() + '_' + Math.floor(Math.rand
 
 // ¿Una categoría está gobernada por subcategorías? (tiene al menos una)
 function subcatCatTieneSubs(catId){ return Array.isArray(SUBCATS[catId]) && SUBCATS[catId].length > 0; }
+
+// Valor del renglón = precio × cantidad, en la unidad de `unit`.
+// `sens` aplica los desvíos porcentuales de Escenarios (ver SUBSENS).
+function subcatValor(sc, sens){
+  var p = parseFloat(sc.precio);   if(!isFinite(p)) p = 0;
+  var q = parseFloat(sc.cantidad); if(!isFinite(q)) q = 0;
+  if(sens){
+    var d = SUBSENS[sc.id] || {};
+    p *= 1 + (parseFloat(d.dp)||0)/100;
+    q *= 1 + (parseFloat(d.dq)||0)/100;
+  }
+  return p * q;
+}
+
+// Normaliza un renglón viejo { valor, unit } al formato precio × cantidad.
+// Se le asigna cantidad 1 para que el número no se mueva ni un centavo: lo que
+// antes era un valor suelto pasa a ser "una unidad a ese precio", y el productor
+// lo desarma cuando quiera.
+function subcatNormalizar(sc){
+  if(sc.precio === undefined || sc.precio === null || sc.precio === ''){
+    sc.precio = (sc.valor !== undefined && sc.valor !== null && sc.valor !== '') ? sc.valor : 0;
+    if(sc.cantidad === undefined || sc.cantidad === null || sc.cantidad === '') sc.cantidad = 1;
+  }
+  if(sc.cantidad === undefined || sc.cantidad === null || sc.cantidad === '') sc.cantidad = 1;
+  if(sc.unidadItem === undefined || sc.unidadItem === null) sc.unidadItem = '';
+  delete sc.valor;      // deja de existir: ahora es derivado
+  return sc;
+}
 
 // Convierte un valor de subcategoría a $/litro según su unidad.
 function subcatAPerLitro(valor, unit){
@@ -2037,10 +2123,17 @@ function subcatAPerLitro(valor, unit){
   return v;
 }
 
+// Total $/litro de una categoría. `sens` aplica los desvíos de Escenarios.
+function subcatTotalCat(catId, sens){
+  return (SUBCATS[catId]||[]).reduce(function(a,sc){
+    return a + subcatAPerLitro(subcatValor(sc, sens), sc.unit);
+  }, 0);
+}
+
 // Suma las subcategorías de una categoría → total $/litro, y lo vuelca al hidden c_xxx.
 function subcatAplicarCategoria(catId){
   if(!subcatCatTieneSubs(catId)) return;
-  var total = SUBCATS[catId].reduce(function(a,sc){ return a + subcatAPerLitro(sc.valor, sc.unit); }, 0);
+  var total = subcatTotalCat(catId);
   var hidden = document.getElementById(catId);
   var entry = document.getElementById(catId+'_entry');
   var deriv = document.getElementById(catId+'_derived');
@@ -2083,7 +2176,7 @@ function subcatCerrar(ev){
 
 function subcatAddFila(catId){
   if(!SUBCATS[catId]) SUBCATS[catId] = [];
-  SUBCATS[catId].push({ id:subcatNuevoId(), nombre:'', valor:0, unit:'litro' });
+  SUBCATS[catId].push({ id:subcatNuevoId(), nombre:'', precio:0, cantidad:0, unidadItem:'', unit:'litro' });
   subcatRenderModal();
 }
 function subcatDelFila(catId, scId){
@@ -2092,13 +2185,28 @@ function subcatDelFila(catId, scId){
 }
 function subcatEditar(catId, scId, campo, valor){
   var sc = (SUBCATS[catId]||[]).find(function(x){ return x.id===scId; });
-  if(sc){ sc[campo] = (campo==='valor') ? parseFloat(valor)||0 : valor; }
-  // recalcular subtotal en vivo
+  if(!sc) return;
+  sc[campo] = (campo==='precio' || campo==='cantidad') ? (parseFloat(valor)||0) : valor;
+  // Recalcular en vivo el renglón y el subtotal, sin repintar el modal:
+  // repintarlo le sacaría el foco al input que el usuario está tipeando.
+  var fila = document.getElementById('scres_'+scId);
+  if(fila) fila.textContent = subcatTextoFila(sc);
   var st = document.getElementById('subtot_'+catId);
-  if(st){
-    var total = (SUBCATS[catId]||[]).reduce(function(a,x){ return a+subcatAPerLitro(x.valor,x.unit); },0);
-    st.textContent = total.toFixed(2) + ' $/L';
+  if(st) st.textContent = subcatTotalCat(catId).toFixed(2) + ' $/L';
+}
+
+// Texto del resultado de un renglón: la multiplicación a la vista y, si la
+// unidad no es $/litro, también su equivalente por litro, que es la moneda en
+// la que piensa el resto del tablero.
+function subcatTextoFila(sc){
+  var v = subcatValor(sc);
+  var u = { litro:'$/L', mes:'$/mes', vaca:'$/vaca/mes' }[sc.unit] || '$';
+  var txt = '= ' + fm(v, 2) + ' ' + u;
+  if(sc.unit !== 'litro'){
+    var porL = subcatAPerLitro(v, sc.unit);
+    txt += '  ·  ' + fm(porL, 2) + ' $/L';
   }
+  return txt;
 }
 
 function subcatRenderModal(){
@@ -2107,7 +2215,7 @@ function subcatRenderModal(){
   var html = '';
   COST_CATS.forEach(function(cat){
     var subs = SUBCATS[cat.id] || [];
-    var subtotal = subs.reduce(function(a,x){ return a+subcatAPerLitro(x.valor,x.unit); },0);
+    var subtotal = subcatTotalCat(cat.id);
     html += '<div class="sc-cat">';
     html +=   '<div class="sc-cat-hdr">';
     html +=     '<span class="sc-cat-name">'+cat.nombre+'</span>';
@@ -2116,17 +2224,25 @@ function subcatRenderModal(){
     html +=   '</div>';
     if(subs.length){
       html += '<div class="sc-rows">';
+      html +=   '<div class="sc-row sc-row-hdr">'
+             +    '<span>Item</span><span>Precio $</span><span>Unidad</span>'
+             +    '<span>Cantidad</span><span>por</span><span></span></div>';
       subs.forEach(function(sc){
+        var esc_ = function(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); };
+        var ed = function(campo){ return 'subcatEditar(\''+cat.id+'\',\''+sc.id+'\',\''+campo+'\',this.value)'; };
         html += '<div class="sc-row">';
-        html +=   '<input class="sc-name" type="text" placeholder="Nombre (ej. Balanceado, Silo...)" value="'+(sc.nombre||'').replace(/"/g,'&quot;')+'" oninput="subcatEditar(\''+cat.id+'\',\''+sc.id+'\',\'nombre\',this.value)">';
-        html +=   '<input class="sc-val" type="number" step="0.01" min="0" value="'+sc.valor+'" oninput="subcatEditar(\''+cat.id+'\',\''+sc.id+'\',\'valor\',this.value)">';
-        html +=   '<select class="sc-unit" onchange="subcatEditar(\''+cat.id+'\',\''+sc.id+'\',\'unit\',this.value)">';
-        html +=     '<option value="litro"'+(sc.unit==='litro'?' selected':'')+'>$/litro</option>';
-        html +=     '<option value="mes"'+(sc.unit==='mes'?' selected':'')+'>$/mes</option>';
-        html +=     '<option value="vaca"'+(sc.unit==='vaca'?' selected':'')+'>$/vaca/mes</option>';
+        html +=   '<input class="sc-name" type="text" placeholder="Balanceado, silo, jornal…" value="'+esc_(sc.nombre)+'" oninput="'+ed('nombre')+'">';
+        html +=   '<input class="sc-val" type="number" step="0.01" min="0" value="'+sc.precio+'" title="Precio por unidad del item" oninput="'+ed('precio')+'">';
+        html +=   '<input class="sc-uitem" type="text" placeholder="kg" value="'+esc_(sc.unidadItem)+'" title="Cómo se mide el item: kg, dosis, jornal, kWh…" oninput="'+ed('unidadItem')+'">';
+        html +=   '<input class="sc-val" type="number" step="0.0001" min="0" value="'+sc.cantidad+'" title="Cuántas unidades consume" oninput="'+ed('cantidad')+'">';
+        html +=   '<select class="sc-unit" onchange="'+ed('unit')+'">';
+        html +=     '<option value="litro"'+(sc.unit==='litro'?' selected':'')+'>por litro</option>';
+        html +=     '<option value="mes"'+(sc.unit==='mes'?' selected':'')+'>por mes</option>';
+        html +=     '<option value="vaca"'+(sc.unit==='vaca'?' selected':'')+'>por vaca/mes</option>';
         html +=   '</select>';
         html +=   '<button class="sc-del" onclick="subcatDelFila(\''+cat.id+'\',\''+sc.id+'\')">×</button>';
         html += '</div>';
+        html += '<div class="sc-res" id="scres_'+sc.id+'">'+subcatTextoFila(sc)+'</div>';
       });
       html += '</div>';
     } else {
@@ -2137,10 +2253,37 @@ function subcatRenderModal(){
   cont.innerHTML = html;
 }
 
+/* ------------------------------------------------------------
+   Sensibilidad por subcategoría (se usa en Escenarios)
+   SUBSENS = { scId: { dp: %precio, dq: %cantidad } }
+   Vive aparte de SUBCATS porque es una hipótesis sobre los datos,
+   no un dato: borrarla no toca lo que el productor cargó.
+   ------------------------------------------------------------ */
+var SUBSENS = {};
+
+function subsensGet(scId){ return SUBSENS[scId] || { dp:0, dq:0 }; }
+function subsensHayCambios(){
+  return Object.keys(SUBSENS).some(function(k){
+    var d = SUBSENS[k] || {};
+    return (parseFloat(d.dp)||0) !== 0 || (parseFloat(d.dq)||0) !== 0;
+  });
+}
+function subsensLimpiar(){
+  SUBSENS = {};
+  if(typeof render==='function') render();
+}
+
 // Persistencia: incluir SUBCATS en los datos guardados y restaurarlos.
 function subcatParaGuardar(){ return JSON.parse(JSON.stringify(SUBCATS)); }
+function subsensParaGuardar(){ return JSON.parse(JSON.stringify(SUBSENS)); }
 function subcatRestaurar(datos){
   SUBCATS = (datos && datos._subcats) ? JSON.parse(JSON.stringify(datos._subcats)) : {};
+  // Los escenarios guardados antes de este cambio traen renglones con `valor`
+  // suelto: se normalizan a precio × cantidad sin mover el número.
+  Object.keys(SUBCATS).forEach(function(k){
+    if(Array.isArray(SUBCATS[k])) SUBCATS[k].forEach(subcatNormalizar);
+  });
+  SUBSENS = (datos && datos._subsens) ? JSON.parse(JSON.stringify(datos._subsens)) : {};
   subcatAplicarTodas();
 }
 
@@ -2159,7 +2302,8 @@ function render(){
   });
 
   renderTop(base);
-  renderScenarios(base, pes, opt);
+  renderScenarios(base, pes, opt, subsensModelo());
+  renderSubsens(base);
   renderCosts(base);
   renderBenchmarks(base);
   renderActions(base);
@@ -2209,13 +2353,17 @@ function renderTop(base){
   }
 }
 
-function renderScenarios(base, pes, opt){
+function renderScenarios(base, pes, opt, sens){
   var node = document.getElementById('escenarios_grid');
   var cols = [
     { cls:'pes', lbl:'Pesimista', model:pes },
     { cls:'base', lbl:'Base', model:base },
     { cls:'opt', lbl:'Optimista', model:opt }
   ];
+  // La columna sensibilizada solo aparece cuando hay algún desvío cargado: si
+  // no, sería una cuarta columna idéntica a Base ocupando lugar.
+  if(sens) cols.push({ cls:'sens', lbl:'Sensibilizado', model:sens });
+  node.className = sens ? 'res-3 res-4' : 'res-3';
   node.innerHTML = cols.map(function(item){
     var cls = item.model.margenMes >= 0 ? 'pos' : 'neg';
     return '<div class="res-col ' + item.cls + '">' +
@@ -2225,6 +2373,113 @@ function renderScenarios(base, pes, opt){
       '<div class="rc-sub">' + fm(item.model.litrosVendiblesMes, 0) + ' L/mes</div>' +
     '</div>';
   }).join('');
+}
+
+/* ------------------------------------------------------------
+   Sensibilidad por subcategoría
+   Los desvíos NO tocan lo cargado: construyen un juego de datos
+   paralelo donde cada categoría con subcategorías se recalcula con
+   los precios y cantidades desviados. El resto del motor es el mismo,
+   así que el escenario sensibilizado pasa por los mismos cálculos
+   que la base y los números se pueden comparar de frente.
+   ------------------------------------------------------------ */
+function subsensDatos(){
+  var d = serializeForm();
+  COST_CATS.forEach(function(c){
+    if(subcatCatTieneSubs(c.id)) d[c.id] = subcatTotalCat(c.id, true).toFixed(4);
+  });
+  return d;
+}
+function subsensModelo(){
+  if(!subsensHayCambios()) return null;
+  return buildModelFromData(subsensDatos(), { price:0, prod:0, cost:0 });
+}
+
+function subsensEditar(scId, campo, valor){
+  if(!SUBSENS[scId]) SUBSENS[scId] = { dp:0, dq:0 };
+  SUBSENS[scId][campo] = parseFloat(valor) || 0;
+  render();
+}
+
+function renderSubsens(base){
+  var box = document.getElementById('subsens_box');
+  if(!box) return;
+
+  // En la vista consolidada los costos son combinación de varios tambos: no hay
+  // un juego de subcategorías que editar.
+  if(typeof MT !== 'undefined' && MT.activo === MT.CONSOLIDADO){
+    box.innerHTML = '<div class="ss-empty">La sensibilidad por subcategoría se arma sobre un tambo. '
+      + 'Elegí uno en la barra de arriba para moverle el precio o la cantidad de cada item.</div>';
+    return;
+  }
+
+  var hay = COST_CATS.some(function(c){ return subcatCatTieneSubs(c.id); });
+  if(!hay){
+    box.innerHTML = '<div class="ss-empty">Todavía no cargaste subcategorías. '
+      + 'Creálas en <b>Administrar subcategorías de costos</b>, dentro de Costo por litro, '
+      + 'y acá vas a poder mover el precio y la cantidad de cada item por separado.</div>';
+    return;
+  }
+
+  // El precio y la cantidad van como subtítulo del item y no en columnas
+  // propias: esta tabla vive en la columna angosta del formulario, y si las
+  // llevan, las dos columnas que importan —el desvío y el resultado— quedan
+  // fuera de la pantalla.
+  var html = '<table class="ss-tabla"><thead><tr>'
+    + '<th>Item</th><th class="num">Δ% precio</th><th class="num">Δ% cant.</th>'
+    + '<th class="num">$/litro</th></tr></thead><tbody>';
+
+  var BASE_UNIT = { litro:'por litro', mes:'por mes', vaca:'por vaca/mes' };
+  var totalBase = 0, totalSens = 0;
+  COST_CATS.forEach(function(cat){
+    var subs = SUBCATS[cat.id] || [];
+    if(!subs.length) return;
+    html += '<tr class="ss-cat"><td colspan="4">'+cat.nombre+'</td></tr>';
+    subs.forEach(function(sc){
+      var d = subsensGet(sc.id);
+      var pl  = subcatAPerLitro(subcatValor(sc), sc.unit);
+      var pls = subcatAPerLitro(subcatValor(sc, true), sc.unit);
+      totalBase += pl; totalSens += pls;
+      var dif = pls - pl;
+      var movio = Math.abs(dif) >= 0.005;
+      var cls = movio ? (dif > 0 ? 'ss-sube' : 'ss-baja') : '';
+      var uni = sc.unidadItem ? (' ' + sc.unidadItem) : '';
+      html += '<tr>'
+        + '<td class="ss-nom">' + (sc.nombre || '<i>sin nombre</i>')
+        +   '<small>' + fm(parseFloat(sc.precio)||0, 2) + ' × ' + fm(parseFloat(sc.cantidad)||0, 2) + uni
+        +   ' ' + (BASE_UNIT[sc.unit]||'') + '</small></td>'
+        + '<td class="num"><input class="ss-in" type="number" step="1" value="' + (d.dp||0)
+        +   '" aria-label="Desvío de precio" oninput="subsensEditar(\'' + sc.id + '\',\'dp\',this.value)"></td>'
+        + '<td class="num"><input class="ss-in" type="number" step="1" value="' + (d.dq||0)
+        +   '" aria-label="Desvío de cantidad" oninput="subsensEditar(\'' + sc.id + '\',\'dq\',this.value)"></td>'
+        + '<td class="num ' + cls + '">' + fm(pls, 2)
+        +   (movio ? '<small class="ss-antes">antes ' + fm(pl, 2) + '</small>' : '') + '</td>'
+        + '</tr>';
+    });
+  });
+
+  var difTot = totalSens - totalBase;
+  var movioT = Math.abs(difTot) >= 0.005;
+  html += '</tbody><tfoot><tr>'
+    + '<td colspan="3">Costo cubierto por subcategorías</td>'
+    + '<td class="num ' + (movioT ? (difTot > 0 ? 'ss-sube' : 'ss-baja') : '') + '">' + fm(totalSens, 2)
+    +   (movioT ? '<small class="ss-antes">antes ' + fm(totalBase, 2) + '</small>' : '') + '</td>'
+    + '</tr></tfoot></table>';
+
+  // Qué significa el desvío en plata y en margen, que es la pregunta real.
+  if(subsensHayCambios()){
+    var sens = subsensModelo();
+    var dLitro = sens ? (sens.margenLitro - base.margenLitro) : 0;
+    var dMes   = sens ? (sens.margenMes - base.margenMes) : 0;
+    html += '<div class="ss-impacto ' + (dMes >= 0 ? 'pos' : 'neg') + '">'
+      + '<div>El costo por litro se mueve <b>' + (difTot>=0?'+':'−') + fm(Math.abs(difTot),2) + ' $/L</b>, '
+      + 'así que el margen pasa de ' + fm(base.margenLitro,2) + ' a <b>' + fm(sens.margenLitro,2) + ' $/litro</b> '
+      + '(' + (dMes>=0?'+':'−') + money(Math.abs(dMes)) + ' por mes).</div>'
+      + '<button type="button" class="ss-reset" onclick="subsensLimpiar()">Volver a cero</button></div>';
+  } else {
+    html += '<div class="ss-nota">Sin desvíos cargados: el escenario sensibilizado no se muestra porque sería igual a la base.</div>';
+  }
+  box.innerHTML = html;
 }
 
 function renderCosts(base){
