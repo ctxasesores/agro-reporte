@@ -389,12 +389,8 @@ label .u{margin-left:4px}
 .est-ctb-nom small{display:block;font-size:10px;font-weight:400;color:var(--txt-soft,#9fb2c4)}
 .est-ctb-bar{height:14px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
 .est-ctb-fill{height:100%;border-radius:4px;background:#e0714f}
-.est-ctb-fill.est-ctb-alt{background:#5a7fa0}
 .est-ctb-fill.est-ctb-neg{background:#5fbf8f}
 .est-ctb-pct{text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
-.est-ctb-res{margin-top:10px;font-size:12px;color:var(--txt-soft,#9fb2c4)}
-.est-ctb-res b{color:var(--txt,#e8eef5);font-size:14px}
-.est-sep{height:1px;background:rgba(255,255,255,.08);margin:22px 0 16px}
 .est-pos{color:#5fbf8f}
 .est-sin-dato{opacity:.35}
 .est-enso-sel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
@@ -2800,36 +2796,6 @@ function estContribuciones(w, cov){
   return { sigma:sigma, items:out };
 }
 
-/* ---------- Mínima varianza solo largo (referencia secundaria) ---------- */
-function estProyectarSimplex(v){
-  var n = v.length, u = v.slice().sort(function(a,b){ return b-a; });
-  var css = 0, rho = -1, theta = 0;
-  for(var i=0;i<n;i++){
-    css += u[i];
-    var t = (css-1)/(i+1);
-    if(u[i]-t > 0){ rho = i; theta = t; }
-  }
-  if(rho < 0) theta = (v.reduce(function(a,b){ return a+b; }, 0) - 1)/n;
-  return v.map(function(x){ return Math.max(0, x-theta); });
-}
-function estMinVarianzaLongOnly(cov){
-  var n = cov.length, i, j;
-  if(!n) return null;
-  var w = []; for(i=0;i<n;i++) w.push(1/n);
-  var maxDiag = 0; for(i=0;i<n;i++) maxDiag = Math.max(maxDiag, Math.abs(cov[i][i]));
-  var lr = maxDiag > 0 ? 1/(4*maxDiag) : 0.1;
-  for(var it=0; it<4000; it++){
-    var grad = [];
-    for(i=0;i<n;i++){ var g = 0; for(j=0;j<n;j++) g += 2*cov[i][j]*w[j]; grad.push(g); }
-    var nw = []; for(i=0;i<n;i++) nw.push(w[i] - lr*grad[i]);
-    nw = estProyectarSimplex(nw);
-    var dif = 0; for(i=0;i<n;i++) dif += Math.abs(nw[i]-w[i]);
-    w = nw;
-    if(dif < 1e-10) break;
-  }
-  return w;
-}
-
 /* ============================================================
    Estado y datos
    ============================================================ */
@@ -3238,35 +3204,6 @@ function estRenderContrib(){
   h += '<div class="est-glosario">Las contribuciones suman 100%: es el desvío del conjunto repartido, no el riesgo '
     + 'aislado de cada tambo. Un tambo puede ser variable y aportar poco si sus caídas no coinciden con las de los demás.</div>';
 
-  // ── Referencia estadística: mínima varianza ──
-  var pesos = estMinVarianzaLongOnly(mat.cov);
-  if(pesos){
-    var sigmaOpt = estRiesgoCartera(pesos, mat.cov);
-    h += '<div class="est-sep"></div>';
-    h += '<div class="sec-lbl">Referencia: reparto de menor variabilidad</div>';
-    h += '<p class="est-expl">Qué participación de los litros por tambo habría dado el total más parejo según esta historia. '
-      +  'Es una referencia estadística, no un plan: las vacas no se mudan de establecimiento como se reasignan hectáreas, '
-      +  'y no entran acá la superficie, las instalaciones ni la gente de cada tambo.</p>';
-    h += '<div class="est-ctb">';
-    vs.forEach(function(v, i){
-      var pct = pesos[i]*100;
-      h += '<div class="est-ctb-row">'
-        +  '<span class="est-ctb-nom">' + escTxt(v.nombre) + '<small>hoy ' + estFmt(w[i]*100, 0) + '% de los litros</small></span>'
-        +  '<div class="est-ctb-bar"><div class="est-ctb-fill est-ctb-alt" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>'
-        +  '<span class="est-ctb-pct">' + estFmt(pct, 1) + '%</span>'
-        +  '</div>';
-    });
-    h += '</div>';
-    h += '<div class="est-ctb-res">Variabilidad con ese reparto: <b>' + estFmt(sigmaOpt*100, 1) + '%</b> '
-      +  '<small>contra ' + estFmt(c.sigma*100, 1) + '% del reparto actual</small></div>';
-    var maxPeso = Math.max.apply(null, pesos);
-    if(maxPeso > 0.85){
-      h += '<div class="est-avisos"><div class="est-aviso">⚠ El modelo concentra casi todo en <b>'
-        + escTxt(vs[pesos.indexOf(maxPeso)].nombre) + '</b>. Pasa cuando los tambos tienen meses buenos y malos parecidos: '
-        + 'si caen juntos, repartir vacas no baja el riesgo y el modelo elige el más estable. '
-        + '<b>No es una recomendación de concentrar el rodeo.</b></div></div>';
-    }
-  }
   cont.innerHTML = h;
 }
 
