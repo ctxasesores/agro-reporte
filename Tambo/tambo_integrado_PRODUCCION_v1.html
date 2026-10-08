@@ -282,6 +282,49 @@ label .u{margin-left:4px}
   .cost-derived{grid-column:1/-1}
 }
 
+/* ---- Litros por vaca y día, tambo por tambo ---- */
+.tl-box{margin-top:14px;padding:12px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.025)}
+.tl-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.tl-t{font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--txt-soft,#9fb2c4);font-weight:700}
+.tl-ref{font-size:12px;color:var(--txt-soft,#9fb2c4);text-align:right}
+.tl-ref b{color:var(--oro-l,#e8c45a);font-size:15px}
+.tl-ref small{display:block;font-size:10px;opacity:.8}
+.tl-fila{display:grid;grid-template-columns:1fr 100px 78px 62px;gap:10px;align-items:center;
+  padding:7px 0;border-top:1px solid rgba(255,255,255,.055)}
+.tl-fila.tl-activo{background:rgba(212,160,23,.05);border-radius:7px;padding-left:6px;padding-right:6px;margin:0 -6px}
+.tl-nom{font-size:12.5px;font-weight:600;min-width:0}
+.tl-nom small{display:block;font-size:10px;font-weight:400;color:var(--txt-soft,#9fb2c4)}
+.tl-chip{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;font-size:9px;
+  letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:1px}
+.tl-chip.mejor{background:rgba(95,191,143,.15);color:#5fbf8f;border:1px solid rgba(95,191,143,.35)}
+.tl-chip.peor{background:rgba(224,113,79,.13);color:#f0906a;border:1px solid rgba(224,113,79,.33)}
+.tl-barra{position:relative;height:16px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.tl-fill{height:100%;border-radius:4px;background:#5a7fa0}
+.tl-fill.tl-arriba{background:#5fbf8f}
+.tl-fill.tl-abajo{background:#e0714f}
+.tl-marca{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--oro-l,#e8c45a);opacity:.85;
+  overflow:visible;border-radius:1px}
+.tl-val{text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.tl-val small{display:block;font-size:9.5px;font-weight:400;color:var(--txt-soft,#9fb2c4)}
+.tl-dif{text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.tl-dif small{display:block;font-size:10px;font-weight:400;opacity:.85}
+.tl-dif.tl-arriba{color:#5fbf8f}
+.tl-dif.tl-abajo{color:#f0906a}
+.tl-dif.tl-igual{color:var(--txt-soft,#9fb2c4)}
+.tl-pie{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;padding-top:9px;
+  border-top:1px solid rgba(255,255,255,.1);font-size:11.5px;color:var(--txt-soft,#9fb2c4)}
+.tl-pie b{color:var(--txt,#e8eef5)}
+.tl-nota{margin-top:8px;font-size:11px;line-height:1.5;color:var(--txt-soft,#9fb2c4);font-style:italic}
+.tl-vacio{margin-top:14px;padding:11px 13px;border-radius:12px;border:1px dashed rgba(255,255,255,.14);
+  font-size:11.5px;line-height:1.55;color:var(--txt-soft,#9fb2c4)}
+.tl-vacio b{color:var(--txt,#e8eef5)}
+@media(max-width:620px){
+  .tl-fila{grid-template-columns:1fr 70px 58px;grid-template-areas:'nom val dif' 'bar bar bar';gap:6px 10px}
+  .tl-nom{grid-area:nom}.tl-val{grid-area:val}.tl-dif{grid-area:dif}.tl-barra{grid-area:bar}
+  .tl-pie{gap:4px;flex-direction:column}
+}
+
 /* ---- ABM subcategorías (punto 4b) ---- */
 .subcat-btn{margin-bottom:12px;padding:8px 14px;border-radius:9px;border:1px solid var(--oro,#d4a017);
   background:rgba(212,160,23,.1);color:var(--oro-l,#e8c45a);font-size:13px;font-weight:600;cursor:pointer}
@@ -548,6 +591,7 @@ label .u{margin-left:4px}
           <div class="fields" id="acc-tablero">
             <div id="mt_barra" class="mt-barra" style="display:none"></div>
             <div class="kpi-grid" id="top_kpis"></div>
+            <div id="mt_litros"></div>
           </div>
         </section>
 
@@ -819,6 +863,13 @@ function money(v){
   return '$' + fm(v, 0);
 }
 
+// Nombres de tambo cargados por el productor: van a HTML, así que se escapan.
+function escTxt(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function pct(v, d){
   return fm(v, d == null ? 1 : d) + '%';
 }
@@ -1060,6 +1111,12 @@ function deserializeForm(data){
 
   // Sincronizar los inputs visibles de costos ($/litro) con los hidden cargados
   if(typeof costSyncEntriesFromHidden === 'function') costSyncEntriesFromHidden();
+
+  // Las subcategorías de costo (p × Q) viajan DENTRO de los datos, así que se
+  // restauran acá: es el único punto por el que pasan todas las rutas de carga
+  // (cambio de tambo, escenario guardado, modo estándar). Va al final porque
+  // costSyncEntriesFromHidden reescribe los inputs visibles de cada categoría.
+  if(typeof subcatRestaurar === 'function') subcatRestaurar(data || {});
 }
 function getStorageKey(){
   return 'ctx_tambo_escenarios_' + REPORT_MODE + '_' + currentUserId;
@@ -1747,9 +1804,11 @@ function mtActivo(){ return typeof isTamboPro === 'function' && isTamboPro(); }
 function mtDatosParaGuardar(){
   if(typeof mtGuardarActivoDesdeForm === 'function') mtGuardarActivoDesdeForm();
   var datos = serializeForm();
+  // Las subcategorías del tambo en edición se guardan siempre, también en modo
+  // estándar, donde no hay lista de tambos que las lleve adentro.
+  datos._subcats = (typeof subcatParaGuardar==='function') ? subcatParaGuardar() : {};
+  datos._subsens = (typeof subsensParaGuardar==='function') ? subsensParaGuardar() : {};
   if(mtActivo() && MT.tambos.length){
-    datos._subcats = (typeof subcatParaGuardar==='function') ? subcatParaGuardar() : {};
-    datos._subsens = (typeof subsensParaGuardar==='function') ? subsensParaGuardar() : {};
     datos._mt = {
       version: 1,
       activo: (MT.activo === MT.CONSOLIDADO) ? MT.CONSOLIDADO : MT.activo,
@@ -1764,7 +1823,13 @@ function mtRestaurarDesdeDatos(datos){
   if(!mtActivo()){ return; }
   if(datos && datos._mt && Array.isArray(datos._mt.tambos) && datos._mt.tambos.length){
     MT.tambos = datos._mt.tambos.map(function(t){
-      return { id: t.id || mtNuevoId(), nombre: t.nombre || 'Tambo', datos: t.datos || {} };
+      var d = t.datos || {};
+      // Escenarios guardados antes de este cambio traen las subcategorías una
+      // sola vez, al nivel del escenario: se siembran en cada tambo para que no
+      // se pierdan al cargar.
+      if(d._subcats === undefined && datos._subcats) d._subcats = JSON.parse(JSON.stringify(datos._subcats));
+      if(d._subsens === undefined && datos._subsens) d._subsens = JSON.parse(JSON.stringify(datos._subsens));
+      return { id: t.id || mtNuevoId(), nombre: t.nombre || 'Tambo', datos: d };
     });
     var act = datos._mt.activo;
     MT.activo = (act === MT.CONSOLIDADO) ? MT.tambos[0].id : (MT.tambos.find(function(x){return x.id===act;}) ? act : MT.tambos[0].id);
@@ -1777,8 +1842,13 @@ function mtRestaurarDesdeDatos(datos){
   mtRenderBarra();
 }
 
+// Snapshot de un tambo. Incluye las subcategorías de costo: si no viajaran acá,
+// al cambiar de pestaña el tambo volvería sin el detalle de precio × cantidad.
 function mtSnapshotActual(){
-  return serializeForm();
+  var d = serializeForm();
+  if(typeof subcatParaGuardar === 'function') d._subcats = subcatParaGuardar();
+  if(typeof subsensParaGuardar === 'function') d._subsens = subsensParaGuardar();
+  return d;
 }
 
 // Crea el primer tambo a partir de lo que haya en el formulario.
@@ -1812,7 +1882,7 @@ function mtSeleccionar(id){
   } else {
     mtSetConsolidadoUI(false);
     var t = MT.tambos.find(function(x){ return x.id === id; });
-    if(t){ if(typeof subcatRestaurar==='function') subcatRestaurar(t.datos); deserializeForm(t.datos); }
+    if(t){ deserializeForm(t.datos); }   // deserializeForm ya restaura las subcategorías
     mtRenderBarra();
   }
 }
@@ -1866,6 +1936,111 @@ function mtRenderBarra(){
   html += '<button class="mt-tab mt-cons' + onCons + '" onclick="mtSeleccionar(\'' + MT.CONSOLIDADO + '\')">Σ Todos juntos</button>';
   html += '</div>';
   cont.innerHTML = html;
+}
+
+/* ------------------------------------------------------------
+   Comparación de litros por vaca y día entre tambos
+   ------------------------------------------------------------
+   El tambo que se está editando se toma del FORMULARIO y no de
+   MT.tambos, que recién se sincroniza al cambiar de pestaña o al
+   guardar: así la comparación se mueve mientras el productor tipea.
+   ------------------------------------------------------------ */
+function mtListaModelos(){
+  if(!mtActivo() || !MT.tambos.length) return [];
+  var cero = { price:0, prod:0, cost:0 };
+  return MT.tambos.map(function(t){
+    var datos = (t.id === MT.activo) ? serializeForm() : t.datos;
+    return { id:t.id, nombre:t.nombre || 'Tambo', model: buildModelFromData(datos, cero) };
+  });
+}
+
+function renderTambosLitros(){
+  var box = document.getElementById('mt_litros');
+  if(!box) return;
+  var lista = mtListaModelos();
+  // Con un solo tambo no hay con qué comparar. En PRO igual se deja la pista de
+  // dónde aparece el cuadro, que si no parece que no existiera.
+  if(lista.length < 2){
+    box.innerHTML = (mtActivo() && lista.length === 1)
+      ? '<div class="tl-vacio">La comparación de <b>litros por vaca y día</b> entre tambos aparece acá '
+        + 'cuando haya dos o más cargados. Agregá otro con <b>+ Tambo</b> en la barra de arriba.</div>'
+      : '';
+    return;
+  }
+
+  var filas = lista.map(function(x){
+    return { id:x.id, nombre:x.nombre,
+             lvd: x.model.litrosVaca || 0,
+             vacas: x.model.vacasOrdene || 0,
+             litrosDia: x.model.litrosBrutosDia || 0,
+             diasMes: (x.model.litrosVendiblesMes && x.model.litrosBrutosDia)
+                      ? x.model.litrosVendiblesMes / x.model.litrosBrutosDia : 30 };
+  });
+
+  // Referencia: litros totales ÷ vacas totales. Es el litros/vaca/día REAL del
+  // conjunto. El promedio simple de los tambos no sirve de referencia cuando
+  // tienen tamaños distintos: uno de 80 vacas pesaría igual que uno de 400.
+  var vacasTot  = filas.reduce(function(a,f){ return a + f.vacas; }, 0);
+  var litrosTot = filas.reduce(function(a,f){ return a + f.litrosDia; }, 0);
+  var prom      = vacasTot > 0 ? litrosTot / vacasTot : 0;
+  var promSimple = filas.reduce(function(a,f){ return a + f.lvd; }, 0) / filas.length;
+
+  var mejor = filas.reduce(function(m,f){ return f.lvd > m.lvd ? f : m; }, filas[0]);
+  var peor  = filas.reduce(function(m,f){ return f.lvd < m.lvd ? f : m; }, filas[0]);
+  var brecha = mejor.lvd - peor.lvd;
+
+  // Desvío estándar poblacional: cuánto se dispersan los tambos entre sí.
+  var varianza = filas.reduce(function(a,f){ return a + Math.pow(f.lvd - promSimple, 2); }, 0) / filas.length;
+  var desvio = Math.sqrt(varianza);
+
+  var maxEsc = Math.max(mejor.lvd, prom) * 1.08 || 1;
+
+  var html = '<div class="tl-box">'
+    + '<div class="tl-hdr"><span class="tl-t">Litros por vaca y día</span>'
+    + '<span class="tl-ref">Promedio del conjunto <b>' + fm(prom, 1) + '</b> L'
+    + '<small>' + fm(litrosTot, 0) + ' L/día ÷ ' + fm(vacasTot, 0) + ' vacas</small></span></div>';
+
+  filas.forEach(function(f){
+    var dif = f.lvd - prom;
+    var pct = prom > 0 ? dif / prom * 100 : 0;
+    // Banda neutra del 5%: un tambo a medio litro del promedio no es un
+    // problema, y pintarlo del mismo rojo que uno a ocho litros aplana la
+    // diferencia entre "está en línea" y "está lejos".
+    var cls = Math.abs(pct) < 5 ? 'tl-igual' : (dif > 0 ? 'tl-arriba' : 'tl-abajo');
+    var chip = '';
+    if(f.id === mejor.id && brecha > 0.05) chip = '<span class="tl-chip mejor">mejor</span>';
+    else if(f.id === peor.id && brecha > 0.05) chip = '<span class="tl-chip peor">peor</span>';
+    var esActivo = (f.id === MT.activo) ? ' tl-activo' : '';
+    html += '<div class="tl-fila' + esActivo + '">'
+      + '<div class="tl-nom">' + escTxt(f.nombre) + chip + '<small>' + fm(f.vacas, 0) + ' vacas en ordeñe</small></div>'
+      + '<div class="tl-barra"><div class="tl-fill ' + cls + '" style="width:'
+      +   Math.max(2, Math.min(100, f.lvd / maxEsc * 100)) + '%"></div>'
+      +   '<i class="tl-marca" style="left:' + Math.min(100, prom / maxEsc * 100) + '%"></i></div>'
+      + '<div class="tl-val">' + fm(f.lvd, 1) + '<small>L/vaca/día</small></div>'
+      + '<div class="tl-dif ' + cls + '">' + (dif >= 0 ? '+' : '−') + fm(Math.abs(dif), 1)
+      +   '<small>' + (pct >= 0 ? '+' : '−') + fm(Math.abs(pct), 1) + '%</small></div>'
+      + '</div>';
+  });
+
+  // Qué significa la brecha en litros por mes, que es la pregunta que sigue.
+  var litrosMesSiPeorLlegaAlProm = Math.max(0, (prom - peor.lvd)) * peor.vacas * peor.diasMes;
+  html += '<div class="tl-pie">'
+    + '<span>Brecha entre el mejor y el peor: <b>' + fm(brecha, 1) + ' L/vaca/día</b></span>'
+    + '<span>Desvío entre tambos: <b>' + fm(desvio, 1) + ' L</b></span>'
+    + (litrosMesSiPeorLlegaAlProm > 0
+        ? '<span>Si <b>' + escTxt(peor.nombre) + '</b> llegara al promedio: <b>+' + fm(litrosMesSiPeorLlegaAlProm, 0) + ' L/mes</b></span>'
+        : '')
+    + '</div>';
+
+  // El promedio simple solo se muestra cuando se separa del ponderado, que es
+  // justo cuando confundirlos cambia la lectura.
+  if(Math.abs(promSimple - prom) >= 0.3){
+    html += '<div class="tl-nota">El promedio del conjunto está ponderado por vacas (' + fm(prom, 1) + ' L). '
+      + 'El promedio simple de los ' + filas.length + ' tambos da ' + fm(promSimple, 1) + ' L: '
+      + 'difieren porque los tambos tienen tamaños distintos, y el que manda para el negocio es el ponderado.</div>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
 }
 
 /* ---------- Consolidación ---------- */
@@ -1970,7 +2145,9 @@ function mtRenderConsolidado(){
   var pes = mtModeloConsolidado({ price: pc(n('pes_precio')), prod: pc(n('pes_prod')), cost: pc(n('pes_costo')) });
   var opt = mtModeloConsolidado({ price: pc(n('opt_precio')), prod: pc(n('opt_prod')), cost: pc(n('opt_costo')) });
   renderTop(base);
+  renderTambosLitros();
   renderScenarios(base, pes, opt);
+  renderSubsens(base);
   renderCosts(base);
   renderBenchmarks(base);
   renderActions(base);
@@ -2302,6 +2479,7 @@ function render(){
   });
 
   renderTop(base);
+  renderTambosLitros();
   renderScenarios(base, pes, opt, subsensModelo());
   renderSubsens(base);
   renderCosts(base);
