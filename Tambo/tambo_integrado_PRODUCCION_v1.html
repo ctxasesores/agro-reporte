@@ -319,6 +319,87 @@ label .u{margin-left:4px}
 .tl-vacio{margin-top:14px;padding:11px 13px;border-radius:12px;border:1px dashed rgba(255,255,255,.14);
   font-size:11.5px;line-height:1.55;color:var(--txt-soft,#9fb2c4)}
 .tl-vacio b{color:var(--txt,#e8eef5)}
+
+/* ---- Análisis estadístico de riesgo productivo (multi-tambo) ---- */
+.est-nota{font-size:11.5px;line-height:1.55;color:var(--txt-soft,#9fb2c4);margin-bottom:12px}
+.est-nota b{color:var(--txt,#e8eef5)}
+.est-acc{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.est-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:var(--txt,#e8eef5);
+  border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:600;cursor:pointer}
+.est-btn:hover{background:rgba(255,255,255,.12)}
+.est-btn.est-ghost{background:transparent;color:var(--txt-soft,#9fb2c4)}
+.est-pegar{margin-bottom:12px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.18)}
+.est-pegar textarea{width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);color:var(--txt,#e8eef5);
+  border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font-size:12px;font-family:inherit}
+.est-pegar-acc{display:flex;gap:8px;margin-top:8px}
+.est-fb{margin-top:8px;font-size:11.5px}
+.est-fb.ok{color:#5fbf8f}
+.est-fb.err{color:#f0906a}
+.est-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.est-tabla{width:100%;border-collapse:collapse;font-size:12px}
+.est-tabla th,.est-tabla td{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.07);text-align:right;white-space:nowrap}
+.est-tabla thead th{font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--txt-soft,#9fb2c4);
+  font-weight:700;vertical-align:bottom;text-align:right}
+.est-tabla thead th small{display:block;font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;opacity:.8}
+.est-tabla td.est-nom,.est-tabla th.est-nom{text-align:left;font-weight:600;color:var(--txt,#e8eef5)}
+.est-tabla td.est-nom .est-chip{margin-left:7px;vertical-align:1px}
+.est-th-f{text-align:left !important}
+.est-th-t{text-align:right}
+.est-th-acc{width:28px}
+.est-f,.est-v{width:100%;box-sizing:border-box;background:rgba(0,0,0,.25);color:var(--txt,#e8eef5);
+  border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:4px 6px;font-size:12px;
+  font-variant-numeric:tabular-nums;text-align:right}
+.est-f{text-align:left;min-width:84px}
+.est-v{min-width:66px}
+.est-f:focus,.est-v:focus{outline:none;border-color:var(--oro-l,#e8c45a)}
+.est-x{background:none;border:none;color:var(--txt-soft,#9fb2c4);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px}
+.est-x:hover{color:#f0906a}
+.est-td-acc{text-align:center}
+.est-tabla-riesgo td{font-variant-numeric:tabular-nums}
+.est-sin td{opacity:.6}
+.est-sin-txt{text-align:left !important;font-style:italic}
+.est-neg{color:#f0906a}
+.est-chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:9.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px}
+.est-bajo{background:rgba(95,191,143,.15);color:#5fbf8f;border:1px solid rgba(95,191,143,.35)}
+.est-medio{background:rgba(212,160,23,.14);color:var(--oro-l,#e8c45a);border:1px solid rgba(212,160,23,.35)}
+.est-alto{background:rgba(224,113,79,.13);color:#f0906a;border:1px solid rgba(224,113,79,.33)}
+.est-matriz td{font-variant-numeric:tabular-nums;text-align:center}
+.est-matriz td small{display:block;font-size:9px;opacity:.6}
+.est-diag{opacity:.35}
+.est-corr-alta{background:rgba(224,113,79,.14);color:#f0906a}
+.est-corr-media{background:rgba(212,160,23,.12);color:var(--oro-l,#e8c45a)}
+.est-corr-baja{background:rgba(95,191,143,.13);color:#5fbf8f}
+.est-corr-pocos{opacity:.55}
+.est-expl{font-size:11.5px;line-height:1.55;color:var(--txt-soft,#9fb2c4);margin:6px 0 12px}
+.est-expl b{color:var(--txt,#e8eef5)}
+.est-vacio{padding:12px 13px;border-radius:10px;border:1px dashed rgba(255,255,255,.14);
+  font-size:11.5px;line-height:1.5;color:var(--txt-soft,#9fb2c4)}
+.est-avisos{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.est-aviso{font-size:11px;line-height:1.5;color:var(--txt-soft,#9fb2c4);padding:7px 10px;border-radius:8px;
+  background:rgba(212,160,23,.07);border-left:2px solid rgba(212,160,23,.45)}
+.est-aviso b{color:var(--txt,#e8eef5)}
+.est-glosario{margin-top:10px;font-size:11px;line-height:1.55;color:var(--txt-soft,#9fb2c4);font-style:italic}
+.est-glosario b{color:var(--txt,#e8eef5);font-style:normal}
+.est-ctb{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.est-ctb-row{display:grid;grid-template-columns:1fr 120px 58px;gap:10px;align-items:center}
+.est-ctb-nom{font-size:12.5px;font-weight:600;min-width:0}
+.est-ctb-nom small{display:block;font-size:10px;font-weight:400;color:var(--txt-soft,#9fb2c4)}
+.est-ctb-bar{height:14px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.est-ctb-fill{height:100%;border-radius:4px;background:#e0714f}
+.est-ctb-fill.est-ctb-alt{background:#5a7fa0}
+.est-ctb-fill.est-ctb-neg{background:#5fbf8f}
+.est-ctb-pct{text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.est-ctb-res{margin-top:10px;font-size:12px;color:var(--txt-soft,#9fb2c4)}
+.est-ctb-res b{color:var(--txt,#e8eef5);font-size:14px}
+.est-sep{height:1px;background:rgba(255,255,255,.08);margin:22px 0 16px}
+@media(max-width:620px){
+  .est-ctb-row{grid-template-columns:1fr 54px;grid-template-areas:"nom pct" "bar bar"}
+  .est-ctb-nom{grid-area:nom}
+  .est-ctb-pct{grid-area:pct}
+  .est-ctb-bar{grid-area:bar}
+}
 @media(max-width:620px){
   .tl-fila{grid-template-columns:1fr 70px 58px;grid-template-areas:'nom val dif' 'bar bar bar';gap:6px 10px}
   .tl-nom{grid-area:nom}.tl-val{grid-area:val}.tl-dif{grid-area:dif}.tl-barra{grid-area:bar}
@@ -605,6 +686,39 @@ label .u{margin-left:4px}
           </div>
           <div class="fields" id="acc-comparativa">
             <div class="res-3" id="escenarios_grid"></div>
+          </div>
+        </section>
+
+        <section class="rep-card" id="sec-estadistica" style="display:none">
+          <div class="card-hdr" onclick="toggleAcc('acc-estadistica','icon-estadistica')">
+            <div>
+              <div class="card-title">Analisis estadistico de riesgo productivo</div>
+              <div class="card-sub">Variabilidad de los litros por vaca y dia de cada tambo, control a control.</div>
+            </div>
+            <span class="acc-icon" id="icon-estadistica">&#9660;</span>
+          </div>
+          <div class="fields" id="acc-estadistica" style="display:none">
+            <div class="est-nota">Carga un renglon por <b>control lechero o por mes</b> y el dato de litros por vaca y dia
+              de cada tambo. Las columnas son los tambos que ya tenes cargados arriba. Con una fila por dia los datos no
+              son independientes entre si y las medidas de riesgo quedan mal estimadas: por eso la unidad es el control.</div>
+            <div class="est-acc">
+              <button type="button" class="est-btn" onclick="estAgregarControl()">+ Control</button>
+              <button type="button" class="est-btn" onclick="estAbrirPegar()">Pegar desde Excel</button>
+              <button type="button" class="est-btn est-ghost" onclick="estLimpiar()">Vaciar</button>
+            </div>
+            <div id="est_pegar_box" class="est-pegar" style="display:none">
+              <textarea id="est_pegar_ta" rows="6" placeholder="Control&#9;Tambo Norte&#9;Tambo Sur&#10;03/2026&#9;31,5&#9;22,0&#10;04/2026&#9;30,8&#9;22,6"></textarea>
+              <div class="est-pegar-acc">
+                <button type="button" class="est-btn" onclick="estProcesarPegado()">Pegar</button>
+                <button type="button" class="est-btn est-ghost" onclick="document.getElementById('est_pegar_box').style.display='none'">Cancelar</button>
+              </div>
+              <div id="est_pegar_fb" class="est-fb" style="display:none"></div>
+            </div>
+            <div class="sec-lbl">Litros por vaca y dia, control a control</div>
+            <div class="est-wrap"><div id="est_grilla"></div></div>
+            <div id="est_riesgo" style="margin-top:22px"></div>
+            <div id="est_correl" style="margin-top:26px"></div>
+            <div id="est_contrib" style="margin-top:26px"></div>
           </div>
         </section>
 
@@ -1620,6 +1734,7 @@ function cargarAnalisis(id){
   } else {
     deserializeForm(item.datos || {});
   }
+  if(typeof estRestaurar === 'function') estRestaurar(item.datos || {});
   var nombreEl = document.getElementById('scenario_name');
   if(nombreEl) nombreEl.value = currentAnalisisNombre;
   document.getElementById('last_saved').textContent = 'Cargado: ' + item.nombre;
@@ -1808,6 +1923,8 @@ function mtDatosParaGuardar(){
   // estándar, donde no hay lista de tambos que las lleve adentro.
   datos._subcats = (typeof subcatParaGuardar==='function') ? subcatParaGuardar() : {};
   datos._subsens = (typeof subsensParaGuardar==='function') ? subsensParaGuardar() : {};
+  // La serie de controles es del conjunto, no de un tambo: va al nivel del escenario.
+  if(typeof estParaGuardar === 'function') datos._serie = estParaGuardar();
   if(mtActivo() && MT.tambos.length){
     datos._mt = {
       version: 1,
@@ -1936,6 +2053,7 @@ function mtRenderBarra(){
   html += '<button class="mt-tab mt-cons' + onCons + '" onclick="mtSeleccionar(\'' + MT.CONSOLIDADO + '\')">Σ Todos juntos</button>';
   html += '</div>';
   cont.innerHTML = html;
+  if(typeof estSync === 'function') estSync();   // la grilla sigue a los tambos
 }
 
 /* ------------------------------------------------------------
@@ -2146,6 +2264,7 @@ function mtRenderConsolidado(){
   var opt = mtModeloConsolidado({ price: pc(n('opt_precio')), prod: pc(n('opt_prod')), cost: pc(n('opt_costo')) });
   renderTop(base);
   renderTambosLitros();
+  if(typeof estSync === 'function') estSync();
   renderScenarios(base, pes, opt);
   renderSubsens(base);
   renderCosts(base);
@@ -2465,6 +2584,597 @@ function subcatRestaurar(datos){
 }
 
 
+/* ============================================================
+   ANÁLISIS ESTADÍSTICO DE RIESGO PRODUCTIVO — multi-tambo
+   ------------------------------------------------------------
+   Motor portado del módulo de agricultura (index.html, funciones rp*).
+   La matemática es la misma; cambian tres cosas, a propósito:
+
+   1) La fila es un CONTROL (mes o fecha de control lechero), no una
+      campaña. Con días, los datos no son independientes entre sí
+      (la producción de mañana se parece a la de hoy) y el desvío, el
+      P10 y el CVaR quedan mal estimados: 365 días con autocorrelación
+      0,8 valen como 40 observaciones, no como 365.
+   2) El indicador es litros por vaca y día, que es comparable entre
+      tambos de tamaños distintos. El promedio del conjunto se pondera
+      por vacas, igual que en el cuadro del tablero.
+   3) El reparto se lee como CONTRIBUCIÓN de cada tambo a la
+      variabilidad del total, no como asignación libre de vacas: las
+      vacas no se mudan de establecimiento como se reasignan hectáreas.
+      La mínima varianza queda abajo, como referencia estadística.
+   ============================================================ */
+
+/* ---------- Estadística básica ---------- */
+function estMedia(xs){
+  var v = xs.filter(function(x){ return x!=null && isFinite(x); });
+  return v.length ? v.reduce(function(a,b){ return a+b; }, 0) / v.length : NaN;
+}
+function estDesvio(xs){                    // desvío muestral (n−1)
+  var v = xs.filter(function(x){ return x!=null && isFinite(x); });
+  if(v.length < 2) return NaN;
+  var m = estMedia(v);
+  var s = v.reduce(function(a,x){ return a + (x-m)*(x-m); }, 0);
+  return Math.sqrt(s/(v.length-1));
+}
+function estPercentil(xs, p){              // PERCENTILE.INC
+  var v = xs.filter(function(x){ return x!=null && isFinite(x); }).sort(function(a,b){ return a-b; });
+  if(!v.length) return NaN;
+  if(v.length === 1) return v[0];
+  var idx = p*(v.length-1), lo = Math.floor(idx), hi = Math.ceil(idx);
+  if(lo === hi) return v[lo];
+  return v[lo] + (v[hi]-v[lo])*(idx-lo);
+}
+function estCVaR(xs, p){                   // media de la cola inferior
+  var v = xs.filter(function(x){ return x!=null && isFinite(x); });
+  if(!v.length) return NaN;
+  var umbral = estPercentil(v, p);
+  var cola = v.filter(function(x){ return x <= umbral; });
+  return cola.length ? estMedia(cola) : umbral;
+}
+function estCount(xs){ return xs.filter(function(x){ return x!=null && isFinite(x); }).length; }
+
+/* ---------- Shock relativo: valor / media − 1 ---------- */
+function estShocks(serie){
+  var m = estMedia(serie);
+  return serie.map(function(x){ return (x!=null && isFinite(x) && m) ? x/m - 1 : null; });
+}
+
+/* ---------- Correlación sobre controles comunes ---------- */
+function estParesComunes(a, b){
+  var xa = [], xb = [];
+  for(var i=0;i<a.length;i++){
+    if(a[i]!=null && isFinite(a[i]) && b[i]!=null && isFinite(b[i])){ xa.push(a[i]); xb.push(b[i]); }
+  }
+  return { a:xa, b:xb, n:xa.length };
+}
+function estCorrel(a, b){
+  var par = estParesComunes(a, b);
+  if(par.n < 2) return NaN;
+  var ma = estMedia(par.a), mb = estMedia(par.b);
+  var num = 0, da = 0, db = 0;
+  for(var i=0;i<par.n;i++){
+    num += (par.a[i]-ma)*(par.b[i]-mb);
+    da  += (par.a[i]-ma)*(par.a[i]-ma);
+    db  += (par.b[i]-mb)*(par.b[i]-mb);
+  }
+  return (da && db) ? num/Math.sqrt(da*db) : NaN;
+}
+// Covarianza medida sobre los MISMOS controles, para no mezclar períodos.
+function estCovar(sa, sb){
+  var par = estParesComunes(sa, sb);
+  if(par.n < 2) return { cov:NaN, n:par.n };
+  var corr = estCorrel(sa, sb);
+  var da = estDesvio(par.a), db = estDesvio(par.b);
+  return { cov: corr*da*db, n:par.n, corr:corr };
+}
+function estMatrizCov(lista){
+  var n = lista.length, cov = [], comunes = [];
+  for(var i=0;i<n;i++){ cov[i] = []; comunes[i] = [];
+    for(var j=0;j<n;j++){ var r = estCovar(lista[i], lista[j]); cov[i][j] = r.cov; comunes[i][j] = r.n; }
+  }
+  return { cov:cov, comunes:comunes };
+}
+
+/* ---------- Riesgo de una combinación y su reparto ---------- */
+function estRiesgoCartera(w, cov){
+  var n = w.length, s = 0;
+  for(var i=0;i<n;i++) for(var j=0;j<n;j++) s += w[i]*w[j]*cov[i][j];
+  return Math.sqrt(Math.max(s, 0));
+}
+// Contribución de cada tambo al desvío del conjunto.
+// contrib_i = w_i · (Σw)_i / σ ; la suma de las contribuciones da σ exacto.
+function estContribuciones(w, cov){
+  var n = w.length, sigma = estRiesgoCartera(w, cov);
+  if(!(sigma > 0)) return null;
+  var out = [];
+  for(var i=0;i<n;i++){
+    var sw = 0;
+    for(var j=0;j<n;j++) sw += cov[i][j]*w[j];
+    out.push({ abs: w[i]*sw/sigma, pct: w[i]*sw/(sigma*sigma) });
+  }
+  return { sigma:sigma, items:out };
+}
+
+/* ---------- Mínima varianza solo largo (referencia secundaria) ---------- */
+function estProyectarSimplex(v){
+  var n = v.length, u = v.slice().sort(function(a,b){ return b-a; });
+  var css = 0, rho = -1, theta = 0;
+  for(var i=0;i<n;i++){
+    css += u[i];
+    var t = (css-1)/(i+1);
+    if(u[i]-t > 0){ rho = i; theta = t; }
+  }
+  if(rho < 0) theta = (v.reduce(function(a,b){ return a+b; }, 0) - 1)/n;
+  return v.map(function(x){ return Math.max(0, x-theta); });
+}
+function estMinVarianzaLongOnly(cov){
+  var n = cov.length, i, j;
+  if(!n) return null;
+  var w = []; for(i=0;i<n;i++) w.push(1/n);
+  var maxDiag = 0; for(i=0;i<n;i++) maxDiag = Math.max(maxDiag, Math.abs(cov[i][i]));
+  var lr = maxDiag > 0 ? 1/(4*maxDiag) : 0.1;
+  for(var it=0; it<4000; it++){
+    var grad = [];
+    for(i=0;i<n;i++){ var g = 0; for(j=0;j<n;j++) g += 2*cov[i][j]*w[j]; grad.push(g); }
+    var nw = []; for(i=0;i<n;i++) nw.push(w[i] - lr*grad[i]);
+    nw = estProyectarSimplex(nw);
+    var dif = 0; for(i=0;i<n;i++) dif += Math.abs(nw[i]-w[i]);
+    w = nw;
+    if(dif < 1e-10) break;
+  }
+  return w;
+}
+
+/* ============================================================
+   Estado y datos
+   ============================================================ */
+// Los valores se guardan por ID de tambo, no por posición: así renombrar,
+// reordenar o borrar un tambo no corre los datos de columna.
+var EST = { filas: [], init: false };
+
+// Columnas = los tambos cargados. El nombre sale siempre de MT, no se copia.
+function estColumnas(){
+  if(!mtActivo() || !MT.tambos.length) return [];
+  return MT.tambos.map(function(t){ return { id:t.id, nombre:t.nombre || 'Tambo' }; });
+}
+function estSerie(id){
+  return EST.filas.map(function(f){
+    var v = f.v ? f.v[id] : null;
+    return (v!=null && isFinite(v)) ? v : null;
+  });
+}
+// Vacas en ordeñe de cada tambo: son los pesos con los que se arma el total.
+function estVacas(){
+  var out = {};
+  mtListaModelos().forEach(function(x){ out[x.id] = x.model.vacasOrdene || 0; });
+  return out;
+}
+function estNuevaFila(f){ return { f: f || '', v: {} }; }
+
+// Siembra 12 controles mensuales hacia atrás desde el mes pasado.
+function estSembrarFilas(n){
+  var d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1);
+  EST.filas = [];
+  for(var i=n-1;i>=0;i--){
+    var x = new Date(d.getFullYear(), d.getMonth()-i, 1);
+    EST.filas.push(estNuevaFila(String(x.getMonth()+1).padStart(2,'0') + '/' + x.getFullYear()));
+  }
+}
+
+/* ---------- Grilla de carga ---------- */
+function estRenderGrilla(){
+  var cont = document.getElementById('est_grilla');
+  if(!cont) return;
+  var cols = estColumnas();
+  if(!cols.length){ cont.innerHTML = '<div class="est-vacio">Cargá al menos un tambo para empezar.</div>'; return; }
+
+  var h = '<table class="est-tabla"><thead><tr><th class="est-th-f">Control</th>';
+  cols.forEach(function(c){
+    h += '<th><div class="est-th-t">' + escTxt(c.nombre) + '<small>L/vaca/día</small></div></th>';
+  });
+  h += '<th class="est-th-acc"></th></tr></thead><tbody>';
+  EST.filas.forEach(function(f, fi){
+    h += '<tr><td><input class="est-f" value="' + escTxt(f.f) + '" oninput="estEditarFecha(' + fi + ',this.value)" placeholder="03/2026"></td>';
+    cols.forEach(function(c){
+      var v = (f.v && f.v[c.id] != null) ? f.v[c.id] : '';
+      h += '<td><input class="est-v" inputmode="decimal" value="' + v + '" '
+        +  'oninput="estEditarValor(' + fi + ',\'' + c.id + '\',this.value)" placeholder="—"></td>';
+    });
+    h += '<td class="est-td-acc"><button class="est-x" onclick="estQuitarFila(' + fi + ')" title="Quitar control">×</button></td></tr>';
+  });
+  h += '</tbody></table>';
+  cont.innerHTML = h;
+}
+
+/* ---------- Edición (no redibuja la grilla: no se pierde el foco) ---------- */
+function estEditarFecha(fi, val){ if(EST.filas[fi]) EST.filas[fi].f = val; }
+function estEditarValor(fi, id, val){
+  if(!EST.filas[fi]) return;
+  if(!EST.filas[fi].v) EST.filas[fi].v = {};
+  var t = String(val).trim().replace(',', '.');
+  var n = (t === '') ? null : parseFloat(t);
+  if(n != null && isFinite(n)) EST.filas[fi].v[id] = n;
+  else delete EST.filas[fi].v[id];
+  estRenderAnalisis();
+}
+function estAgregarControl(){
+  var prim = EST.filas.length ? EST.filas[0].f : '';
+  var m = String(prim).match(/^(\d{1,2})\/(\d{4})$/);
+  var nueva = '';
+  if(m){
+    var mes = Number(m[1]) - 1, anio = Number(m[2]);
+    if(mes < 1){ mes = 12; anio -= 1; }
+    nueva = String(mes).padStart(2,'0') + '/' + anio;
+  }
+  EST.filas.unshift(estNuevaFila(nueva));
+  estRenderGrilla(); estRenderAnalisis();
+}
+function estQuitarFila(fi){ EST.filas.splice(fi, 1); estRenderGrilla(); estRenderAnalisis(); }
+function estLimpiar(){
+  if(!confirm('¿Vaciar todos los controles cargados?')) return;
+  estSembrarFilas(12); estRenderGrilla(); estRenderAnalisis();
+}
+
+/* ---------- Pegar desde Excel ---------- */
+// Primera columna: la fecha del control. El resto, un tambo por columna, en el
+// orden de las pestañas. Si la primera fila trae nombres, se usan para
+// emparejar columnas con tambos por nombre.
+function estPegarDesdeTexto(texto){
+  var lineas = String(texto).replace(/\r/g,'').split('\n').filter(function(l){ return l.trim() !== ''; });
+  if(!lineas.length) return { ok:false, msg:'No hay datos para pegar.' };
+  var cols = estColumnas();
+  if(!cols.length) return { ok:false, msg:'No hay tambos cargados.' };
+
+  var sep = lineas[0].indexOf('\t') >= 0 ? '\t' : (lineas[0].indexOf(';') >= 0 ? ';' : ',');
+  var tabla = lineas.map(function(l){ return l.split(sep).map(function(c){ return c.trim(); }); });
+
+  var prim = tabla[0].slice(1);
+  var esHeader = prim.length && prim.every(function(c){ return c !== '' && !isFinite(parseFloat(c.replace(',','.'))); });
+  var cabecera = esHeader ? tabla.shift() : null;
+  if(!tabla.length) return { ok:false, msg:'Solo se encontró el encabezado.' };
+
+  // Mapa columna del pegado → id de tambo
+  var mapa = cols.map(function(c){ return c.id; });
+  if(cabecera){
+    mapa = cabecera.slice(1).map(function(nom, i){
+      var hit = cols.find(function(c){ return c.nombre.toLowerCase() === String(nom).toLowerCase(); });
+      return hit ? hit.id : (cols[i] ? cols[i].id : null);
+    });
+  }
+
+  var filas = [], leidos = 0;
+  tabla.forEach(function(r){
+    var fila = estNuevaFila(r[0] || '');
+    for(var i=0;i<mapa.length;i++){
+      if(!mapa[i]) continue;
+      var t = String(r[i+1] == null ? '' : r[i+1]).replace(',', '.');
+      var n = (t === '') ? null : parseFloat(t);
+      if(n != null && isFinite(n)){ fila.v[mapa[i]] = n; leidos++; }
+    }
+    filas.push(fila);
+  });
+  if(!leidos) return { ok:false, msg:'No se encontró ningún número en las columnas de datos.' };
+  EST.filas = filas;
+  return { ok:true, msg:'Se cargaron ' + filas.length + ' controles (' + leidos + ' datos).' };
+}
+function estAbrirPegar(){
+  var box = document.getElementById('est_pegar_box');
+  if(box) box.style.display = (box.style.display === 'none') ? '' : 'none';
+}
+function estProcesarPegado(){
+  var ta = document.getElementById('est_pegar_ta');
+  var fb = document.getElementById('est_pegar_fb');
+  if(!ta) return;
+  var r = estPegarDesdeTexto(ta.value);
+  if(fb){ fb.style.display = ''; fb.textContent = r.msg; fb.className = 'est-fb ' + (r.ok ? 'ok' : 'err'); }
+  if(r.ok){ ta.value = ''; estRenderGrilla(); estRenderAnalisis(); }
+}
+
+/* ============================================================
+   Análisis
+   ============================================================ */
+function estFmt(x, d){ return isFinite(x) ? fm(x, d == null ? 1 : d) : '—'; }
+
+// Bandas de variabilidad recalibradas para tambo. Las de agricultura
+// (bajo <25%, alto >35%) están pensadas para rindes de grano: aplicadas a
+// litros por vaca y día darían "bajo" en todos los casos y el semáforo no
+// diría nada. Primera calibración, a ajustar con datos reales de la cuenca.
+function estNivelCV(cv){
+  if(!isFinite(cv)) return 'n.a.';
+  return cv < 0.07 ? 'Bajo' : (cv < 0.12 ? 'Medio' : 'Alto');
+}
+function estRiesgoIndividual(serie){
+  var m = estMedia(serie), sd = estDesvio(serie), n = estCount(serie);
+  var vals = serie.filter(function(x){ return x!=null && isFinite(x); });
+  var cv = (m && m !== 0) ? sd/m : NaN;
+  // "Control malo": 10% por debajo de la propia media. En leche una caída del
+  // 20% (el corte que usa agricultura) es excepcional y no marcaría nunca.
+  var malas = vals.length ? vals.filter(function(x){ return x < 0.9*m; }).length / n : NaN;
+  return {
+    n:n, media:m, desvio:sd, cv:cv,
+    p10: estPercentil(serie, 0.1),
+    cvar: estCVaR(serie, 0.1),
+    peorVsMedia: vals.length ? Math.min.apply(null, vals)/m - 1 : NaN,
+    freqMalas: malas,
+    nivel: estNivelCV(cv)
+  };
+}
+
+function estRenderRiesgo(){
+  var cont = document.getElementById('est_riesgo');
+  if(!cont) return;
+  var cols = estColumnas();
+  var conDato = cols.map(function(c){ var s = estSerie(c.id); return { id:c.id, nombre:c.nombre, serie:s, n:estCount(s) }; });
+  var validos = conDato.filter(function(x){ return x.n >= 2; });
+
+  if(!validos.length){
+    cont.innerHTML = '<div class="est-vacio">Cargá al menos 2 controles con dato para ver el análisis de riesgo.</div>';
+    return;
+  }
+
+  var h = '<div class="sec-lbl">Riesgo individual por tambo</div>';
+  h += '<div class="est-wrap"><table class="est-tabla est-tabla-riesgo"><thead><tr>'
+    +  '<th>Tambo</th><th>Controles</th><th>Media<br><small>L/vaca/día</small></th>'
+    +  '<th>Desvío<br><small>L</small></th><th>Variabilidad<br><small>CV</small></th>'
+    +  '<th>P10<br><small>L</small></th><th>CVaR 10%<br><small>L</small></th>'
+    +  '<th>Peor control<br><small>vs media</small></th><th>Controles malos<br><small>&lt;90% media</small></th>'
+    +  '</tr></thead><tbody>';
+
+  conDato.forEach(function(x){
+    if(x.n < 2){
+      h += '<tr class="est-sin"><td>' + escTxt(x.nombre) + '</td><td>' + x.n + '</td>'
+        +  '<td colspan="7" class="est-sin-txt">Necesita al menos 2 controles con dato</td></tr>';
+      return;
+    }
+    var r = estRiesgoIndividual(x.serie);
+    var clase = r.nivel === 'Bajo' ? 'est-bajo' : (r.nivel === 'Medio' ? 'est-medio' : 'est-alto');
+    h += '<tr>'
+      + '<td class="est-nom">' + escTxt(x.nombre)
+      +   '<span class="est-chip ' + clase + '">' + r.nivel + '</span></td>'
+      + '<td>' + r.n + '</td>'
+      + '<td><b>' + estFmt(r.media, 1) + '</b></td>'
+      + '<td>' + estFmt(r.desvio, 2) + '</td>'
+      + '<td>' + estFmt(r.cv*100, 1) + '%</td>'
+      + '<td>' + estFmt(r.p10, 1) + '</td>'
+      + '<td>' + estFmt(r.cvar, 1) + '</td>'
+      + '<td class="' + (r.peorVsMedia < -0.2 ? 'est-neg' : '') + '">' + estFmt(r.peorVsMedia*100, 0) + '%</td>'
+      + '<td>' + estFmt(r.freqMalas*100, 0) + '%</td>'
+      + '</tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // Nivel y estabilidad son dos cosas distintas: un tambo puede producir mucho
+  // y ser errático. Esta lectura es la que el productor no saca de la tabla.
+  if(validos.length >= 2){
+    var rs = validos.map(function(x){ var r = estRiesgoIndividual(x.serie); r.nombre = x.nombre; return r; });
+    var medias = rs.map(function(r){ return r.media; });
+    var mediaFlota = estMedia(medias);
+    var cvFlota = estMedia(rs.map(function(r){ return r.cv; }));
+    var raros = rs.filter(function(r){ return r.media >= mediaFlota && r.cv > cvFlota; });
+    if(raros.length){
+      h += '<div class="est-avisos"><div class="est-aviso">'
+        + raros.map(function(r){ return '<b>' + escTxt(r.nombre) + '</b>'; }).join(', ')
+        + (raros.length > 1 ? ' producen' : ' produce')
+        + ' por encima del promedio pero con más variabilidad que el resto: el nivel está, '
+        + 'falta la regularidad. Es el caso que más litros deja sobre la mesa, porque el potencial ya está demostrado.'
+        + '</div></div>';
+    }
+  }
+
+  var avisos = [];
+  var pocos = conDato.filter(function(x){ return x.n > 0 && x.n < 12; });
+  if(pocos.length){
+    avisos.push('Con menos de 12 controles las estimaciones son poco robustas: '
+      + pocos.map(function(x){ return escTxt(x.nombre) + ' (' + x.n + ')'; }).join(', ') + '.');
+  }
+  var maxN = Math.max.apply(null, conDato.map(function(x){ return x.n; }));
+  if(maxN > 0 && maxN < 24){
+    avisos.push('Tenés ' + maxN + ' controles como máximo. Con 24 o más (dos años) el P10 y el CVaR ganan precisión '
+      + 'y se puede separar la estacionalidad del riesgo de manejo.');
+  }
+  if(avisos.length){
+    h += '<div class="est-avisos">' + avisos.map(function(a){ return '<div class="est-aviso">⚠ ' + a + '</div>'; }).join('') + '</div>';
+  }
+
+  h += '<div class="est-glosario"><b>Cómo leerlo.</b> <b>CV</b>: cuánto varía la producción respecto de su propia media; '
+    + 'más alto, más irregular. <b>P10</b>: el valor que solo se perfora en 1 de cada 10 controles. '
+    + '<b>CVaR 10%</b>: el promedio de ese 10% peor. Referencia de variabilidad para tambo: '
+    + 'bajo &lt;7%, medio 7–12%, alto &gt;12%.</div>';
+  cont.innerHTML = h;
+}
+
+/* ---------- ¿Caen juntos? ---------- */
+function estShocksValidos(){
+  return estColumnas().map(function(c){
+      var s = estSerie(c.id);
+      return { id:c.id, nombre:c.nombre, n:estCount(s), s:estShocks(s) };
+    }).filter(function(x){ return x.n >= 3; });
+}
+
+function estRenderCorrel(){
+  var cont = document.getElementById('est_correl');
+  if(!cont) return;
+  var vs = estShocksValidos();
+  if(vs.length < 2){
+    cont.innerHTML = '<div class="est-vacio">Se necesitan al menos 2 tambos con 3 o más controles para ver si caen juntos.</div>';
+    return;
+  }
+  var mat = estMatrizCov(vs.map(function(v){ return v.s; }));
+
+  var h = '<div class="sec-lbl">¿Los tambos caen juntos?</div>';
+  h += '<p class="est-expl">Si dos tambos tienen sus meses buenos y malos <b>al mismo tiempo</b>, la causa es común: '
+    +  'clima, precio del concentrado, calidad del silo de la temporada. Si uno cae solo, el problema es de ese tambo '
+    +  'y se arregla ahí. Cerca de <b>+1</b>: se mueven juntos. Cerca de <b>0</b> o negativo: cada uno por su lado.</p>';
+  h += '<div class="est-wrap"><table class="est-tabla est-matriz"><thead><tr><th></th>';
+  vs.forEach(function(v){ h += '<th>' + escTxt(v.nombre) + '</th>'; });
+  h += '</tr></thead><tbody>';
+  vs.forEach(function(va, i){
+    h += '<tr><th class="est-nom">' + escTxt(va.nombre) + '</th>';
+    vs.forEach(function(vb, j){
+      if(i === j){ h += '<td class="est-diag">—</td>'; return; }
+      var corr = estCorrel(va.s, vb.s);
+      var n = mat.comunes[i][j];
+      var cls = !isFinite(corr) ? '' : (corr > 0.6 ? 'est-corr-alta' : (corr < 0.2 ? 'est-corr-baja' : 'est-corr-media'));
+      h += '<td class="' + cls + (n < 12 ? ' est-corr-pocos' : '') + '" title="' + n + ' controles comparables">'
+        +  (isFinite(corr) ? estFmt(corr, 2) : '—') + '<small>' + n + ' ctrl.</small></td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // Lectura automática del par más y menos acoplado.
+  var pares = [];
+  for(var i=0;i<vs.length;i++) for(var j=i+1;j<vs.length;j++){
+    var c = estCorrel(vs[i].s, vs[j].s);
+    if(isFinite(c)) pares.push({ a:vs[i].nombre, b:vs[j].nombre, c:c, n:mat.comunes[i][j] });
+  }
+  if(pares.length){
+    var alto = pares.reduce(function(m,p){ return p.c > m.c ? p : m; }, pares[0]);
+    var bajo = pares.reduce(function(m,p){ return p.c < m.c ? p : m; }, pares[0]);
+    h += '<div class="est-avisos"><div class="est-aviso">';
+    if(alto.c > 0.6){
+      h += '<b>' + escTxt(alto.a) + '</b> y <b>' + escTxt(alto.b) + '</b> se mueven casi en bloque ('
+        + estFmt(alto.c, 2) + '): lo que los afecta es común a los dos, así que buscá la causa afuera del tambo '
+        + '— clima, alimento comprado, agua — antes que en el manejo de cada uno.';
+    } else {
+      h += 'Ningún par se mueve en bloque (el más acoplado es <b>' + escTxt(alto.a) + '</b> con <b>' + escTxt(alto.b)
+        + '</b>, ' + estFmt(alto.c, 2) + '): las caídas son propias de cada tambo y se atacan tambo por tambo.';
+    }
+    if(pares.length > 1 && bajo.c < 0.2){
+      h += ' <b>' + escTxt(bajo.a) + '</b> y <b>' + escTxt(bajo.b) + '</b> son los más independientes ('
+        + estFmt(bajo.c, 2) + ').';
+    }
+    h += '</div></div>';
+  }
+  var flojos = pares.filter(function(p){ return p.n < 12; });
+  if(flojos.length){
+    h += '<div class="est-avisos"><div class="est-aviso">⚠ Pocos controles comparables en: '
+      + flojos.map(function(p){ return escTxt(p.a) + ' vs ' + escTxt(p.b) + ' (' + p.n + ')'; }).join(', ')
+      + '. Esas relaciones todavía no son confiables.</div></div>';
+  }
+  cont.innerHTML = h;
+}
+
+/* ---------- Contribución al riesgo + mínima varianza ---------- */
+function estRenderContrib(){
+  var cont = document.getElementById('est_contrib');
+  if(!cont) return;
+  var vs = estShocksValidos();
+  if(vs.length < 2){
+    cont.innerHTML = '<div class="est-vacio">Se necesitan al menos 2 tambos con controles en común para repartir el riesgo.</div>';
+    return;
+  }
+  var mat = estMatrizCov(vs.map(function(v){ return v.s; }));
+  for(var i=0;i<mat.cov.length;i++) for(var j=0;j<mat.cov.length;j++){
+    if(!isFinite(mat.cov[i][j])){
+      cont.innerHTML = '<div class="est-vacio">Faltan controles en común entre algunos tambos para calcular el reparto del riesgo.</div>';
+      return;
+    }
+  }
+
+  // Pesos reales: participación de vacas de cada tambo en el rodeo total.
+  var vacas = estVacas();
+  var total = vs.reduce(function(a, v){ return a + (vacas[v.id] || 0); }, 0);
+  if(!(total > 0)){ cont.innerHTML = '<div class="est-vacio">Cargá las vacas en ordeñe de cada tambo para repartir el riesgo.</div>'; return; }
+  var w = vs.map(function(v){ return (vacas[v.id] || 0) / total; });
+
+  var c = estContribuciones(w, mat.cov);
+  if(!c){ cont.innerHTML = '<div class="est-vacio">No hay variabilidad suficiente para repartir el riesgo.</div>'; return; }
+
+  var h = '<div class="sec-lbl">¿Qué tambo mueve el resultado del conjunto?</div>';
+  h += '<p class="est-expl">La variabilidad de tus litros totales es <b>' + estFmt(c.sigma*100, 1) + '%</b> de su media. '
+    +  'Esto la reparte entre los tambos combinando dos cosas: cuántas vacas tiene cada uno y cuánto '
+    +  'arrastra al conjunto cuando se mueve. Un tambo chico pero muy inestable puede pesar más que uno grande y parejo.</p>';
+
+  var filas = vs.map(function(v, i){ return { nombre:v.nombre, peso:w[i], pct:c.items[i].pct }; })
+                .sort(function(a,b){ return b.pct - a.pct; });
+  var maxPct = Math.max.apply(null, filas.map(function(f){ return Math.abs(f.pct); })) || 1;
+
+  h += '<div class="est-ctb">';
+  filas.forEach(function(f){
+    h += '<div class="est-ctb-row">'
+      +  '<span class="est-ctb-nom">' + escTxt(f.nombre) + '<small>' + estFmt(f.peso*100, 0) + '% de las vacas</small></span>'
+      +  '<div class="est-ctb-bar"><div class="est-ctb-fill' + (f.pct < 0 ? ' est-ctb-neg' : '') + '" style="width:'
+      +     Math.max(2, Math.min(100, Math.abs(f.pct)/maxPct*100)) + '%"></div></div>'
+      +  '<span class="est-ctb-pct">' + estFmt(f.pct*100, 1) + '%</span>'
+      +  '</div>';
+  });
+  h += '</div>';
+
+  var top = filas[0];
+  if(top && top.pct > top.peso*1.25){
+    h += '<div class="est-avisos"><div class="est-aviso"><b>' + escTxt(top.nombre) + '</b> aporta el '
+      + estFmt(top.pct*100, 0) + '% de la variabilidad del conjunto con el ' + estFmt(top.peso*100, 0)
+      + '% de las vacas: pesa más en el riesgo que en el tamaño. Estabilizarlo mueve el total más que cualquier otra cosa.</div></div>';
+  }
+  h += '<div class="est-glosario">Las contribuciones suman 100%: es el desvío del conjunto repartido, no el riesgo '
+    + 'aislado de cada tambo. Un tambo puede ser variable y aportar poco si sus caídas no coinciden con las de los demás.</div>';
+
+  // ── Referencia estadística: mínima varianza ──
+  var pesos = estMinVarianzaLongOnly(mat.cov);
+  if(pesos){
+    var sigmaOpt = estRiesgoCartera(pesos, mat.cov);
+    h += '<div class="est-sep"></div>';
+    h += '<div class="sec-lbl">Referencia: reparto de menor variabilidad</div>';
+    h += '<p class="est-expl">Qué participación de vacas por tambo habría dado el total más parejo según esta historia. '
+      +  'Es una referencia estadística, no un plan: las vacas no se mudan de establecimiento como se reasignan hectáreas, '
+      +  'y no entran acá la superficie, las instalaciones ni la gente de cada tambo.</p>';
+    h += '<div class="est-ctb">';
+    vs.forEach(function(v, i){
+      var pct = pesos[i]*100;
+      h += '<div class="est-ctb-row">'
+        +  '<span class="est-ctb-nom">' + escTxt(v.nombre) + '<small>hoy ' + estFmt(w[i]*100, 0) + '%</small></span>'
+        +  '<div class="est-ctb-bar"><div class="est-ctb-fill est-ctb-alt" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>'
+        +  '<span class="est-ctb-pct">' + estFmt(pct, 1) + '%</span>'
+        +  '</div>';
+    });
+    h += '</div>';
+    h += '<div class="est-ctb-res">Variabilidad con ese reparto: <b>' + estFmt(sigmaOpt*100, 1) + '%</b> '
+      +  '<small>contra ' + estFmt(c.sigma*100, 1) + '% del reparto actual</small></div>';
+    var maxPeso = Math.max.apply(null, pesos);
+    if(maxPeso > 0.85){
+      h += '<div class="est-avisos"><div class="est-aviso">⚠ El modelo concentra casi todo en <b>'
+        + escTxt(vs[pesos.indexOf(maxPeso)].nombre) + '</b>. Pasa cuando los tambos tienen meses buenos y malos parecidos: '
+        + 'si caen juntos, repartir vacas no baja el riesgo y el modelo elige el más estable. '
+        + '<b>No es una recomendación de concentrar el rodeo.</b></div></div>';
+    }
+  }
+  cont.innerHTML = h;
+}
+
+/* ---------- Orquestación ---------- */
+function estRenderAnalisis(){
+  estRenderRiesgo();
+  estRenderCorrel();
+  estRenderContrib();
+}
+// La grilla NO se redibuja en cada render: si se rehiciera mientras el productor
+// tipea una celda, perdería el foco. Solo se rehace cuando cambian los tambos
+// (alta, baja o renombre) o la cantidad de controles.
+var EST_FIRMA = '';
+function estSync(){
+  var sec = document.getElementById('sec-estadistica');
+  if(sec) sec.style.display = mtActivo() ? '' : 'none';
+  if(!mtActivo()) return;
+  if(!EST.filas.length) estSembrarFilas(12);
+  var firma = estColumnas().map(function(c){ return c.id + ':' + c.nombre; }).join('|') + '#' + EST.filas.length;
+  if(firma !== EST_FIRMA){ EST_FIRMA = firma; estRenderGrilla(); }
+  estRenderAnalisis();
+}
+function estRenderTodo(){ EST_FIRMA = ''; estSync(); }
+
+/* ---------- Persistencia (a nivel escenario, junto a _mt) ---------- */
+function estParaGuardar(){ return { filas: JSON.parse(JSON.stringify(EST.filas)) }; }
+function estRestaurar(datos){
+  var s = datos && datos._serie;
+  EST.filas = (s && Array.isArray(s.filas)) ? s.filas.map(function(f){
+    return { f: f.f || '', v: (f.v && typeof f.v === 'object') ? f.v : {} };
+  }) : [];
+  if(!EST.filas.length) estSembrarFilas(12);
+  estRenderTodo();
+}
+
+
 function render(){
   var base = buildModel();
   var pes = buildModel({
@@ -2480,6 +3190,7 @@ function render(){
 
   renderTop(base);
   renderTambosLitros();
+  if(typeof estSync === 'function') estSync();
   renderScenarios(base, pes, opt, subsensModelo());
   renderSubsens(base);
   renderCosts(base);
