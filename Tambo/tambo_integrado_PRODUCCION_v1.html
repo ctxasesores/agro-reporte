@@ -357,6 +357,7 @@ label .u{margin-left:4px}
 .est-x:hover{color:#f0906a}
 .est-td-acc{text-align:center}
 .est-tabla-riesgo td{font-variant-numeric:tabular-nums}
+.est-tabla-enso td small{display:block;font-size:9px;font-weight:400;opacity:.6}
 .est-sin td{opacity:.6}
 .est-sin-txt{text-align:left !important;font-style:italic}
 .est-neg{color:#f0906a}
@@ -394,6 +395,21 @@ label .u{margin-left:4px}
 .est-ctb-res{margin-top:10px;font-size:12px;color:var(--txt-soft,#9fb2c4)}
 .est-ctb-res b{color:var(--txt,#e8eef5);font-size:14px}
 .est-sep{height:1px;background:rgba(255,255,255,.08);margin:22px 0 16px}
+.est-pos{color:#5fbf8f}
+.est-sin-dato{opacity:.35}
+.est-enso-sel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.est-enso-sel .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-soft,#9fb2c4);font-weight:700}
+.est-enso-sel button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--txt-soft,#9fb2c4);
+  border-radius:7px;padding:4px 12px;font-size:11.5px;font-weight:700;cursor:pointer}
+.est-enso-sel button.on{background:rgba(212,160,23,.16);border-color:rgba(212,160,23,.5);color:var(--oro-l,#e8c45a)}
+.est-enso-sel .n{flex:1 1 260px;font-size:10.5px;line-height:1.45;color:var(--txt-soft,#9fb2c4)}
+.est-enso-reg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:14px}
+.est-enso-card{padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1)}
+.est-enso-card.est-flojo{opacity:.55}
+.est-enso-card .k{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--txt-soft,#9fb2c4);font-weight:700;line-height:1.3}
+.est-enso-card b{display:block;font-size:20px;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.est-enso-card .n{font-size:10px;color:var(--txt-soft,#9fb2c4)}
 @media(max-width:620px){
   .est-ctb-row{grid-template-columns:1fr 54px;grid-template-areas:"nom pct" "bar bar"}
   .est-ctb-nom{grid-area:nom}
@@ -719,6 +735,7 @@ label .u{margin-left:4px}
             <div id="est_riesgo" style="margin-top:22px"></div>
             <div id="est_correl" style="margin-top:26px"></div>
             <div id="est_contrib" style="margin-top:26px"></div>
+            <div id="est_enso" style="margin-top:26px"></div>
           </div>
         </section>
 
@@ -2659,13 +2676,59 @@ function estCorrel(a, b){
   }
   return (da && db) ? num/Math.sqrt(da*db) : NaN;
 }
-// Covarianza medida sobre los MISMOS controles, para no mezclar períodos.
+// Covarianza de a pares. SOLO para mostrar: cada celda se mide sobre los
+// controles comunes de ESE par, así que la tabla no sirve como matriz.
+// Mezcla soportes distintos entre la diagonal y lo de afuera, y eso puede dar
+// correlaciones implícitas mayores que 1 y combinaciones de varianza negativa.
+// Para cualquier cálculo de riesgo se usa estCovCompleta().
 function estCovar(sa, sb){
   var par = estParesComunes(sa, sb);
-  if(par.n < 2) return { cov:NaN, n:par.n };
+  if(par.n < 3) return { cov:NaN, n:par.n };     // con 2 puntos la correlación es siempre ±1
   var corr = estCorrel(sa, sb);
   var da = estDesvio(par.a), db = estDesvio(par.b);
   return { cov: corr*da*db, n:par.n, corr:corr };
+}
+// La matriz armada por pares (cada celda con su propio subconjunto de controles)
+// NO es necesariamente semidefinida positiva: mezcla períodos distintos. Con una
+// matriz así, w'Σw puede dar negativo, la raíz se recorta a 0 y el reparto del
+// riesgo se vuelve basura silenciosa. Para todo lo que necesita una covarianza
+// coherente —reparto y mínima varianza— se usa esta versión: solo los controles
+// donde TODOS los tambos tienen dato, con los shocks recentrados sobre ese mismo
+// subconjunto. Así la matriz es un Gram de media cero y es PSD por construcción.
+function estMatrizCovCompleta(series){
+  var n = series.length;
+  if(!n) return { cov:null, n:0 };
+  var T = series[0].length, filas = [], t, i, j, k;
+  for(t=0;t<T;t++){
+    var ok = true;
+    for(i=0;i<n;i++){ var x = series[i][t]; if(x==null || !isFinite(x)){ ok = false; break; } }
+    if(ok) filas.push(t);
+  }
+  var N = filas.length;
+  if(N < 3) return { cov:null, n:N };
+  var sh = series.map(function(s){
+    var v = filas.map(function(t2){ return s[t2]; });
+    var m = estMedia(v);
+    return v.map(function(x){ return m ? x/m - 1 : 0; });   // media exactamente 0
+  });
+  var cov = [];
+  for(i=0;i<n;i++){ cov[i] = [];
+    for(j=0;j<n;j++){ var acc = 0; for(k=0;k<N;k++) acc += sh[i][k]*sh[j][k]; cov[i][j] = acc/(N-1); }
+  }
+  return { cov:cov, n:N };
+}
+// Cholesky: devuelve false si la matriz no es semidefinida positiva.
+function estEsPSD(cov){
+  var n = cov.length, L = [], i, j, k;
+  for(i=0;i<n;i++){ L[i] = [];
+    for(j=0;j<=i;j++){
+      var acc = cov[i][j];
+      for(k=0;k<j;k++) acc -= L[i][k]*L[j][k];
+      if(i === j){ if(acc < -1e-10) return false; L[i][j] = Math.sqrt(Math.max(acc, 0)); }
+      else L[i][j] = (L[j][j] > 1e-12) ? acc/L[j][j] : 0;
+    }
+  }
+  return true;
 }
 function estMatrizCov(lista){
   var n = lista.length, cov = [], comunes = [];
@@ -2673,6 +2736,48 @@ function estMatrizCov(lista){
     for(var j=0;j<n;j++){ var r = estCovar(lista[i], lista[j]); cov[i][j] = r.cov; comunes[i][j] = r.n; }
   }
   return { cov:cov, comunes:comunes };
+}
+
+// Índices de los controles en los que TODOS los tambos tienen dato.
+function estComunesTodos(series){
+  var idx = [], largo = (series[0] || []).length;
+  for(var t=0;t<largo;t++){
+    var ok = series.every(function(s){ return s[t] != null && isFinite(s[t]); });
+    if(ok) idx.push(t);
+  }
+  return idx;
+}
+
+// Matriz de covarianza sobre CASOS COMPLETOS: un único conjunto de controles
+// para todos los tambos. Es la versión que vale para medir riesgo: al salir de
+// una sola muestra es simétrica y semidefinida positiva por construcción, así
+// que no puede devolver una combinación de varianza negativa ni una
+// correlación implícita fuera de [-1, 1].
+function estCovCompleta(series){
+  var idx = estComunesTodos(series);
+  var n = idx.length;
+  if(n < 3) return { cov:null, n:n };
+  // Los shocks se calculan DENTRO del conjunto común, no sobre la serie entera:
+  // si no, el desvío de cada tambo correspondería a otro período que el de la
+  // covarianza, que es exactamente el error que se está corrigiendo.
+  var sh = [];
+  for(var i=0;i<series.length;i++){
+    var v = idx.map(function(t){ return series[i][t]; });
+    var m = estMedia(v);
+    if(!m) return { cov:null, n:n };
+    sh.push(v.map(function(x){ return x/m - 1; }));
+  }
+  var k = sh.length, cov = [], i2, j2, t2;
+  for(i2=0;i2<k;i2++){
+    cov[i2] = [];
+    var mi = estMedia(sh[i2]);
+    for(j2=0;j2<k;j2++){
+      var mj = estMedia(sh[j2]), s = 0;
+      for(t2=0;t2<n;t2++) s += (sh[i2][t2]-mi)*(sh[j2][t2]-mj);
+      cov[i2][j2] = s/(n-1);
+    }
+  }
+  return { cov:cov, n:n, idx:idx };
 }
 
 /* ---------- Riesgo de una combinación y su reparto ---------- */
@@ -2743,10 +2848,19 @@ function estSerie(id){
     return (v!=null && isFinite(v)) ? v : null;
   });
 }
-// Vacas en ordeñe de cada tambo: son los pesos con los que se arma el total.
+// Vacas en ordeñe de cada tambo (para mostrar el tamaño del rodeo).
 function estVacas(){
   var out = {};
   mtListaModelos().forEach(function(x){ out[x.id] = x.model.vacasOrdene || 0; });
+  return out;
+}
+// Litros por día de cada tambo. Son los pesos correctos para repartir el riesgo:
+// el total que varía son los LITROS, y si el shock relativo de cada tambo es
+// s_i, el shock relativo del total es la suma de s_i ponderada por la
+// participación de cada tambo EN LOS LITROS, no en las vacas.
+function estLitros(){
+  var out = {};
+  mtListaModelos().forEach(function(x){ out[x.id] = x.model.litrosBrutosDia || 0; });
   return out;
 }
 function estNuevaFila(f){ return { f: f || '', v: {} }; }
@@ -3064,36 +3178,50 @@ function estRenderContrib(){
     cont.innerHTML = '<div class="est-vacio">Se necesitan al menos 2 tambos con controles en común para repartir el riesgo.</div>';
     return;
   }
-  var mat = estMatrizCov(vs.map(function(v){ return v.s; }));
-  for(var i=0;i<mat.cov.length;i++) for(var j=0;j<mat.cov.length;j++){
-    if(!isFinite(mat.cov[i][j])){
-      cont.innerHTML = '<div class="est-vacio">Faltan controles en común entre algunos tambos para calcular el reparto del riesgo.</div>';
-      return;
-    }
+  // Covarianza sobre los controles completos: es la única que garantiza que el
+  // desvío del conjunto y su reparto tengan sentido (ver estMatrizCovCompleta).
+  var mc = estMatrizCovCompleta(vs.map(function(v){ return estSerie(v.id); }));
+  if(!mc.cov){
+    cont.innerHTML = '<div class="est-vacio">Hacen falta al menos 3 controles donde <b>todos</b> los tambos tengan dato '
+      + 'para repartir el riesgo del conjunto. Hoy hay ' + mc.n + '.</div>';
+    return;
+  }
+  var mat = { cov: mc.cov };
+  if(!estEsPSD(mat.cov)){
+    cont.innerHTML = '<div class="est-vacio">La matriz de covarianzas salió inconsistente; no se reparte el riesgo con datos así.</div>';
+    return;
   }
 
-  // Pesos reales: participación de vacas de cada tambo en el rodeo total.
-  var vacas = estVacas();
-  var total = vs.reduce(function(a, v){ return a + (vacas[v.id] || 0); }, 0);
-  if(!(total > 0)){ cont.innerHTML = '<div class="est-vacio">Cargá las vacas en ordeñe de cada tambo para repartir el riesgo.</div>'; return; }
-  var w = vs.map(function(v){ return (vacas[v.id] || 0) / total; });
+  // Pesos: participación de cada tambo EN LOS LITROS del conjunto. Lo que varía
+  // es el total de litros, y el shock relativo del total es el promedio de los
+  // shocks de cada tambo ponderado por su parte de los litros.
+  var litros = estLitros(), vacas = estVacas();
+  var total = vs.reduce(function(a, v){ return a + (litros[v.id] || 0); }, 0);
+  if(!(total > 0)){ cont.innerHTML = '<div class="est-vacio">Cargá vacas y litros de cada tambo para repartir el riesgo.</div>'; return; }
+  var w = vs.map(function(v){ return (litros[v.id] || 0) / total; });
+  var totVacas = vs.reduce(function(a, v){ return a + (vacas[v.id] || 0); }, 0);
 
   var c = estContribuciones(w, mat.cov);
   if(!c){ cont.innerHTML = '<div class="est-vacio">No hay variabilidad suficiente para repartir el riesgo.</div>'; return; }
 
   var h = '<div class="sec-lbl">¿Qué tambo mueve el resultado del conjunto?</div>';
-  h += '<p class="est-expl">La variabilidad de tus litros totales es <b>' + estFmt(c.sigma*100, 1) + '%</b> de su media. '
-    +  'Esto la reparte entre los tambos combinando dos cosas: cuántas vacas tiene cada uno y cuánto '
-    +  'arrastra al conjunto cuando se mueve. Un tambo chico pero muy inestable puede pesar más que uno grande y parejo.</p>';
+  h += '<p class="est-expl">La variabilidad de tus litros totales es <b>' + estFmt(c.sigma*100, 1) + '%</b> de su media, '
+    +  'medida sobre ' + mc.n + ' controles con dato en todos los tambos. '
+    +  'Se reparte combinando dos cosas: qué parte de los litros aporta cada tambo y cuánto arrastra al conjunto '
+    +  'cuando se mueve. Un tambo chico pero muy inestable puede pesar más que uno grande y parejo.</p>';
 
-  var filas = vs.map(function(v, i){ return { nombre:v.nombre, peso:w[i], pct:c.items[i].pct }; })
+  var filas = vs.map(function(v, i){
+      return { nombre:v.nombre, peso:w[i], pct:c.items[i].pct,
+               vacasPct: totVacas > 0 ? (vacas[v.id]||0)/totVacas : 0 };
+    })
                 .sort(function(a,b){ return b.pct - a.pct; });
   var maxPct = Math.max.apply(null, filas.map(function(f){ return Math.abs(f.pct); })) || 1;
 
   h += '<div class="est-ctb">';
   filas.forEach(function(f){
     h += '<div class="est-ctb-row">'
-      +  '<span class="est-ctb-nom">' + escTxt(f.nombre) + '<small>' + estFmt(f.peso*100, 0) + '% de las vacas</small></span>'
+      +  '<span class="est-ctb-nom">' + escTxt(f.nombre) + '<small>' + estFmt(f.peso*100, 0) + '% de los litros · '
+      +     estFmt(f.vacasPct*100, 0) + '% de las vacas</small></span>'
       +  '<div class="est-ctb-bar"><div class="est-ctb-fill' + (f.pct < 0 ? ' est-ctb-neg' : '') + '" style="width:'
       +     Math.max(2, Math.min(100, Math.abs(f.pct)/maxPct*100)) + '%"></div></div>'
       +  '<span class="est-ctb-pct">' + estFmt(f.pct*100, 1) + '%</span>'
@@ -3105,7 +3233,7 @@ function estRenderContrib(){
   if(top && top.pct > top.peso*1.25){
     h += '<div class="est-avisos"><div class="est-aviso"><b>' + escTxt(top.nombre) + '</b> aporta el '
       + estFmt(top.pct*100, 0) + '% de la variabilidad del conjunto con el ' + estFmt(top.peso*100, 0)
-      + '% de las vacas: pesa más en el riesgo que en el tamaño. Estabilizarlo mueve el total más que cualquier otra cosa.</div></div>';
+      + '% de los litros: pesa más en el riesgo que en el tamaño. Estabilizarlo mueve el total más que cualquier otra cosa.</div></div>';
   }
   h += '<div class="est-glosario">Las contribuciones suman 100%: es el desvío del conjunto repartido, no el riesgo '
     + 'aislado de cada tambo. Un tambo puede ser variable y aportar poco si sus caídas no coinciden con las de los demás.</div>';
@@ -3116,14 +3244,14 @@ function estRenderContrib(){
     var sigmaOpt = estRiesgoCartera(pesos, mat.cov);
     h += '<div class="est-sep"></div>';
     h += '<div class="sec-lbl">Referencia: reparto de menor variabilidad</div>';
-    h += '<p class="est-expl">Qué participación de vacas por tambo habría dado el total más parejo según esta historia. '
+    h += '<p class="est-expl">Qué participación de los litros por tambo habría dado el total más parejo según esta historia. '
       +  'Es una referencia estadística, no un plan: las vacas no se mudan de establecimiento como se reasignan hectáreas, '
       +  'y no entran acá la superficie, las instalaciones ni la gente de cada tambo.</p>';
     h += '<div class="est-ctb">';
     vs.forEach(function(v, i){
       var pct = pesos[i]*100;
       h += '<div class="est-ctb-row">'
-        +  '<span class="est-ctb-nom">' + escTxt(v.nombre) + '<small>hoy ' + estFmt(w[i]*100, 0) + '%</small></span>'
+        +  '<span class="est-ctb-nom">' + escTxt(v.nombre) + '<small>hoy ' + estFmt(w[i]*100, 0) + '% de los litros</small></span>'
         +  '<div class="est-ctb-bar"><div class="est-ctb-fill est-ctb-alt" style="width:' + Math.max(0, Math.min(100, pct)) + '%"></div></div>'
         +  '<span class="est-ctb-pct">' + estFmt(pct, 1) + '%</span>'
         +  '</div>';
@@ -3142,11 +3270,352 @@ function estRenderContrib(){
   cont.innerHTML = h;
 }
 
+/* ---------- Tabla ONI/RONI (copia de la del módulo de agricultura) ---------- */
+var EST_ONI = {
+  '90/91':[0.35,'Neutro',0.27,0.34,0.26,0.57,0.27,0.43,0.53],
+  '91/92':[1.54,'Niño',0.83,1.43,1.50,2.12,1.20,1.97,2.08],
+  '92/93':[0.13,'Neutro',-0.22,-0.05,0.31,0.55,0.10,0.35,0.70],
+  '93/94':[0.07,'Neutro',0.20,0.19,0.00,0.33,0.46,0.42,0.24],
+  '94/95':[0.88,'Niño',0.66,0.97,0.65,1.17,0.97,1.28,0.86],
+  '95/96':[-0.88,'Niña',-0.97,-1.01,-0.70,-0.87,-0.93,-0.99,-0.75],
+  '96/97':[-0.41,'Neutro',-0.33,-0.41,-0.26,-0.21,-0.25,-0.29,-0.03],
+  '97/98':[2.22,'Niño',2.24,2.37,1.91,2.13,2.22,2.28,1.82],
+  '98/99':[-1.51,'Niña',-1.12,-1.47,-1.25,-1.56,-1.33,-1.61,-1.28],
+  '99/00':[-1.47,'Niña',-1.13,-1.53,-1.26,-1.50,-1.06,-1.56,-1.31],
+  '00/01':[-0.76,'Niña',-0.54,-0.78,-0.54,-0.79,-0.55,-0.82,-0.62],
+  '01/02':[-0.15,'Neutro',-0.26,-0.32,0.07,-0.16,-0.18,-0.32,0.01],
+  '02/03':[0.90,'Niño',0.99,1.08,0.59,0.85,1.18,1.13,0.47],
+  '03/04':[0.34,'Neutro',0.23,0.29,0.27,0.23,0.17,0.22,0.12],
+  '04/05':[0.62,'Niño',0.61,0.71,0.55,0.54,0.70,0.69,0.40],
+  '05/06':[-0.86,'Niña',-0.27,-0.82,-0.80,-0.90,-0.18,-0.81,-0.87],
+  '06/07':[0.62,'Niño',0.71,0.88,0.19,0.60,0.73,0.89,0.16],
+  '07/08':[-1.76,'Niña',-1.38,-1.72,-1.61,-1.73,-1.33,-1.65,-1.62],
+  '08/09':[-0.89,'Niña',-0.36,-0.79,-0.84,-0.96,-0.38,-0.86,-0.92],
+  '09/10':[1.47,'Niño',0.92,1.50,1.21,1.44,0.86,1.50,1.11],
+  '10/11':[-1.29,'Niña',-1.54,-1.48,-1.06,-1.42,-1.61,-1.55,-1.21],
+  '11/12':[-0.71,'Niña',-0.94,-0.92,-0.56,-0.77,-0.91,-0.96,-0.60],
+  '12/13':[-0.24,'Neutro',0.28,-0.03,-0.28,-0.55,0.21,-0.27,-0.57],
+  '13/14':[-0.24,'Neutro',-0.14,-0.11,-0.21,-0.43,-0.22,-0.27,-0.38],
+  '14/15':[0.73,'Niño',0.51,0.80,0.65,0.54,0.35,0.62,0.47],
+  '15/16':[2.50,'Niño',2.28,2.59,2.21,2.14,2.03,2.25,1.81],
+  '16/17':[-0.08,'Niña',-0.51,-0.37,0.08,-0.60,-0.96,-0.89,-0.44],
+  '17/18':[-0.71,'Niña',-0.44,-0.76,-0.67,-1.08,-0.82,-1.14,-1.04],
+  '18/19':[0.99,'Niño',0.82,1.05,0.94,0.68,0.62,0.78,0.64],
+  '19/20':[0.71,'Niño',0.51,0.75,0.66,0.14,0.15,0.22,0.10],
+  '20/21':[-0.99,'Niña',-1.00,-1.06,-0.85,-1.32,-1.37,-1.39,-1.18],
+  '21/22':[-0.76,'Niña',-0.77,-0.83,-0.68,-1.18,-1.08,-1.22,-1.13],
+  '22/23':[-0.55,'Niña',-0.89,-0.70,-0.33,-0.86,-1.10,-0.99,-0.68],
+  '23/24':[1.84,'Niño',1.74,1.99,1.53,1.13,1.30,1.40,0.78],
+  '24/25':[-0.46,'Neutro',-0.19,-0.43,-0.22,-1.10,-0.76,-1.05,-0.85],
+  '25/26':[-0.39,'Neutro',-0.57,-0.60,-0.21,-0.91,-0.93,-1.04,-0.76]
+};
+
+/* ============================================================
+   CAPA CLIMÁTICA — ENSO sobre la serie de controles
+   ------------------------------------------------------------
+   Tres diferencias con el módulo de agricultura, y las tres son
+   consecuencia de que acá la fila es un control mensual y no una campaña:
+
+   1) DESESTACIONALIZACIÓN OBLIGATORIA. El ENSO es estacional (su pico es
+      en verano) y la producción de leche también (curva de lactancia y
+      golpe de calor). Si se comparan controles contra la media anual del
+      tambo, el verano aparece como "shock negativo" todos los años y se
+      le atribuye al Niño o a la Niña lo que es la estación. Por eso el
+      shock se mide contra la media de ESE MISMO MES en los otros años, y
+      un mes que aparece una sola vez no se puede usar.
+   2) VENTANA PROPIA. En agricultura cada cultivo mira el trimestre de su
+      período crítico. Acá cada control mira el trimestre que lo contiene;
+      los controles de abril a agosto miran el DJF del verano que pasó,
+      porque lo que arrastra a esos meses es el forraje de esa temporada.
+   3) RESPUESTA DEL CONJUNTO. Con pocos años no alcanza para estimar la
+      respuesta de cada tambo por separado: el titular es la respuesta del
+      conjunto, ponderada por litros, y el detalle por tambo se muestra
+      como promedios por estado, que aguantan muestras chicas.
+   ============================================================ */
+
+var EST_INDICE = 'oni';
+var EST_INDICE_NOMBRE = { oni:'ONI', roni:'RONI' };
+function estSetIndice(v){ if(v !== EST_INDICE){ EST_INDICE = v; estRenderEnso(); } }
+
+// Columnas de EST_ONI: [oni(DJF), evento, son, ndj, jfm, roni(DJF), roni_son, roni_ndj, roni_jfm]
+function estEventoDe(v){
+  if(v == null || !isFinite(v)) return 's/d';
+  return v >= 0.5 ? 'Niño' : (v <= -0.5 ? 'Niña' : 'Neutro');
+}
+
+// 'MM/AAAA', 'MM/AA', 'AAAA-MM' o 'MM-AAAA' → { m:1..12, y:AAAA }
+function estMesDe(txt){
+  var t = String(txt == null ? '' : txt).trim();
+  var m = t.match(/^(\d{4})[\/\-](\d{1,2})$/);          // 2026-03
+  if(m) return { y:Number(m[1]), m:Number(m[2]) };
+  m = t.match(/^(\d{1,2})[\/\-](\d{2,4})$/);            // 03/2026 ó 03/26
+  if(m){
+    var y = Number(m[2]);
+    if(y < 100) y = y >= 90 ? 1900+y : 2000+y;
+    return { y:y, m:Number(m[1]) };
+  }
+  return null;
+}
+
+// Campaña ENSO y ventana trimestral de un control mensual.
+// set-dic pertenecen a la campaña que arranca ese año; ene-ago, a la anterior.
+function estEnsoDeMes(mes){
+  if(!mes || !(mes.m >= 1 && mes.m <= 12)) return null;
+  var yIni = (mes.m >= 9) ? mes.y : mes.y - 1;
+  var clave = String(yIni % 100).padStart(2,'0') + '/' + String((yIni+1) % 100).padStart(2,'0');
+  var vent;
+  if(mes.m >= 9 && mes.m <= 11)      vent = 'son';      // set-oct-nov
+  else if(mes.m === 12)              vent = 'ndj';      // nov-dic-ene
+  else if(mes.m === 1)               vent = 'djf';      // dic-ene-feb
+  else if(mes.m === 2 || mes.m === 3) vent = 'jfm';     // ene-feb-mar
+  else                               vent = 'djf';      // abr-ago: arrastre del verano
+  var arrastre = (mes.m >= 4 && mes.m <= 8);
+  var e = EST_ONI[clave];
+  if(!e) return { clave:clave, vent:vent, arrastre:arrastre, x:null, ev:'s/d', anio:yIni };
+  var roni = (EST_INDICE === 'roni');
+  var idx = roni ? { djf:5, son:6, ndj:7, jfm:8 } : { djf:0, son:2, ndj:3, jfm:4 };
+  var v = e[idx[vent]];
+  var ref = e[roni ? 5 : 0];
+  return {
+    clave:clave, vent:vent, arrastre:arrastre, anio:yIni,
+    x: (v != null && isFinite(v)) ? v : null,
+    ev: roni ? estEventoDe(ref) : (e[1] || estEventoDe(ref))
+  };
+}
+
+/* ---------- Shocks desestacionalizados ---------- */
+// Para cada tambo: shock = valor / media de ese mes del año − 1.
+// Devuelve, por control, el shock de cada tambo y los metadatos del índice.
+function estSerieEnso(){
+  var cols = estColumnas();
+  if(!cols.length) return [];
+  var metas = EST.filas.map(function(f){ return estMesDe(f.f); });
+
+  // Media por mes del año y por tambo, y cuántos años aportan a cada una.
+  var acum = {};
+  cols.forEach(function(c){ acum[c.id] = {}; });
+  EST.filas.forEach(function(f, i){
+    var mm = metas[i]; if(!mm) return;
+    cols.forEach(function(c){
+      var v = f.v ? f.v[c.id] : null;
+      if(v == null || !isFinite(v)) return;
+      var a = acum[c.id][mm.m] || (acum[c.id][mm.m] = { s:0, n:0 });
+      a.s += v; a.n++;
+    });
+  });
+
+  return EST.filas.map(function(f, i){
+    var mm = metas[i];
+    var enso = mm ? estEnsoDeMes(mm) : null;
+    var sh = {};
+    if(mm){
+      cols.forEach(function(c){
+        var v = f.v ? f.v[c.id] : null;
+        var a = acum[c.id][mm.m];
+        // Hace falta el mismo mes en al menos dos años: con uno solo, la media
+        // del mes ES el dato y el shock daría siempre cero.
+        if(v != null && isFinite(v) && a && a.n >= 2 && a.s > 0) sh[c.id] = v/(a.s/a.n) - 1;
+      });
+    }
+    return { f:f.f, mes:mm, enso:enso, sh:sh };
+  });
+}
+
+/* ---------- Mínimos cuadrados (bisagra asimétrica + tendencia) ---------- */
+// y = a + bNiña·min(x,0) + bNiño·max(x,0) + c·(año − año0)
+// El término de tendencia está por la misma razón que en agricultura: sin él,
+// cualquier deriva del rodeo o del manejo se le carga al clima.
+function estResolver(XtX, Xty){
+  var n = XtX.length, A = XtX.map(function(r, i){ return r.concat(Xty[i]); }), i, j, k;
+  var inv = XtX.map(function(r, i2){ return r.concat(r.map(function(_, j2){ return i2 === j2 ? 1 : 0; })); });
+  for(k=0;k<n;k++){
+    var piv = k;
+    for(i=k+1;i<n;i++) if(Math.abs(inv[i][k]) > Math.abs(inv[piv][k])) piv = i;
+    if(Math.abs(inv[piv][k]) < 1e-12) return null;
+    var t1 = inv[k]; inv[k] = inv[piv]; inv[piv] = t1;
+    var t2 = A[k];   A[k] = A[piv];     A[piv] = t2;
+    var d = inv[k][k];
+    for(j=0;j<2*n;j++) inv[k][j] /= d;
+    A[k][n] /= d;
+    for(i=0;i<n;i++) if(i !== k){
+      var fct = inv[i][k];
+      for(j=0;j<2*n;j++) inv[i][j] -= fct*inv[k][j];
+      A[i][n] -= fct*A[k][n];
+    }
+  }
+  return { beta: A.map(function(r){ return r[n]; }), inv: inv.map(function(r){ return r.slice(n); }) };
+}
+
+function estEnsoRegresion(){
+  var serie = estSerieEnso();
+  var litros = estLitros();
+  var cols = estColumnas();
+  var totL = cols.reduce(function(a, c){ return a + (litros[c.id] || 0); }, 0);
+
+  var pts = [];
+  serie.forEach(function(r){
+    if(!r.enso || r.enso.x == null) return;
+    // Shock del conjunto: promedio de los shocks de cada tambo ponderado por su
+    // parte de los litros, renormalizada entre los que tienen dato ese control.
+    var num = 0, den = 0;
+    cols.forEach(function(c){
+      if(r.sh[c.id] == null) return;
+      var w = totL > 0 ? (litros[c.id] || 0)/totL : 1/cols.length;
+      num += w*r.sh[c.id]; den += w;
+    });
+    if(den <= 0) return;
+    pts.push({ x:r.enso.x, y:num/den, anio:r.enso.anio, ev:r.enso.ev, mes:r.mes });
+  });
+  if(pts.length < 12) return { pocos:true, n:pts.length, serie:serie, pts:pts };
+
+  var nina = pts.filter(function(p){ return p.x < 0; }).length;
+  var nino = pts.filter(function(p){ return p.x > 0; }).length;
+  var anios = {};
+  pts.forEach(function(p){ anios[p.anio] = 1; });
+  var nAnios = Object.keys(anios).length;
+  if(nina < 4 || nino < 4 || nAnios < 3) return { pocos:true, n:pts.length, nina:nina, nino:nino, anios:nAnios, serie:serie, pts:pts };
+
+  var a0 = Math.min.apply(null, pts.map(function(p){ return p.anio; }));
+  var X = pts.map(function(p){ return [1, Math.min(p.x, 0), Math.max(p.x, 0), p.anio - a0]; });
+  var y = pts.map(function(p){ return p.y; });
+  var k = 4, XtX = [], Xty = [], i, j, t;
+  for(i=0;i<k;i++){ XtX[i] = []; for(j=0;j<k;j++){ var s = 0; for(t=0;t<X.length;t++) s += X[t][i]*X[t][j]; XtX[i][j] = s; }
+    var sy = 0; for(t=0;t<X.length;t++) sy += X[t][i]*y[t]; Xty[i] = sy; }
+  var sol = estResolver(XtX, Xty);
+  if(!sol) return { pocos:true, n:pts.length, serie:serie, pts:pts };
+
+  var b = sol.beta, sse = 0;
+  for(t=0;t<X.length;t++){
+    var fit = 0; for(j=0;j<k;j++) fit += X[t][j]*b[j];
+    sse += (y[t]-fit)*(y[t]-fit);
+  }
+  var gl = X.length - k;
+  if(gl < 3) return { pocos:true, n:pts.length, serie:serie, pts:pts };
+  var s2 = sse/gl;
+  var seNina = Math.sqrt(s2*sol.inv[1][1]), seNino = Math.sqrt(s2*sol.inv[2][2]);
+  // El contraste Niño vs Niña necesita la covarianza, no la suma de varianzas.
+  var varDif = s2*(sol.inv[2][2] + sol.inv[1][1] - 2*sol.inv[1][2]);
+  var seDif = Math.sqrt(Math.max(varDif, 0));
+
+  return {
+    ok:true, n:X.length, gl:gl, anios:nAnios, nNina:nina, nNino:nino,
+    bNina:b[1], bNino:b[2], tend:b[3], a0:a0,
+    seNina:seNina, seNino:seNino, seDif:seDif,
+    tNina: seNina > 0 ? b[1]/seNina : NaN,
+    tNino: seNino > 0 ? b[2]/seNino : NaN,
+    tDif:  seDif  > 0 ? (b[2]-b[1])/seDif : NaN,
+    serie:serie, pts:pts, indice:EST_INDICE
+  };
+}
+
+/* ---------- Render ---------- */
+function estRenderEnso(){
+  var cont = document.getElementById('est_enso');
+  if(!cont) return;
+  var cols = estColumnas();
+  if(cols.length < 1 || !EST.filas.length){ cont.innerHTML = ''; return; }
+
+  var IX = EST_INDICE_NOMBRE[EST_INDICE];
+  var h = '<div class="sec-lbl">Análisis condicional por clima · ENSO</div>';
+  h += '<p class="est-expl">Cuánto se corre la producción según el estado del Pacífico, una vez descontada la estación. '
+    +  'El shock de cada control se mide contra <b>la media de ese mismo mes</b> en los otros años: sin eso, el bajón '
+    +  'de todos los veranos se le atribuiría al clima del año y no a la curva de lactancia.</p>';
+  h += '<div class="est-enso-sel"><span class="k">Índice</span>'
+    +  '<button type="button" class="' + (EST_INDICE === 'oni' ? 'on' : '') + '" onclick="estSetIndice(\'oni\')">ONI</button>'
+    +  '<button type="button" class="' + (EST_INDICE === 'roni' ? 'on' : '') + '" onclick="estSetIndice(\'roni\')">RONI</button>'
+    +  '<span class="n">' + (EST_INDICE === 'oni'
+        ? 'Anomalía del Pacífico central (Niño 3.4). Es el índice estándar y el que define los episodios de la NOAA.'
+        : 'Igual que el ONI pero descontando el calentamiento de todo el trópico. Deriva −0,25 por década, así que la '
+          + 'regresión incluye control de tendencia para no confundir esa deriva con un efecto climático.')
+    +  '</span></div>';
+
+  var reg = estEnsoRegresion();
+  var serie = reg.serie || estSerieEnso();
+
+  // ── Promedios por estado, del conjunto y de cada tambo ──
+  var litros = estLitros();
+  var totL = cols.reduce(function(a, c){ return a + (litros[c.id] || 0); }, 0);
+  var ESTADOS = ['Niña','Neutro','Niño'];
+  var porTambo = cols.map(function(c){
+    var acc = { Niña:[], Neutro:[], Niño:[] };
+    serie.forEach(function(r){
+      if(!r.enso || r.enso.x == null || r.sh[c.id] == null) return;
+      if(acc[r.enso.ev]) acc[r.enso.ev].push(r.sh[c.id]);
+    });
+    return { id:c.id, nombre:c.nombre, acc:acc,
+             wl: totL > 0 ? (litros[c.id]||0)/totL : 0 };
+  });
+  var hayAlgo = porTambo.some(function(p){
+    return ESTADOS.some(function(e){ return p.acc[e].length > 0; });
+  });
+
+  if(!hayAlgo){
+    var conMes = serie.filter(function(r){ return r.mes; }).length;
+    h += '<div class="est-vacio">'
+      + (conMes === 0
+          ? 'No se pudo leer la fecha de ningún control. Usá el formato <b>MM/AAAA</b> (03/2026) para que cada control se pueda aparear con el índice climático.'
+          : 'Todavía no hay con qué comparar: hace falta el <b>mismo mes en al menos dos años</b> para separar la estación del efecto del clima. '
+            + 'Con dos campañas completas de controles el bloque empieza a hablar.')
+      + '</div>';
+    cont.innerHTML = h;
+    return;
+  }
+
+  var pcq = function(v, d){ return (v >= 0 ? '+' : '−') + estFmt(Math.abs(v*100), d == null ? 1 : d) + '%'; };
+  h += '<div class="est-wrap"><table class="est-tabla est-tabla-riesgo est-tabla-enso"><thead><tr><th>Tambo</th>';
+  ESTADOS.forEach(function(e){ h += '<th>' + e + '<br><small>desvío vs mes normal</small></th>'; });
+  h += '</tr></thead><tbody>';
+  porTambo.forEach(function(p){
+    h += '<tr><td class="est-nom">' + escTxt(p.nombre) + '</td>';
+    ESTADOS.forEach(function(e){
+      var a = p.acc[e];
+      if(!a.length){ h += '<td class="est-sin-dato">—</td>'; return; }
+      var m = estMedia(a);
+      var cls = a.length < 4 ? ' est-corr-pocos' : '';
+      h += '<td class="' + (m < -0.02 ? 'est-neg' : (m > 0.02 ? 'est-pos' : '')) + cls + '">'
+        +  pcq(m, 1) + '<small>' + a.length + ' ctrl.</small></td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // ── Regresión del conjunto ──
+  if(reg.ok){
+    var sig = function(t){ return isFinite(t) && Math.abs(t) >= 2 ? '' : ' est-flojo'; };
+    h += '<div class="est-enso-reg">'
+      +  '<div class="est-enso-card' + sig(reg.tNina) + '"><span class="k">Por cada punto de ' + IX + ' hacia Niña</span>'
+      +    '<b>' + pcq(-reg.bNina, 1) + '</b><span class="n">t = ' + estFmt(reg.tNina, 1) + '</span></div>'
+      +  '<div class="est-enso-card' + sig(reg.tNino) + '"><span class="k">Por cada punto de ' + IX + ' hacia Niño</span>'
+      +    '<b>' + pcq(reg.bNino, 1) + '</b><span class="n">t = ' + estFmt(reg.tNino, 1) + '</span></div>'
+      +  '<div class="est-enso-card' + sig(reg.tDif) + '"><span class="k">¿La respuesta es asimétrica?</span>'
+      +    '<b>' + (isFinite(reg.tDif) && Math.abs(reg.tDif) >= 2 ? 'Sí' : 'No concluyente') + '</b>'
+      +    '<span class="n">t = ' + estFmt(reg.tDif, 1) + ' · ' + reg.gl + ' gl</span></div>'
+      +  '</div>';
+    h += '<div class="est-glosario">Modelo: shock = a + bNiña·mín(' + IX + ',0) + bNiño·máx(' + IX + ',0) + tendencia. '
+      + 'La bisagra permite que la Niña y el Niño peguen distinto, que es lo habitual. '
+      + 'El término de tendencia evita cargarle al clima la deriva del rodeo o del manejo: acá vale '
+      + pcq(reg.tend, 1) + ' por año. Con |t| ≥ 2 el efecto se distingue del ruido; '
+      + reg.n + ' controles, ' + reg.anios + ' campañas.</div>';
+  } else {
+    h += '<div class="est-avisos"><div class="est-aviso">⚠ La tabla de arriba ya se puede leer, pero todavía no alcanza '
+      + 'para medir la respuesta con una regresión: hacen falta 12 controles apareados con el índice (hay ' + (reg.n || 0) + '), '
+      + 'al menos 4 de cada lado y 3 campañas distintas'
+      + (reg.nina != null ? ' (hoy: ' + reg.nina + ' con índice negativo, ' + reg.nino + ' positivo, ' + reg.anios + ' campañas)' : '')
+      + '.</div></div>';
+  }
+
+  h += '<div class="est-glosario"><b>Cómo se aparea cada control.</b> Set-nov miran el trimestre SON; diciembre, NDJ; '
+    + 'enero, DJF; feb-mar, JFM. Los controles de abr-ago miran el DJF del verano que acaba de pasar, porque lo que '
+    + 'arrastra a esos meses es el forraje de esa temporada. El estado (Niña, Neutro, Niño) es el de la campaña.</div>';
+  cont.innerHTML = h;
+}
+
 /* ---------- Orquestación ---------- */
 function estRenderAnalisis(){
   estRenderRiesgo();
   estRenderCorrel();
   estRenderContrib();
+  estRenderEnso();
 }
 // La grilla NO se redibuja en cada render: si se rehiciera mientras el productor
 // tipea una celda, perdería el foco. Solo se rehace cuando cambian los tambos
