@@ -493,7 +493,7 @@ label .u{margin-left:4px}
         <div class="action-stack">
           <div>
             <label for="scenario_name">Nombre del escenario</label>
-            <input type="text" id="scenario_name" value="Base cliente" oninput="if(typeof mtSyncNombre==='function')mtSyncNombre(); if(typeof actualizarVinculoUI==='function')actualizarVinculoUI();" placeholder="Ej. Cuenca oeste - mixto invierno">
+            <input type="text" id="scenario_name" value="Base cliente" oninput="if(typeof actualizarVinculoUI==='function')actualizarVinculoUI();" placeholder="Ej. Cuenca oeste - mixto invierno">
           </div>
           <div class="save-row">
             <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
@@ -577,6 +577,16 @@ label .u{margin-left:4px}
             <span class="acc-icon" id="icon-config" style="transform:rotate(180deg)">▼</span>
           </div>
           <div class="fields" id="acc-config">
+            <div id="tambo_nombre_box">
+              <div class="sec-lbl">Identificacion</div>
+              <div class="fg">
+                <div><label for="tambo_nombre">Nombre del tambo</label>
+                  <input type="text" id="tambo_nombre" value="Tambo 1" placeholder="Ej. La Esperanza"
+                    oninput="if(typeof mtSyncNombre==='function')mtSyncNombre()"></div>
+              </div>
+              <div class="info-box">Es el nombre de este establecimiento y es independiente del nombre del escenario:
+                renombrar la simulacion al guardarla ya no renombra el tambo.</div>
+            </div>
             <div>
               <div class="sec-lbl">Rodeo y superficie</div>
               <div class="fg">
@@ -932,7 +942,7 @@ var currentClienteCodigo = '';
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
 var FORM_FIELDS = [
-  'preset_cuenca','preset_sistema','scenario_name','rodeo_total','vacas_ordene','litros_vaca','dias_mes','superficie','consumo_ms',
+  'preset_cuenca','preset_sistema','scenario_name','tambo_nombre','rodeo_total','vacas_ordene','litros_vaca','dias_mes','superficie','consumo_ms',
   'precio_base','grasa','proteina','bonif_solidos','bonif_calidad','merma',
   'cuenca_superficie_ref','cuenca_c_alim_ref','cuenca_c_estructura_ref','cuenca_c_impuestos_ref','cuenca_tgt_carga_ref','cuenca_bonif_solidos_ref',
   'sis_litros_vaca_ref','sis_consumo_ms_ref','sis_c_personal_ref','sis_c_energia_ref','sis_merma_ref','sis_tgt_costo_ref',
@@ -1236,8 +1246,25 @@ function deserializeForm(data){
   updateSystemUI();
   render();
 
-  // Sincronizar los inputs visibles de costos ($/litro) con los hidden cargados
-  if(typeof costSyncEntriesFromHidden === 'function') costSyncEntriesFromHidden();
+  // Costos. serializeForm ya venía guardando en _costMeta la unidad de carga
+  // ($/litro, $/mes, $/vaca/mes), el destino de prorrateo y el valor tal como lo
+  // tecleó el productor; lo que faltaba era leerlo de vuelta acá. Sin esto, todo
+  // volvía convertido a $/litro y la forma de carga se perdía en cada apertura.
+  var meta = data && data._costMeta;
+  COST_IDS.forEach(function(cid){
+    var m = meta && meta[cid];
+    if(m){
+      var unit = document.getElementById(cid+'_unit');
+      var dest = document.getElementById(cid+'_dest');
+      var entry = document.getElementById(cid+'_entry');
+      if(unit && m.unit) unit.value = m.unit;
+      if(dest && m.dest) dest.value = m.dest;
+      if(entry && m.entry !== undefined) entry.value = m.entry;
+      if(typeof costRecalcSilencioso === 'function') costRecalcSilencioso(cid);
+    } else if(typeof costSyncEntryFromHidden === 'function'){
+      costSyncEntryFromHidden(cid);     // escenario sin metadatos: $/litro
+    }
+  });
 
   // Las subcategorías de costo (p × Q) viajan DENTRO de los datos, así que se
   // restauran acá: es el único punto por el que pasan todas las rutas de carga
@@ -1959,14 +1986,20 @@ function mtRestaurarDesdeDatos(datos){
       // se pierdan al cargar.
       if(d._subcats === undefined && datos._subcats) d._subcats = JSON.parse(JSON.stringify(datos._subcats));
       if(d._subsens === undefined && datos._subsens) d._subsens = JSON.parse(JSON.stringify(datos._subsens));
-      return { id: t.id || mtNuevoId(), nombre: t.nombre || 'Tambo', datos: d };
+      // Guardados anteriores al campo propio: el nombre vivía en el registro del
+      // tambo (o, más atrás, en scenario_name). Se siembra para que el campo lo muestre.
+      var nom = String(t.nombre || d.tambo_nombre || d.scenario_name || 'Tambo').trim() || 'Tambo';
+      d.tambo_nombre = nom;
+      return { id: t.id || mtNuevoId(), nombre: nom, datos: d };
     });
     var act = datos._mt.activo;
     MT.activo = (act === MT.CONSOLIDADO) ? MT.tambos[0].id : (MT.tambos.find(function(x){return x.id===act;}) ? act : MT.tambos[0].id);
   } else {
     // Escenario viejo (un solo tambo): lo envolvemos.
     var d = Object.assign({}, datos); delete d._mt;
-    MT.tambos = [{ id: mtNuevoId(), nombre: (d.scenario_name || 'Tambo 1').trim() || 'Tambo 1', datos: d }];
+    var nom1 = String(d.tambo_nombre || d.scenario_name || 'Tambo 1').trim() || 'Tambo 1';
+    d.tambo_nombre = nom1;
+    MT.tambos = [{ id: mtNuevoId(), nombre: nom1, datos: d }];
     MT.activo = MT.tambos[0].id;
   }
   mtRenderBarra();
@@ -1986,7 +2019,7 @@ function mtInit(){
   if(!mtActivo()) return;
   if(MT.tambos.length === 0){
     var datos = mtSnapshotActual();
-    var nombre = (datos.scenario_name || 'Tambo 1').trim() || 'Tambo 1';
+    var nombre = String(datos.tambo_nombre || 'Tambo 1').trim() || 'Tambo 1';
     MT.tambos.push({ id: mtNuevoId(), nombre: nombre, datos: datos });
     MT.activo = MT.tambos[0].id;
   }
@@ -1997,7 +2030,7 @@ function mtInit(){
 function mtGuardarActivoDesdeForm(){
   if(MT.activo === MT.CONSOLIDADO) return;
   var t = MT.tambos.find(function(x){ return x.id === MT.activo; });
-  if(t){ t.datos = mtSnapshotActual(); t.nombre = (t.datos.scenario_name || t.nombre).trim() || t.nombre; }
+  if(t){ t.datos = mtSnapshotActual(); t.nombre = String(t.datos.tambo_nombre || t.nombre).trim() || t.nombre; }
 }
 
 // Carga un tambo al formulario (o entra a vista consolidada).
@@ -2012,7 +2045,14 @@ function mtSeleccionar(id){
   } else {
     mtSetConsolidadoUI(false);
     var t = MT.tambos.find(function(x){ return x.id === id; });
-    if(t){ deserializeForm(t.datos); }   // deserializeForm ya restaura las subcategorías
+    if(t){
+      // El nombre del escenario es del escenario, no del tambo: se preserva al
+      // cambiar de pestaña aunque el snapshot del tambo traiga una copia vieja.
+      var nomEsc = document.getElementById('scenario_name');
+      var escenario = nomEsc ? nomEsc.value : null;
+      deserializeForm(t.datos);          // ya restaura subcategorías y costos
+      if(nomEsc && escenario !== null) nomEsc.value = escenario;
+    }
     mtRenderBarra();
   }
 }
@@ -2023,7 +2063,8 @@ function mtAgregar(){
   var base = MT.tambos.find(function(x){ return x.id === MT.activo; });
   var datos = base ? JSON.parse(JSON.stringify(base.datos)) : mtSnapshotActual();
   var n = MT.tambos.length + 1;
-  datos.scenario_name = 'Tambo ' + n;
+  // Solo el nombre del tambo. El del escenario es uno solo para todos los tambos.
+  datos.tambo_nombre = 'Tambo ' + n;
   var nuevo = { id: mtNuevoId(), nombre: 'Tambo ' + n, datos: datos };
   MT.tambos.push(nuevo);
   mtSeleccionar(nuevo.id);
@@ -2039,10 +2080,10 @@ function mtEliminar(id){
   else mtRenderBarra();
 }
 
-// Renombra el tambo activo desde el campo scenario_name.
+// Renombra el tambo activo desde su propio campo, no desde el del escenario.
 function mtSyncNombre(){
   var t = MT.tambos.find(function(x){ return x.id === MT.activo; });
-  var el = document.getElementById('scenario_name');
+  var el = document.getElementById('tambo_nombre');
   if(t && el){ t.nombre = (el.value || t.nombre).trim() || t.nombre; mtRenderBarra(); }
 }
 
@@ -2294,19 +2335,37 @@ function mtRenderConsolidado(){
 
 // Al cargar un tambo, los hidden c_xxx traen $/litro. Reflejamos ese valor en el
 // campo visible y dejamos la unidad en $/litro (es el valor canónico guardado).
-function costSyncEntriesFromHidden(){
-  ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos']
-    .forEach(function(cid){
-      var hidden = document.getElementById(cid);
-      var entry = document.getElementById(cid+'_entry');
-      var unit = document.getElementById(cid+'_unit');
-      var deriv = document.getElementById(cid+'_derived');
-      if(hidden && entry){
-        entry.value = hidden.value;
-        if(unit) unit.value = 'litro';
-        if(deriv) deriv.textContent = '= ' + parseFloat(hidden.value||0).toFixed(2) + ' $/L';
-      }
-    });
+var COST_IDS = ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'];
+
+// Escenario viejo (sin unidad guardada): el visible se reconstruye desde el
+// $/litro canónico y la unidad queda en $/litro, que es lo que ese dato es.
+function costSyncEntryFromHidden(cid){
+  var hidden = document.getElementById(cid);
+  var entry = document.getElementById(cid+'_entry');
+  var unit = document.getElementById(cid+'_unit');
+  var deriv = document.getElementById(cid+'_derived');
+  if(!hidden || !entry) return;
+  entry.value = hidden.value;
+  if(unit) unit.value = 'litro';
+  if(deriv) deriv.textContent = '= ' + parseFloat(hidden.value||0).toFixed(2) + ' $/L';
+}
+function costSyncEntriesFromHidden(){ COST_IDS.forEach(costSyncEntryFromHidden); }
+
+// Igual que costRecalc pero sin disparar render: lo usa la carga de un
+// escenario, que ya va a renderizar una sola vez al final.
+function costRecalcSilencioso(cid){
+  var entry = document.getElementById(cid+'_entry');
+  var unit  = document.getElementById(cid+'_unit');
+  var hidden= document.getElementById(cid);
+  var deriv = document.getElementById(cid+'_derived');
+  if(!entry || !unit || !hidden) return;
+  var v = parseFloat(entry.value); if(!isFinite(v)) v = 0;
+  var litrosMes = costLitrosMesActual(), vacas = costVacasActual();
+  var perLitro = v;
+  if(unit.value === 'mes')       perLitro = litrosMes > 0 ? v/litrosMes : 0;
+  else if(unit.value === 'vaca') perLitro = litrosMes > 0 ? (v*vacas)/litrosMes : 0;
+  hidden.value = perLitro.toFixed(4);
+  if(deriv) deriv.textContent = '= ' + (isFinite(perLitro) ? perLitro.toFixed(2) : '0') + ' $/L';
 }
 
 function costLitrosMesActual(){
@@ -2586,13 +2645,20 @@ function subsensLimpiar(){
 function subcatParaGuardar(){ return JSON.parse(JSON.stringify(SUBCATS)); }
 function subsensParaGuardar(){ return JSON.parse(JSON.stringify(SUBSENS)); }
 function subcatRestaurar(datos){
-  SUBCATS = (datos && datos._subcats) ? JSON.parse(JSON.stringify(datos._subcats)) : {};
+  // Ausente y vacío NO son lo mismo. Un payload sin la clave _subcats no sabe
+  // nada de subcategorías (p. ej. un serializeForm() plano) y no tiene autoridad
+  // para borrarlas; un {} sí dice "este tambo no tiene", y entonces se limpian.
+  if(!datos || datos._subcats === undefined){
+    if(typeof subcatAplicarTodas === 'function') subcatAplicarTodas();
+    return;
+  }
+  SUBCATS = JSON.parse(JSON.stringify(datos._subcats));
   // Los escenarios guardados antes de este cambio traen renglones con `valor`
   // suelto: se normalizan a precio × cantidad sin mover el número.
   Object.keys(SUBCATS).forEach(function(k){
     if(Array.isArray(SUBCATS[k])) SUBCATS[k].forEach(subcatNormalizar);
   });
-  SUBSENS = (datos && datos._subsens) ? JSON.parse(JSON.stringify(datos._subsens)) : {};
+  SUBSENS = (datos._subsens !== undefined) ? JSON.parse(JSON.stringify(datos._subsens)) : {};
   subcatAplicarTodas();
 }
 
@@ -3570,9 +3636,12 @@ function estSync(){
 function estRenderTodo(){ EST_FIRMA = ''; estSync(); }
 
 /* ---------- Persistencia (a nivel escenario, junto a _mt) ---------- */
-function estParaGuardar(){ return { filas: JSON.parse(JSON.stringify(EST.filas)) }; }
+function estParaGuardar(){
+  return { filas: JSON.parse(JSON.stringify(EST.filas)), indice: EST_INDICE };
+}
 function estRestaurar(datos){
   var s = datos && datos._serie;
+  if(s && (s.indice === 'oni' || s.indice === 'roni')) EST_INDICE = s.indice;
   EST.filas = (s && Array.isArray(s.filas)) ? s.filas.map(function(f){
     return { f: f.f || '', v: (f.v && typeof f.v === 'object') ? f.v : {} };
   }) : [];
