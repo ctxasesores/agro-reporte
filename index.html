@@ -2136,6 +2136,24 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               Analiza el <b>riesgo productivo puro</b>: cuánto varían los rindes de cada cultivo y cómo se combinan. Trabaja con rindes físicos (qq/ha), sin precios ni costos. Cuantas más campañas cargues, más precisas las estimaciones.
             </div>
 
+            <style>
+              .rpz-box{margin:0 0 16px;padding:13px 14px;border-radius:12px;
+                background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.28)}
+              .rpz-tit{font-size:12.5px;font-weight:700;color:var(--oro-l,#e8c45a);
+                text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+              .rpz-sub{font-size:11.5px;line-height:1.55;color:var(--txt-soft,#9fb2c4);margin:0 0 11px}
+              .rpz-fila{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+              .rpz-fila label{display:flex;flex-direction:column;gap:4px;font-size:10px;
+                text-transform:uppercase;letter-spacing:.4px;color:var(--txt-soft,#9fb2c4);font-weight:700}
+              .rpz-fila select{min-width:150px;padding:7px 9px;border-radius:8px;font-size:12.5px;
+                font-family:inherit;background:rgba(0,0,0,.28);color:var(--txt,#e8eef5);
+                border:1px solid rgba(255,255,255,.16);text-transform:none;letter-spacing:0;font-weight:400}
+              .rpz-fila select:disabled{opacity:.45}
+              .rpz-fila #rpz_btn{align-self:flex-end}
+              .rpz-aviso{margin-top:11px;padding:9px 11px;border-radius:9px;font-size:11px;line-height:1.55;
+                color:var(--txt-soft,#9fb2c4);background:rgba(0,0,0,.18);border-left:2px solid rgba(212,160,23,.5)}
+              .rpz-aviso b{color:var(--txt,#e8eef5)}
+            </style>
             <datalist id="rp_cultivos_ar">
   <option value="Soja de primera"><option value="Soja de segunda">
   <option value="Maíz temprano"><option value="Maíz tardío"><option value="Maíz de segunda">
@@ -2143,6 +2161,42 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
   <option value="Colza / canola"><option value="Girasol"><option value="Sorgo">
   <option value="Maní"><option value="Arveja"><option value="Garbanzo"><option value="Algodón"><option value="Arroz">
 </datalist>
+            <div class="rpz-box">
+              <div class="rpz-tit">Precargar rindes de tu zona</div>
+              <p class="rpz-sub">Si todavía no tenés tu propia serie, traé la del departamento o partido donde están
+                los campos y usala como punto de partida. Después editá las celdas que sí conocés.</p>
+              <div class="rpz-fila">
+                <label>Provincia
+                  <select id="rpz_prov" onchange="rpzCambioProvincia()" disabled>
+                    <option value="">Cargando…</option>
+                  </select>
+                </label>
+                <label>Departamento o partido
+                  <select id="rpz_dep" onchange="rpzCambioDepto()" disabled>
+                    <option value="">—</option>
+                  </select>
+                </label>
+                <label>Campañas
+                  <select id="rpz_camp" onchange="rpzVistaPrevia()">
+                    <option value="15" selected>Últimas 15</option>
+                    <option value="10">Últimas 10</option>
+                    <option value="20">Últimas 20</option>
+                    <option value="25">Últimas 25</option>
+                    <option value="35">Toda la serie</option>
+                  </select>
+                </label>
+                <button class="rp-btn rp-btn-ok" id="rpz_btn" onclick="rpzPrecargar()" disabled>Precargar</button>
+              </div>
+              <div id="rpz_estado" class="rp-fb" style="display:none"></div>
+              <div id="rpz_aviso" class="rpz-aviso" style="display:none">
+                <b>Qué son estos números.</b> Son el rinde promedio de todos los campos del departamento, campaña por
+                campaña. Sirven para medir el riesgo <b>climático de la zona</b>, que es el que no depende de vos.
+                Dos salvedades: al promediar muchos campos se emparejan los altibajos, así que la variabilidad de
+                <b>tu</b> lote es mayor que la que vas a ver acá; y la serie no distingue maíz temprano de tardío,
+                todo entra como «Maíz». Donde tengas tus propios rindes, pisá la celda: el análisis mejora.
+              </div>
+            </div>
+
             <div class="rp-barra">
               <button class="rp-btn" onclick="rpAgregarFila()">+ Campaña</button>
               <button class="rp-btn" onclick="rpAgregarCultivo()">+ Cultivo</button>
@@ -7236,7 +7290,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261014-1330';
+  var CTX_BUILD = '20261014-1800';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10262,6 +10316,157 @@ function rpMatrizCov(listaShocks){
    Solo Agricultura PRO. Usa el motor rp* (Markowitz sobre rindes).
    ============================================================ */
 
+/* ============================================================
+   PRECARGA DE RINDES POR DEPARTAMENTO / PARTIDO
+   ------------------------------------------------------------
+   Fuente: estimaciones agrícolas por departamento del Ministerio
+   (serie 1990/91 en adelante), empaquetada en un JSON por provincia
+   bajo datos/rindes/. Se baja solo la provincia elegida.
+
+   POR QUE 15 CAMPAÑAS POR DEFECTO, Y NO TODA LA SERIE:
+   El rinde departamental tiene tendencia tecnológica. Medido sobre
+   estos mismos datos, el maíz sube 88 kg/ha por año: tomando las 35
+   campañas el CV da 22,0%, y descontando la tendencia, 13,3%. O sea
+   que la serie larga INFLA el riesgo medido un 65% y manda al maíz a
+   "Alto" cuando en realidad es "Medio/Bajo". En trigo infla 36%.
+   Con las últimas 15 campañas esa distorsión desaparece (1% en maíz
+   y soja, 10% en trigo) y todavía quedan datos de sobra para el P10.
+   Menos de 15 tampoco conviene: con 10 la muestra es tan corta que
+   las medidas de cola se vuelven inestables.
+   ============================================================ */
+
+var RPZ = { index: null, prov: null, cargando: false };
+
+function rpzEl(id){ return document.getElementById(id); }
+
+function rpzEstado(msg, tipo){
+  var el = rpzEl('rpz_estado');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.className = 'rp-fb' + (tipo ? ' rp-fb-' + tipo : '');
+  el.style.display = msg ? '' : 'none';
+}
+
+// Catálogo de provincias. Se pide una sola vez, al abrir el módulo.
+function rpzInit(){
+  if(RPZ.index || RPZ.cargando) return;
+  RPZ.cargando = true;
+  fetch('/agro-reporte/datos/rindes/index.json', { cache: 'force-cache' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      RPZ.cargando = false;
+      if(!j || !j.provincias) { rpzEstado('No se pudo leer el catálogo de provincias.', 'err'); return; }
+      RPZ.index = j;
+      var sel = rpzEl('rpz_prov');
+      if(!sel) return;
+      var h = '<option value="">Elegí la provincia…</option>';
+      j.provincias.forEach(function(p){
+        h += '<option value="' + p.id + '">' + p.n + ' (' + p.deps + ')</option>';
+      });
+      sel.innerHTML = h;
+      sel.disabled = false;
+    })
+    .catch(function(){
+      RPZ.cargando = false;
+      rpzEstado('Sin conexión: no se pudieron traer los rindes de referencia.', 'err');
+    });
+}
+
+function rpzCambioProvincia(){
+  var pid = rpzEl('rpz_prov').value;
+  var selD = rpzEl('rpz_dep');
+  selD.innerHTML = '<option value="">—</option>';
+  selD.disabled = true;
+  rpzEl('rpz_btn').disabled = true;
+  RPZ.prov = null;
+  if(!pid) { rpzEstado('', ''); return; }
+  rpzEstado('Trayendo los departamentos…', '');
+  fetch('/agro-reporte/datos/rindes/' + pid + '.json', { cache: 'force-cache' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      if(!j){ rpzEstado('No se pudo leer la provincia.', 'err'); return; }
+      RPZ.prov = j;
+      var deps = Object.keys(j.d).map(function(k){ return { id:k, n:j.d[k].n }; });
+      deps.sort(function(a,b){ return a.n.localeCompare(b.n, 'es'); });
+      var h = '<option value="">Elegí el departamento o partido…</option>';
+      deps.forEach(function(d){ h += '<option value="' + d.id + '">' + d.n + '</option>'; });
+      selD.innerHTML = h;
+      selD.disabled = false;
+      rpzEstado('', '');
+    })
+    .catch(function(){ rpzEstado('Sin conexión: no se pudo traer la provincia.', 'err'); });
+}
+
+function rpzCambioDepto(){
+  var hay = !!rpzEl('rpz_dep').value && !!RPZ.prov;
+  rpzEl('rpz_btn').disabled = !hay;
+  if(hay) rpzVistaPrevia();
+  else rpzEstado('', '');
+}
+
+// Qué cultivos tiene ese departamento en la ventana elegida, y con cuántas
+// campañas cada uno. Se precargan los que tienen al menos 5.
+function rpzCultivosDisponibles(){
+  var j = RPZ.prov, did = rpzEl('rpz_dep').value;
+  if(!j || !j.d[did]) return null;
+  var n = parseInt(rpzEl('rpz_camp').value, 10) || 15;
+  var desde = Math.max(0, j.k.length - n);
+  var camps = j.k.slice(desde);
+  var s = j.d[did].s;
+  var out = [];
+  Object.keys(s).forEach(function(ci){
+    var serie = s[ci].slice(desde);
+    var con = serie.filter(function(x){ return x > 0; }).length;
+    if(con >= 5) out.push({ nombre: j.c[parseInt(ci, 10)], serie: serie, n: con });
+  });
+  // El catálogo j.c ya viene en orden de importancia; se respeta y se corta en 8
+  // columnas, que es lo que entra sin que la grilla se vuelva ilegible.
+  out.sort(function(a, b){ return j.c.indexOf(a.nombre) - j.c.indexOf(b.nombre); });
+  return { camps: camps, cultivos: out.slice(0, 8), descartados: Math.max(0, out.length - 8) };
+}
+
+function rpzVistaPrevia(){
+  var d = rpzCultivosDisponibles();
+  if(!d){ rpzEstado('', ''); return; }
+  if(!d.cultivos.length){
+    rpzEstado('Ese departamento no tiene ningún cultivo con al menos 5 campañas en la ventana elegida.', 'err');
+    return;
+  }
+  rpzEstado('Va a cargar ' + d.cultivos.length + ' cultivos × ' + d.camps.length + ' campañas: '
+    + d.cultivos.map(function(c){ return c.nombre + ' (' + c.n + ')'; }).join(', ')
+    + (d.descartados ? '. Quedan afuera ' + d.descartados + ' cultivos menores.' : '.'), 'ok');
+}
+
+function rpzPrecargar(){
+  var d = rpzCultivosDisponibles();
+  if(!d || !d.cultivos.length) return;
+  var dep = RPZ.prov.d[rpzEl('rpz_dep').value].n;
+  if(RP.filas.some(function(f){ return f.v.some(function(x){ return x != null; }); })){
+    if(!confirm('Esto reemplaza los rindes que tengas cargados en la grilla.\n\n¿Seguir?')) return;
+  }
+
+  RP.cultivos = d.cultivos.map(function(c){ return c.nombre; });
+  RP.filas = d.camps.map(function(camp, i){
+    return {
+      camp: camp.slice(2, 4) + '/' + camp.slice(7, 9),          // 2010/2011 → 10/11
+      v: d.cultivos.map(function(c){
+        var kg = c.serie[i];
+        return kg > 0 ? Math.round(kg / 10) / 10 : null;        // kg/ha → qq/ha, 1 decimal
+      })
+    };
+  });
+  RP.filas.reverse();        // la grilla va de la campaña más nueva a la más vieja
+
+  rpRenderGrilla();
+  rpRenderTodo();
+  rpzEstado('Cargados los rindes de ' + dep + ' (' + RPZ.prov.p + '): '
+    + RP.cultivos.length + ' cultivos × ' + RP.filas.length + ' campañas. '
+    + 'Son promedios del departamento, no de tu campo: editá las celdas con tus números donde los tengas.', 'ok');
+  var av = rpzEl('rpz_aviso');
+  if(av) av.style.display = '';
+}
+
+
 var RP = {
   cultivos: ['Soja de primera','Soja de segunda','Maíz temprano','Maíz de segunda','Trigo'],
   filas: [],          // [{camp:'23/24', v:[null,...]}]
@@ -10498,6 +10703,7 @@ function rpRenderRiesgo(){
 
 /* ---------- Apertura del módulo ---------- */
 function rpInitSiHaceFalta(){
+  if(typeof rpzInit === 'function') rpzInit();   // catálogo de provincias (una sola vez)
   if(RP.init) return; RP.init = true;
   if(!RP.filas.length) rpSembrarFilas(10);
   rpRenderGrilla();
@@ -11207,7 +11413,8 @@ var RP_ONI_PRONOSTICO = null;
 function rpVentanaCultivo(nombre){
   var n = String(nombre||'').toLowerCase();
   if(n.indexOf('segunda')>=0 || n.indexOf('2da')>=0 || n.indexOf('tardi')>=0) return 'jfm';
-  if(n.indexOf('trigo')>=0 || n.indexOf('cebada')>=0) return 'son';
+  if(n.indexOf('trigo')>=0 || n.indexOf('cebada')>=0 || n.indexOf('avena')>=0
+     || n.indexOf('centeno')>=0 || n.indexOf('colza')>=0 || n.indexOf('canola')>=0) return 'son';
   if(n.indexOf('maíz')>=0 || n.indexOf('maiz')>=0)   return 'ndj';
   return 'djf';   // soja de primera, girasol, sorgo y cualquier otro
 }
