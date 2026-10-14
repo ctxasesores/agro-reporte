@@ -7236,7 +7236,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261005-2100';
+  var CTX_BUILD = '20261014-1330';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -7315,9 +7315,17 @@ function cerrarMacroModal(ev){
     document.body.appendChild(b);
     requestAnimationFrame(function () { b.classList.add('show'); });
     document.getElementById('ctx-upd-btn').addEventListener('click', function () {
-      worker.postMessage('SKIP_WAITING');   // el SW nuevo toma control → controllerchange recarga
+      // Actualización pedida por el usuario: se levanta el tope de una recarga
+      // por pestaña para que esta sí se aplique.
+      try { sessionStorage.removeItem('ctx_sw_reload'); } catch (e) {}
+      worker.postMessage('SKIP_WAITING');
       var btn = document.getElementById('ctx-upd-btn');
       if (btn) { btn.textContent = 'Actualizando...'; btn.disabled = true; }
+      // La recarga no se delega en controllerchange: si el service worker nuevo
+      // ya había tomado control (se instala con skipWaiting), ese evento ya pasó
+      // y el botón quedaba en "Actualizando..." para siempre. Recargamos acá; si
+      // controllerchange llega antes, recarga él y esto no corre.
+      setTimeout(function () { location.reload(); }, 500);
     });
     document.getElementById('ctx-upd-x').addEventListener('click', function () {
       b.classList.remove('show');
@@ -7326,6 +7334,12 @@ function cerrarMacroModal(ev){
   }
 
   if ('serviceWorker' in navigator) {
+    // ¿La página arrancó CON un service worker al mando? Se mira ACÁ, antes de
+    // registrar nada: si arrancó sin controlador, el primer controllerchange que
+    // llegue va a ser el clients.claim() del SW recién instalado —no una versión
+    // nueva— y recargar en ese momento no refresca absolutamente nada.
+    var _habiaControlador = !!navigator.serviceWorker.controller;
+
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('/agro-reporte/sw.js', { updateViaCache: 'none' })
         .then(function (reg) {
@@ -7356,11 +7370,36 @@ function cerrarMacroModal(ev){
         })
         .catch(function (e) { console.log('SW error:', e); });
 
-      // Cuando el SW nuevo toma control, recargamos una sola vez para ver la versión nueva.
+      // Cuando el SW nuevo toma control, recargamos una sola vez para ver la
+      // versión nueva.
+      //
+      // POR QUE LOS DOS CANDADOS DE ABAJO:
+      // Safari descarta el registro del service worker entre visitas (su
+      // protección de privacidad borra el almacenamiento escribible por el
+      // sitio). Ahí cada carga arrancaba SIN controlador: el SW se instalaba,
+      // hacía clients.claim(), disparaba controllerchange y la página se
+      // recargaba. Como _recargando es una variable de la página, moría en cada
+      // recarga y no frenaba nada, así que el panel quedaba recargándose solo.
+      // En Chrome no se veía porque el registro sobrevive y la segunda carga ya
+      // viene controlada.
       var _recargando = false;
       navigator.serviceWorker.addEventListener('controllerchange', function () {
+        // 1) Primera toma de control de la pestaña: no hay versión vieja en
+        //    pantalla que refrescar. Se anota que de acá en más SÍ hay
+        //    controlador, para que un cambio posterior —una versión realmente
+        //    nueva— sí recargue. Si esto quedara congelado en el valor del
+        //    arranque, una pestaña que abrió sin controlador no se actualizaría
+        //    nunca más, ni apretando "Actualizar".
+        if (!_habiaControlador) { _habiaControlador = true; return; }
         if (_recargando) return;
         _recargando = true;
+        // 2) Red de seguridad que SÍ sobrevive a la recarga: una sola recarga
+        //    automática por pestaña. El botón "Actualizar" del cartel limpia
+        //    esta marca, así que la actualización pedida a mano siempre anda.
+        try {
+          if (sessionStorage.getItem('ctx_sw_reload') === '1') return;
+          sessionStorage.setItem('ctx_sw_reload', '1');
+        } catch (e) {}
         window.location.reload();
       });
     });
