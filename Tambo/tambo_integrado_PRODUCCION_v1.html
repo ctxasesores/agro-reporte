@@ -532,9 +532,9 @@ label .u{margin-left:4px}
         <div class="fields" id="acc-cuenca">
           <div class="fg">
             <div><label for="cuenca_superficie_ref">Superficie de referencia (ha)</label><input type="number" id="cuenca_superficie_ref" value="165" step="0.1" min="1"><div class="hint">Hectáreas de referencia de la cuenca (ha).</div></div>
-            <div><label for="cuenca_c_alim_ref">Costo alimentacion de base</label><input type="number" id="cuenca_c_alim_ref" value="188" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
-            <div><label for="cuenca_c_estructura_ref">Costo estructura de base</label><input type="number" id="cuenca_c_estructura_ref" value="24" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
-            <div><label for="cuenca_c_impuestos_ref">Impuestos y otros de base</label><input type="number" id="cuenca_c_impuestos_ref" value="11" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="cuenca_c_alim_ref">Costo alimentacion de base</label><input type="number" id="cuenca_c_alim_ref" value="188" step="any" min="0"><div class="hint">Por litro, en la misma moneda que el resto del panel.</div></div>
+            <div><label for="cuenca_c_estructura_ref">Costo estructura de base</label><input type="number" id="cuenca_c_estructura_ref" value="24" step="any" min="0"><div class="hint">Por litro, en la misma moneda que el resto del panel.</div></div>
+            <div><label for="cuenca_c_impuestos_ref">Impuestos y otros de base</label><input type="number" id="cuenca_c_impuestos_ref" value="11" step="any" min="0"><div class="hint">Por litro, en la misma moneda que el resto del panel.</div></div>
             <div><label for="cuenca_tgt_carga_ref">Carga objetivo de cuenca</label><input type="number" id="cuenca_tgt_carga_ref" value="1.18" step="0.01" min="0"><div class="hint">Vacas en ordeñe por hectárea (vacas/ha).</div></div>
             <div><label for="cuenca_bonif_solidos_ref">Bonif. solidos de cuenca</label><input type="number" id="cuenca_bonif_solidos_ref" value="0.04" step="0.01" min="-1"><div class="hint">Fracción sobre el precio: 0.04 = +4%.</div></div>
           </div>
@@ -554,10 +554,10 @@ label .u{margin-left:4px}
           <div class="fg">
             <div><label for="sis_litros_vaca_ref">Litros por vaca base</label><input type="number" id="sis_litros_vaca_ref" value="25.5" step="0.1" min="0"><div class="hint">Litros por vaca por día (L/vaca/día).</div></div>
             <div><label for="sis_consumo_ms_ref">Consumo MS base</label><input type="number" id="sis_consumo_ms_ref" value="20.8" step="0.1" min="0"><div class="hint">Kg de materia seca por vaca por día (kg MS/vaca/día).</div></div>
-            <div><label for="sis_c_personal_ref">Costo personal de base</label><input type="number" id="sis_c_personal_ref" value="54" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
-            <div><label for="sis_c_energia_ref">Costo energia de base</label><input type="number" id="sis_c_energia_ref" value="9" step="1" min="0"><div class="hint">Pesos por litro ($/litro).</div></div>
+            <div><label for="sis_c_personal_ref">Costo personal de base</label><input type="number" id="sis_c_personal_ref" value="54" step="any" min="0"><div class="hint">Por litro, en la misma moneda que el resto del panel.</div></div>
+            <div><label for="sis_c_energia_ref">Costo energia de base</label><input type="number" id="sis_c_energia_ref" value="9" step="any" min="0"><div class="hint">Por litro, en la misma moneda que el resto del panel.</div></div>
             <div><label for="sis_merma_ref">Merma comercial de base</label><input type="number" id="sis_merma_ref" value="1.7" step="0.1" min="0"><div class="hint">Porcentaje de leche no comercializable (%).</div></div>
-            <div><label for="sis_tgt_costo_ref">Meta costo/litro del sistema</label><input type="number" id="sis_tgt_costo_ref" value="345" step="1" min="0"><div class="hint">Pesos por litro objetivo ($/litro).</div></div>
+            <div><label for="sis_tgt_costo_ref">Meta costo/litro del sistema</label><input type="number" id="sis_tgt_costo_ref" value="345" step="any" min="0"><div class="hint">Objetivo por litro, en la misma moneda que el resto del panel.</div></div>
           </div>
           <div class="sec-lbl">Palancas editables del sistema</div>
           <div class="fg">
@@ -567,7 +567,7 @@ label .u{margin-left:4px}
             <div><label for="sys_personal_adj">Ajuste costo personal</label><input type="number" id="sys_personal_adj" value="0" step="0.1"><div class="hint">% sobre personal.</div></div>
             <div><label for="sys_energia_adj">Ajuste energia y frio</label><input type="number" id="sys_energia_adj" value="0" step="0.1"><div class="hint">% sobre energia.</div></div>
             <div><label for="sys_estructura_adj">Ajuste estructura</label><input type="number" id="sys_estructura_adj" value="0" step="0.1"><div class="hint">% sobre estructura.</div></div>
-            <div><label for="sys_cama_efluentes">Cama y efluentes</label><input type="number" id="sys_cama_efluentes" value="0" step="1" min="0"><div class="hint">$ por litro. Relevante en sistemas estabulados.</div></div>
+            <div><label for="sys_cama_efluentes">Cama y efluentes</label><input type="number" id="sys_cama_efluentes" value="0" step="any" min="0"><div class="hint">$ por litro. Relevante en sistemas estabulados.</div></div>
             <div><label for="sys_sanidad_adj">Ajuste sanidad y reproduccion</label><input type="number" id="sys_sanidad_adj" value="0" step="0.1"><div class="hint">% sobre sanidad y reproduccion.</div></div>
           </div>
           <div class="info-box" id="system_note">Podés usar estas variables para representar barro, confort, cama, eficiencia del mixer o mayor presion de estructura segun el sistema.</div>
@@ -611,11 +611,11 @@ label .u{margin-left:4px}
             <div>
               <div class="sec-lbl">Precio y calidad</div>
               <div class="fg3">
-                <div><label for="precio_base">Precio base leche <span class="u">($/litro)</span></label><input type="number" id="precio_base" value="430" step="1" min="0"></div>
+                <div><label for="precio_base">Precio base leche <span class="u">($/litro)</span></label><input type="number" id="precio_base" value="430" step="any" min="0"></div>
                 <div><label for="grasa">Grasa butirosa <span class="u">(%)</span></label><input type="number" id="grasa" value="3.75" step="0.01" min="0"></div>
                 <div><label for="proteina">Proteína <span class="u">(%)</span></label><input type="number" id="proteina" value="3.28" step="0.01" min="0"></div>
-                <div><label for="bonif_solidos">Bonif. sólidos <span class="u">(fracción, 0.05=5%)</span></label><input type="number" id="bonif_solidos" value="0.05" step="0.01" min="-1"></div>
-                <div><label for="bonif_calidad">Bonif. calidad <span class="u">(fracción, 0.02=2%)</span></label><input type="number" id="bonif_calidad" value="0.02" step="0.01" min="-1"></div>
+                <div><label for="bonif_solidos">Bonif. sólidos <span class="u">(fracción, 0.05=5%)</span></label><input type="number" id="bonif_solidos" value="0.05" step="any" min="-1"></div>
+                <div><label for="bonif_calidad">Bonif. calidad <span class="u">(fracción, 0.02=2%)</span></label><input type="number" id="bonif_calidad" value="0.02" step="any" min="-1"></div>
                 <div><label for="merma">Merma comercial <span class="u">(%)</span></label><input type="number" id="merma" value="1.5" step="0.1" min="0"></div>
               </div>
               <div class="hint">Las bonificaciones se cargan como proporcion. Ejemplo: 0.05 = 5%.</div>
@@ -634,14 +634,14 @@ label .u{margin-left:4px}
           <div class="fields" id="acc-costos">
             <button type="button" class="subcat-btn" onclick="subcatAbrir()">⚙ Administrar subcategorías de costos</button>
             <div class="cost-head"><span>Rubro</span><span>Valor y unidad</span><span>Equivale</span><span>Destino</span></div>
-            <div class="cost-row" data-cost="c_alim"><label class="cost-label">Alimentación</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_alim_entry" value="205" step="0.01" min="0" oninput="costRecalc('c_alim')"><select class="cost-unit" id="c_alim_unit" onchange="costRecalc('c_alim')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_alim_derived">= 205 $/L</div><select class="cost-dest" id="c_alim_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_alim" value="205"></div>
-            <div class="cost-row" data-cost="c_personal"><label class="cost-label">Personal</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_personal_entry" value="54" step="0.01" min="0" oninput="costRecalc('c_personal')"><select class="cost-unit" id="c_personal_unit" onchange="costRecalc('c_personal')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_personal_derived">= 54 $/L</div><select class="cost-dest" id="c_personal_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_personal" value="54"></div>
-            <div class="cost-row" data-cost="c_sanidad"><label class="cost-label">Sanidad</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_sanidad_entry" value="14" step="0.01" min="0" oninput="costRecalc('c_sanidad')"><select class="cost-unit" id="c_sanidad_unit" onchange="costRecalc('c_sanidad')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_sanidad_derived">= 14 $/L</div><select class="cost-dest" id="c_sanidad_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_sanidad" value="14"></div>
-            <div class="cost-row" data-cost="c_repro"><label class="cost-label">Reproducción</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_repro_entry" value="10" step="0.01" min="0" oninput="costRecalc('c_repro')"><select class="cost-unit" id="c_repro_unit" onchange="costRecalc('c_repro')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_repro_derived">= 10 $/L</div><select class="cost-dest" id="c_repro_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_repro" value="10"></div>
-            <div class="cost-row" data-cost="c_energia"><label class="cost-label">Energía y frío</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_energia_entry" value="11" step="0.01" min="0" oninput="costRecalc('c_energia')"><select class="cost-unit" id="c_energia_unit" onchange="costRecalc('c_energia')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_energia_derived">= 11 $/L</div><select class="cost-dest" id="c_energia_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_energia" value="11"></div>
-            <div class="cost-row" data-cost="c_estructura"><label class="cost-label">Estructura</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_estructura_entry" value="26" step="0.01" min="0" oninput="costRecalc('c_estructura')"><select class="cost-unit" id="c_estructura_unit" onchange="costRecalc('c_estructura')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_estructura_derived">= 26 $/L</div><select class="cost-dest" id="c_estructura_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_estructura" value="26"></div>
-            <div class="cost-row" data-cost="c_recria"><label class="cost-label">Reposición / recría</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_recria_entry" value="19" step="0.01" min="0" oninput="costRecalc('c_recria')"><select class="cost-unit" id="c_recria_unit" onchange="costRecalc('c_recria')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_recria_derived">= 19 $/L</div><select class="cost-dest" id="c_recria_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_recria" value="19"></div>
-            <div class="cost-row" data-cost="c_impuestos"><label class="cost-label">Impuestos y otros</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_impuestos_entry" value="12" step="0.01" min="0" oninput="costRecalc('c_impuestos')"><select class="cost-unit" id="c_impuestos_unit" onchange="costRecalc('c_impuestos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_impuestos_derived">= 12 $/L</div><select class="cost-dest" id="c_impuestos_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_impuestos" value="12"></div>
+            <div class="cost-row" data-cost="c_alim"><label class="cost-label">Alimentación</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_alim_entry" value="205" step="any" min="0" oninput="costRecalc('c_alim')"><select class="cost-unit" id="c_alim_unit" onchange="costRecalc('c_alim')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_alim_derived">= 205 $/L</div><select class="cost-dest" id="c_alim_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_alim" value="205"></div>
+            <div class="cost-row" data-cost="c_personal"><label class="cost-label">Personal</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_personal_entry" value="54" step="any" min="0" oninput="costRecalc('c_personal')"><select class="cost-unit" id="c_personal_unit" onchange="costRecalc('c_personal')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_personal_derived">= 54 $/L</div><select class="cost-dest" id="c_personal_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_personal" value="54"></div>
+            <div class="cost-row" data-cost="c_sanidad"><label class="cost-label">Sanidad</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_sanidad_entry" value="14" step="any" min="0" oninput="costRecalc('c_sanidad')"><select class="cost-unit" id="c_sanidad_unit" onchange="costRecalc('c_sanidad')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_sanidad_derived">= 14 $/L</div><select class="cost-dest" id="c_sanidad_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_sanidad" value="14"></div>
+            <div class="cost-row" data-cost="c_repro"><label class="cost-label">Reproducción</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_repro_entry" value="10" step="any" min="0" oninput="costRecalc('c_repro')"><select class="cost-unit" id="c_repro_unit" onchange="costRecalc('c_repro')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_repro_derived">= 10 $/L</div><select class="cost-dest" id="c_repro_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_repro" value="10"></div>
+            <div class="cost-row" data-cost="c_energia"><label class="cost-label">Energía y frío</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_energia_entry" value="11" step="any" min="0" oninput="costRecalc('c_energia')"><select class="cost-unit" id="c_energia_unit" onchange="costRecalc('c_energia')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_energia_derived">= 11 $/L</div><select class="cost-dest" id="c_energia_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_energia" value="11"></div>
+            <div class="cost-row" data-cost="c_estructura"><label class="cost-label">Estructura</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_estructura_entry" value="26" step="any" min="0" oninput="costRecalc('c_estructura')"><select class="cost-unit" id="c_estructura_unit" onchange="costRecalc('c_estructura')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_estructura_derived">= 26 $/L</div><select class="cost-dest" id="c_estructura_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_estructura" value="26"></div>
+            <div class="cost-row" data-cost="c_recria"><label class="cost-label">Reposición / recría</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_recria_entry" value="19" step="any" min="0" oninput="costRecalc('c_recria')"><select class="cost-unit" id="c_recria_unit" onchange="costRecalc('c_recria')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_recria_derived">= 19 $/L</div><select class="cost-dest" id="c_recria_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_recria" value="19"></div>
+            <div class="cost-row" data-cost="c_impuestos"><label class="cost-label">Impuestos y otros</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_impuestos_entry" value="12" step="any" min="0" oninput="costRecalc('c_impuestos')"><select class="cost-unit" id="c_impuestos_unit" onchange="costRecalc('c_impuestos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_impuestos_derived">= 12 $/L</div><select class="cost-dest" id="c_impuestos_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_impuestos" value="12"></div>
 
             <div class="info-box">La referencia rapida queda en costo total por litro, peso de alimentacion y eficiencia litros/kg MS.</div>
           </div>
@@ -683,7 +683,8 @@ label .u{margin-left:4px}
           <div class="fields" id="acc-bench-base">
             <div class="fg">
               <div><label for="tgt_litros_vaca">Meta litros/vaca/dia</label><input type="number" id="tgt_litros_vaca" value="28" step="0.1"></div>
-              <div><label for="tgt_costo_litro">Meta costo/litro</label><input type="number" id="tgt_costo_litro" value="360" step="1"></div>
+              <div><label for="tgt_costo_litro">Meta costo/litro</label><input type="number" id="tgt_costo_litro" value="360" step="any"></div>
+              <div><label for="tgt_margen_litro">Meta margen/litro</label><input type="number" id="tgt_margen_litro" value="25" step="any"><div class="hint">Desde este margen el semaforo pasa a verde. Si cargas el panel en dolares, bajalo a la escala que corresponda (p. ej. 0,02).</div></div>
               <div><label for="tgt_carga">Meta vacas/ha</label><input type="number" id="tgt_carga" value="1.10" step="0.01"></div>
               <div><label for="tgt_solidos">Meta grasa + proteina</label><input type="number" id="tgt_solidos" value="7.00" step="0.01"></div>
             </div>
@@ -804,7 +805,7 @@ label .u{margin-left:4px}
           <div class="card-hdr" onclick="toggleAcc('acc-resumen','icon-resumen')">
             <div>
               <div class="card-title">Resumen mensual</div>
-              <div class="card-sub">Traduccion a litros, pesos y costos unitarios para conversar con el cliente.</div>
+              <div class="card-sub">Traduccion a litros, plata y costos unitarios para conversar con el cliente.</div>
             </div>
             <span class="acc-icon" id="icon-resumen" style="transform:rotate(180deg)">▼</span>
           </div>
@@ -958,7 +959,7 @@ var FORM_FIELDS = [
   'sys_litros_adj','sys_ms_adj','sys_alim_adj','sys_personal_adj','sys_energia_adj','sys_estructura_adj','sys_cama_efluentes','sys_sanidad_adj',
   'c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos',
   'pes_precio','pes_prod','pes_costo','opt_precio','opt_prod','opt_costo',
-  'tgt_litros_vaca','tgt_costo_litro','tgt_carga','tgt_solidos'
+  'tgt_litros_vaca','tgt_costo_litro','tgt_carga','tgt_solidos','tgt_margen_litro'
 ];
 var CUENCA_PRESETS = {
   santa_fe_central: { cuenca_superficie_ref:165, cuenca_c_alim_ref:188, cuenca_c_estructura_ref:24, cuenca_c_impuestos_ref:11, cuenca_tgt_carga_ref:1.18, cuenca_bonif_solidos_ref:0.04 },
@@ -1005,8 +1006,51 @@ function fm(v, d){
   });
 }
 
+// DECIMALES SEGUN LA ESCALA — para que el panel se lea igual cargado en pesos o
+// en dolares. En pesos el costo por litro ronda los 300 y no necesita decimales;
+// en dolares ronda los 0,30 y sin decimales se veia "$0".
+//
+// Cada formateador CONSERVA lo que mostraba en pesos y solo gana precision abajo
+// de 1, que es donde caen los montos por litro en dolares. Asi, para el que
+// carga en pesos no cambia absolutamente nada: todos sus montos son >= 1.
+//
+// Tres decimales y no dos: en dolares, sanidad (0,013), reproduccion (0,009),
+// energia (0,010) e impuestos (0,011) colapsan todas a "$0,01" con dos, y la
+// barra de estructura de costos deja de distinguir un rubro de otro.
+function decMonto(v){      // money(): en pesos mostraba 0 decimales siempre
+  return Math.abs(Number(v) || 0) < 1 ? 3 : 0;
+}
+function decPorLitro(v){   // textos "= X $/L": en pesos mostraban 2 decimales
+  return Math.abs(Number(v) || 0) < 1 ? 3 : 2;
+}
+
 function money(v){
-  return '$' + fm(v, 0);
+  return '$' + fm(v, decMonto(v));
+}
+
+// Mismo criterio para los textos "= X $/L" de la carga de costos.
+function porLitro(v){
+  var x = Number(v) || 0;
+  return fm(x, decPorLitro(x));
+}
+
+// Meta de margen por litro. Estaba clavada en 25 adentro del código, y 25 es un
+// número EN PESOS: cargando el panel en dólares, un margen excelente de 0,12
+// quedaba en amarillo porque no llegaba a 25. Ahora es un objetivo del usuario,
+// como la meta de costo o la de sólidos, y arranca en 25 para que nada cambie en
+// los escenarios que ya están cargados en pesos.
+// ¿El panel está cargado en dólares? No hay un selector de moneda: el panel es
+// agnóstico y esto es solo una heurística para avisar, nunca para calcular. El
+// testigo es el precio de la leche, que en pesos va en cientos y en dólares en
+// décimas. El corte en 10 deja afuera cualquier precio en pesos imaginable.
+function panelEnDolares(){
+  var p = n('precio_base');
+  return isFinite(p) && p > 0 && p < 10;
+}
+
+function metaMargenLitro(){
+  var v = n('tgt_margen_litro');
+  return isFinite(v) && v > 0 ? v : 25;
 }
 
 // Nombres de tambo cargados por el productor: van a HTML, así que se escapan.
@@ -1205,6 +1249,14 @@ function applyPresetMap(map){
 }
 
 function applyPresets(){
+  // Los presets de cuenca y de sistema traen costos de referencia EN PESOS
+  // (alimentación 188, personal 54, meta de costo 345). Si el panel está cargado
+  // en dólares, aplicarlos pisa todo con números de otra escala sin avisar.
+  if(panelEnDolares() && !confirm(
+      'Los valores de referencia de cuenca y sistema estan en PESOS por litro '
+      + '(alimentacion 188, personal 54, meta de costo 345).\n\n'
+      + 'Este panel parece cargado en dolares. Si los aplicas, van a reemplazar '
+      + 'tus costos con numeros de otra escala.\n\n¿Aplicarlos igual?')) return;
   applyPresetMap(CUENCA_PRESETS[document.getElementById('preset_cuenca').value]);
   applyPresetMap(SISTEMA_PRESETS[document.getElementById('preset_sistema').value]);
   syncPresetControls();
@@ -1388,7 +1440,7 @@ function pctFromRecord(record, key){
 
 function buildSavedOutputsFromModel(base){
   var solidsKgHaAnio = base.superficie > 0 ? (base.solidosKgMes * 12) / base.superficie : 0;
-  var marginState = base.margenLitro >= 25 ? 'verde' : base.margenLitro >= 0 ? 'amarillo' : 'rojo';
+  var marginState = base.margenLitro >= metaMargenLitro() ? 'verde' : base.margenLitro >= 0 ? 'amarillo' : 'rojo';
   return {
     version: 'v1',
     modulo: 'tambo',
@@ -2415,7 +2467,7 @@ function costSyncEntryFromHidden(cid){
   if(!hidden || !entry) return;
   entry.value = hidden.value;
   if(unit) unit.value = 'litro';
-  if(deriv) deriv.textContent = '= ' + parseFloat(hidden.value||0).toFixed(2) + ' $/L';
+  if(deriv) deriv.textContent = '= ' + porLitro(parseFloat(hidden.value||0)) + ' $/L';
 }
 function costSyncEntriesFromHidden(){ COST_IDS.forEach(costSyncEntryFromHidden); }
 
@@ -2433,7 +2485,7 @@ function costRecalcSilencioso(cid){
   if(unit.value === 'mes')       perLitro = litrosMes > 0 ? v/litrosMes : 0;
   else if(unit.value === 'vaca') perLitro = litrosMes > 0 ? (v*vacas)/litrosMes : 0;
   hidden.value = perLitro.toFixed(4);
-  if(deriv) deriv.textContent = '= ' + (isFinite(perLitro) ? perLitro.toFixed(2) : '0') + ' $/L';
+  if(deriv) deriv.textContent = '= ' + (isFinite(perLitro) ? porLitro(perLitro) : '0') + ' $/L';
 }
 
 function costLitrosMesActual(){
@@ -2462,7 +2514,7 @@ function costRecalc(cid){
     perLitro = litrosMes > 0 ? totalMes / litrosMes : 0;
   }
   hidden.value = perLitro.toFixed(4);
-  if(deriv) deriv.textContent = '= ' + (isFinite(perLitro)?perLitro.toFixed(2):'0') + ' $/L';
+  if(deriv) deriv.textContent = '= ' + (isFinite(perLitro)?porLitro(perLitro):'0') + ' $/L';
   if(typeof render === 'function') render();
 }
 // Al cambiar producción (litros/vacas) hay que recalcular todos los costos que
@@ -2575,9 +2627,9 @@ function subcatAplicarCategoria(catId){
   var deriv = document.getElementById(catId+'_derived');
   var unitSel = document.getElementById(catId+'_unit');
   if(hidden) hidden.value = total.toFixed(4);
-  if(entry){ entry.value = total.toFixed(2); entry.disabled = true; entry.title = 'Definido por subcategorías'; }
+  if(entry){ entry.value = total.toFixed(4).replace(/0+$/,'').replace(/\.$/,''); entry.disabled = true; entry.title = 'Definido por subcategorías'; }
   if(unitSel){ unitSel.value = 'litro'; unitSel.disabled = true; }
-  if(deriv) deriv.textContent = '= ' + total.toFixed(2) + ' $/L · ' + SUBCATS[catId].length + ' subcat.';
+  if(deriv) deriv.textContent = '= ' + porLitro(total) + ' $/L · ' + SUBCATS[catId].length + ' subcat.';
 }
 
 // Libera una categoría (sin subcategorías): reactiva el input manual.
@@ -2628,7 +2680,7 @@ function subcatEditar(catId, scId, campo, valor){
   var fila = document.getElementById('scres_'+scId);
   if(fila) fila.textContent = subcatTextoFila(sc);
   var st = document.getElementById('subtot_'+catId);
-  if(st) st.textContent = subcatTotalCat(catId).toFixed(2) + ' $/L';
+  if(st) st.textContent = porLitro(subcatTotalCat(catId)) + ' $/L';
 }
 
 // Texto del resultado de un renglón: la multiplicación a la vista y, si la
@@ -2640,7 +2692,7 @@ function subcatTextoFila(sc){
   var txt = '= ' + fm(v, 2) + ' ' + u;
   if(sc.unit !== 'litro'){
     var porL = subcatAPerLitro(v, sc.unit);
-    txt += '  ·  ' + fm(porL, 2) + ' $/L';
+    txt += '  ·  ' + porLitro(porL) + ' $/L';
   }
   return txt;
 }
@@ -2655,7 +2707,7 @@ function subcatRenderModal(){
     html += '<div class="sc-cat">';
     html +=   '<div class="sc-cat-hdr">';
     html +=     '<span class="sc-cat-name">'+cat.nombre+'</span>';
-    html +=     '<span class="sc-cat-sub">Subtotal: <b id="subtot_'+cat.id+'">'+subtotal.toFixed(2)+' $/L</b></span>';
+    html +=     '<span class="sc-cat-sub">Subtotal: <b id="subtot_'+cat.id+'">'+porLitro(subtotal)+' $/L</b></span>';
     html +=     '<button class="sc-add" onclick="subcatAddFila(\''+cat.id+'\')">+ subcategoría</button>';
     html +=   '</div>';
     if(subs.length){
@@ -3745,7 +3797,7 @@ function render(){
 
 function renderTop(base){
   var top = document.getElementById('top_kpis');
-  var marginCls = stateClass(base.margenLitro >= 25, base.margenLitro >= 0);
+  var marginCls = stateClass(base.margenLitro >= metaMargenLitro(), base.margenLitro >= 0);
   var solidsCls = stateClass(base.solidos >= n('tgt_solidos'), base.solidos >= (n('tgt_solidos') - 0.2));
   var costCls = stateClass(base.costoLitro <= n('tgt_costo_litro'), base.costoLitro <= (n('tgt_costo_litro') * 1.05));
   var litrosCls = stateClass(base.litrosVaca >= n('tgt_litros_vaca'), base.litrosVaca >= (n('tgt_litros_vaca') - 1.5));
@@ -3772,7 +3824,7 @@ function renderTop(base){
     qBadge.className = 'badge ' + (base.solidos >= n('tgt_solidos') ? 'ok' : 'warn');
   }
   if(mBadge){
-    if(base.margenLitro >= 25){
+    if(base.margenLitro >= metaMargenLitro()){
       mBadge.textContent = 'Margen defendible';
       mBadge.className = 'badge ok';
     }else if(base.margenLitro >= 0){
@@ -3878,7 +3930,7 @@ function renderSubsens(base){
       var uni = sc.unidadItem ? (' ' + sc.unidadItem) : '';
       html += '<tr>'
         + '<td class="ss-nom">' + (sc.nombre || '<i>sin nombre</i>')
-        +   '<small>' + fm(parseFloat(sc.precio)||0, 2) + ' × ' + fm(parseFloat(sc.cantidad)||0, 2) + uni
+        +   '<small>' + fm(parseFloat(sc.precio)||0, decPorLitro(parseFloat(sc.precio)||0)) + ' × ' + fm(parseFloat(sc.cantidad)||0, 2) + uni
         +   ' ' + (BASE_UNIT[sc.unit]||'') + '</small></td>'
         + '<td class="num"><input class="ss-in" type="number" step="1" value="' + (d.dp||0)
         +   '" aria-label="Desvío de precio" oninput="subsensEditar(\'' + sc.id + '\',\'dp\',this.value)"></td>'
@@ -3904,8 +3956,8 @@ function renderSubsens(base){
     var dLitro = sens ? (sens.margenLitro - base.margenLitro) : 0;
     var dMes   = sens ? (sens.margenMes - base.margenMes) : 0;
     html += '<div class="ss-impacto ' + (dMes >= 0 ? 'pos' : 'neg') + '">'
-      + '<div>El costo por litro se mueve <b>' + (difTot>=0?'+':'−') + fm(Math.abs(difTot),2) + ' $/L</b>, '
-      + 'así que el margen pasa de ' + fm(base.margenLitro,2) + ' a <b>' + fm(sens.margenLitro,2) + ' $/litro</b> '
+      + '<div>El costo por litro se mueve <b>' + (difTot>=0?'+':'−') + porLitro(Math.abs(difTot)) + ' $/L</b>, '
+      + 'así que el margen pasa de ' + porLitro(base.margenLitro) + ' a <b>' + porLitro(sens.margenLitro) + ' $/litro</b> '
       + '(' + (dMes>=0?'+':'−') + money(Math.abs(dMes)) + ' por mes).</div>'
       + '<button type="button" class="ss-reset" onclick="subsensLimpiar()">Volver a cero</button></div>';
   } else {
