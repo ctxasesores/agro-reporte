@@ -216,7 +216,57 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 .hist-info{flex:1;min-width:0}
 .hist-name{font-size:13px;font-weight:700;color:white}
 .hist-meta{font-size:11px;color:var(--gris);margin-top:3px}
-.hist-actions{display:flex;gap:6px;flex-wrap:wrap}
+.hist-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+/* ---- Comparar escenarios ---- */
+.modal-ancho{max-width:900px}
+.modal-acc{display:flex;gap:8px;align-items:center}
+.hist-chk{display:inline-flex;align-items:center;margin-left:4px;cursor:pointer}
+.hist-chk input{width:17px;height:17px;accent-color:var(--oro,#d4a017);cursor:pointer}
+.cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cmp-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
+.cmp-tabla th,.cmp-tabla td{padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.07);
+  text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cmp-tabla thead th{font-size:10px;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--txt-soft,#9fb2c4);font-weight:700;vertical-align:bottom}
+.cmp-tabla thead th small{display:block;font-size:9.5px;font-weight:400;text-transform:none;
+  letter-spacing:0;opacity:.75;margin-top:2px}
+.cmp-tabla td.cmp-nom,.cmp-tabla th:first-child{text-align:left}
+.cmp-tabla td.cmp-nom{font-weight:600;color:var(--txt,#e8eef5)}
+.cmp-campo{text-align:left !important;font-family:ui-monospace,Menlo,monospace;font-size:11px;opacity:.75}
+.cmp-dif small{display:block;font-size:9.5px;font-weight:400;opacity:.8}
+.cmp-pos{color:#5fbf8f}
+.cmp-neg{color:#f0906a}
+.cmp-expl{font-size:11.5px;line-height:1.55;color:var(--txt-soft,#9fb2c4);margin:6px 0 12px}
+.cmp-expl b{color:var(--txt,#e8eef5)}
+.cmp-vacio{padding:11px 13px;border-radius:10px;border:1px dashed rgba(255,255,255,.14);
+  font-size:11.5px;color:var(--txt-soft,#9fb2c4);margin-top:8px}
+.cmp-avisos{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.cmp-aviso{font-size:11px;line-height:1.5;color:var(--txt-soft,#9fb2c4);padding:8px 11px;border-radius:8px;
+  background:rgba(212,160,23,.08);border-left:2px solid rgba(212,160,23,.5)}
+.cmp-pares{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.cmp-pares .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--txt-soft,#9fb2c4);font-weight:700}
+.cmp-pares button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+  color:var(--txt-soft,#9fb2c4);border-radius:7px;padding:4px 11px;font-size:11.5px;
+  font-weight:600;cursor:pointer;font-family:inherit}
+.cmp-pares button.on{background:rgba(212,160,23,.16);border-color:rgba(212,160,23,.5);color:var(--oro-l,#e8c45a)}
+.cmp-puente{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.cmp-pt-row{display:grid;grid-template-columns:1fr 220px 118px;gap:12px;align-items:center;font-size:12.5px}
+.cmp-pt-base{font-weight:700;padding:5px 0;border-top:1px solid rgba(255,255,255,.12);
+  border-bottom:1px solid rgba(255,255,255,.12)}
+.cmp-pt-nom{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cmp-pt-bar{position:relative;height:15px;background:rgba(255,255,255,.04);border-radius:3px}
+.cmp-pt-bar::before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(255,255,255,.22)}
+.cmp-pt-bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.cmp-pt-bar i.pos{background:#5fbf8f}
+.cmp-pt-bar i.neg{background:#e0714f}
+.cmp-pt-val{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.cmp-chk{margin-top:10px;font-size:10.5px;line-height:1.5;color:var(--txt-soft,#9fb2c4);font-style:italic}
+.cmp-chk b{color:var(--txt,#e8eef5);font-style:normal}
+@media(max-width:620px){
+  .cmp-pt-row{grid-template-columns:1fr 96px}
+  .cmp-pt-bar{display:none}
+}
 .macro-modal-shell{position:relative;width:min(1180px,96vw);height:min(760px,92vh);border-radius:24px;overflow:hidden;background:var(--negro-s);box-shadow:var(--shadow-lg);border:.5px solid var(--border)}
 .macro-modal-close{position:absolute;top:12px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(13,32,53,.92);color:white;font-size:20px;line-height:1;cursor:pointer;z-index:3}
 .macro-modal-frame{width:100%;height:100%;border:0;background:var(--negro-b);display:block}
@@ -881,9 +931,22 @@ label .u{margin-left:4px}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-title">Escenarios guardados</div>
-      <button class="btn btn-sm" type="button" onclick="cerrarHistorial()">Cerrar</button>
+      <div class="modal-acc">
+        <button class="btn btn-sm btn-primary" type="button" id="cmp_btn" onclick="cmpAbrir()" disabled style="display:none">Comparar</button>
+        <button class="btn btn-sm" type="button" onclick="cerrarHistorial()">Cerrar</button>
+      </div>
     </div>
     <div id="hist_list"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal_cmp" onclick="cmpCerrar(event)">
+  <div class="modal modal-ancho" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Comparar escenarios</div>
+      <button class="btn btn-sm" type="button" onclick="cmpCerrar()">Cerrar</button>
+    </div>
+    <div id="cmp_body"></div>
   </div>
 </div>
 
@@ -1788,6 +1851,283 @@ function cerrarHistorial(){
   document.getElementById('modal_hist').classList.remove('open');
 }
 
+/* ============================================================
+   COMPARACIÓN DE ESCENARIOS GUARDADOS
+   ------------------------------------------------------------
+   Una tabla lado a lado dice CUÁNTO cambió el margen. No dice por
+   qué, que es la única pregunta que importa. Esto arma un puente:
+   descompone la diferencia de margen en lo que aportó cada driver.
+
+   POR QUÉ SHAPLEY Y NO SUSTITUIR UNO POR VEZ:
+   El margen es un producto —litros × (precio − costo)—, así que los
+   drivers interactúan y la contribución de cada uno depende del orden
+   en que los sustituyas. Medido sobre dos escenarios reales de este
+   panel, a "litros por vaca" se le podía atribuir +2.226.778 o
+   +1.210.458 según por dónde se empezara: un 84% de diferencia por una
+   decisión arbitraria. Shapley promedia la contribución marginal sobre
+   TODAS las órdenes posibles: no depende del orden y cierra exacto
+   contra la diferencia total. Con 7 drivers son 5.040 órdenes, pero
+   solo 128 subconjuntos distintos: se memoriza y es instantáneo.
+   ============================================================ */
+
+var CMP = { sel: [], items: [], par: null };
+
+var CMP_DRIVERS = [
+  { id:'precio',       nombre:'Precio de la leche',    campos:['precio_base','bonif_solidos','bonif_calidad'] },
+  { id:'calidad',      nombre:'Grasa y proteína',      campos:['grasa','proteina'] },
+  { id:'produccion',   nombre:'Litros por vaca',       campos:['litros_vaca'] },
+  { id:'rodeo',        nombre:'Rodeo en ordeñe',       campos:['vacas_ordene','rodeo_total'] },
+  { id:'dias',         nombre:'Días de ordeñe y merma',campos:['dias_mes','merma'] },
+  { id:'alimentacion', nombre:'Alimentación',          campos:['c_alim'] },
+  { id:'otros',        nombre:'Resto de los costos',   campos:['c_personal','c_sanidad','c_repro',
+                                                               'c_energia','c_estructura','c_recria','c_impuestos'] }
+];
+
+/* ---------- Modelo de un escenario guardado ---------- */
+// Un escenario puede tener varios tambos. Lo que se compara es el conjunto.
+function cmpTambosDe(datos){
+  if(datos && datos._mt && Array.isArray(datos._mt.tambos) && datos._mt.tambos.length){
+    return datos._mt.tambos.map(function(t){ return t.datos || {}; });
+  }
+  return [datos || {}];
+}
+function cmpModeloDe(lista){
+  var cero = { price:0, prod:0, cost:0 };
+  return lista.length > 1 ? mtModeloConsolidado(cero, lista) : buildModelFromData(lista[0], cero);
+}
+
+/* ---------- Mezcla A/B para el puente ---------- */
+// Devuelve la lista de tambos de A con los campos de los drivers de `ids`
+// tomados de B. Tambo por tambo, en el mismo orden.
+function cmpMezcla(listaA, listaB, ids){
+  var campos = [];
+  CMP_DRIVERS.forEach(function(d){ if(ids.indexOf(d.id) >= 0) campos = campos.concat(d.campos); });
+  return listaA.map(function(dA, i){
+    var dB = listaB[i] || listaB[0];
+    var out = JSON.parse(JSON.stringify(dA));
+    campos.forEach(function(f){ if(dB && dB[f] !== undefined) out[f] = dB[f]; });
+    return out;
+  });
+}
+
+// Contribución de cada driver al cambio de margen mensual, por Shapley.
+function cmpPuente(listaA, listaB){
+  var ids = CMP_DRIVERS.map(function(d){ return d.id; });
+  var cache = {};
+  var margen = function(set){
+    var k = set.slice().sort().join('|');
+    if(cache[k] === undefined) cache[k] = cmpModeloDe(cmpMezcla(listaA, listaB, set)).margenMes;
+    return cache[k];
+  };
+  var mA = margen([]), mB = margen(ids);
+
+  // Contribución marginal promediada sobre todas las órdenes. Con n drivers, el
+  // peso de cada subconjunto S al que se le agrega i es |S|!·(n−|S|−1)!/n!
+  var n = ids.length;
+  var fact = [1]; for(var i = 1; i <= n; i++) fact[i] = fact[i-1] * i;
+  var aporte = {};
+  ids.forEach(function(id){ aporte[id] = 0; });
+
+  var total = 1 << n;
+  for(var m = 0; m < total; m++){
+    var S = [];
+    for(var b = 0; b < n; b++) if(m & (1 << b)) S.push(ids[b]);
+    var peso = fact[S.length] * fact[n - S.length - 1] / fact[n];
+    for(var b2 = 0; b2 < n; b2++){
+      var id2 = ids[b2];
+      if(m & (1 << b2)) continue;                 // i tiene que estar FUERA de S
+      aporte[id2] += peso * (margen(S.concat(id2)) - margen(S));
+    }
+  }
+  return {
+    mA: mA, mB: mB, total: mB - mA, aporte: aporte,
+    evaluaciones: Object.keys(cache).length,
+    residuo: (mB - mA) - ids.reduce(function(a, id){ return a + aporte[id]; }, 0)
+  };
+}
+
+/* ---------- Selección en la lista de guardados ---------- */
+function cmpToggle(id, el){
+  var i = CMP.sel.indexOf(id);
+  if(el.checked && i < 0) CMP.sel.push(id);
+  if(!el.checked && i >= 0) CMP.sel.splice(i, 1);
+  var btn = document.getElementById('cmp_btn');
+  if(btn){
+    btn.disabled = CMP.sel.length < 2;
+    btn.textContent = CMP.sel.length < 2 ? 'Comparar' : 'Comparar (' + CMP.sel.length + ')';
+  }
+}
+
+function cmpAbrir(){
+  var todos = readSavedAnalisis();
+  CMP.items = CMP.sel.map(function(id){ return todos.find(function(x){ return x.id === id; }); })
+                     .filter(Boolean)
+                     .sort(function(a, b){ return new Date(a.updated_at) - new Date(b.updated_at); });
+  if(CMP.items.length < 2) return;
+  CMP.par = [CMP.items.length - 2, CMP.items.length - 1];   // por defecto, los dos últimos
+  document.getElementById('modal_hist').classList.remove('open');
+  document.getElementById('modal_cmp').classList.add('open');
+  cmpRender();
+}
+function cmpCerrar(){ document.getElementById('modal_cmp').classList.remove('open'); }
+function cmpElegirPar(i){ CMP.par = [i, i + 1]; cmpRender(); }
+
+/* ---------- Render ---------- */
+function cmpFecha(it){
+  var d = new Date(it.updated_at);
+  return d.toLocaleDateString('es-AR', { day:'2-digit', month:'short' }) + ' ' +
+         d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+}
+// Un valor cargado puede venir con cola de punto flotante (464.40000000000003)
+// si lo escribió un cálculo. Se muestra como número, no como string crudo.
+function cmpValor(v){
+  if(v == null || v === '') return '—';
+  var x = Number(String(v).replace(',', '.'));
+  if(!isFinite(x)) return escTxt(v);
+  var r = Math.round(x * 10000) / 10000;
+  return fm(r, (r % 1 === 0) ? 0 : String(r).split('.')[1].length);
+}
+
+function cmpDelta(v, dec){
+  return (v >= 0 ? '+' : '−') + fm(Math.abs(v), dec == null ? decMonto(v) : dec);
+}
+
+function cmpRender(){
+  var box = document.getElementById('cmp_body');
+  if(!box) return;
+  var its = CMP.items.map(function(it){
+    var lista = cmpTambosDe(it.datos || {});
+    return { it: it, lista: lista, m: cmpModeloDe(lista) };
+  });
+
+  var h = '';
+
+  // ── Avisos de comparabilidad ──
+  var avisos = [];
+  var tambos = its.map(function(x){ return x.lista.length; });
+  if(Math.min.apply(null, tambos) !== Math.max.apply(null, tambos)){
+    avisos.push('Los escenarios no tienen la misma cantidad de tambos (' + tambos.join(' vs ') + '). '
+      + 'Los totales se comparan igual porque son del conjunto, pero el puente de margen queda desactivado: '
+      + 'no se puede atribuir a un driver lo que en realidad es un tambo que está o no está.');
+  }
+  var dolar = its.map(function(x){ var p = Number(x.lista[0].precio_base) || 0; return p > 0 && p < 10; });
+  if(dolar.some(Boolean) && !dolar.every(Boolean)){
+    avisos.push('Hay escenarios cargados en pesos y otros en dólares. Los números no son comparables entre sí.');
+  }
+  if(avisos.length){
+    h += '<div class="cmp-avisos">' + avisos.map(function(a){ return '<div class="cmp-aviso">⚠ ' + a + '</div>'; }).join('') + '</div>';
+  }
+
+  // ── Cabecera: los números gruesos de cada escenario ──
+  var KPIS = [
+    { k:'margenMes',          n:'Margen mensual',   money:true },
+    { k:'margenLitro',        n:'Margen por litro', money:true },
+    { k:'costoLitro',         n:'Costo por litro',  money:true },
+    { k:'precioFinal',        n:'Precio final',     money:true },
+    { k:'litrosVendiblesMes', n:'Litros vendibles / mes', dec:0 },
+    { k:'litrosVaca',         n:'Litros por vaca y día',  dec:1 }
+  ];
+  h += '<div class="cmp-wrap"><table class="cmp-tabla"><thead><tr><th>Indicador</th>';
+  its.forEach(function(x, i){
+    h += '<th>' + escTxt(x.it.nombre) + '<small>' + cmpFecha(x.it)
+      +  (x.lista.length > 1 ? ' · ' + x.lista.length + ' tambos' : '') + '</small></th>';
+    if(i > 0) h += '<th class="cmp-dif">Δ</th>';
+  });
+  h += '</tr></thead><tbody>';
+  KPIS.forEach(function(kp){
+    h += '<tr><td class="cmp-nom">' + kp.n + '</td>';
+    its.forEach(function(x, i){
+      var v = x.m[kp.k] || 0;
+      h += '<td>' + (kp.money ? money(v) : fm(v, kp.dec)) + '</td>';
+      if(i > 0){
+        var prev = its[i-1].m[kp.k] || 0, d = v - prev;
+        var pct = prev !== 0 ? d / Math.abs(prev) * 100 : 0;
+        var cls = Math.abs(pct) < 0.05 ? '' : (d > 0 ? 'cmp-pos' : 'cmp-neg');
+        h += '<td class="cmp-dif ' + cls + '">' + cmpDelta(d, kp.money ? null : kp.dec)
+          +  '<small>' + cmpDelta(pct, 1) + '%</small></td>';
+      }
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // ── Selector de par cuando hay más de dos ──
+  if(its.length > 2){
+    h += '<div class="cmp-pares"><span class="k">Puente entre</span>';
+    for(var i = 0; i < its.length - 1; i++){
+      h += '<button type="button" class="' + (CMP.par[0] === i ? 'on' : '') + '" onclick="cmpElegirPar(' + i + ')">'
+        +  escTxt(its[i].it.nombre) + ' → ' + escTxt(its[i+1].it.nombre) + '</button>';
+    }
+    h += '</div>';
+  }
+
+  // ── El puente ──
+  var A = its[CMP.par[0]], B = its[CMP.par[1]];
+  if(A.lista.length !== B.lista.length){
+    h += '<div class="cmp-vacio">El puente necesita que los dos escenarios tengan la misma cantidad de tambos.</div>';
+  } else {
+    var p = cmpPuente(A.lista, B.lista);
+    h += '<div class="sec-lbl" style="margin-top:22px">De dónde sale la diferencia de margen</div>';
+    h += '<p class="cmp-expl">Cuánto aportó cada driver al pasar de <b>' + escTxt(A.it.nombre) + '</b> a <b>'
+      +  escTxt(B.it.nombre) + '</b>. Las contribuciones suman exactamente la diferencia total: '
+      +  'no dependen del orden en que se miren los drivers.</p>';
+
+    var filas = CMP_DRIVERS.map(function(d){ return { n:d.nombre, v:p.aporte[d.id] || 0 }; })
+                           .filter(function(f){ return Math.abs(f.v) > 0.5; })
+                           .sort(function(a, b){ return Math.abs(b.v) - Math.abs(a.v); });
+    var maxAbs = filas.length ? Math.max.apply(null, filas.map(function(f){ return Math.abs(f.v); })) : 1;
+
+    h += '<div class="cmp-puente">';
+    h += '<div class="cmp-pt-row cmp-pt-base"><span class="cmp-pt-nom">' + escTxt(A.it.nombre) + '</span>'
+      +  '<span class="cmp-pt-bar"></span><span class="cmp-pt-val">' + money(p.mA) + '</span></div>';
+    filas.forEach(function(f){
+      var w = Math.max(2, Math.abs(f.v) / maxAbs * 50);
+      h += '<div class="cmp-pt-row"><span class="cmp-pt-nom">' + f.n + '</span>'
+        +  '<span class="cmp-pt-bar"><i class="' + (f.v >= 0 ? 'pos' : 'neg') + '" style="'
+        +      (f.v >= 0 ? 'left:50%;' : 'right:50%;') + 'width:' + w + '%"></i></span>'
+        +  '<span class="cmp-pt-val ' + (f.v >= 0 ? 'cmp-pos' : 'cmp-neg') + '">' + cmpDelta(f.v) + '</span></div>';
+    });
+    if(!filas.length){
+      h += '<div class="cmp-pt-row"><span class="cmp-pt-nom">Sin diferencias de carga entre los dos</span>'
+        +  '<span class="cmp-pt-bar"></span><span class="cmp-pt-val">—</span></div>';
+    }
+    h += '<div class="cmp-pt-row cmp-pt-base"><span class="cmp-pt-nom">' + escTxt(B.it.nombre) + '</span>'
+      +  '<span class="cmp-pt-bar"></span><span class="cmp-pt-val">' + money(p.mB) + '</span></div>';
+    h += '</div>';
+    h += '<div class="cmp-chk">Suma de las contribuciones: <b>' + cmpDelta(p.total) + '</b>'
+      +  ' · diferencia real de margen: <b>' + cmpDelta(p.mB - p.mA) + '</b>'
+      +  ' · residuo ' + p.residuo.toExponential(1) + ' (' + p.evaluaciones + ' evaluaciones del modelo)</div>';
+  }
+
+  // ── Qué se cargó distinto ──
+  h += '<div class="sec-lbl" style="margin-top:22px">Qué se cargó distinto</div>';
+  var difs = [];
+  CMP_DRIVERS.forEach(function(d){
+    d.campos.forEach(function(f){
+      var va = A.lista[0][f], vb = B.lista[0][f];
+      if(va === undefined && vb === undefined) return;
+      if(String(va) !== String(vb)) difs.push({ g:d.nombre, f:f, a:va, b:vb });
+    });
+  });
+  if(!difs.length){
+    h += '<div class="cmp-vacio">Los dos escenarios tienen los mismos valores en todos los drivers del puente.</div>';
+  } else {
+    h += '<div class="cmp-wrap"><table class="cmp-tabla cmp-difs"><thead><tr><th>Driver</th><th>Campo</th>'
+      +  '<th>' + escTxt(A.it.nombre) + '</th><th>' + escTxt(B.it.nombre) + '</th></tr></thead><tbody>';
+    difs.forEach(function(x){
+      h += '<tr><td class="cmp-nom">' + x.g + '</td><td class="cmp-campo">' + x.f + '</td>'
+        +  '<td>' + cmpValor(x.a) + '</td><td>' + cmpValor(x.b) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    if(A.lista.length > 1){
+      h += '<div class="cmp-chk">El detalle de campos muestra el primer tambo de cada escenario; '
+        +  'el puente y los totales sí usan los ' + A.lista.length + ' tambos.</div>';
+    }
+  }
+  box.innerHTML = h;
+}
+
+
 async function cargarHistorial(){
   var listEl = document.getElementById('hist_list');
   listEl.innerHTML = '<div class="meta-note">Cargando...</div>';
@@ -1808,8 +2148,17 @@ async function cargarHistorial(){
       + '</div><div class="hist-actions">'
       + '<button class="btn btn-sm btn-primary" type="button" onclick="cargarAnalisis(\'' + item.id + '\')">Editar</button>'
       + '<button class="btn btn-sm btn-danger" type="button" onclick="eliminarAnalisis(\'' + item.id + '\')">Borrar</button>'
+      + '<label class="hist-chk" title="Marcar para comparar">'
+      +   '<input type="checkbox" onchange="cmpToggle(\'' + item.id + '\', this)"'
+      +   (CMP.sel.indexOf(item.id) >= 0 ? ' checked' : '') + '></label>'
       + '</div></div>';
   }).join('');
+  var btn = document.getElementById('cmp_btn');
+  if(btn){
+    btn.style.display = data.length > 1 ? '' : 'none';
+    btn.disabled = CMP.sel.length < 2;
+    btn.textContent = CMP.sel.length < 2 ? 'Comparar' : 'Comparar (' + CMP.sel.length + ')';
+  }
 }
 
 function cargarAnalisis(id){
@@ -2337,9 +2686,13 @@ function renderTambosLitros(){
 
 /* ---------- Consolidación ---------- */
 // Combina N tambos: suma de flujos + promedios ponderados por litros vendibles.
-function mtModeloConsolidado(adj){
+function mtModeloConsolidado(adj, listaDatos){
   adj = adj || { price:0, prod:0, cost:0 };
-  var modelos = MT.tambos.map(function(t){ return buildModelFromData(t.datos, adj); });
+  // Sin lista, consolida los tambos del panel. Con lista, consolida los datos
+  // que le pasen: así la comparación puede consolidar un escenario GUARDADO sin
+  // tocar lo que el productor tiene cargado en pantalla.
+  var fuentes = listaDatos || MT.tambos.map(function(t){ return t.datos; });
+  var modelos = fuentes.map(function(d){ return buildModelFromData(d, adj); });
 
   var sum = function(sel){ return modelos.reduce(function(a,m){ return a + (sel(m)||0); }, 0); };
   var litrosMesTot = sum(function(m){ return m.litrosVendiblesMes; });
