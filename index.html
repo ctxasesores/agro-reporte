@@ -2153,6 +2153,45 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               .rpz-aviso{margin-top:11px;padding:9px 11px;border-radius:9px;font-size:11px;line-height:1.55;
                 color:var(--txt-soft,#9fb2c4);background:rgba(0,0,0,.18);border-left:2px solid rgba(212,160,23,.5)}
               .rpz-aviso b{color:var(--txt,#e8eef5)}
+              .hm-box{margin:0 0 16px;padding:13px 14px;border-radius:12px;
+                background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1)}
+              .hm-cargando{padding:14px 0;font-size:11.5px;color:var(--txt-soft,#9fb2c4)}
+              .hm-resumen{margin-top:14px;font-size:11.5px;line-height:1.55;color:var(--txt-soft,#9fb2c4)}
+              .hm-resumen b{color:var(--txt,#e8eef5)}
+              .hm-leyenda{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:11px 0 12px}
+              .hm-leyenda .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+                color:var(--txt-soft,#9fb2c4);font-weight:700;margin-right:3px}
+              .hm-chip{padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap}
+              .hm-chip small{font-weight:400;opacity:.85}
+              .hm-wrap{overflow-x:auto;max-height:460px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+              .hm-tabla{width:100%;border-collapse:collapse;font-size:12px}
+              .hm-tabla th,.hm-tabla td{padding:5px 9px;border-bottom:1px solid rgba(255,255,255,.06);
+                text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+              .hm-tabla thead th{position:sticky;top:0;background:var(--negro-s,#1a3349);z-index:1;
+                font-size:9.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--txt-soft,#9fb2c4);
+                font-weight:700;vertical-align:bottom}
+              .hm-tabla thead th small{display:block;font-size:9px;font-weight:400;
+                text-transform:none;letter-spacing:0;opacity:.75}
+              .hm-tabla td.hm-dep,.hm-tabla td.hm-prov,.hm-tabla th:nth-child(2),.hm-tabla th:nth-child(3){text-align:left}
+              .hm-tabla td.hm-dep{font-weight:600;color:var(--txt,#e8eef5)}
+              .hm-tabla td.hm-prov{color:var(--txt-soft,#9fb2c4);font-size:11px}
+              .hm-rank{color:var(--txt-soft,#9fb2c4);font-size:10.5px;width:38px}
+              .hm-cv{text-align:right}
+              .hm-celda{display:inline-block;min-width:58px;padding:3px 8px;border-radius:6px;
+                font-weight:700;font-size:11.5px;text-align:center}
+              .hm-mio{background:rgba(212,160,23,.1)}
+              .hm-vista{display:inline-flex;gap:0;border:1px solid rgba(255,255,255,.16);border-radius:8px;overflow:hidden;align-self:flex-end}
+              .hm-vista button{background:transparent;border:none;color:var(--txt-soft,#9fb2c4);padding:7px 14px;
+                font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit}
+              .hm-vista button.on{background:rgba(212,160,23,.18);color:var(--oro-l,#e8c45a)}
+              .mp-wrap{margin-top:12px;background:rgba(0,0,0,.14);border-radius:10px;padding:8px}
+              .mp-svg{display:block;width:100%;height:auto}
+              .mp-svg path{transition:opacity .1s}
+              .mp-svg path:hover{opacity:.72;stroke:#e8c45a;stroke-width:1.1}
+              .mp-svg path.mp-mio{stroke:#e8c45a;stroke-width:1.3}
+              .hm-tag{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:99px;font-size:9px;
+                font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+                background:rgba(212,160,23,.2);color:var(--oro-l,#e8c45a)}
             </style>
             <datalist id="rp_cultivos_ar">
   <option value="Soja de primera"><option value="Soja de segunda">
@@ -2195,6 +2234,35 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
                 <b>tu</b> lote es mayor que la que vas a ver acá; y la serie no distingue maíz temprano de tardío,
                 todo entra como «Maíz». Donde tengas tus propios rindes, pisá la celda: el análisis mejora.
               </div>
+            </div>
+
+            <div class="hm-box">
+              <div class="rpz-tit">Mapa de calor del riesgo por departamento</div>
+              <p class="rpz-sub">Qué tan parejo rinde cada zona, ordenado del más estable al más errático.
+                Es el riesgo climático del lugar, el que no depende del manejo.</p>
+              <div class="rpz-fila">
+                <label>Cultivo
+                  <select id="hm_cult" onchange="hmRender()"></select>
+                </label>
+                <label>Ámbito
+                  <select id="hm_prov" onchange="hmRender()"></select>
+                </label>
+                <label>Campañas
+                  <select id="hm_camp" onchange="hmRender()">
+                    <option value="15" selected>Últimas 15</option>
+                    <option value="10">Últimas 10</option>
+                    <option value="20">Últimas 20</option>
+                    <option value="25">Últimas 25</option>
+                    <option value="35">Toda la serie</option>
+                  </select>
+                </label>
+                <button class="rp-btn rp-btn-ok" onclick="hmRender()">Ver</button>
+                <span class="hm-vista">
+                  <button type="button" id="hm_tab_tabla" class="on" onclick="hmVista('tabla')">Tabla</button>
+                  <button type="button" id="hm_tab_mapa" onclick="hmVista('mapa')">Mapa</button>
+                </span>
+              </div>
+              <div id="hm_body"></div>
             </div>
 
             <div class="rp-barra">
@@ -7290,7 +7358,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261014-1800';
+  var CTX_BUILD = '20261016-0005';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10335,6 +10403,320 @@ function rpMatrizCov(listaShocks){
    las medidas de cola se vuelven inestables.
    ============================================================ */
 
+/* ============================================================
+   MAPA DE CALOR DE RIESGO POR DEPARTAMENTO
+   ------------------------------------------------------------
+   Mientras no esté la geometría para el mapa real, la misma lectura
+   en tabla: los departamentos ordenados por variabilidad, pintados
+   con una escala común.
+
+   QUÉ SE PINTA Y POR QUÉ:
+   No el rinde. Un mapa de rindes redibuja el suelo y la lluvia, que
+   el productor ya conoce. Lo que nadie tiene a mano es el RIESGO: la
+   variabilidad del rinde del departamento. Medido sobre esta misma
+   base, va de 15% a 33% en soja y de 15% a 36% en maíz — un rango de
+   2,2 a 2,5 veces entre el más parejo y el más errático.
+
+   LA ESCALA:
+   Divergente azul↔rojo con el gris en la mediana, no verde↔rojo: el
+   par verde/rojo es justo el que no distingue un daltónico, y acá el
+   color ordena 300 celdas. Los cortes son FIJOS, no relativos a lo que
+   estás mirando: así el color significa lo mismo cambiando de cultivo
+   o de provincia, y filtrar no repinta lo que quedó. Salen de la
+   distribución real medida (p10 ≈ 15%, mediana ≈ 22%, p90 ≈ 34%, casi
+   idéntica en soja, maíz y trigo).
+   Además cada celda imprime su número: el color nunca es el único canal.
+   ============================================================ */
+
+/* ============================================================
+   MAPA — el mismo riesgo de la tabla, sobre los departamentos
+   ------------------------------------------------------------
+   Geometría: IGN vía georef (datos.gob.ar), simplificada con
+   topología compartida. Dos niveles de detalle, elegidos por el
+   píxel y no por el gusto: a 700 px de ancho, el país entra con un
+   píxel ≈ 5 km y una provincia con un píxel ≈ 1 km.
+
+   SVG propio, sin tiles ni librería: funciona sin señal dentro del
+   cache del service worker y no depende de que un proveedor de
+   mapas siga vivo. Misma escala, mismos cortes y mismos datos que
+   la tabla — lo único que cambia es que en vez de filas son
+   polígonos.
+   ============================================================ */
+
+var MAPA = { cache: {}, vista: 'tabla' };
+
+// El Ministerio todavía usa el código viejo de Chascomús; georef usa el nuevo.
+// Verificado: mismo nombre, misma provincia, y Lezama —el partido que se separó
+// de Chascomús— coincide en las dos fuentes.
+var GEO_ALIAS = { '06217': '06218' };
+function geoId(did){ return GEO_ALIAS[did] || did; }
+
+function mapaGeo(clave){
+  if(MAPA.cache[clave]) return Promise.resolve(MAPA.cache[clave]);
+  return fetch('/agro-reporte/datos/geo/' + clave + '.json', { cache:'force-cache' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){ if(j) MAPA.cache[clave] = j; return j; });
+}
+
+function hmVista(v){
+  MAPA.vista = v;
+  var t = document.getElementById('hm_tab_tabla'), m = document.getElementById('hm_tab_mapa');
+  if(t) t.className = (v === 'tabla' ? 'on' : '');
+  if(m) m.className = (v === 'mapa' ? 'on' : '');
+  hmRender();
+}
+
+/* ---------- Proyección ---------- */
+// Equirectangular con corrección por latitud. Argentina es mucho más larga de
+// norte a sur que de este a oeste: sin el coseno, el país sale aplastado.
+function mapaProyector(feats, ancho, altoMax){
+  var lo0 = 180, lo1 = -180, la0 = 90, la1 = -90;
+  feats.forEach(function(f){
+    mapaAnillos(f).forEach(function(r){
+      r.forEach(function(p){
+        if(p[0] < lo0) lo0 = p[0]; if(p[0] > lo1) lo1 = p[0];
+        if(p[1] < la0) la0 = p[1]; if(p[1] > la1) la1 = p[1];
+      });
+    });
+  });
+  var k = Math.cos((la0 + la1) / 2 * Math.PI / 180);
+  var x0 = lo0 * k, x1 = lo1 * k, y0 = -la1, y1 = -la0;
+  var esc = Math.min(ancho / (x1 - x0), altoMax / (y1 - y0));
+  var dx = (ancho - (x1 - x0) * esc) / 2;
+  return {
+    w: ancho, h: (y1 - y0) * esc,
+    px: function(p){ return [ (p[0]*k - x0)*esc + dx, (-p[1] - y0)*esc ]; }
+  };
+}
+function mapaAnillos(f){
+  var g = f.geometry;
+  if(!g) return [];
+  return g.type === 'Polygon' ? g.coordinates
+       : g.coordinates.reduce(function(a, p){ return a.concat(p); }, []);
+}
+function mapaPath(f, pr){
+  var g = f.geometry; if(!g) return '';
+  var polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+  var d = '';
+  polys.forEach(function(poly){
+    poly.forEach(function(r){
+      for(var i = 0; i < r.length; i++){
+        var q = pr.px(r[i]);
+        d += (i ? 'L' : 'M') + q[0].toFixed(1) + ',' + q[1].toFixed(1);
+      }
+      d += 'Z';
+    });
+  });
+  return d;
+}
+
+/* ---------- Render ---------- */
+function mapaRender(box, filas, cult, nCamp, pid){
+  var porId = {};
+  filas.forEach(function(f){ porId[geoId(f.did)] = f; });
+  var clave = pid || 'pais';
+
+  box.innerHTML = '<div class="hm-cargando">Dibujando el mapa…</div>';
+  mapaGeo(clave).then(function(geo){
+    if(!geo){ box.innerHTML = '<div class="rp-vacio">No se pudo traer la geometría.</div>'; return; }
+    var ancho = Math.max(320, Math.min(760, (box.clientWidth || 700) - 4));
+    // El encuadre se calcula SOLO con los departamentos que tienen dato. Si se
+    // usaran todos, la Antártida y las islas del Atlántico Sur estiran el mapa
+    // y el área agrícola queda del tamaño de una estampilla. Lo que caiga fuera
+    // del encuadre se dibuja igual y lo recorta el viewBox.
+    var marco = geo.features.filter(function(f){ return porId[f.properties.id]; });
+    if(marco.length < 3) marco = geo.features;
+    var pr = mapaProyector(marco, ancho, pid ? 620 : 900);
+    var elegido = document.getElementById('rpz_dep') ? geoId(document.getElementById('rpz_dep').value) : '';
+
+    var conDato = 0, paths = '';
+    geo.features.forEach(function(f){
+      var id = f.properties.id, d = porId[id];
+      var nom = f.properties.n || (d ? d.dep : id);
+      var fill, titulo;
+      if(d){
+        conDato++;
+        var b = hmBanda(d.cv);
+        fill = b.c;
+        titulo = nom + ' · ' + b.n + ' · ' + rpFmt(d.cv*100,1) + '% de variabilidad · '
+               + rpFmt(d.media/100,1) + ' qq/ha de media en ' + d.n + ' campañas';
+      } else {
+        fill = 'rgba(255,255,255,.055)';
+        titulo = nom + ' · sin datos de ' + cult;
+      }
+      paths += '<path d="' + mapaPath(f, pr) + '" fill="' + fill + '" fill-rule="evenodd"'
+            +  (id === elegido ? ' class="mp-mio"' : '')
+            +  '><title>' + titulo + '</title></path>';
+    });
+
+    var h = '<div class="mp-wrap"><svg viewBox="0 0 ' + pr.w + ' ' + pr.h.toFixed(0) + '" '
+          + 'width="100%" preserveAspectRatio="xMidYMid meet" class="mp-svg">'
+          + 'style="overflow:hidden">'
+          + '<g stroke="rgba(13,32,53,.75)" stroke-width="0.4">' + paths + '</g></svg></div>';
+    h += '<div class="rp-glosario">' + conDato + ' de ' + geo.features.length
+      +  ' departamentos tienen 8 o más campañas de <b>' + cult + '</b> en las últimas ' + nCamp
+      +  '; los grises no. Pasá el mouse por encima para ver el número de cada uno. '
+      +  'Son promedios del departamento: tu lote varía más que esto.</div>';
+    box.insertAdjacentHTML('beforeend', h);
+    box.querySelector('.hm-cargando').remove();
+  });
+}
+
+
+var HM = { cache: {}, cargando: false };
+
+// Cortes fijos de variabilidad y su paso de color. Brazo frío = más parejo que
+// la mediana, brazo cálido = más errático. El centro recede contra el fondo.
+var HM_BANDAS = [
+  { max: 0.15, c:'#86b6ef', t:'#0d2035', n:'Muy estable' },
+  { max: 0.19, c:'#3d86c6', t:'#0d2035', n:'Estable' },
+  { max: 0.22, c:'#2a5e8f', t:'#e8eef5', n:'Algo más parejo' },
+  { max: 0.26, c:'#35485c', t:'#e8eef5', n:'En la media' },
+  { max: 0.31, c:'#8c3f28', t:'#e8eef5', n:'Inestable' },
+  { max: 0.38, c:'#c45a33', t:'#0d2035', n:'Muy inestable' },
+  { max: 99,   c:'#ef9a74', t:'#0d2035', n:'Extremo' }
+];
+function hmBanda(cv){
+  for(var i = 0; i < HM_BANDAS.length; i++) if(cv < HM_BANDAS[i].max) return HM_BANDAS[i];
+  return HM_BANDAS[HM_BANDAS.length - 1];
+}
+
+/* ---------- Estadística ---------- */
+function hmMedia(xs){ return xs.reduce(function(a,b){ return a+b; }, 0) / xs.length; }
+function hmCV(xs){
+  if(xs.length < 8) return null;
+  var m = hmMedia(xs);
+  if(!m) return null;
+  var s = xs.reduce(function(a,x){ return a + (x-m)*(x-m); }, 0) / (xs.length - 1);
+  return Math.sqrt(s) / m;
+}
+
+/* ---------- Datos ---------- */
+// Una provincia se baja una sola vez por sesión.
+function hmProvincia(pid){
+  if(HM.cache[pid]) return Promise.resolve(HM.cache[pid]);
+  return fetch('/agro-reporte/datos/rindes/' + pid + '.json', { cache:'force-cache' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){ if(j) HM.cache[pid] = j; return j; });
+}
+
+function hmInit(){
+  var sel = document.getElementById('hm_prov');
+  if(!sel || !RPZ.index || sel.dataset.listo) return;
+  var h = '<option value="">Todo el país</option>';
+  RPZ.index.provincias.forEach(function(p){ h += '<option value="' + p.id + '">' + p.n + '</option>'; });
+  sel.innerHTML = h;
+  sel.dataset.listo = '1';
+  // El cultivo sale del catálogo nacional, no de una provincia suelta.
+  var sc = document.getElementById('hm_cult');
+  if(sc && !sc.dataset.listo){
+    ['Soja 1ra','Maíz','Trigo','Girasol','Sorgo','Soja 2da','Cebada cervecera','Avena','Centeno','Maní','Sorgo']
+      .filter(function(v,i,a){ return a.indexOf(v) === i; })
+      .forEach(function(c){ sc.innerHTML += '<option value="' + c + '">' + c + '</option>'; });
+    sc.dataset.listo = '1';
+  }
+}
+
+function hmRender(){
+  var box = document.getElementById('hm_body');
+  if(!box) return;
+  hmInit();
+  var cult = document.getElementById('hm_cult').value;
+  var pid  = document.getElementById('hm_prov').value;
+  var nCamp = parseInt(document.getElementById('hm_camp').value, 10) || 15;
+  var ids = pid ? [pid] : RPZ.index.provincias.map(function(p){ return p.id; });
+
+  box.innerHTML = '<div class="hm-cargando">Calculando…</div>';
+  HM.cargando = true;
+  Promise.all(ids.map(hmProvincia)).then(function(provs){
+    HM.cargando = false;
+    var filas = [];
+    provs.filter(Boolean).forEach(function(j){
+      var ci = j.c.indexOf(cult);
+      if(ci < 0) return;
+      var desde = Math.max(0, j.k.length - nCamp);
+      Object.keys(j.d).forEach(function(did){
+        var s = j.d[did].s[String(ci)];
+        if(!s) return;
+        var serie = s.slice(desde).filter(function(x){ return x > 0; });
+        var cv = hmCV(serie);
+        if(cv == null) return;
+        // "sin definir" es el cajón de sastre del Ministerio para la producción
+        // que no se asignó a ningún departamento: no es un lugar y no se mapea.
+        if(/^sin definir$/i.test((j.d[did].n || '').trim())) return;
+        var media = hmMedia(serie);
+        var peor = Math.min.apply(null, serie);
+        filas.push({ prov:j.p, dep:j.d[did].n, did:did, n:serie.length,
+                     cv:cv, media:media, peor: peor/media - 1 });
+      });
+    });
+
+    if(!filas.length){
+      box.innerHTML = '<div class="rp-vacio">No hay departamentos con al menos 8 campañas de ' + cult
+        + ' en la ventana elegida.</div>';
+      return;
+    }
+    filas.sort(function(a,b){ return a.cv - b.cv; });
+    var cvs = filas.map(function(f){ return f.cv; }).sort(function(a,b){ return a-b; });
+    var mediana = cvs[Math.floor(cvs.length/2)];
+    var elegido = (RPZ.prov && document.getElementById('rpz_dep')) ? document.getElementById('rpz_dep').value : '';
+
+    var h = '<div class="hm-resumen">' + filas.length + ' departamentos con 8 o más campañas de <b>' + cult
+      + '</b> en las últimas ' + nCamp + '. Variabilidad mediana <b>' + rpFmt(mediana*100,1) + '%</b>, '
+      + 'del <b>' + rpFmt(cvs[0]*100,1) + '%</b> al <b>' + rpFmt(cvs[cvs.length-1]*100,1) + '%</b>.</div>';
+
+    // Leyenda: el color nunca va solo, y acá dice qué significa cada paso.
+    h += '<div class="hm-leyenda"><span class="k">Variabilidad del rinde</span>';
+    HM_BANDAS.forEach(function(b, i){
+      var desde = i === 0 ? 0 : HM_BANDAS[i-1].max;
+      h += '<span class="hm-chip" style="background:' + b.c + ';color:' + b.t + '">'
+        +  b.n + ' <small>' + (i === 0 ? '<' + Math.round(b.max*100)
+             : (i === HM_BANDAS.length-1 ? '≥' + Math.round(desde*100)
+                : Math.round(desde*100) + '–' + Math.round(b.max*100))) + '%</small></span>';
+    });
+    h += '</div>';
+
+    if(MAPA.vista === 'mapa'){
+      box.innerHTML = h;
+      var cont = document.createElement('div');
+      box.appendChild(cont);
+      mapaRender(cont, filas, cult, nCamp, pid);
+      return;
+    }
+
+    h += '<div class="hm-wrap"><table class="hm-tabla"><thead><tr>'
+      +  '<th class="hm-rank">#</th><th>Departamento</th><th>Provincia</th>'
+      +  '<th>Campañas</th><th>Rinde medio<br><small>qq/ha</small></th>'
+      +  '<th>Peor campaña<br><small>vs su media</small></th>'
+      +  '<th class="hm-cv">Variabilidad</th></tr></thead><tbody>';
+    filas.forEach(function(f, i){
+      var b = hmBanda(f.cv);
+      var mio = (f.did === elegido) ? ' hm-mio' : '';
+      h += '<tr class="' + mio + '">'
+        +  '<td class="hm-rank">' + (i+1) + '</td>'
+        +  '<td class="hm-dep">' + f.dep + (mio ? '<span class="hm-tag">tu zona</span>' : '') + '</td>'
+        +  '<td class="hm-prov">' + f.prov + '</td>'
+        +  '<td>' + f.n + '</td>'
+        +  '<td>' + rpFmt(f.media/100, 1) + '</td>'
+        +  '<td class="' + (f.peor < -0.4 ? 'rp-neg' : '') + '">' + rpFmt(f.peor*100, 0) + '%</td>'
+        +  '<td class="hm-cv"><span class="hm-celda" style="background:' + b.c + ';color:' + b.t + '"'
+        +     ' title="' + f.dep + ' · ' + b.n + ' · ' + rpFmt(f.cv*100,1) + '% de variabilidad sobre '
+        +     f.n + ' campañas">' + rpFmt(f.cv*100, 1) + '%</span></td>'
+        +  '</tr>';
+    });
+    h += '</tbody></table></div>';
+    h += '<div class="rp-glosario">Ordenado del más parejo al más errático. <b>Variabilidad</b> es el desvío '
+      + 'del rinde sobre su propia media: no mide si rinde mucho, mide si rinde parecido todos los años. '
+      + 'Los cortes de color son fijos, así que el mismo color significa lo mismo cambiando de cultivo o de '
+      + 'provincia. Son promedios del departamento: tu lote varía más que esto.</div>';
+    box.innerHTML = h;
+  }).catch(function(){
+    HM.cargando = false;
+    box.innerHTML = '<div class="rp-vacio">No se pudieron traer los datos de rindes.</div>';
+  });
+}
+
+
 var RPZ = { index: null, prov: null, cargando: false };
 
 function rpzEl(id){ return document.getElementById(id); }
@@ -10357,6 +10739,7 @@ function rpzInit(){
       RPZ.cargando = false;
       if(!j || !j.provincias) { rpzEstado('No se pudo leer el catálogo de provincias.', 'err'); return; }
       RPZ.index = j;
+      if(typeof hmInit === 'function') hmInit();
       var sel = rpzEl('rpz_prov');
       if(!sel) return;
       var h = '<option value="">Elegí la provincia…</option>';
