@@ -324,9 +324,9 @@ input[type=number]:focus,input[type=text]:focus,select:focus{
 label .u{margin-left:4px}
 
 /* ---- Filas de costos con unidad y destino (punto 2 y 4a) ---- */
-.cost-head{display:grid;grid-template-columns:1.1fr 1.5fr .9fr 1.1fr;gap:10px;padding:0 2px 6px;
+.cost-head{display:grid;grid-template-columns:1.1fr 1.5fr 1.2fr;gap:10px;padding:0 2px 6px;
   font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-soft,#9fb2c4);opacity:.7;font-weight:700}
-.cost-row{display:grid;grid-template-columns:1.1fr 1.5fr .9fr 1.1fr;gap:10px;align-items:center;
+.cost-row{display:grid;grid-template-columns:1.1fr 1.5fr 1.2fr;gap:10px;align-items:center;
   padding:7px 2px;border-bottom:1px solid rgba(255,255,255,.06)}
 .cost-label{font-size:13px;font-weight:600}
 .cost-inputs{display:flex;gap:6px}
@@ -337,7 +337,39 @@ label .u{margin-left:4px}
    lugar al campo de carga de ESA fila y la desalinea del resto. Dejandolo partir en
    dos lineas, las cuatro columnas mantienen su proporcion en todas las filas. */
 .cost-derived{font-size:12px;color:var(--oro-l,#e8c45a);font-variant-numeric:tabular-nums;white-space:normal;min-width:0}
-.cost-dest{font-size:11.5px;min-width:0}
+/* ---- Costos compartidos de la empresa (nivel escenario) ---- */
+.cmp-desc{font-size:12.5px;color:var(--txt-soft,#9fb2c4);line-height:1.5;margin:0 0 12px}
+.cmp-linea{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;margin-bottom:10px;
+  background:rgba(255,255,255,.022)}
+.cmp-hdr{display:grid;grid-template-columns:1.5fr 1.15fr .95fr 1fr 28px;gap:8px;
+  font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-soft,#9fb2c4);padding:0 2px 4px}
+.cmp-grid{display:grid;grid-template-columns:1.5fr 1.15fr .95fr 1fr 28px;gap:8px;align-items:center}
+.cmp-grid input,.cmp-grid select{padding:6px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);
+  background:var(--negro-b,#0d2035);color:inherit;font-size:13px;min-width:0;width:100%}
+.cmp-grid input[type=number]{font-variant-numeric:tabular-nums}
+.cmp-del{background:transparent;border:none;color:#e06060;font-size:18px;cursor:pointer;line-height:1;padding:0}
+.cmp-pesos{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:10px;padding-top:9px;
+  border-top:1px dashed rgba(255,255,255,.12)}
+.cmp-peso{display:flex;align-items:center;gap:6px;font-size:12px}
+.cmp-peso input{width:64px;padding:5px 7px;border-radius:7px;border:1px solid rgba(255,255,255,.15);
+  background:var(--negro-b,#0d2035);color:inherit;font-size:12.5px;font-variant-numeric:tabular-nums}
+.cmp-suma{font-size:11.5px;font-variant-numeric:tabular-nums;font-weight:600}
+.cmp-suma.ok{color:var(--verde-l,#35c694)}
+.cmp-suma.mal{color:#e06060}
+.cmp-rep{margin-top:9px;font-size:12px;color:var(--txt-soft,#9fb2c4);font-variant-numeric:tabular-nums;line-height:1.75}
+.cmp-rep b{color:var(--oro-l,#f0ca60);font-weight:600}
+.cmp-rep .cmp-t{color:inherit;font-weight:600}
+.cmp-add{padding:7px 12px;border-radius:8px;border:1px dashed rgba(255,255,255,.25);background:transparent;
+  color:var(--oro-l,#f0ca60);font-size:13px;cursor:pointer;font-weight:600}
+.cmp-empty{font-size:12.5px;color:var(--txt-soft,#9fb2c4);font-style:italic;padding:4px 2px 12px}
+.cmp-aviso{font-size:12px;color:#e06060;margin-top:8px}
+/* Marca en la fila de costo del tambo: parte del rubro viene de compartidos. */
+.cost-comp{font-size:11px;color:var(--oro-l,#f0ca60);opacity:.85;display:block;margin-top:2px}
+@media(max-width:720px){
+  .cmp-hdr{display:none}
+  .cmp-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .cmp-grid .cmp-del{grid-column:1/-1;justify-self:end}
+}
 @media(max-width:640px){
   .cost-head{display:none}
   .cost-row{grid-template-columns:1fr 1fr;gap:6px}
@@ -687,18 +719,36 @@ label .u{margin-left:4px}
           </div>
           <div class="fields" id="acc-costos">
             <button type="button" class="subcat-btn" onclick="subcatAbrir()">⚙ Administrar subcategorías de costos</button>
-            <div class="cost-head"><span>Rubro</span><span>Valor y unidad</span><span>Equivale</span><span>Destino</span></div>
-            <div class="cost-row" data-cost="c_alim"><label class="cost-label">Alimentación</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_alim_entry" value="205" step="any" min="0" oninput="costRecalc('c_alim')"><select class="cost-unit" id="c_alim_unit" onchange="costRecalc('c_alim')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_alim_derived">= 205 $/L</div><select class="cost-dest" id="c_alim_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_alim" value="205"></div>
-            <div class="cost-row" data-cost="c_insumos"><label class="cost-label">Insumos y servicios agrícolas</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_insumos_entry" value="0" step="any" min="0" oninput="costRecalc('c_insumos')"><select class="cost-unit" id="c_insumos_unit" onchange="costRecalc('c_insumos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_insumos_derived">= 0 $/L</div><select class="cost-dest" id="c_insumos_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_insumos" value="0"></div>
-            <div class="cost-row" data-cost="c_personal"><label class="cost-label">Personal</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_personal_entry" value="54" step="any" min="0" oninput="costRecalc('c_personal')"><select class="cost-unit" id="c_personal_unit" onchange="costRecalc('c_personal')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_personal_derived">= 54 $/L</div><select class="cost-dest" id="c_personal_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_personal" value="54"></div>
-            <div class="cost-row" data-cost="c_sanidad"><label class="cost-label">Sanidad</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_sanidad_entry" value="14" step="any" min="0" oninput="costRecalc('c_sanidad')"><select class="cost-unit" id="c_sanidad_unit" onchange="costRecalc('c_sanidad')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_sanidad_derived">= 14 $/L</div><select class="cost-dest" id="c_sanidad_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_sanidad" value="14"></div>
-            <div class="cost-row" data-cost="c_repro"><label class="cost-label">Reproducción</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_repro_entry" value="10" step="any" min="0" oninput="costRecalc('c_repro')"><select class="cost-unit" id="c_repro_unit" onchange="costRecalc('c_repro')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_repro_derived">= 10 $/L</div><select class="cost-dest" id="c_repro_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_repro" value="10"></div>
-            <div class="cost-row" data-cost="c_energia"><label class="cost-label">Energía y frío</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_energia_entry" value="11" step="any" min="0" oninput="costRecalc('c_energia')"><select class="cost-unit" id="c_energia_unit" onchange="costRecalc('c_energia')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_energia_derived">= 11 $/L</div><select class="cost-dest" id="c_energia_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_energia" value="11"></div>
-            <div class="cost-row" data-cost="c_estructura"><label class="cost-label">Estructura</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_estructura_entry" value="26" step="any" min="0" oninput="costRecalc('c_estructura')"><select class="cost-unit" id="c_estructura_unit" onchange="costRecalc('c_estructura')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_estructura_derived">= 26 $/L</div><select class="cost-dest" id="c_estructura_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_estructura" value="26"></div>
-            <div class="cost-row" data-cost="c_recria"><label class="cost-label">Reposición / recría</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_recria_entry" value="19" step="any" min="0" oninput="costRecalc('c_recria')"><select class="cost-unit" id="c_recria_unit" onchange="costRecalc('c_recria')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_recria_derived">= 19 $/L</div><select class="cost-dest" id="c_recria_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_recria" value="19"></div>
-            <div class="cost-row" data-cost="c_impuestos"><label class="cost-label">Impuestos y otros</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_impuestos_entry" value="12" step="any" min="0" oninput="costRecalc('c_impuestos')"><select class="cost-unit" id="c_impuestos_unit" onchange="costRecalc('c_impuestos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_impuestos_derived">= 12 $/L</div><select class="cost-dest" id="c_impuestos_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_impuestos" value="12"></div>
+            <div class="cost-head"><span>Rubro</span><span>Valor y unidad</span><span>Equivale</span></div>
+            <div class="cost-row" data-cost="c_alim"><label class="cost-label">Alimentación</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_alim_entry" value="205" step="any" min="0" oninput="costRecalc('c_alim')"><select class="cost-unit" id="c_alim_unit" onchange="costRecalc('c_alim')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_alim_derived">= 205 $/L</div><input type="hidden" id="c_alim" value="205"></div>
+            <div class="cost-row" data-cost="c_insumos"><label class="cost-label">Insumos y servicios agrícolas</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_insumos_entry" value="0" step="any" min="0" oninput="costRecalc('c_insumos')"><select class="cost-unit" id="c_insumos_unit" onchange="costRecalc('c_insumos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_insumos_derived">= 0 $/L</div><input type="hidden" id="c_insumos" value="0"></div>
+            <div class="cost-row" data-cost="c_personal"><label class="cost-label">Personal</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_personal_entry" value="54" step="any" min="0" oninput="costRecalc('c_personal')"><select class="cost-unit" id="c_personal_unit" onchange="costRecalc('c_personal')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_personal_derived">= 54 $/L</div><input type="hidden" id="c_personal" value="54"></div>
+            <div class="cost-row" data-cost="c_sanidad"><label class="cost-label">Sanidad</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_sanidad_entry" value="14" step="any" min="0" oninput="costRecalc('c_sanidad')"><select class="cost-unit" id="c_sanidad_unit" onchange="costRecalc('c_sanidad')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_sanidad_derived">= 14 $/L</div><input type="hidden" id="c_sanidad" value="14"></div>
+            <div class="cost-row" data-cost="c_repro"><label class="cost-label">Reproducción</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_repro_entry" value="10" step="any" min="0" oninput="costRecalc('c_repro')"><select class="cost-unit" id="c_repro_unit" onchange="costRecalc('c_repro')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_repro_derived">= 10 $/L</div><input type="hidden" id="c_repro" value="10"></div>
+            <div class="cost-row" data-cost="c_energia"><label class="cost-label">Energía y frío</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_energia_entry" value="11" step="any" min="0" oninput="costRecalc('c_energia')"><select class="cost-unit" id="c_energia_unit" onchange="costRecalc('c_energia')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_energia_derived">= 11 $/L</div><input type="hidden" id="c_energia" value="11"></div>
+            <div class="cost-row" data-cost="c_estructura"><label class="cost-label">Estructura</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_estructura_entry" value="26" step="any" min="0" oninput="costRecalc('c_estructura')"><select class="cost-unit" id="c_estructura_unit" onchange="costRecalc('c_estructura')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_estructura_derived">= 26 $/L</div><input type="hidden" id="c_estructura" value="26"></div>
+            <div class="cost-row" data-cost="c_recria"><label class="cost-label">Reposición / recría</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_recria_entry" value="19" step="any" min="0" oninput="costRecalc('c_recria')"><select class="cost-unit" id="c_recria_unit" onchange="costRecalc('c_recria')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_recria_derived">= 19 $/L</div><input type="hidden" id="c_recria" value="19"></div>
+            <div class="cost-row" data-cost="c_impuestos"><label class="cost-label">Impuestos y otros</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_impuestos_entry" value="12" step="any" min="0" oninput="costRecalc('c_impuestos')"><select class="cost-unit" id="c_impuestos_unit" onchange="costRecalc('c_impuestos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_impuestos_derived">= 12 $/L</div><input type="hidden" id="c_impuestos" value="12"></div>
 
             <div class="info-box">La referencia rapida queda en costo total por litro, peso de alimentacion y eficiencia litros/kg MS.</div>
+          </div>
+        </section>
+
+        <section class="card" id="card_compartidos" style="display:none">
+          <div class="card-hdr" onclick="toggleAcc('acc-compartidos','icon-compartidos')">
+            <div>
+              <div class="card-title">Costos compartidos de la empresa</div>
+              <div class="card-sub">Lo que no es de ningun tambo: se carga una vez y se reparte.</div>
+            </div>
+            <span class="acc-icon" id="icon-compartidos" style="transform:rotate(180deg)">▼</span>
+          </div>
+          <div class="fields" id="acc-compartidos">
+            <p class="cmp-desc">Un costo indivisible —el contratista de labores, la administracion, un asesor— no pertenece
+              a ningun tambo. Se carga <b>una sola vez aca</b>, por el total mensual de la empresa, y el panel lo reparte
+              entre los tambos. En cada tambo se suma al rubro que elijas, asi la estructura de costos sigue siendo
+              comparable. Lo que carges adentro de un tambo sigue siendo solo de ese tambo.</p>
+            <div id="comp_body"></div>
+            <button type="button" class="cmp-add" onclick="compAgregar()">+ Agregar costo compartido</button>
           </div>
         </section>
 
@@ -1364,6 +1414,10 @@ function serializeForm(){
     };
   });
   data._costMeta = costMeta;
+  // Lo que le toca a ESTE tambo de los costos compartidos de la empresa. Es un
+  // derivado del bloque de compartidos y de los litros de todos los tambos, no un
+  // dato cargado: se recalcula en cada serializacion y nunca se lee de vuelta.
+  data._comp = compParaActivo(data);
   return data;
 }
 
@@ -1891,10 +1945,16 @@ var CMP_DRIVERS = [
 /* ---------- Modelo de un escenario guardado ---------- */
 // Un escenario puede tener varios tambos. Lo que se compara es el conjunto.
 function cmpTambosDe(datos){
+  // Cada escenario reparte con SUS propios compartidos, no con los del panel.
+  var items = (datos && datos._compartidos && Array.isArray(datos._compartidos.items))
+            ? datos._compartidos.items : [];
+  var lista;
   if(datos && datos._mt && Array.isArray(datos._mt.tambos) && datos._mt.tambos.length){
-    return datos._mt.tambos.map(function(t){ return t.datos || {}; });
+    lista = datos._mt.tambos.map(function(t){ return { id: t.id, datos: t.datos || {} }; });
+  } else {
+    lista = [{ id: 't1', datos: datos || {} }];
   }
-  return [datos || {}];
+  return compEstampar(lista, items).map(function(t){ return t.datos; });
 }
 function cmpModeloDe(lista){
   var cero = { price:0, prod:0, cost:0 };
@@ -2180,6 +2240,9 @@ function cargarAnalisis(id){
   currentClienteId = item.cliente_id || currentClienteId;
   currentClienteNombre = item.cliente_nombre || currentClienteNombre;
   document.getElementById('report_cliente_nombre').textContent = currentClienteNombre;
+  // Los compartidos van PRIMERO: el reparto tiene que existir antes de que se
+  // restauren los tambos y se deserialice el formulario, que ya renderizan.
+  compRestaurar(item.datos || {});
   if(mtActivo()){
     mtRestaurarDesdeDatos(item.datos || {});
     var act = MT.tambos.find(function(x){ return x.id === MT.activo; }) || MT.tambos[0];
@@ -2293,6 +2356,20 @@ function buildModelFromData(data, adj){
     'Impuestos y otros': numberFromRecord(data, 'c_impuestos') * costAdj + numberFromRecord(data, 'sys_cama_efluentes')
   };
 
+  // Costos compartidos de la empresa. El reparto ya viene resuelto en $/litro de
+  // ESTE tambo (compReparto lo calcula contra los litros de todos), asi que aca
+  // solo se suma al rubro elegido: la estructura de costos sigue significando lo
+  // mismo y se puede seguir comparando contra las referencias de cuenca.
+  // Sin bloque de compartidos no hay _comp y no se suma nada, de modo que un
+  // escenario guardado antes de esto da exactamente el mismo costo por litro.
+  var comp = (data && data._comp) || null;
+  if(comp){
+    Object.keys(comp).forEach(function(cid){
+      var k = COST_LABEL[cid];
+      if(k && costos[k] !== undefined) costos[k] += numberFromRecord(comp, cid) * costAdj;
+    });
+  }
+
   var costoLitro = Object.values(costos).reduce(function(acc, item){ return acc + item; }, 0);
   var ingresoMes = litrosVendiblesMes * precioFinal;
   var egresoMes = litrosVendiblesMes * costoLitro;
@@ -2387,6 +2464,22 @@ function mtDatosParaGuardar(){
   datos._subsens = (typeof subsensParaGuardar==='function') ? subsensParaGuardar() : {};
   // La serie de controles es del conjunto, no de un tambo: va al nivel del escenario.
   if(typeof estParaGuardar === 'function') datos._serie = estParaGuardar();
+  // Los compartidos son de la empresa, no de un tambo: van al nivel del escenario,
+  // igual que la serie de controles.
+  if(typeof compParaGuardar === 'function') datos._compartidos = compParaGuardar();
+  // El reparto (_comp) es un derivado de esas lineas y de los litros de cada tambo:
+  // se recalcula siempre al leer, asi que no se guarda. Guardarlo invitaria a que
+  // alguna vez se lea como si fuera un dato cargado.
+  // Sobre COPIAS: _mt.tambos[].datos apunta al estado vivo del panel y borrar ahi
+  // dejaria a los tambos sin su reparto hasta el proximo recalculo.
+  delete datos._comp;
+  if(datos._mt && Array.isArray(datos._mt.tambos)){
+    datos._mt.tambos = datos._mt.tambos.map(function(t){
+      var d = Object.assign({}, t.datos || {});
+      delete d._comp;
+      return { id: t.id, nombre: t.nombre, datos: d };
+    });
+  }
   if(mtActivo() && MT.tambos.length){
     datos._mt = {
       version: 1,
@@ -2589,6 +2682,9 @@ function mtRenderBarra(){
   html += '</div>';
   cont.innerHTML = html;
   if(typeof estSync === 'function') estSync();   // la grilla sigue a los tambos
+  // El bloque de compartidos tambien: cambia la lista de tambos, cambia el reparto
+  // y cambian los nombres y las casillas de porcentaje manual.
+  if(typeof compRender === 'function') compRender();
 }
 
 /* ------------------------------------------------------------
@@ -2601,9 +2697,15 @@ function mtRenderBarra(){
 function mtListaModelos(){
   if(!mtActivo() || !MT.tambos.length) return [];
   var cero = { price:0, prod:0, cost:0 };
-  return MT.tambos.map(function(t){
-    var datos = (t.id === MT.activo) ? serializeForm() : t.datos;
-    return { id:t.id, nombre:t.nombre || 'Tambo', model: buildModelFromData(datos, cero) };
+  var lista = MT.tambos.map(function(t){
+    return { id:t.id, nombre:t.nombre || 'Tambo',
+             datos: (t.id === MT.activo) ? serializeForm() : t.datos };
+  });
+  // El reparto de compartidos se estampa sobre esta misma foto, con el tambo en
+  // edicion tomado del formulario: asi los N tambos reparten contra los mismos
+  // litros y la suma de las partes cierra contra el total cargado.
+  return compEstampar(lista, COMP.items).map(function(t){
+    return { id:t.id, nombre:t.nombre, model: buildModelFromData(t.datos, cero) };
   });
 }
 
@@ -2703,7 +2805,13 @@ function mtModeloConsolidado(adj, listaDatos){
   // Sin lista, consolida los tambos del panel. Con lista, consolida los datos
   // que le pasen: así la comparación puede consolidar un escenario GUARDADO sin
   // tocar lo que el productor tiene cargado en pantalla.
-  var fuentes = listaDatos || MT.tambos.map(function(t){ return t.datos; });
+  // Con lista, los registros ya vienen con su reparto estampado (cmpTambosDe lo
+  // hace con los compartidos de ESE escenario). Sin lista, se estampa aca sobre
+  // los tambos del panel.
+  var fuentes = listaDatos || compEstampar(
+        MT.tambos.map(function(t){ return { id:t.id, nombre:t.nombre, datos:t.datos }; }),
+        COMP.items
+      ).map(function(t){ return t.datos; });
   var modelos = fuentes.map(function(d){ return buildModelFromData(d, adj); });
 
   var sum = function(sel){ return modelos.reduce(function(a,m){ return a + (sel(m)||0); }, 0); };
@@ -2807,6 +2915,7 @@ function mtRenderConsolidado(){
   renderScenarios(base, pes, opt);
   renderSubsens(base);
   renderCosts(base);
+  compMarcarFilas();
   renderBenchmarks(base);
   renderActions(base);
   renderSummary(base);
@@ -2915,6 +3024,333 @@ var COST_CATS = [
   {id:'c_repro',     nombre:'Reproducción'},
   {id:'c_energia',   nombre:'Energía y frío'}
 ];
+
+// Puente entre el id del campo (c_alim) y la clave con la que el rubro vive dentro
+// del objeto `costos` del modelo, que es ademas el rotulo que se ve en la barra.
+// Hasta ahora esa correspondencia estaba implicita en buildModelFromData; los
+// compartidos necesitan resolverla explicitamente para saber a que rubro imputar.
+var COST_LABEL = {
+  c_alim:'Alimentacion',   c_insumos:'Insumos y servicios agricolas',
+  c_personal:'Personal',   c_sanidad:'Sanidad',
+  c_repro:'Reproduccion',  c_energia:'Energia y frio',
+  c_estructura:'Estructura', c_recria:'Reposicion / recria',
+  c_impuestos:'Impuestos y otros'
+};
+
+
+/* ============================================================
+   COSTOS COMPARTIDOS DE LA EMPRESA (solo PRO)
+   ------------------------------------------------------------
+   Un costo indivisible —el contratista de labores, la administracion,
+   un asesor— no es de ningun tambo: es de la empresa. Por eso NO vive
+   adentro de un tambo sino al nivel del escenario, en COMP.items, y se
+   guarda en datos._compartidos.
+
+   POR QUE ACA Y NO ADENTRO DE UN TAMBO:
+   Si el monto se cargara en un tambo y se repartiera desde ahi, la misma
+   casilla significaria el total de la empresa en una pestaña y la parte
+   que toca en las otras. Peor: las subcategorias son siempre del tambo,
+   asi que las de un rubro compartido quedarian guardadas en el tambo donde
+   se tipearon sin ser de ese tambo. Sacando los compartidos afuera, la
+   invariante se mantiene intacta: adentro de un tambo, todo es del tambo.
+
+   CADA LINEA es un concepto con su monto $/mes de TODA la empresa, el rubro
+   al que imputa y su clave de reparto. La granularidad se consigue con mas
+   lineas, no con subcategorias anidadas: tres lineas imputando a c_insumos
+   dan el mismo desglose sin un segundo ABM que mantener.
+
+   EL REPARTO devuelve $/litro ya resuelto POR TAMBO; buildModelFromData solo
+   lo suma al rubro. Por litros, a todos les toca el mismo $/litro (el total
+   sobre los litros totales). Manual, cada uno lleva su porcentaje sobre SUS
+   litros, que es distinto en cada tambo.
+   ============================================================ */
+
+var COMP = { items: [] };
+
+function compNuevoId(){ return 'sc' + Math.random().toString(36).slice(2,8); }
+function compHayItems(){ return !!(COMP.items && COMP.items.length); }
+
+// Pesos del reparto de una linea, normalizados sobre los tambos QUE EXISTEN.
+// Si se borro un tambo que tenia porcentaje manual, su parte no se evapora:
+// se reparte entre los que quedan en la misma proporcion.
+function compPesos(item, lista, litros, litrosTot){
+  var n = lista.length;
+  if(item.clave === 'manual'){
+    var crudos = lista.map(function(t){ return Math.max(0, Number((item.pesos||{})[t.id]) || 0); });
+    var suma = crudos.reduce(function(a,x){ return a+x; }, 0);
+    if(suma > 0) return crudos.map(function(x){ return x/suma; });
+    // sin pesos cargados todavia: no inventamos un reparto, no se imputa nada
+    return lista.map(function(){ return 0; });
+  }
+  if(litrosTot > 0) return litros.map(function(l){ return l/litrosTot; });
+  return lista.map(function(){ return 0; });
+}
+
+// Nucleo del reparto. lista: [{id, datos}]. Devuelve, alineado con lista:
+//   reparto[i] = { c_insumos: 14.17, ... }   en $/litro de ESE tambo
+//   detalle[i] = [{ id, nombre, rubro, peso, mes, litro }]  para mostrar el desglose
+function compReparto(lista, items){
+  var reparto = lista.map(function(){ return {}; });
+  var detalle = lista.map(function(){ return []; });
+  if(!items || !items.length || !lista.length) return { reparto: reparto, detalle: detalle };
+
+  var cero = { price:0, prod:0, cost:0 };
+  // Los litros no dependen de los costos, asi que construir el modelo base aca
+  // no se muerde la cola aunque el registro ya traiga un _comp viejo.
+  var litros = lista.map(function(t){
+    var m = buildModelFromData(t.datos || {}, cero);
+    return m.litrosVendiblesMes || 0;
+  });
+  var litrosTot = litros.reduce(function(a,x){ return a+x; }, 0);
+
+  items.forEach(function(it){
+    var cid = it.rubro, monto = Number(it.monto) || 0;
+    if(!cid || !COST_LABEL[cid] || !monto) return;
+    var pesos = compPesos(it, lista, litros, litrosTot);
+    pesos.forEach(function(w, i){
+      if(!(w > 0) || !(litros[i] > 0)) return;
+      var mes = monto * w;                 // $/mes que le tocan a este tambo
+      var porLitro = mes / litros[i];      // sobre SUS litros
+      reparto[i][cid] = (reparto[i][cid] || 0) + porLitro;
+      detalle[i].push({ id: it.id, nombre: it.nombre || 'Compartido', rubro: cid,
+                        peso: w, mes: mes, litro: porLitro });
+    });
+  });
+  return { reparto: reparto, detalle: detalle };
+}
+
+// Lista de tambos tal como esta el panel ahora, usando el registro recien
+// serializado para el tambo en edicion (asi el reparto se mueve mientras tipea).
+function compListaPanel(dataActivo){
+  if(!mtActivo() || !MT.tambos.length) return [];
+  return MT.tambos.map(function(t){
+    return { id: t.id, datos: (dataActivo && t.id === MT.activo) ? dataActivo : t.datos };
+  });
+}
+
+// Lo que le toca al tambo en edicion. Lo llama serializeForm, por eso recibe el
+// registro ya armado en vez de volver a serializar (seria recursion infinita).
+function compParaActivo(dataActivo){
+  if(!compHayItems()) return {};
+  var lista = compListaPanel(dataActivo);
+  if(!lista.length) return {};
+  var i = 0;
+  for(var k = 0; k < lista.length; k++){ if(lista[k].id === MT.activo){ i = k; break; } }
+  return compReparto(lista, COMP.items).reparto[i] || {};
+}
+
+// Estampa el reparto en una lista de tambos. Siempre pisa el _comp que hubiera:
+// es un derivado, nunca una fuente, y asi no puede quedar viejo.
+function compEstampar(lista, items){
+  var r = compReparto(lista, items || []);
+  return lista.map(function(t, i){
+    var d = Object.assign({}, t.datos || {});
+    d._comp = r.reparto[i];
+    return { id: t.id, nombre: t.nombre, datos: d };
+  });
+}
+
+function compParaGuardar(){
+  return { version: 1, items: JSON.parse(JSON.stringify(COMP.items || [])) };
+}
+function compRestaurar(datos){
+  var c = datos && datos._compartidos;
+  COMP.items = (c && Array.isArray(c.items)) ? JSON.parse(JSON.stringify(c.items)) : [];
+  if(typeof compRender === 'function') compRender();
+}
+
+/* ---------- Bloque de compartidos en pantalla ---------- */
+// Por linea y por tambo: cuanto le toca. Se muestra al lado de la carga para que
+// el reparto no haya que imaginarselo — que era el problema del destino viejo.
+function compPreview(){
+  var out = {};
+  if(!mtActivo() || !MT.tambos.length) return out;
+  var lista = compListaPanel(serializeForm());
+  var r = compReparto(lista, COMP.items);
+  r.detalle.forEach(function(filas, i){
+    filas.forEach(function(d){
+      (out[d.id] = out[d.id] || []).push({
+        tambo: MT.tambos[i] ? (MT.tambos[i].nombre || 'Tambo') : 'Tambo',
+        peso: d.peso, mes: d.mes, litro: d.litro
+      });
+    });
+  });
+  return out;
+}
+
+function compItem(id){
+  for(var i = 0; i < COMP.items.length; i++) if(COMP.items[i].id === id) return COMP.items[i];
+  return null;
+}
+
+// Refresca SOLO los textos calculados de cada linea. No toca ningun input, asi que
+// se puede llamar en cada tecla sin que se pierda el foco ni el cursor.
+function compRefrescar(){
+  var prev = compPreview();
+  COMP.items.forEach(function(it){
+    var cont = document.querySelector('.cmp-linea[data-cid="' + it.id + '"]');
+    if(!cont) return;
+    var rep = cont.querySelector('.cmp-rep');
+    if(rep) rep.innerHTML = compRepartoHTML(it, prev[it.id]);
+    var suma = cont.querySelector('.cmp-suma');
+    if(suma){
+      var s = compSumaPesos(it);
+      suma.textContent = 'suma ' + fm(s, 0) + '%';
+      suma.className = 'cmp-suma ' + (Math.abs(s - 100) < 0.5 ? 'ok' : 'mal');
+    }
+  });
+  if(typeof render === 'function') render();
+}
+
+function compSumaPesos(it){
+  if(!mtActivo()) return 0;
+  return MT.tambos.reduce(function(a, t){
+    return a + (Math.max(0, Number((it.pesos || {})[t.id]) || 0));
+  }, 0);
+}
+
+function compRepartoHTML(it, filas){
+  if(!Number(it.monto)) return '<span style="opacity:.7">Cargá el monto mensual para ver el reparto.</span>';
+  if(!filas || !filas.length){
+    return it.clave === 'manual'
+      ? '<span style="opacity:.7">Cargá los porcentajes para ver el reparto.</span>'
+      : '<span style="opacity:.7">Sin litros cargados todavía.</span>';
+  }
+  return filas.map(function(f){
+    return '<span class="cmp-t">' + f.tambo + '</span> · ' + fm(f.peso * 100, 1) + '% · '
+         + money(f.mes) + '/mes · <b>' + porLitro(f.litro) + ' $/L</b>';
+  }).join('<br>');
+}
+
+function compRender(){
+  var card = document.getElementById('card_compartidos');
+  var box = document.getElementById('comp_body');
+  if(!card || !box) return;
+  // Solo tiene sentido con la vista multi-tambo activa: si hay un solo tambo,
+  // un costo "compartido" es simplemente un costo de ese tambo.
+  if(!mtActivo()){ card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  if(!COMP.items.length){
+    box.innerHTML = '<div class="cmp-empty">No hay costos compartidos cargados. '
+      + 'Mientras no haya ninguno, cada tambo lleva exactamente lo que cargaste en él.</div>';
+    return;
+  }
+
+  var prev = compPreview();
+  var opciones = COST_CATS.map(function(c){ return { v:c.id, n:c.nombre }; });
+  var h = '<div class="cmp-hdr"><span>Concepto</span><span>Imputa al rubro</span>'
+        + '<span>$/mes total</span><span>Reparto</span><span></span></div>';
+
+  COMP.items.forEach(function(it){
+    h += '<div class="cmp-linea" data-cid="' + it.id + '">'
+      +  '<div class="cmp-grid">'
+      +    '<input type="text" value="' + String(it.nombre || '').replace(/"/g,'&quot;') + '" placeholder="Contratista de labores" '
+      +      'oninput="compInput(\'' + it.id + '\',\'nombre\',this.value)">'
+      +    '<select onchange="compCambio(\'' + it.id + '\',\'rubro\',this.value)">'
+      +      opciones.map(function(o){
+             return '<option value="' + o.v + '"' + (it.rubro === o.v ? ' selected' : '') + '>' + o.n + '</option>';
+           }).join('')
+      +    '</select>'
+      +    '<input type="number" step="any" min="0" value="' + (Number(it.monto) || 0) + '" '
+      +      'oninput="compInput(\'' + it.id + '\',\'monto\',this.value)">'
+      +    '<select onchange="compCambio(\'' + it.id + '\',\'clave\',this.value)">'
+      +      '<option value="litros"' + (it.clave !== 'manual' ? ' selected' : '') + '>Por litros</option>'
+      +      '<option value="manual"' + (it.clave === 'manual' ? ' selected' : '') + '>Manual</option>'
+      +    '</select>'
+      +    '<button type="button" class="cmp-del" title="Quitar" onclick="compBorrar(\'' + it.id + '\')">×</button>'
+      +  '</div>';
+
+    if(it.clave === 'manual'){
+      var s = compSumaPesos(it);
+      h += '<div class="cmp-pesos">';
+      MT.tambos.forEach(function(t){
+        h += '<span class="cmp-peso">' + (t.nombre || 'Tambo')
+          +  ' <input type="number" step="any" min="0" value="' + (Number((it.pesos||{})[t.id]) || 0) + '" '
+          +  'oninput="compPeso(\'' + it.id + '\',\'' + t.id + '\',this.value)">%</span>';
+      });
+      h += '<span class="cmp-suma ' + (Math.abs(s-100) < 0.5 ? 'ok' : 'mal') + '">suma ' + fm(s,0) + '%</span>';
+      h += '</div>';
+    }
+    h += '<div class="cmp-rep">' + compRepartoHTML(it, prev[it.id]) + '</div></div>';
+  });
+  box.innerHTML = h;
+}
+
+// Marca en la fila de cada rubro cuanto de lo que se ve no se cargo ahi, sino que
+// bajo del bloque de compartidos. Sin esto el productor ve un numero mas grande que
+// el que tipeo y no tiene como saber de donde salio.
+function compMarcarFilas(){
+  var rep = {};
+  if(compHayItems() && mtActivo() && MT.tambos.length){
+    if(MT.activo === MT.CONSOLIDADO){
+      // En la vista del conjunto no hay un tambo activo: lo compartido de cada
+      // rubro es el total repartido sobre los litros de todos.
+      var lista = MT.tambos.map(function(t){ return { id:t.id, datos:t.datos }; });
+      var cero = { price:0, prod:0, cost:0 };
+      var litros = lista.map(function(t){
+        return buildModelFromData(t.datos || {}, cero).litrosVendiblesMes || 0;
+      });
+      var tot = litros.reduce(function(a,x){ return a+x; }, 0);
+      compReparto(lista, COMP.items).reparto.forEach(function(x, i){
+        Object.keys(x).forEach(function(cid){ rep[cid] = (rep[cid] || 0) + x[cid] * litros[i]; });
+      });
+      if(tot > 0) Object.keys(rep).forEach(function(cid){ rep[cid] = rep[cid] / tot; });
+      else rep = {};
+    } else {
+      try { rep = serializeForm()._comp || {}; } catch(e){ rep = {}; }
+    }
+  }
+  COST_IDS.forEach(function(cid){
+    var row = document.querySelector('.cost-row[data-cost="' + cid + '"]');
+    if(!row) return;
+    var deriv = row.querySelector('.cost-derived');
+    if(!deriv) return;
+    var marca = deriv.querySelector('.cost-comp');
+    var v = Number(rep[cid]) || 0;
+    if(v > 0){
+      if(!marca){
+        marca = document.createElement('span');
+        marca.className = 'cost-comp';
+        deriv.appendChild(marca);
+      }
+      marca.textContent = '+ ' + porLitro(v) + ' compartidos';
+      marca.title = 'Baja del bloque de costos compartidos de la empresa, no se carga en este tambo.';
+    } else if(marca){
+      marca.remove();
+    }
+  });
+}
+
+function compAgregar(){
+  COMP.items.push({ id: compNuevoId(), nombre:'', rubro:'c_insumos', monto:0, clave:'litros', pesos:{} });
+  compRender();
+  if(typeof render === 'function') render();
+}
+function compBorrar(id){
+  COMP.items = COMP.items.filter(function(x){ return x.id !== id; });
+  compRender();
+  if(typeof render === 'function') render();
+}
+// Tecleo: actualiza el modelo y refresca solo los textos. NO rehace la linea.
+function compInput(id, campo, valor){
+  var it = compItem(id); if(!it) return;
+  it[campo] = (campo === 'monto') ? (parseFloat(valor) || 0) : valor;
+  compRefrescar();
+}
+function compPeso(id, tamboId, valor){
+  var it = compItem(id); if(!it) return;
+  it.pesos = it.pesos || {};
+  it.pesos[tamboId] = parseFloat(valor) || 0;
+  compRefrescar();
+}
+// Cambio de select: hay que rehacer la linea (manual agrega la fila de pesos).
+function compCambio(id, campo, valor){
+  var it = compItem(id); if(!it) return;
+  it[campo] = valor;
+  compRender();
+  if(typeof render === 'function') render();
+}
 
 // subcats vive en memoria como
 //   { c_alim:[{id, nombre, precio, cantidad, unidadItem, unit}], ... }
@@ -4155,6 +4591,7 @@ function render(){
   renderScenarios(base, pes, opt, subsensModelo());
   renderSubsens(base);
   renderCosts(base);
+  compMarcarFilas();
   renderBenchmarks(base);
   renderActions(base);
   renderSummary(base);
@@ -4504,6 +4941,9 @@ render();
 (async function bootstrapScenarioSync(){
   await resolveReportModeEntitlement();
   render();
+  // El modo PRO se resuelve recien aca, y de el depende que exista la vista
+  // multi-tambo: el bloque de compartidos se decide despues de saberlo.
+  if(typeof compRender === 'function') compRender();
   await syncAnalisisFromSupabase();
   consumePendingOpenRequest();
   actualizarVinculoUI();
