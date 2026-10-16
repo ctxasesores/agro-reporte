@@ -7411,7 +7411,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261016-0749';
+  var CTX_BUILD = '20261016-1510';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10624,7 +10624,14 @@ var HM_BANDAS = [
   { max: 0.15, c:'#86b6ef', t:'#0d2035', n:'Muy estable' },
   { max: 0.19, c:'#3d86c6', t:'#0d2035', n:'Estable' },
   { max: 0.22, c:'#2a5e8f', t:'#e8eef5', n:'Algo más parejo' },
-  { max: 0.26, c:'#35485c', t:'#e8eef5', n:'En la media' },
+  // Centro neutro y CLARO. Antes era #35485c, que contra el fondo de las tarjetas
+  // daba 1,38:1 y se confundia con el panel: el departamento promedio parecia un
+  // agujero en el mapa. Este gris da 5,9:1 y empata en claridad con los extremos
+  // claros de los dos brazos (L* 71), asi que no se impone: lo que lo distingue
+  // es que no tiene color. En una escala divergente el centro se lee por falta de
+  // saturacion, no por ser el mas brillante. El texto pasa a oscuro, obligatorio:
+  // sobre este fondo el claro de antes seria ilegible.
+  { max: 0.26, c:'#a7b0b8', t:'#0d2035', n:'En la media' },
   { max: 0.31, c:'#ef9a74', t:'#0d2035', n:'Inestable' },
   { max: 0.38, c:'#c45a33', t:'#0d2035', n:'Muy inestable' },
   { max: 99,   c:'#8c3f28', t:'#e8eef5', n:'Extremo' }
