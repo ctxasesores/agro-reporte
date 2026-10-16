@@ -7358,7 +7358,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261016-0005';
+  var CTX_BUILD = '20261016-0710';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10572,9 +10572,9 @@ var HM_BANDAS = [
   { max: 0.19, c:'#3d86c6', t:'#0d2035', n:'Estable' },
   { max: 0.22, c:'#2a5e8f', t:'#e8eef5', n:'Algo más parejo' },
   { max: 0.26, c:'#35485c', t:'#e8eef5', n:'En la media' },
-  { max: 0.31, c:'#8c3f28', t:'#e8eef5', n:'Inestable' },
+  { max: 0.31, c:'#ef9a74', t:'#0d2035', n:'Inestable' },
   { max: 0.38, c:'#c45a33', t:'#0d2035', n:'Muy inestable' },
-  { max: 99,   c:'#ef9a74', t:'#0d2035', n:'Extremo' }
+  { max: 99,   c:'#8c3f28', t:'#e8eef5', n:'Extremo' }
 ];
 function hmBanda(cv){
   for(var i = 0; i < HM_BANDAS.length; i++) if(cv < HM_BANDAS[i].max) return HM_BANDAS[i];
