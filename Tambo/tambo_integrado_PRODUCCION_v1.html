@@ -332,7 +332,11 @@ label .u{margin-left:4px}
 .cost-inputs{display:flex;gap:6px}
 .cost-entry{width:70px;min-width:0}
 .cost-unit{flex:1;min-width:0;font-size:12px}
-.cost-derived{font-size:12px;color:var(--oro-l,#e8c45a);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* min-width:0 + wrap: con nowrap, el texto "= 229,53 $/L · 3 subcat." de un rubro
+   con subcategorias fuerza un ancho minimo mayor al que le toca por grilla, le roba
+   lugar al campo de carga de ESA fila y la desalinea del resto. Dejandolo partir en
+   dos lineas, las cuatro columnas mantienen su proporcion en todas las filas. */
+.cost-derived{font-size:12px;color:var(--oro-l,#e8c45a);font-variant-numeric:tabular-nums;white-space:normal;min-width:0}
 .cost-dest{font-size:11.5px;min-width:0}
 @media(max-width:640px){
   .cost-head{display:none}
@@ -685,6 +689,7 @@ label .u{margin-left:4px}
             <button type="button" class="subcat-btn" onclick="subcatAbrir()">⚙ Administrar subcategorías de costos</button>
             <div class="cost-head"><span>Rubro</span><span>Valor y unidad</span><span>Equivale</span><span>Destino</span></div>
             <div class="cost-row" data-cost="c_alim"><label class="cost-label">Alimentación</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_alim_entry" value="205" step="any" min="0" oninput="costRecalc('c_alim')"><select class="cost-unit" id="c_alim_unit" onchange="costRecalc('c_alim')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_alim_derived">= 205 $/L</div><select class="cost-dest" id="c_alim_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_alim" value="205"></div>
+            <div class="cost-row" data-cost="c_insumos"><label class="cost-label">Insumos y servicios agrícolas</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_insumos_entry" value="0" step="any" min="0" oninput="costRecalc('c_insumos')"><select class="cost-unit" id="c_insumos_unit" onchange="costRecalc('c_insumos')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_insumos_derived">= 0 $/L</div><select class="cost-dest" id="c_insumos_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_insumos" value="0"></div>
             <div class="cost-row" data-cost="c_personal"><label class="cost-label">Personal</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_personal_entry" value="54" step="any" min="0" oninput="costRecalc('c_personal')"><select class="cost-unit" id="c_personal_unit" onchange="costRecalc('c_personal')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_personal_derived">= 54 $/L</div><select class="cost-dest" id="c_personal_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_personal" value="54"></div>
             <div class="cost-row" data-cost="c_sanidad"><label class="cost-label">Sanidad</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_sanidad_entry" value="14" step="any" min="0" oninput="costRecalc('c_sanidad')"><select class="cost-unit" id="c_sanidad_unit" onchange="costRecalc('c_sanidad')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_sanidad_derived">= 14 $/L</div><select class="cost-dest" id="c_sanidad_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_sanidad" value="14"></div>
             <div class="cost-row" data-cost="c_repro"><label class="cost-label">Reproducción</label><div class="cost-inputs"><input type="number" class="cost-entry" id="c_repro_entry" value="10" step="any" min="0" oninput="costRecalc('c_repro')"><select class="cost-unit" id="c_repro_unit" onchange="costRecalc('c_repro')"><option value="litro">$/litro</option><option value="mes">$/mes total</option><option value="vaca">$/vaca/mes</option></select></div><div class="cost-derived" id="c_repro_derived">= 10 $/L</div><select class="cost-dest" id="c_repro_dest" title="Cómo se asigna este costo entre tambos"><option value="this">Este tambo</option><option value="prorrateo_auto">Prorratear × litros</option><option value="prorrateo_manual">Prorratear manual</option></select><input type="hidden" id="c_repro" value="10"></div>
@@ -1020,7 +1025,7 @@ var FORM_FIELDS = [
   'cuenca_superficie_ref','cuenca_c_alim_ref','cuenca_c_estructura_ref','cuenca_c_impuestos_ref','cuenca_tgt_carga_ref','cuenca_bonif_solidos_ref',
   'sis_litros_vaca_ref','sis_consumo_ms_ref','sis_c_personal_ref','sis_c_energia_ref','sis_merma_ref','sis_tgt_costo_ref',
   'sys_litros_adj','sys_ms_adj','sys_alim_adj','sys_personal_adj','sys_energia_adj','sys_estructura_adj','sys_cama_efluentes','sys_sanidad_adj',
-  'c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos',
+  'c_alim','c_insumos','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos',
   'pes_precio','pes_prod','pes_costo','opt_precio','opt_prod','opt_costo',
   'tgt_litros_vaca','tgt_costo_litro','tgt_carga','tgt_solidos','tgt_margen_litro'
 ];
@@ -1348,7 +1353,7 @@ function serializeForm(){
   });
   // Metadatos de costos (unidad de carga y destino de prorrateo) por rubro.
   var costMeta = {};
-  ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'].forEach(function(cid){
+  ['c_alim','c_insumos','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'].forEach(function(cid){
     var unit = document.getElementById(cid+'_unit');
     var dest = document.getElementById(cid+'_dest');
     var entry = document.getElementById(cid+'_entry');
@@ -1879,7 +1884,7 @@ var CMP_DRIVERS = [
   { id:'rodeo',        nombre:'Rodeo en ordeñe',       campos:['vacas_ordene','rodeo_total'] },
   { id:'dias',         nombre:'Días de ordeñe y merma',campos:['dias_mes','merma'] },
   { id:'alimentacion', nombre:'Alimentación',          campos:['c_alim'] },
-  { id:'otros',        nombre:'Resto de los costos',   campos:['c_personal','c_sanidad','c_repro',
+  { id:'otros',        nombre:'Resto de los costos',   campos:['c_insumos','c_personal','c_sanidad','c_repro',
                                                                'c_energia','c_estructura','c_recria','c_impuestos'] }
 ];
 
@@ -2272,6 +2277,13 @@ function buildModelFromData(data, adj){
   var estabuladoFactor = sistema === 'compost_barn' ? 1.04 : sistema === 'free_stall' ? 1.07 : sistema === 'mixto' ? 1.02 : 1;
   var costos = {
     Alimentacion: numberFromRecord(data, 'c_alim') * costAdj * estabuladoFactor * (1 + pctFromRecord(data, 'sys_alim_adj')),
+    // Insumos y servicios agricolas: semilla, agroquimicos, labores, servicios de
+    // terceros. Sin factor de estabulado ni ajuste por sistema a proposito: los
+    // insumos agricolas escalan al reves del encierre (el free stall compra mas
+    // forraje hecho y siembra menos). En escenarios guardados antes de que existiera
+    // este rubro la clave no esta y numberFromRecord devuelve 0, asi que el costo
+    // por litro de esos escenarios no se mueve.
+    'Insumos y servicios agricolas': numberFromRecord(data, 'c_insumos') * costAdj,
     Personal: numberFromRecord(data, 'c_personal') * costAdj * (sistema === 'pastoril' ? 1 : 1.03) * (1 + pctFromRecord(data, 'sys_personal_adj')),
     Sanidad: numberFromRecord(data, 'c_sanidad') * costAdj * (1 + pctFromRecord(data, 'sys_sanidad_adj')),
     Reproduccion: numberFromRecord(data, 'c_repro') * costAdj * (1 + pctFromRecord(data, 'sys_sanidad_adj')),
@@ -2767,7 +2779,7 @@ function mtSetConsolidadoUI(activo){
   // Deshabilitar/relanzar inputs de datos del tambo (no los de escenarios/targets globales)
   var ids = ['rodeo_total','vacas_ordene','litros_vaca','dias_mes','superficie','consumo_ms',
     'precio_base','grasa','proteina','bonif_solidos','bonif_calidad','merma','preset_sistema','scenario_name',
-    'c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'];
+    'c_alim','c_insumos','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'];
   ids.forEach(function(id){
     var el = document.getElementById(id);
     if(el){ el.disabled = !!activo; }
@@ -2808,7 +2820,7 @@ function mtRenderConsolidado(){
 
 // Al cargar un tambo, los hidden c_xxx traen $/litro. Reflejamos ese valor en el
 // campo visible y dejamos la unidad en $/litro (es el valor canónico guardado).
-var COST_IDS = ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'];
+var COST_IDS = ['c_alim','c_insumos','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos'];
 
 // Escenario viejo (sin unidad guardada): el visible se reconstruye desde el
 // $/litro canónico y la unidad queda en $/litro, que es lo que ese dato es.
@@ -2873,7 +2885,7 @@ function costRecalc(cid){
 // Al cambiar producción (litros/vacas) hay que recalcular todos los costos que
 // estén cargados en $/mes o $/vaca (su equivalencia en $/litro cambia).
 function costRecalcAll(){
-  ['c_alim','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos']
+  ['c_alim','c_insumos','c_personal','c_sanidad','c_repro','c_energia','c_estructura','c_recria','c_impuestos']
     .forEach(function(cid){
       var u = document.getElementById(cid+'_unit');
       if(u && u.value !== 'litro') costRecalc(cid);
@@ -2887,13 +2899,14 @@ function costRecalcAll(){
    El usuario crea subcategorías libres bajo cada categoría
    predefinida. La SUMA de subcategorías de una categoría
    reemplaza el valor $/litro de esa categoría (c_xxx) para
-   los cálculos del dashboard. Las 8 categorías predefinidas
+   los cálculos del dashboard. Las 9 categorías predefinidas
    son fijas; las subcategorías son administrables.
    Se guarda por tambo, dentro de datos._subcats.
    ============================================================ */
 
 var COST_CATS = [
   {id:'c_alim',      nombre:'Alimentación'},
+  {id:'c_insumos',   nombre:'Insumos y servicios agrícolas'},
   {id:'c_personal',  nombre:'Personal'},
   {id:'c_estructura',nombre:'Estructura'},
   {id:'c_recria',    nombre:'Reposición / recría'},
@@ -4622,7 +4635,7 @@ render();
       <h3>Subcategorías de costos</h3>
       <button class="sc-close" onclick="subcatCerrar()">×</button>
     </div>
-    <p class="sc-modal-desc">Creá subcategorías dentro de cada rubro. La <b>suma</b> de las subcategorías reemplaza el valor del rubro en el dashboard. Las 8 categorías son fijas; las subcategorías las administrás vos.</p>
+    <p class="sc-modal-desc">Creá subcategorías dentro de cada rubro. La <b>suma</b> de las subcategorías reemplaza el valor del rubro en el dashboard. Las 9 categorías son fijas; las subcategorías las administrás vos.</p>
     <div id="subcat_body"></div>
     <div class="sc-modal-foot">
       <button class="sc-apply" onclick="subcatCerrar()">Aplicar y cerrar</button>
