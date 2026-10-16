@@ -1481,6 +1481,59 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               <div class="training-result"><strong>Resultado esperado:</strong> el usuario puede leer el panel como una herramienta de decisión, no solo como un resumen de datos cargados.</div>
             </div>
           </details>
+          <details class="training-detail">
+            <summary>Agricultura · Análisis estadístico de riesgo productivo (PRO)</summary>
+            <div class="training-detail-body">
+              <div class="training-columns">
+                <div class="training-block">
+                  <h5>Qué es</h5>
+                  <p>Mide el <strong>riesgo de los rindes</strong> en qq/ha (sin precios ni costos): cuánto varía cada cultivo y cómo se combinan. Se abre como ventana aparte desde el botón <strong>Análisis estadístico de riesgo productivo</strong>. Cuantas más campañas cargues, más firmes las estimaciones.</p>
+                </div>
+                <div class="training-block">
+                  <h5>Arranque rápido</h5>
+                  <ul>
+                    <li><strong>Precargar rindes de tu zona:</strong> Provincia → Departamento → nº de campañas, y tocá Precargar.</li>
+                    <li>Es un promedio del departamento: empareja altibajos (tu lote varía más) y mete todo el maíz como «Maíz». Pisá las celdas que conozcas.</li>
+                    <li><strong>Mapa de calor del riesgo por departamento:</strong> qué zonas rinden más parejo (riesgo climático del lugar), en Tabla o Mapa.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="training-block">
+                <h5>Qué leer</h5>
+                <ul>
+                  <li><strong>Riesgo individual por cultivo:</strong> media (qq/ha y tn/ha), desvío, CV (bajo &lt;25%, medio 25–35%, alto &gt;35%), P10, CVaR 10%, peor campaña y campañas malas (&lt;80% de la media).</li>
+                  <li><strong>Correlaciones</strong> y <strong>combinación de menor riesgo</strong>; con <strong>Simulá tu planteo</strong> comparás tus hectáreas contra ese mínimo, con costos y precio de indiferencia.</li>
+                  <li><strong>Clima (ENSO):</strong> índice ONI (por defecto) o RONI, modelo asimétrico (Niña y Niño pesan distinto) y escenario de pronóstico.</li>
+                  <li>Celda vacía = no sembrado (vacío ≠ cero). Guardá el análisis con nombre: mismo nombre actualiza, otro nombre crea una variante.</li>
+                </ul>
+              </div>
+              <div class="training-result"><strong>Resultado esperado:</strong> el usuario sabe qué cultivo es más errático, cómo combinarlos para bajar riesgo y cuánto corre el rinde si la campaña viene Niña o Niño.</div>
+            </div>
+          </details>
+          <details class="training-detail">
+            <summary>Tambo · multi-tambo y análisis de riesgo (PRO)</summary>
+            <div class="training-detail-body">
+              <div class="training-columns">
+                <div class="training-block">
+                  <h5>Multi-tambo</h5>
+                  <p>Con <strong>+ Tambo</strong> agregás establecimientos y los mirás uno por uno o con <strong>Σ Todos juntos</strong>. Las comparativas y el riesgo se leen sobre el conjunto.</p>
+                </div>
+                <div class="training-block">
+                  <h5>Margen por litro</h5>
+                  <p>KPI rector: verde desde la <strong>Meta margen/litro</strong> (Benchmarks de referencia, por defecto $25/L), amarillo entre 0 y la meta, rojo por debajo de 0. Las metas (litros/vaca/día, costo/litro, carga, sólidos) alimentan los semáforos de Benchmarks operativos.</p>
+                </div>
+              </div>
+              <div class="training-block">
+                <h5>Qué hay de nuevo</h5>
+                <ul>
+                  <li><strong>Subcategorías de costos:</strong> abrís un rubro con «Administrar subcategorías de costos» y la suma de los ítems reemplaza el valor del rubro.</li>
+                  <li><strong>Comparativa de escenarios:</strong> el puente de margen reparte la diferencia por Shapley; se desactiva si comparás conjuntos con distintos tambos.</li>
+                  <li><strong>Análisis estadístico de riesgo productivo:</strong> litros por vaca y día <strong>control a control</strong> por tambo (la unidad es el control, no el día). Devuelve riesgo individual por tambo, correlaciones, qué tambo mueve el resultado y la capa ENSO.</li>
+                </ul>
+              </div>
+              <div class="training-result"><strong>Resultado esperado:</strong> el usuario arma y compara varios tambos, entiende de dónde viene el margen por litro y qué tambo aporta más variabilidad al conjunto.</div>
+            </div>
+          </details>
         </div>
       </div>
       <div class="tutorial-flow">
@@ -7358,7 +7411,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261016-0710';
+  var CTX_BUILD = '20261016-0749';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
