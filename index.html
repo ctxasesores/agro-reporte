@@ -2240,8 +2240,13 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
               .mp-wrap{margin-top:12px;background:rgba(0,0,0,.14);border-radius:10px;padding:8px}
               .mp-svg{display:block;width:100%;height:auto}
               .mp-svg path{transition:opacity .1s}
-              .mp-svg path:hover{opacity:.72;stroke:#e8c45a;stroke-width:1.1}
-              .mp-svg path.mp-mio{stroke:#e8c45a;stroke-width:1.3}
+              /* Trazo OSCURO, no dorado: con la paleta nueva las siete bandas son
+                 claras y el dorado quedaba entre 1,1:1 y 2,3:1 contra el relleno,
+                 o sea invisible justo sobre el departamento del productor. En
+                 oscuro va de 4,3:1 a 14,6:1 segun la banda. Se distingue del borde
+                 comun por el grosor, no por el color. */
+              .mp-svg path:hover{opacity:.72;stroke:#0d2035;stroke-width:1.4}
+              .mp-svg path.mp-mio{stroke:#0d2035;stroke-width:2.2}
               .hm-tag{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:99px;font-size:9px;
                 font-weight:700;text-transform:uppercase;letter-spacing:.4px;
                 background:rgba(212,160,23,.2);color:var(--oro-l,#e8c45a)}
@@ -7411,7 +7416,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261016-1510';
+  var CTX_BUILD = '20261019-1030';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -10620,21 +10625,33 @@ var HM = { cache: {}, cargando: false };
 
 // Cortes fijos de variabilidad y su paso de color. Brazo frío = más parejo que
 // la mediana, brazo cálido = más errático. El centro recede contra el fondo.
+/* Paleta de riesgo. Reemplaza a la divergente azul<->naranja, que tenia tres
+   bandas por debajo de 2:1 contra el fondo de las tarjetas y se empastaba.
+
+   POR QUE NO VERDE<->ROJO PURO: es el par que no distingue una persona con
+   deficiencia rojo-verde (~8% de los hombres), y aca el color ordena ~300
+   departamentos. Simulado con Vienot-Brettel-Mollon, una rampa verde->rojo de
+   7 bandas colapsa a un campo de oliva con dE2000 de 3,2 entre bandas
+   contiguas: ilegible. Por eso el extremo bueno arranca en AZUL y VERDE
+   AZULADO, que conservan el eje azul-amarillo, el unico que sobrevive.
+
+   MEDIDO sobre el fondo #1a3349: ninguna banda baja de 3:1, dE2000 minimo
+   entre contiguas 15,7 en vision normal y 6,9 en el peor caso daltonico.
+
+   EL EXTREMO ES EL MAS LUMINOSO, no el mas oscuro: sobre un panel oscuro la
+   convencion se invierte. Un granate (#7E0E08) medido daba 1,21:1 — se hundia
+   justo en la banda que tiene que gritar.
+
+   Texto oscuro en todas; en Extremo, negro puro: #0d2035 sobre ese rojo da
+   4,30:1 y no alcanza el 4,5:1 que pide un texto chico, el negro da 5,44:1. */
 var HM_BANDAS = [
-  { max: 0.15, c:'#86b6ef', t:'#0d2035', n:'Muy estable' },
-  { max: 0.19, c:'#3d86c6', t:'#0d2035', n:'Estable' },
-  { max: 0.22, c:'#2a5e8f', t:'#e8eef5', n:'Algo más parejo' },
-  // Centro neutro y CLARO. Antes era #35485c, que contra el fondo de las tarjetas
-  // daba 1,38:1 y se confundia con el panel: el departamento promedio parecia un
-  // agujero en el mapa. Este gris da 5,9:1 y empata en claridad con los extremos
-  // claros de los dos brazos (L* 71), asi que no se impone: lo que lo distingue
-  // es que no tiene color. En una escala divergente el centro se lee por falta de
-  // saturacion, no por ser el mas brillante. El texto pasa a oscuro, obligatorio:
-  // sobre este fondo el claro de antes seria ilegible.
-  { max: 0.26, c:'#a7b0b8', t:'#0d2035', n:'En la media' },
-  { max: 0.31, c:'#ef9a74', t:'#0d2035', n:'Inestable' },
-  { max: 0.38, c:'#c45a33', t:'#0d2035', n:'Muy inestable' },
-  { max: 99,   c:'#8c3f28', t:'#e8eef5', n:'Extremo' }
+  { max: 0.15, c:'#3ba5ff', t:'#0d2035', n:'Muy estable' },
+  { max: 0.19, c:'#00b5b0', t:'#0d2035', n:'Estable' },
+  { max: 0.22, c:'#89fa9e', t:'#0d2035', n:'Algo más parejo' },
+  { max: 0.26, c:'#f0fa73', t:'#0d2035', n:'En la media' },
+  { max: 0.31, c:'#ffab00', t:'#0d2035', n:'Inestable' },
+  { max: 0.38, c:'#ff7a33', t:'#0d2035', n:'Muy inestable' },
+  { max: 99,   c:'#fa2e23', t:'#000000', n:'Extremo' }
 ];
 function hmBanda(cv){
   for(var i = 0; i < HM_BANDAS.length; i++) if(cv < HM_BANDAS[i].max) return HM_BANDAS[i];
