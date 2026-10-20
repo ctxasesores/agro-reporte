@@ -5221,7 +5221,14 @@ function _tasasToggleBanner(){ _tasasBanner = (_tasasBanner === 'booster') ? 'va
 // ── Datos auxiliares para tasas en pesos y Valor Actual (TAMAR) ──
 // DLR (a3_precios), dólar mayorista spot (tipo_de_cambio) y TAMAR (bcra_observaciones).
 // Todas con lectura pública, así que se leen con la key publishable.
-let mercadoAux = { dlr: {}, dlrPts: [], tamar: null, spot: null, loaded: false, loading: false };
+// Rango plausible de la TAMAR en % nominal anual. Mismo criterio que la guarda
+// de la ingesta (edge function actualizar-bcra): ninguna tasa nominal anual
+// argentina estuvo jamás por debajo de 0,5%, así que un valor menor es basura
+// publicada aguas arriba, no un dato.
+const TAMAR_MIN = 0.5, TAMAR_MAX = 500;
+
+let mercadoAux = { dlr: {}, dlrPts: [], tamar: null, tamarFecha: null, tamarSalteo: 0,
+                   spot: null, loaded: false, loading: false };
 
 async function cargarMercadoAux() {
   if (mercadoAux.loading || typeof sb === 'undefined') return;
@@ -5246,8 +5253,27 @@ async function cargarMercadoAux() {
     mercadoAux.spot = tcRes.data?.[0]?.valor != null ? Number(tcRes.data[0].valor) : null;
     const serieId = serieRes.data?.[0]?.id;
     if (serieId) {
-      const obs = await sb.from('bcra_observaciones').select('valor,fecha').eq('serie_id', serieId).order('fecha', { ascending:false }).limit(1);
-      mercadoAux.tamar = obs.data?.[0]?.valor != null ? Number(obs.data[0].valor) / 100 : null; // % n.a. -> decimal
+      // GUARDA: no se toma la última observación a ciegas, se toma la última
+      // PLAUSIBLE. El 16/10/2026 el BCRA publicó TAMAR = 0 y la ingesta lo
+      // escribió; como acá se leía `limit(1)`, ese único 0 apagó el descuento
+      // del Valor Actual en todo el panel —VA = precio/(1+tamar·d/365) quedó
+      // en VA = precio— sin que nada lo avisara. Una tasa nominal anual nunca
+      // es 0: eso significa "hoy no hay dato", no "tasa cero".
+      const obs = await sb.from('bcra_observaciones').select('valor,fecha')
+        .eq('serie_id', serieId).order('fecha', { ascending:false }).limit(30);
+      const filas = (obs.data || []).map(r => ({ valor: Number(r.valor), fecha: r.fecha }));
+      const i = filas.findIndex(r => isFinite(r.valor) && r.valor >= TAMAR_MIN && r.valor <= TAMAR_MAX);
+      mercadoAux.tamar       = i >= 0 ? filas[i].valor / 100 : null;   // % n.a. -> decimal
+      mercadoAux.tamarFecha  = i >= 0 ? filas[i].fecha : null;
+      mercadoAux.tamarSalteo = i > 0 ? i : 0;      // cuántas observaciones más nuevas se descartaron
+      if (i > 0) {
+        console.warn('[CTX] TAMAR: se descartaron ' + i + ' observación(es) fuera de rango; '
+          + 'se usa la del ' + filas[i].fecha + ' (' + filas[i].valor + '% n.a.)',
+          filas.slice(0, i));
+      } else if (i < 0 && filas.length) {
+        console.warn('[CTX] TAMAR: ninguna de las últimas ' + filas.length
+          + ' observaciones es plausible. El Valor Actual no se calcula.');
+      }
     }
     mercadoAux.loaded = true;
   } catch (e) { console.warn('mercadoAux:', e); }
@@ -5335,11 +5361,25 @@ function buildTasasContentHTML(vencMap, useTNA, prod) {
   const pesoBase = spot != null ? basePrice * spot : null;
   let maxVA = null, maxVALabel = null;
 
+  // Cuando hubo que saltear observaciones rotas se muestra de cuándo es el dato
+  // que se está usando: un número sin fecha no deja ver que la serie está parada.
+  // Y si no hay ninguna válida se dice explícitamente, porque en ese caso la
+  // columna de Valor Actual queda en "—" y si no el usuario no sabe por qué.
+  const ddmm = (f) => { const p = String(f || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] : f; };
+  const tamarTxt = tamar != null
+    ? `TAMAR <b>${(tamar*100).toFixed(1)}%</b> n.a.` + (
+        (mercadoAux.tamarSalteo > 0 && mercadoAux.tamarFecha)
+          ? ` <span style="color:#e0a63a" title="El BCRA publicó ${mercadoAux.tamarSalteo} dato(s) más reciente(s) fuera de rango. Se usa el último válido; el Valor Actual se calcula con esta tasa.">(al ${ddmm(mercadoAux.tamarFecha)})</span>`
+          : '')
+    : (mercadoAux.loaded
+        ? `<span style="color:#e0a63a" title="Sin una TAMAR válida no se puede descontar: la columna de Valor Actual queda en —.">TAMAR <b>sin dato válido</b></span>`
+        : '');
+
   const notaAux = `<div class="tasas-nota">${
-    tamar != null ? `TAMAR <b>${(tamar*100).toFixed(1)}%</b> n.a.` : ''
-  }${(tamar != null && spot != null) ? ' · ' : ''}${
+    tamarTxt
+  }${(tamarTxt && spot != null) ? ' · ' : ''}${
     spot != null ? `Dólar mayorista <b>$${f0(spot)}</b>` : ''
-  }${!mercadoAux.loaded ? `${(tamar!=null||spot!=null)?' · ':''}<i>cargando dólar / TAMAR…</i>` : ''}</div>`;
+  }${!mercadoAux.loaded ? `${(tamarTxt||spot!=null)?' · ':''}<i>cargando dólar / TAMAR…</i>` : ''}</div>`;
 
   let tableInner = '';
   if (basePrice) {
@@ -7416,7 +7456,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261019-1030';
+  var CTX_BUILD = '20261020-1545';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
