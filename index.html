@@ -3834,6 +3834,7 @@ function buildTamboSrc(mode) {
   const base = 'Tambo/tambo_integrado_PRODUCCION_v1.html';
   const qs = new URLSearchParams();
   qs.set('mode', (mode || 'ESTANDAR').toUpperCase());
+  qs.set('v', '20261029-1800');   // evita que el navegador sirva un panel de tambo viejo después de un deploy
   if (clienteId) qs.set('cliente_id', clienteId);
   if (clienteNombre) qs.set('cliente_nombre', clienteNombre);
   if (userId) qs.set('user_id', userId);
@@ -4266,7 +4267,8 @@ function fmtMetricValue(metric) {
   const value = Number(metric.valor ?? metric.value ?? 0);
   const unit = metric.unidad || '';
   const hasDecimals = Math.abs(value % 1) > 0.001;
-  const decimals = hasDecimals ? (Math.abs(value) < 10 ? 2 : 1) : 0;
+  // Valores por litro en dólares (0,073 USD/L): con 2 decimales se pierde la mitad del dato.
+  const decimals = hasDecimals ? (Math.abs(value) < 1 && /\/L$/.test(unit) ? 3 : (Math.abs(value) < 10 ? 2 : 1)) : 0;
   if (unit.startsWith('$')) {
     const suffix = unit.slice(1).trim();
     return fmtArs(value, decimals) + (suffix ? ` ${suffix}` : '');
@@ -4403,6 +4405,9 @@ function normalizeScenarioOutputs(source, item) {
   if (item?.outputs && typeof item.outputs === 'object' && Object.keys(item.outputs).length) {
     return item.outputs;
   }
+  // Panel de tambo v2 (datos._v = 2): siempre guarda sus outputs. El respaldo de abajo lee el
+  // formato viejo y con datos v2 inventaría números, así que no se usa.
+  if (source === 'tambo' && item?.datos?._v === 2) return null;
   if (source === 'tambo' && item?.datos && typeof item.datos === 'object') {
     return buildLegacyTamboOutputs(item.datos);
   }
@@ -4573,7 +4578,19 @@ function renderBusinessSummary(rows) {
   });
   const redCount = rows.filter(row => row.state === 'rojo').length;
   const yellowCount = rows.filter(row => row.state === 'amarillo').length;
-  const monthlyMargin = uniqueScenarios.reduce((acc, scenario) => acc + getMonthlyScenarioMargin(scenario), 0);
+  // Cada escenario declara su moneda (tambo v2: outputs.moneda). Sin moneda, pesos.
+  // Pesos y dólares no se suman sin convertir: se muestra un total por moneda.
+  const marginByCurrency = {};
+  uniqueScenarios.forEach(scenario => {
+    const cur = String(scenario.outputs?.moneda || 'ARS').toUpperCase() === 'USD' ? 'USD' : 'ARS';
+    marginByCurrency[cur] = (marginByCurrency[cur] || 0) + getMonthlyScenarioMargin(scenario);
+  });
+  const currencies = Object.keys(marginByCurrency).sort();
+  const fmtCurrency = (cur, v) => cur === 'USD'
+    ? (v < 0 ? '-' : '') + 'USD ' + Math.abs(Number(v) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })
+    : fmtArs(v, 0);
+  const marginValues = currencies.map(cur => marginByCurrency[cur]);
+  const marginTone = !marginValues.length || marginValues.every(v => v >= 0) ? 'is-positive' : (marginValues.every(v => v < 0) ? 'is-negative' : '');
   const latest = uniqueScenarios
     .map(item => item.updated_at)
     .filter(Boolean)
@@ -4592,9 +4609,11 @@ function renderBusinessSummary(rows) {
     },
     {
       label: 'Margen mensual visible',
-      value: fmtArs(monthlyMargin, 0),
-      sub: 'Suma deduplicada de escenarios únicos, llevada a equivalente mensual',
-      tone: monthlyMargin >= 0 ? 'is-positive' : 'is-negative'
+      value: currencies.length ? currencies.map(cur => fmtCurrency(cur, marginByCurrency[cur])).join(' · ') : fmtArs(0, 0),
+      sub: currencies.length > 1
+        ? 'Promedio por mes de cada escenario, sumado por moneda: pesos y dólares no se suman sin convertir'
+        : 'Suma deduplicada de escenarios únicos, llevada a equivalente mensual',
+      tone: marginTone
     },
     {
       label: 'Última actualización',
@@ -4621,7 +4640,9 @@ function statusLabel(state) {
 
 function scenarioMetaText(row) {
   if (!row.scenario) return '';
-  return `${row.scenario.nombre} · ${row.scenario.source === 'tambo' ? 'Tambo' : 'Ganadería'} ${String(row.scenario.modo || 'ESTANDAR').toUpperCase()} · ${fmtScenarioDate(row.scenario.updated_at)}`;
+  const out = row.scenario.outputs || {};
+  const extra = [out.moneda, out.periodo?.rotulo].filter(Boolean).join(' · ');
+  return `${row.scenario.nombre} · ${row.scenario.source === 'tambo' ? 'Tambo' : 'Ganadería'} ${String(row.scenario.modo || 'ESTANDAR').toUpperCase()}${extra ? ' · ' + extra : ''} · ${fmtScenarioDate(row.scenario.updated_at)}`;
 }
 
 function queueBusinessOpenRequest(row) {
@@ -7456,7 +7477,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261020-1545';
+  var CTX_BUILD = '20261029-1800';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {

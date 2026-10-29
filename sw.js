@@ -21,7 +21,7 @@
    con el shell anterior en el fallback.
    ============================================================ */
 
-const CACHE_VERSION = 'ctx-v40';
+const CACHE_VERSION = 'ctx-v41';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 // Solo el shell. Nada de datos.
