@@ -3834,7 +3834,7 @@ function buildTamboSrc(mode) {
   const base = 'Tambo/tambo_integrado_PRODUCCION_v1.html';
   const qs = new URLSearchParams();
   qs.set('mode', (mode || 'ESTANDAR').toUpperCase());
-  qs.set('v', '20261029-1800');   // evita que el navegador sirva un panel de tambo viejo después de un deploy
+  qs.set('v', '20261030-1200');   // evita que el navegador sirva un panel de tambo viejo después de un deploy
   if (clienteId) qs.set('cliente_id', clienteId);
   if (clienteNombre) qs.set('cliente_nombre', clienteNombre);
   if (userId) qs.set('user_id', userId);
@@ -7477,7 +7477,7 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261029-1800';
+  var CTX_BUILD = '20261030-1200';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
