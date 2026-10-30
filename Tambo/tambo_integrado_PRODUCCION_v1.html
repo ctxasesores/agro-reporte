@@ -549,8 +549,6 @@ label .u{margin-left:4px}
 
 /* ================== v2: panel reformulado (29/10/2026) ================== */
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.panel-grid{grid-template-columns:minmax(440px,580px) minmax(0,1fr)}
-@media(max-width:1120px){.panel-grid{grid-template-columns:1fr}}
 .esc-bar{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:12px 16px;margin-bottom:14px;
   background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012)), var(--negro-s);border:.5px solid var(--border);border-radius:var(--r)}
 .esc-bar .grp{display:flex;flex-direction:column;gap:5px}
@@ -578,10 +576,9 @@ label .u{margin-left:4px}
 .deriv{font-size:12px;color:var(--gris)}
 .deriv b{color:#fff;font-variant-numeric:tabular-nums}
 
-.rub-wrap{min-width:540px}
 .rub-head .r{text-align:right}
 .rub-row input[type=number]{text-align:right}
-.rub-head,.rub-row{display:grid;grid-template-columns:minmax(0,1.5fr) 92px 118px 64px minmax(96px,.9fr) 28px;gap:8px;align-items:center}
+.rub-head,.rub-row{display:grid;grid-template-columns:minmax(180px,1.3fr) 130px 150px 80px minmax(170px,1fr) 32px;gap:8px;align-items:center}
 .rub-head{font-size:10.5px;color:var(--gris);font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding-bottom:6px;border-bottom:.5px solid var(--border2)}
 .rub-row{padding:7px 0;border-bottom:.5px solid var(--border);font-size:13px}
 .rub-row:last-child{border-bottom:0}
@@ -593,7 +590,7 @@ label .u{margin-left:4px}
 .rub-tog{background:transparent;border:0;color:var(--gris);font-size:13px;cursor:pointer;width:28px;height:32px;border-radius:6px}
 .rub-tog:hover{background:rgba(255,255,255,.06);color:#fff}
 .rub-row input,.rub-row select,.sub-row input,.sub-row select{padding:6px 7px;font-size:12.5px}
-.rub-total{display:grid;grid-template-columns:minmax(0,1.5fr) 92px 118px 64px minmax(96px,.9fr) 28px;gap:8px;padding-top:10px;font-weight:700;font-size:13px}
+.rub-total{display:grid;grid-template-columns:minmax(180px,1.3fr) 130px 150px 80px minmax(170px,1fr) 32px;gap:8px;padding-top:10px;font-weight:700;font-size:13px}
 .rub-total .r{text-align:right;font-variant-numeric:tabular-nums}
 .chip{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;line-height:1.5}
 .chip.ok{background:rgba(30,153,112,.18);color:#5fd8ac}
@@ -603,16 +600,20 @@ label .u{margin-left:4px}
 
 .sub-panel{background:var(--negro-b);border:1px solid var(--border);border-radius:8px;padding:10px;margin:2px 0 10px;display:flex;flex-direction:column;gap:7px}
 .sub-panel.exc{border-color:rgba(217,81,44,.5)}
-.sub-head,.sub-row{display:grid;grid-template-columns:minmax(0,1.5fr) 78px 58px 78px 92px 22px;gap:6px;align-items:center}
+.sub-head,.sub-row{display:grid;grid-template-columns:minmax(120px,1.3fr) 86px 64px 92px 100px 62px 62px minmax(175px,1fr) 116px 24px;gap:6px;align-items:center}
 .sub-head{font-size:10px;color:var(--gris);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .sub-head .r{text-align:right}
 .sub-item{display:flex;flex-direction:column;gap:5px;padding:6px 0;border-bottom:1px dashed var(--border)}
-.sub-row2{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:12px}
-.sub-row2 .dl{width:52px;padding:5px 6px;font-size:12px}
-.sub-row2 .mini{font-size:11px;color:var(--gris)}
-.sub-row2 .sv{flex:1 1 150px;min-width:150px;text-align:right;font-variant-numeric:tabular-nums;color:var(--texto)}
-.sub-row2 .sv .s,.rub-total .s{color:var(--oro-l)}
-.sub-row2 select.pago{width:auto;padding:5px 7px;font-size:12px}
+.c-sens{display:contents}
+.sd i{display:none;font-style:normal;font-size:11px;color:var(--gris)}
+.sub-row .dl{padding:5px 6px;font-size:12px}
+.sv{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--texto)}
+.sv .s,.rub-total .s{color:var(--oro-l)}
+.sub-row .mini,.sub-row2 .mini{font-size:11px;color:var(--gris)}
+.sub-row select.pago,.sub-row2 select.pago{padding:5px 7px;font-size:12px}
+.sub-row2{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:12px}
+.sub-row2 select.pago{width:auto}
+.sub-pie{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
 .cal-nota{font-size:11px;color:var(--oro-l);margin-left:4px}
 .sub-del{background:transparent;border:0;color:#e06060;font-size:17px;cursor:pointer;line-height:1;padding:0}
 .cal-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:0 0 4px 4px;font-size:11px;color:var(--gris)}
@@ -635,12 +636,14 @@ label .u{margin-left:4px}
 .seg button:last-child{border-radius:0 7px 7px 0}
 .seg button + button{border-left:0}
 .seg button.on{background:var(--oro);border-color:var(--oro);color:#132d46}
-.estac-grid{display:grid;grid-template-columns:84px repeat(6,minmax(0,1fr));gap:4px;align-items:center;font-size:12px}
-.estac-grid + .estac-grid{margin-top:6px}
-.estac-grid .m{text-align:center;color:var(--gris);font-weight:700}
-.estac-grid .r{color:var(--gris)}
-.estac-grid input{padding:5px 2px;text-align:center;font-size:11.5px}
-.estac-grid .v{text-align:center;font-variant-numeric:tabular-nums;color:#fff}
+.estac-cols{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}
+.ec{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:6px 4px;border-radius:7px;background:var(--negro-b);border:1px solid var(--border);text-align:center;font-size:12px;min-width:0}
+.ec .m{color:var(--gris);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
+.ec .i{color:var(--texto)}
+.ec .v{color:#fff;font-weight:600;font-variant-numeric:tabular-nums}
+.ec input{padding:5px 2px;text-align:center;font-size:12px}
+.ec.fuera{opacity:.42}
+.estac-ley{font-size:11.5px;color:var(--gris)}
 .estac-msg{font-size:12px;color:var(--gris)}
 
 .kchip{margin-top:4px}
@@ -684,19 +687,104 @@ label .u{margin-left:4px}
 .map-tabla .warn{color:#ffab94}
 
 .bar-row{grid-template-columns:150px minmax(0,1fr) 84px 66px}
+/* ================== una sola columna (30/10/2026) ==================
+   Dentro de Context el panel recibe el ancho de la pantalla menos el menú
+   lateral (unos 1.100 px en una notebook): dos columnas dejaban los
+   resultados en 500 px. Ahora todo va en una columna, en este orden: tablero,
+   carga del tambo, compartidos, escenarios, flujo, comparación entre tambos,
+   lectura y riesgo. Al bajar aparece arriba una barra fija con el resultado. */
+.container{width:min(1240px, calc(100vw - 24px))}
+.panel-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel-col > section{scroll-margin-top:64px;min-width:0}
+
+.tdatos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 22px}
+.tdatos > .tsec{border-top:0;padding-top:0}
+.tdatos > .tsec + .tsec{border-left:.5px solid var(--border);padding-left:22px}
+.tdatos + .tsec{border-top:.5px solid var(--border);padding-top:14px}
+.tdatos .g3,.tdatos .gd{align-items:end}
+
+.kpi-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+
+.esc-dos{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.esc-dos .pal-list{margin-top:0;max-width:none}
+.ajustes{padding:12px 14px;border-radius:8px;background:var(--negro-b);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.aj-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
+.aj-tabla th,.aj-tabla td{padding:4px 6px;text-align:left}
+.aj-tabla thead th{font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.4px;font-weight:700;text-align:right}
+.aj-tabla tbody th{color:var(--texto);font-weight:600}
+.aj-tabla input{text-align:right;padding:6px 7px}
+
+.resbar{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(-110%);transition:transform .18s ease;
+  background:rgba(13,32,53,.96);border-bottom:1px solid var(--border2);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.resbar.on{transform:none}
+.rb-in{width:min(1240px, calc(100vw - 24px));margin:0 auto;display:flex;align-items:center;gap:14px;padding:7px 0;flex-wrap:wrap}
+.rb-sel{width:auto;max-width:220px;padding:5px 8px;font-size:12.5px;font-weight:600}
+.rb-nom{font-weight:700;color:#fff;font-size:13px}
+.rb-nums{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.rb-k{display:flex;flex-direction:column;line-height:1.15}
+.rb-k small{font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.4px}
+.rb-k b{font-size:14px;font-variant-numeric:tabular-nums;color:#fff}
+.rb-k b.pos{color:var(--verde-l)}
+.rb-k b.neg{color:#ff8d70}
+.rb-nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+.rb-nav button{background:transparent;border:1px solid var(--border2);color:var(--gris);border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.rb-nav button:hover,.rb-nav button:focus-visible{color:#fff;border-color:var(--oro)}
+@media (prefers-reduced-motion: reduce){.resbar{transition:none}}
+
+@media(min-width:621px){
+  .tl-fila{grid-template-columns:minmax(160px,240px) minmax(0,1fr) 92px 80px}
+}
+@media(max-width:1099px){
+  /* Ítems en dos renglones: datos arriba; palancas, valor y pago abajo. */
+  .sub-head{grid-template-columns:minmax(0,1.6fr) 86px 64px 92px 100px 24px}
+  .sub-head .h-x{display:none}
+  .sub-row{grid-template-columns:minmax(0,1.6fr) 86px 64px 92px 100px 24px;
+    grid-template-areas:'nom pre uni can por del' 'sens sens val val pag pag'}
+  .c-nom{grid-area:nom}.c-pre{grid-area:pre}.c-uni{grid-area:uni}.c-can{grid-area:can}.c-por{grid-area:por}.c-del{grid-area:del}
+  .c-val{grid-area:val}.c-pag{grid-area:pag}
+  .c-sens{display:flex;gap:12px;align-items:center;grid-area:sens}
+  .sd{display:inline-flex;align-items:center;gap:5px}
+  .sd i{display:inline}
+  .sd .dl{width:60px}
+}
+@media(max-width:1000px){
+  .kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .rb-nav{display:none}
+}
+@media(max-width:980px){
+  .tdatos{grid-template-columns:1fr;gap:14px}
+  .tdatos > .tsec + .tsec{border-left:0;padding-left:0;border-top:.5px solid var(--border);padding-top:14px}
+  .rub-head,.rub-row,.rub-total{grid-template-columns:minmax(130px,1fr) 108px 132px 66px 130px 28px}
+}
+@media(max-width:900px){
+  .estac-cols{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+@media(max-width:860px){
+  .esc-dos{grid-template-columns:1fr}
+}
 @media(max-width:760px){
   .rub-head{display:none}
   .rub-row,.rub-total{grid-template-columns:repeat(3,minmax(0,1fr))}
   .rub-row > .rub-nom,.rub-total > :first-child{grid-column:1/-1}
   .sub-head{display:none}
-  .sub-row{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .sub-row .sub-del{justify-self:end}
-  .sub-row > :first-child{grid-column:1/-1}
-  .rub-wrap{min-width:0}
+  .sub-row{grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-areas:'nom nom del' 'pre uni can' 'por pag pag' 'sens sens sens' 'val val val'}
+  .c-del{justify-self:end}
+  .c-val{text-align:left}
   .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .estac-grid{grid-template-columns:62px repeat(6,minmax(0,1fr))}
   .bar-row{grid-template-columns:1fr 70px 56px}
   .bar-row .bar-track{grid-column:1/-1}
+  .res-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tdatos .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .rub-row > .rub-eq{grid-column:1/3;text-align:left}
+  .rub-row > .rub-tog{justify-self:end}
+}
+@media(max-width:620px){
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rb-opc{display:none}
+}
+@media(max-width:480px){
+  .estac-cols{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 
 </style>
@@ -771,181 +859,176 @@ label .u{margin-left:4px}
 
     <div id="mt_barra" class="mt-barra tabs-bar" style="display:none"></div>
     <div id="mt_cons_banner" class="mt-cons-banner" style="display:none">Vista <b>consolidada</b>: suma litros, ingresos, costos y caja de todos los tambos. Los valores por litro son promedios ponderados. Para editar, elegí un tambo.</div>
+    <div id="resbar_sentinel" aria-hidden="true"></div>
 
-    <div class="panel-grid">
-      <div class="panel-left">
-        <section class="card" id="card_tambo">
-          <div class="card-hdr" onclick="toggleAcc('acc-tambo','icon-tambo')">
-            <div>
-              <div class="card-title" id="tambo_titulo">Configuración y costos del tambo</div>
-              <div class="card-sub">Todo lo de esta tarjeta es de este tambo. Las palancas (Δ%) no tocan lo cargado: mueven la columna Sensibilizado.</div>
-            </div>
-            <span class="acc-icon" id="icon-tambo" style="transform:rotate(180deg)">▼</span>
-          </div>
-          <div class="fields" id="acc-tambo"><div id="tambo_form"></div></div>
-        </section>
+    <!-- Barra de resultados: aparece fija arriba cuando se baja por la página, para ver el efecto de lo que se carga. -->
+    <div id="resbar" class="resbar"></div>
 
-        <section class="card" id="card_compartidos" style="display:none">
-          <div class="card-hdr" onclick="toggleAcc('acc-compartidos','icon-compartidos')">
-            <div>
-              <div class="card-title">Costos compartidos de la empresa</div>
-              <div class="card-sub">Lo que no es de ningún tambo: se carga una vez y se reparte, mes a mes.</div>
-            </div>
-            <span class="acc-icon" id="icon-compartidos" style="transform:rotate(180deg)">▼</span>
+    <div class="panel-col">
+      <section class="rep-card" id="sec-tablero">
+        <div class="card-hdr" onclick="toggleAcc('acc-tablero','icon-tablero')">
+          <div>
+            <div class="card-title" id="tablero_titulo">Tablero principal</div>
+            <div class="card-sub" id="tablero_sub">Producción, eficiencia, costo y resultado en una sola lectura.</div>
           </div>
-          <div class="fields" id="acc-compartidos">
-            <p class="cmp-desc">Un costo indivisible —el contratista de labores, la administración, un asesor— no pertenece
-              a ningún tambo. Se carga <b>una sola vez acá</b>, por el total mensual de la empresa, y el panel lo reparte
-              entre los tambos cada mes, por sus litros de ese mes o por porcentaje. En cada tambo se suma al rubro que elijas.</p>
-            <div id="comp_body"></div>
-            <button type="button" class="cmp-add" onclick="compAgregar()">+ Agregar costo compartido</button>
-          </div>
-        </section>
+          <span class="acc-icon" id="icon-tablero" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-tablero">
+          <div class="kpi-grid" id="top_kpis"></div>
+          <div id="mt_litros"></div>
+        </div>
+      </section>
 
-        <section class="card">
-          <div class="card-hdr" onclick="toggleAcc('acc-escenarios','icon-escenarios')">
-            <div>
-              <div class="card-title">Escenarios</div>
-              <div class="card-sub">Ajustes globales sobre lo cargado. Valen para todos los tambos.</div>
-            </div>
-            <span class="acc-icon" id="icon-escenarios" style="transform:rotate(180deg)">▼</span>
+      <section class="card" id="card_tambo">
+        <div class="card-hdr" onclick="toggleAcc('acc-tambo','icon-tambo')">
+          <div>
+            <div class="card-title" id="tambo_titulo">Configuración y costos del tambo</div>
+            <div class="card-sub">Todo lo de esta tarjeta es de este tambo. Las palancas (Δ%) no tocan lo cargado: mueven la columna Sensibilizado.</div>
           </div>
-          <div class="fields" id="acc-escenarios">
-            <div class="fg3">
-              <div><label for="pes_precio">Pesimista precio %</label><input type="number" id="pes_precio" step="0.1" oninput="cambiarAjuste('pes','precio',this.value)"></div>
-              <div><label for="pes_prod">Pesimista litros %</label><input type="number" id="pes_prod" step="0.1" oninput="cambiarAjuste('pes','litros',this.value)"></div>
-              <div><label for="pes_costo">Pesimista costo %</label><input type="number" id="pes_costo" step="0.1" oninput="cambiarAjuste('pes','costo',this.value)"></div>
-              <div><label for="opt_precio">Optimista precio %</label><input type="number" id="opt_precio" step="0.1" oninput="cambiarAjuste('opt','precio',this.value)"></div>
-              <div><label for="opt_prod">Optimista litros %</label><input type="number" id="opt_prod" step="0.1" oninput="cambiarAjuste('opt','litros',this.value)"></div>
-              <div><label for="opt_costo">Optimista costo %</label><input type="number" id="opt_costo" step="0.1" oninput="cambiarAjuste('opt','costo',this.value)"></div>
-            </div>
-            <div class="hint">La sensibilización fina está en la tarjeta del tambo: cada dato y cada rubro tienen su Δ%.</div>
-          </div>
-        </section>
-      </div>
+          <span class="acc-icon" id="icon-tambo" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-tambo"><div id="tambo_form"></div></div>
+      </section>
 
-      <div class="panel-right">
-        <section class="rep-card">
-          <div class="card-hdr" onclick="toggleAcc('acc-tablero','icon-tablero')">
-            <div>
-              <div class="card-title" id="tablero_titulo">Tablero principal</div>
-              <div class="card-sub" id="tablero_sub">Producción, eficiencia, costo y resultado en una sola lectura.</div>
-            </div>
-            <span class="acc-icon" id="icon-tablero" style="transform:rotate(180deg)">▼</span>
+      <section class="card" id="card_compartidos" style="display:none">
+        <div class="card-hdr" onclick="toggleAcc('acc-compartidos','icon-compartidos')">
+          <div>
+            <div class="card-title">Costos compartidos de la empresa</div>
+            <div class="card-sub">Lo que no es de ningún tambo: se carga una vez, por el total mensual de la empresa, y se reparte entre los tambos mes a mes, por sus litros de ese mes o por porcentaje. En cada tambo se suma al rubro que elijas.</div>
           </div>
-          <div class="fields" id="acc-tablero">
-            <div class="kpi-grid" id="top_kpis"></div>
-            <div id="mt_litros"></div>
-          </div>
-        </section>
+          <span class="acc-icon" id="icon-compartidos" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-compartidos">
+          <div id="comp_body"></div>
+          <button type="button" class="cmp-add" onclick="compAgregar()">+ Agregar costo compartido</button>
+        </div>
+      </section>
 
-        <section class="rep-card">
-          <div class="card-hdr" onclick="toggleAcc('acc-comparativa','icon-comparativa')">
-            <div>
-              <div class="card-title" id="comparativa_titulo">Comparativa de escenarios</div>
-              <div class="card-sub">Margen promedio por mes. Pesimista y Optimista mueven todo junto; Sensibilizado usa las palancas de cada dato.</div>
-            </div>
-            <span class="acc-icon" id="icon-comparativa" style="transform:rotate(180deg)">▼</span>
+      <section class="rep-card" id="sec-escenarios">
+        <div class="card-hdr" onclick="toggleAcc('acc-comparativa','icon-comparativa')">
+          <div>
+            <div class="card-title" id="comparativa_titulo">Comparativa de escenarios</div>
+            <div class="card-sub">Margen promedio por mes. Pesimista y Optimista mueven todo junto; Sensibilizado usa las palancas de cada dato.</div>
           </div>
-          <div class="fields" id="acc-comparativa">
-            <div class="res-3 res-4" id="escenarios_grid"></div>
+          <span class="acc-icon" id="icon-comparativa" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-comparativa">
+          <div class="res-3 res-4" id="escenarios_grid"></div>
+          <div class="esc-dos">
             <div id="palancas_box"></div>
+            <div class="ajustes">
+              <div class="pal-tit">Ajustes de Pesimista y Optimista</div>
+              <table class="aj-tabla">
+                <thead><tr><th></th><th>Precio %</th><th>Litros %</th><th>Costo %</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Pesimista</th>
+                    <td><input type="number" id="pes_precio" step="0.1" oninput="cambiarAjuste('pes','precio',this.value)" aria-label="Pesimista precio %"></td>
+                    <td><input type="number" id="pes_prod" step="0.1" oninput="cambiarAjuste('pes','litros',this.value)" aria-label="Pesimista litros %"></td>
+                    <td><input type="number" id="pes_costo" step="0.1" oninput="cambiarAjuste('pes','costo',this.value)" aria-label="Pesimista costo %"></td></tr>
+                  <tr><th scope="row">Optimista</th>
+                    <td><input type="number" id="opt_precio" step="0.1" oninput="cambiarAjuste('opt','precio',this.value)" aria-label="Optimista precio %"></td>
+                    <td><input type="number" id="opt_prod" step="0.1" oninput="cambiarAjuste('opt','litros',this.value)" aria-label="Optimista litros %"></td>
+                    <td><input type="number" id="opt_costo" step="0.1" oninput="cambiarAjuste('opt','costo',this.value)" aria-label="Optimista costo %"></td></tr>
+                </tbody>
+              </table>
+              <div class="hint">Valen para todos los tambos y se aplican sobre lo cargado. La sensibilización fina está en la tarjeta del tambo: cada dato y cada rubro tienen su Δ%.</div>
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section class="rep-card" id="sec-comparacion" style="display:none">
-          <div class="card-hdr" onclick="toggleAcc('acc-comparacion','icon-comparacion')">
-            <div>
-              <div class="card-title">Comparación entre tambos</div>
-              <div class="card-sub">Indicadores de cada tambo y del conjunto. Se marca el mejor y el peor de cada fila cuando se separan más de 5%.</div>
-            </div>
-            <span class="acc-icon" id="icon-comparacion" style="transform:rotate(180deg)">▼</span>
+      <section class="rep-card" id="sec-flujo">
+        <div class="card-hdr" onclick="toggleAcc('acc-flujo','icon-flujo')">
+          <div>
+            <div class="card-title" id="flujo_titulo">Resumen y flujo de fondos</div>
+            <div class="card-sub" id="flujo_sub">Mes a mes: lo devengado y la caja.</div>
           </div>
-          <div class="fields" id="acc-comparacion"><div class="table-wrap" id="comparacion_box"></div></div>
-        </section>
+          <span class="acc-icon" id="icon-flujo" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-flujo">
+          <div class="fl-kpis" id="flujo_kpis"></div>
+          <div class="fl-chart" id="flujo_chart"></div>
+          <div class="table-wrap" id="flujo_tabla"></div>
+          <div class="fl-nota" id="flujo_nota"></div>
+        </div>
+      </section>
 
-        <section class="rep-card" id="sec-estadistica" style="display:none">
-          <div class="card-hdr" onclick="toggleAcc('acc-estadistica','icon-estadistica')">
-            <div>
-              <div class="card-title">Analisis estadistico de riesgo productivo</div>
-              <div class="card-sub">Variabilidad de los litros por vaca y dia de cada tambo, control a control.</div>
-            </div>
-            <span class="acc-icon" id="icon-estadistica">&#9660;</span>
+      <section class="rep-card" id="sec-comparacion" style="display:none">
+        <div class="card-hdr" onclick="toggleAcc('acc-comparacion','icon-comparacion')">
+          <div>
+            <div class="card-title">Comparación entre tambos</div>
+            <div class="card-sub">Indicadores de cada tambo y del conjunto. Se marca el mejor y el peor de cada fila cuando se separan más de 5%.</div>
           </div>
-          <div class="fields" id="acc-estadistica" style="display:none">
-            <div class="est-nota">Cargá un renglón por <b>control lechero o por mes</b> y el dato de litros por vaca y día
-              de cada tambo. Las columnas son los tambos que ya tenés cargados arriba. Con una fila por día los datos no
-              son independientes entre sí y las medidas de riesgo quedan mal estimadas: por eso la unidad es el control.</div>
-            <div class="est-acc">
-              <button type="button" class="est-btn" onclick="estAgregarControl()">+ Control</button>
-              <button type="button" class="est-btn" onclick="estAbrirPegar()">Pegar desde Excel</button>
-              <button type="button" class="est-btn est-ghost" onclick="estLimpiar()">Vaciar</button>
-            </div>
-            <div id="est_pegar_box" class="est-pegar" style="display:none">
-              <textarea id="est_pegar_ta" rows="6" placeholder="Control&#9;Tambo Norte&#9;Tambo Sur&#10;03/2026&#9;31,5&#9;22,0&#10;04/2026&#9;30,8&#9;22,6"></textarea>
-              <div class="est-pegar-acc">
-                <button type="button" class="est-btn" onclick="estProcesarPegado()">Revisar columnas</button>
-                <button type="button" class="est-btn est-ghost" onclick="estCancelarPegado()">Cancelar</button>
-              </div>
-              <div id="est_pegar_fb" class="est-fb" style="display:none"></div>
-              <div id="est_pegar_map"></div>
-            </div>
-            <div class="sec-lbl">Litros por vaca y dia, control a control</div>
-            <div class="est-wrap"><div id="est_grilla"></div></div>
-            <div id="est_riesgo" style="margin-top:22px"></div>
-            <div id="est_correl" style="margin-top:26px"></div>
-            <div id="est_contrib" style="margin-top:26px"></div>
-            <div id="est_enso" style="margin-top:26px"></div>
-          </div>
-        </section>
+          <span class="acc-icon" id="icon-comparacion" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-comparacion"><div class="table-wrap" id="comparacion_box"></div></div>
+      </section>
 
-        <section class="rep-card">
-          <div class="card-hdr" onclick="toggleAcc('acc-lectura','icon-lectura')">
-            <div>
-              <div class="card-title">Lectura economica</div>
-              <div class="card-sub">Descomposicion del costo y principales relaciones del negocio, en el período.</div>
-            </div>
-            <span class="acc-icon" id="icon-lectura" style="transform:rotate(180deg)">▼</span>
+      <section class="rep-card" id="sec-lectura">
+        <div class="card-hdr" onclick="toggleAcc('acc-lectura','icon-lectura')">
+          <div>
+            <div class="card-title">Lectura económica</div>
+            <div class="card-sub">Descomposición del costo y principales relaciones del negocio, en el período.</div>
           </div>
-          <div class="fields split" id="acc-lectura">
-            <div class="stack">
-              <div class="sec-lbl">Estructura de costos</div>
-              <div class="bar-list" id="cost_bars"></div>
-            </div>
-            <div class="stack">
-              <div class="sec-lbl">Indicadores de gestion</div>
-              <div id="metric_rows"></div>
-            </div>
+          <span class="acc-icon" id="icon-lectura" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields split" id="acc-lectura">
+          <div class="stack">
+            <div class="sec-lbl">Estructura de costos</div>
+            <div class="bar-list" id="cost_bars"></div>
           </div>
-        </section>
+          <div class="stack">
+            <div class="sec-lbl">Indicadores de gestión</div>
+            <div id="metric_rows"></div>
+          </div>
+        </div>
+      </section>
 
-        <section class="rep-card">
-          <div class="card-hdr" onclick="toggleAcc('acc-flujo','icon-flujo')">
-            <div>
-              <div class="card-title" id="flujo_titulo">Resumen y flujo de fondos</div>
-              <div class="card-sub" id="flujo_sub">Mes a mes: lo devengado y la caja.</div>
+      <section class="rep-card" id="sec-estadistica" style="display:none">
+        <div class="card-hdr" onclick="toggleAcc('acc-estadistica','icon-estadistica')">
+          <div>
+            <div class="card-title">Análisis estadístico de riesgo productivo</div>
+            <div class="card-sub">Variabilidad de los litros por vaca y día de cada tambo, control a control.</div>
+          </div>
+          <span class="acc-icon" id="icon-estadistica">&#9660;</span>
+        </div>
+        <div class="fields" id="acc-estadistica" style="display:none">
+          <div class="est-nota">Cargá un renglón por <b>control lechero o por mes</b> y el dato de litros por vaca y día
+            de cada tambo. Las columnas son los tambos que ya tenés cargados arriba. Con una fila por día los datos no
+            son independientes entre sí y las medidas de riesgo quedan mal estimadas: por eso la unidad es el control.</div>
+          <div class="est-acc">
+            <button type="button" class="est-btn" onclick="estAgregarControl()">+ Control</button>
+            <button type="button" class="est-btn" onclick="estAbrirPegar()">Pegar desde Excel</button>
+            <button type="button" class="est-btn est-ghost" onclick="estLimpiar()">Vaciar</button>
+          </div>
+          <div id="est_pegar_box" class="est-pegar" style="display:none">
+            <textarea id="est_pegar_ta" rows="6" placeholder="Control&#9;Tambo Norte&#9;Tambo Sur&#10;03/2026&#9;31,5&#9;22,0&#10;04/2026&#9;30,8&#9;22,6"></textarea>
+            <div class="est-pegar-acc">
+              <button type="button" class="est-btn" onclick="estProcesarPegado()">Revisar columnas</button>
+              <button type="button" class="est-btn est-ghost" onclick="estCancelarPegado()">Cancelar</button>
             </div>
-            <span class="acc-icon" id="icon-flujo" style="transform:rotate(180deg)">▼</span>
+            <div id="est_pegar_fb" class="est-fb" style="display:none"></div>
+            <div id="est_pegar_map"></div>
           </div>
-          <div class="fields" id="acc-flujo">
-            <div class="fl-kpis" id="flujo_kpis"></div>
-            <div class="fl-chart" id="flujo_chart"></div>
-            <div class="table-wrap" id="flujo_tabla"></div>
-            <div class="fl-nota" id="flujo_nota"></div>
-          </div>
-        </section>
+          <div class="sec-lbl">Litros por vaca y día, control a control</div>
+          <div class="est-wrap"><div id="est_grilla"></div></div>
+          <div id="est_riesgo" style="margin-top:22px"></div>
+          <div id="est_correl" style="margin-top:26px"></div>
+          <div id="est_contrib" style="margin-top:26px"></div>
+          <div id="est_enso" style="margin-top:26px"></div>
+        </div>
+      </section>
 
-        <section class="rep-card" id="sec-prioridades" style="display:none">
-          <div class="card-hdr" onclick="toggleAcc('acc-prioridades','icon-prioridades')">
-            <div>
-              <div class="card-title">Prioridades sugeridas</div>
-              <div class="card-sub">Acciones recomendadas segun los desbalances detectados.</div>
-            </div>
-            <span class="acc-icon" id="icon-prioridades" style="transform:rotate(180deg)">▼</span>
+      <section class="rep-card" id="sec-prioridades" style="display:none">
+        <div class="card-hdr" onclick="toggleAcc('acc-prioridades','icon-prioridades')">
+          <div>
+            <div class="card-title">Prioridades sugeridas</div>
+            <div class="card-sub">Acciones recomendadas según los desbalances detectados.</div>
           </div>
-          <div class="fields" id="acc-prioridades"><div class="action-list" id="action_list"></div></div>
-        </section>
-      </div>
+          <span class="acc-icon" id="icon-prioridades" style="transform:rotate(180deg)">▼</span>
+        </div>
+        <div class="fields" id="acc-prioridades"><div class="action-list" id="action_list"></div></div>
+      </section>
     </div>
   </div>
 <div id="gas_card" class="card" style="display:none;margin-top:16px">
@@ -1686,7 +1769,7 @@ function cambiarNombreTambo(v){
   var nom = String(v || '').trim(); if(!nom) return;          // vacío mientras tipea: no se pisa
   t.nombre = nom;
   var span = document.querySelector('.mt-tab-txt[data-tid="' + t.id + '"]'); if(span) span.textContent = nom;
-  var tit = document.getElementById('tambo_titulo'); if(tit) tit.textContent = nom + ' · configuración y costos';
+  var tit = document.getElementById('tambo_titulo'); if(tit && esPro()) tit.textContent = nom + ' · configuración y costos';
   aplicarNombreTambo(t.id, nom);
 }
 
@@ -1715,46 +1798,45 @@ function renderTarjeta(){
     return;
   }
   var t = tamboActivo(); if(!t) return;
-  if(tit) tit.textContent = (esPro() ? t.nombre + ' · ' : '') + 'configuración y costos';
+  if(tit) tit.textContent = esPro() ? t.nombre + ' · configuración y costos' : 'Configuración y costos del tambo';
   var uL = unidadLitro();
   var P = t.produccion, Pr = t.precio, R = t.rodeo, Q = t.calidad;
   var h = '';
 
-  h += '<div class="tsec"><span class="tsec-t">Identificación</span>'
+  var plazos = PLAZOS.slice();
+  if(!plazos.some(function(p){ return p[0] === num(Pr.plazo_cobro_dias); })) plazos.push([num(Pr.plazo_cobro_dias), fm(Pr.plazo_cobro_dias) + ' días']);
+  // Tres bloques lado a lado en pantallas anchas; uno debajo del otro en angostas.
+  h += '<div class="tdatos">';
+  h += '<div class="tsec"><span class="tsec-t">Tambo</span>'
     +  fld('Nombre del tambo', '', '<input type="text" id="t_nombre" maxlength="40" value="' + escTxt(t.nombre) + '" oninput="cambiarNombreTambo(this.value)">', 't_nombre')
-    +  '</div>';
-
-  h += '<div class="tsec"><span class="tsec-t">Rodeo y superficie</span><div class="g3">'
+    +  '<div class="g3">'
     +  fld('Rodeo total', 'cab.', inNum('rodeo.total', R.total, ' min="0"'))
-    +  fld('Vacas en ordeñe', 'cab.', inNum('rodeo.ordene', R.ordene, ' min="0"'))
+    +  fld('En ordeñe', 'cab.', inNum('rodeo.ordene', R.ordene, ' min="0"'))
     +  fld('Superficie', 'ha', inNum('superficie', t.superficie, ' min="0"'))
     +  '</div><div class="deriv" id="d_rodeo"></div></div>';
-
   h += '<div class="tsec"><span class="tsec-t">Producción</span><div class="gd">'
-    +  fld('Litros por vaca y día', 'promedio del período', inNum('produccion.litros_vaca', P.litros_vaca, ' min="0"'))
+    +  fld('Litros por vaca y día', 'prom. del período', inNum('produccion.litros_vaca', P.litros_vaca, ' min="0"'))
     +  fld('Δ%', '', inDelta('produccion.d_litros', P.d_litros, 'Δ% litros por vaca'))
-    +  fld('Consumo de materia seca', 'kg MS/vaca/día', inNum('produccion.consumo_ms', P.consumo_ms, ' min="0"'))
+    +  fld('Consumo de MS', 'kg/vaca/día', inNum('produccion.consumo_ms', P.consumo_ms, ' min="0"'))
     +  fld('Δ%', '', inDelta('produccion.d_ms', P.d_ms, 'Δ% consumo de MS'))
     +  '</div><div class="g3">'
-    +  fld('Merma comercial', '%', inNum('produccion.merma', P.merma, ' min="0" max="100"'))
+    +  fld('Merma', '%', inNum('produccion.merma', P.merma, ' min="0" max="100"'))
     +  fld('Grasa', '%', inNum('calidad.grasa', Q.grasa, ' min="0"'))
     +  fld('Proteína', '%', inNum('calidad.proteina', Q.proteina, ' min="0"'))
     +  '</div><div class="deriv" id="d_prod"></div></div>';
-
-  var plazos = PLAZOS.slice();
-  if(!plazos.some(function(p){ return p[0] === num(Pr.plazo_cobro_dias); })) plazos.push([num(Pr.plazo_cobro_dias), fm(Pr.plazo_cobro_dias) + ' días']);
   h += '<div class="tsec"><span class="tsec-t">Precio de la leche</span><div class="gd">'
     +  fld('Precio base', uL, inNum('precio.base', Pr.base, ' min="0"'))
     +  fld('Δ%', '', inDelta('precio.d_precio', Pr.d_precio, 'Δ% precio'))
     +  '</div><div class="g3">'
     +  fld('Bonif. sólidos', '%', inNum('precio.bonif_solidos', Pr.bonif_solidos))
     +  fld('Bonif. calidad', '%', inNum('precio.bonif_calidad', Pr.bonif_calidad))
-    +  fld('Plazo de cobro', '', '<select onchange="cambiarPlazo(this.value)">' + plazos.map(function(p){
+    +  fld('Cobro', '', '<select onchange="cambiarPlazo(this.value)" aria-label="Plazo de cobro">' + plazos.map(function(p){
          return '<option value="' + p[0] + '"' + (num(Pr.plazo_cobro_dias) === p[0] ? ' selected' : '') + '>' + p[1] + '</option>'; }).join('') + '</select>')
     +  '</div><div class="deriv" id="d_precio"></div></div>';
+  h += '</div>';
 
   h += '<div class="tsec"><div class="tsec-h"><span class="tsec-t">Costos por rubro</span><span class="deriv">el monto del rubro es el límite de sus subcategorías</span></div>'
-    +  '<div class="table-wrap"><div class="rub-wrap">'
+    +  '<div class="rub-wrap">'
     +  '<div class="rub-head"><span>Rubro</span><span class="r">Monto</span><span>Unidad</span><span class="r">Δ%</span><span class="r">' + uL + ' base → sensib.</span><span></span></div>';
   RUBROS.forEach(function(k){
     var r = t.rubros[k], abierto = !!UI.expand[t.id + ':' + k];
@@ -1769,7 +1851,7 @@ function renderTarjeta(){
     if(abierto) h += renderSubPanel(t, k);
   });
   h += '<div class="rub-total"><span>Costo total</span><span class="r" id="rt_mes"></span><span class="deriv">' + simbolo() + '/mes prom.</span><span></span><span class="r" id="rt_l"></span><span></span></div>';
-  h += '</div></div>'
+  h += '</div>'
     +  '<div class="hint">Cómo cuenta cada unidad: <b>' + simbolo() + '/L</b> se mueve con los litros de cada mes; <b>' + simbolo() + '/mes</b> es fijo en el mes; '
     +  '<b>' + simbolo() + '/vaca/mes</b> se mueve con las vacas; <b>% del ingreso</b> se mueve con litros y precio.</div></div>';
 
@@ -1786,7 +1868,8 @@ function renderSubPanel(t, k){
   var r = t.rubros[k], s = simbolo();
   var h = '<div class="sub-panel" id="sp_' + k + '">';
   if((r.subcats || []).length){
-    h += '<div class="sub-head"><span>Ítem</span><span class="r">Precio</span><span>Unidad</span><span class="r">Cantidad</span><span>Por</span><span></span></div>';
+    h += '<div class="sub-head"><span>Ítem</span><span class="r">Precio</span><span>Unidad</span><span class="r">Cantidad</span><span>Por</span>'
+      +  '<span class="r h-x">Δ% p</span><span class="r h-x">Δ% q</span><span class="r h-x">' + s + '/mes</span><span class="h-x">Pago</span><span></span></div>';
   } else {
     h += '<div class="deriv">Sin subcategorías: cuenta el monto del rubro. Si lo abrís en ítems (precio × cantidad), cada uno se puede sensibilizar y tener su calendario de pago.</div>';
   }
@@ -1794,38 +1877,37 @@ function renderSubPanel(t, k){
     var base = 'rubros.' + k + '.subcats.' + j + '.';
     var conCal = sc.unidad === 'mes' || sc.unidad === 'vaca';
     var cal = Array.isArray(sc.calendario);
-    h += '<div class="sub-item">'
-      +  '<div class="sub-row">'
-      +    '<input type="text" data-b="' + base + 'nombre" value="' + escTxt(sc.nombre) + '" placeholder="Ej. Balanceado" oninput="bindTxt(this);refrescarPalancasNombre()" aria-label="Nombre del ítem">'
-      +    inNum(base + 'precio', sc.precio, ' aria-label="Precio"')
-      +    '<input type="text" data-b="' + base + 'unidad_item" value="' + escTxt(sc.unidad_item) + '" placeholder="kg" oninput="bindTxt(this)" aria-label="Unidad del ítem">'
-      +    inNum(base + 'cantidad', sc.cantidad, ' aria-label="Cantidad"')
-      +    '<select onchange="cambiarPorSubcat(\'' + k + '\',' + j + ',this.value)" aria-label="Cantidad por">' + opcionesPor(sc.unidad) + '</select>'
-      +    '<button type="button" class="sub-del" title="Quitar ítem" onclick="quitarSubcat(\'' + k + '\',' + j + ')">×</button>'
-      +  '</div>'
-      +  '<div class="sub-row2">'
-      +    '<span class="mini" title="Δ% del precio del ítem">Δ% p</span>' + inDelta(base + 'dp', sc.dp, 'Δ% precio del ítem')
-      +    '<span class="mini" title="Δ% de la cantidad del ítem">Δ% q</span>' + inDelta(base + 'dq', sc.dq, 'Δ% cantidad del ítem')
-      +    '<span class="sv" id="sv_' + sc.id + '"></span>'
-      +    (conCal
-          ? '<select class="pago" onchange="cambiarPagoSubcat(\'' + k + '\',' + j + ',this.value)" aria-label="Pago">'
-            + '<option value="parejo"' + (cal ? '' : ' selected') + '>pago parejo</option>'
-            + '<option value="meses"' + (cal ? ' selected' : '') + '>pago en meses…</option></select>'
-          : '<span class="mini">pago con ' + (sc.unidad === 'litro' ? 'los litros' : 'el ingreso') + '</span>')
+    // Diez celdas en una fila; en pantallas angostas se acomodan en dos o más renglones (CSS, grid-template-areas).
+    h += '<div class="sub-item"><div class="sub-row">'
+      +  '<input class="c-nom" type="text" data-b="' + base + 'nombre" value="' + escTxt(sc.nombre) + '" placeholder="Ej. Balanceado" oninput="bindTxt(this);refrescarPalancasNombre()" aria-label="Nombre del ítem">'
+      +  inNum(base + 'precio', sc.precio, ' class="c-pre" aria-label="Precio"')
+      +  '<input class="c-uni" type="text" data-b="' + base + 'unidad_item" value="' + escTxt(sc.unidad_item) + '" placeholder="kg" oninput="bindTxt(this)" aria-label="Unidad del ítem">'
+      +  inNum(base + 'cantidad', sc.cantidad, ' class="c-can" aria-label="Cantidad"')
+      +  '<select class="c-por" onchange="cambiarPorSubcat(\'' + k + '\',' + j + ',this.value)" aria-label="Cantidad por">' + opcionesPor(sc.unidad) + '</select>'
+      +  '<span class="c-sens"><span class="sd"><i>Δ% p</i>' + inDelta(base + 'dp', sc.dp, 'Δ% precio del ítem') + '</span>'
+      +  '<span class="sd"><i>Δ% q</i>' + inDelta(base + 'dq', sc.dq, 'Δ% cantidad del ítem') + '</span></span>'
+      +  '<span class="c-val sv" id="sv_' + sc.id + '"></span>'
+      +  (conCal
+          ? '<select class="c-pag pago" onchange="cambiarPagoSubcat(\'' + k + '\',' + j + ',this.value)" aria-label="Pago">'
+            + '<option value="parejo"' + (cal ? '' : ' selected') + '>parejo</option>'
+            + '<option value="meses"' + (cal ? ' selected' : '') + '>en meses…</option></select>'
+          : '<span class="c-pag mini">con ' + (sc.unidad === 'litro' ? 'los litros' : 'el ingreso') + '</span>')
+      +  '<button type="button" class="c-del sub-del" title="Quitar ítem" onclick="quitarSubcat(\'' + k + '\',' + j + ')">×</button>'
       +  '</div>'
       +  (conCal && cal ? calRow('rubros.' + k + '.subcats.' + j + '.calendario', sc.calendario) : '')
       +  '</div>';
   });
   h += '<div class="lim" id="lim_' + k + '"></div>';
+  h += '<div class="sub-pie">';
   if(r.unidad === 'mes' || r.unidad === 'vaca'){
     var calR = Array.isArray(r.calendario);
-    h += '<div class="sub-row2"><span class="mini">' + ((r.subcats || []).length ? 'Pago de lo no asignado' : 'Pago del rubro') + '</span>'
+    h += '<span class="sub-row2"><span class="mini">' + ((r.subcats || []).length ? 'Pago de lo no asignado' : 'Pago del rubro') + '</span>'
       +  '<select class="pago" onchange="cambiarPagoRubro(\'' + k + '\',this.value)">'
       +  '<option value="parejo"' + (calR ? '' : ' selected') + '>parejo</option>'
-      +  '<option value="meses"' + (calR ? ' selected' : '') + '>en meses…</option></select></div>'
-      +  (calR ? calRow('rubros.' + k + '.calendario', r.calendario) : '');
+      +  '<option value="meses"' + (calR ? ' selected' : '') + '>en meses…</option></select></span>';
   }
-  h += '<button type="button" class="btn-link" onclick="agregarSubcat(\'' + k + '\')">+ Agregar subcategoría</button>';
+  h += '<button type="button" class="btn-link" onclick="agregarSubcat(\'' + k + '\')">+ Agregar subcategoría</button></div>';
+  if((r.unidad === 'mes' || r.unidad === 'vaca') && Array.isArray(r.calendario)) h += calRow('rubros.' + k + '.calendario', r.calendario);
   return h + '</div>';
 }
 
@@ -1925,27 +2007,22 @@ function renderEstac(t){
     + '<div class="fld"><label>Precio</label><div class="seg">' + [['pareja','Pareja'],['mano','A mano']].map(function(o){
       return '<button type="button" class="' + (e.fuente_precio === o[0] ? 'on' : '') + '" onclick="fuenteEstac(\'precio\',\'' + o[0] + '\')">' + o[1] + '</button>'; }).join('') + '</div></div>'
     + estacGrid('precio', e.fuente_precio === 'mano', e.precio, uL)
-    + '<div class="hint">Los índices reparten el promedio cargado entre los meses: el promedio del período queda igual a lo cargado. 1,10 = un 10% arriba del promedio.</div>';
+    + '<div class="hint">Los índices reparten el promedio cargado entre los meses: el promedio del período queda igual a lo cargado.</div>';
   return h;
 }
 function estacGrid(cual, editable, idx, unidad){
-  // Dos bloques de seis meses: en la columna de carga, doce casillas en una fila no se leen.
-  var h = '';
-  [0, 6].forEach(function(desde){
-    h += '<div class="estac-grid"><span></span>';
-    for(var a = desde; a < desde + 6; a++) h += '<span class="m">' + MESES_CORTOS[a] + '</span>';
-    h += '<span class="r">Índice</span>';
-    for(var i = desde; i < desde + 6; i++){
-      var v = idx && num(idx[i]) > 0 ? idx[i] : 1;
-      h += editable
-        ? '<input type="number" step="0.01" min="0" value="' + valInput(v) + '" oninput="editarEstac(\'' + cual + '\',' + i + ',this.value)" aria-label="Índice ' + MESES_CORTOS[i] + '">'
-        : '<span class="v">' + fm(v, 2) + '</span>';
-    }
-    h += '<span class="r">' + unidad + '</span>';
-    for(var j = desde; j < desde + 6; j++) h += '<span class="v" id="ev_' + cual + '_' + j + '">·</span>';
-    h += '</div>';
-  });
-  return h;
+  // Una columna por mes (12 en una fila en pantallas anchas, 6 o 4 por fila en angostas).
+  // Arriba el índice; abajo lo que resulta en el período, en la unidad del dato.
+  var h = '<div class="estac-cols">';
+  for(var i = 0; i < 12; i++){
+    var v = idx && num(idx[i]) > 0 ? idx[i] : 1;
+    h += '<div class="ec"><span class="m">' + MESES_CORTOS[i] + '</span>'
+      +  (editable
+          ? '<input type="number" step="0.01" min="0" value="' + valInput(v) + '" oninput="editarEstac(\'' + cual + '\',' + i + ',this.value)" aria-label="Índice ' + MESES_CORTOS[i] + '">'
+          : '<span class="i">' + fm(v, 2) + '</span>')
+      +  '<span class="v" id="ev_' + cual + '_' + i + '">·</span></div>';
+  }
+  return h + '</div><div class="estac-ley">Arriba, el índice del mes (1,10 = 10% más que el promedio). Abajo, ' + unidad + ' de cada mes del período; los meses fuera del período quedan en gris.</div>';
 }
 function fuenteEstac(cual, f){
   var t = tamboActivo(); if(!t) return;
@@ -2088,6 +2165,10 @@ function refrescarEstac(t, r){
     var x = porMes[i+1];
     setTxt('ev_litros_' + i, x ? fm(x.lvd, 1) : '·');
     setTxt('ev_precio_' + i, x ? porLitro(x.precio) : '·');
+    ['ev_litros_', 'ev_precio_'].forEach(function(p){
+      var el = document.getElementById(p + i), c = el && el.closest('.ec');
+      if(c) c.classList.toggle('fuera', !x);
+    });
   }
 }
 
@@ -2227,6 +2308,7 @@ function recalc(){
     if(banner) banner.style.display = vistaConsolidada() ? '' : 'none';
     refrescarDerivados();
     renderBadges();
+    renderResbar();
     renderTablero();
     renderLitrosTambos();
     renderComparativa();
@@ -2440,7 +2522,7 @@ function renderLectura(){
   var res = UI.ultimo; if(!res) return;
   var v = deVista(res.base), s = v.s, k = v.k, uL = unidadLitro();
   var L = s.litros, tot = Math.max(s.costo, 1e-9);
-  var head = '<div class="bar-row bar-head"><label>Rubro</label><div class="bar-track" style="visibility:hidden"></div><div class="bar-value">' + uL + '</div><div class="bar-pct">% del total</div></div>';
+  var head = '<div class="bar-row bar-head"><label>Rubro</label><div class="bar-track" style="visibility:hidden"></div><div class="bar-value">' + uL + '</div><div class="bar-pct">%</div></div>';
   var rows = RUBROS.slice().sort(function(a,b){ return s.porRubro[b] - s.porRubro[a]; }).map(function(r){
     var val = s.porRubro[r], p = val / tot * 100;
     return '<div class="bar-row"><label>' + RUBRO_NOMBRE[r] + '</label><div class="bar-track"><div class="bar-fill" style="width:' + clamp(p, val > 0 ? 2 : 0, 100) + '%"></div></div>'
@@ -2509,13 +2591,15 @@ function abrev(v){
   return fm(v, 0);
 }
 function graficoFlujo(fl){
-  var W = 760, H = 250, x0 = 56, x1 = 752, yT = 22, yB = 220;
+  // El ancho del dibujo sigue al de la caja: así el texto queda en 11 px en pantallas anchas y no se agranda.
+  var box = document.getElementById('flujo_chart');
+  var W = Math.max(600, Math.min(1180, (box && box.clientWidth ? box.clientWidth - 24 : 760))), H = 250, x0 = 56, x1 = W - 8, yT = 22, yB = 220;
   var vals = fl.map(function(f){ return f.flujo; }).concat(fl.map(function(f){ return f.acumulado; })).concat([0]);
   var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
   if(mx === mn){ mx += 1; mn -= 1; }
   var pad = (mx - mn) * 0.08; mx += pad; mn -= (mn < 0 ? pad : 0);
   var y = function(v){ return yT + (mx - v) / (mx - mn) * (yB - yT); };
-  var n = fl.length, paso = (x1 - x0) / n, bw = Math.min(44, paso * 0.62);
+  var n = fl.length, paso = (x1 - x0) / n, bw = Math.min(48, paso * 0.56);
   // Escala con 3 a 5 líneas en números redondos.
   var rango = mx - mn, bruto = rango / 4, pot = Math.pow(10, Math.floor(Math.log10(bruto))), st = [1,2,2.5,5,10].map(function(m){ return m * pot; }).find(function(x){ return x >= bruto; }) || bruto;
   var g = '<g font-family="DM Sans, sans-serif" font-size="11" fill="#a9c4d8">';
@@ -2594,6 +2678,65 @@ function renderPrioridades(){
   document.getElementById('action_list').innerHTML = a.slice(0, 5).map(function(x){
     return '<div class="action-item"><div class="action-pill ' + x[0] + '">' + (x[0] === 'high' ? 'Alta' : x[0] === 'mid' ? 'Media' : 'Baja') + '</div><div class="action-text">' + x[1] + '</div></div>';
   }).join('');
+}
+
+/* ---------- Barra de resultados fija ----------
+   Con una sola columna, la carga y los resultados quedan lejos. Cuando se baja
+   por la página aparece arriba una barra con los números que mueve la carga
+   (margen, costo, caja), el tambo que se está viendo y accesos a cada sección. */
+var SECCIONES_NAV = [
+  ['sec-tablero', 'Tablero', 'acc-tablero', 'icon-tablero'],
+  ['card_tambo', 'Carga', 'acc-tambo', 'icon-tambo'],
+  ['card_compartidos', 'Compartidos', 'acc-compartidos', 'icon-compartidos'],
+  ['sec-escenarios', 'Escenarios', 'acc-comparativa', 'icon-comparativa'],
+  ['sec-flujo', 'Flujo', 'acc-flujo', 'icon-flujo'],
+  ['sec-comparacion', 'Tambos', 'acc-comparacion', 'icon-comparacion'],
+  ['sec-lectura', 'Lectura', 'acc-lectura', 'icon-lectura'],
+  ['sec-estadistica', 'Riesgo', 'acc-estadistica', 'icon-estadistica']
+];
+function irA(id){
+  var sec = document.getElementById(id); if(!sec) return;
+  var s = SECCIONES_NAV.find(function(x){ return x[0] === id; });
+  if(s){
+    var acc = document.getElementById(s[2]);
+    if(acc && acc.style.display === 'none'){
+      toggleAcc(s[2], s[3]);
+      if(id === 'sec-estadistica' && typeof estRenderTodo === 'function') estRenderTodo();
+    }
+  }
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function renderResbar(){
+  var bar = document.getElementById('resbar'); if(!bar || !UI.ultimo) return;
+  var v = deVista(UI.ultimo.base), k = v.k, s = v.s, uL = unidadLitro();
+  var vista;
+  if(esPro() && ESC.tambos.length > 1){
+    vista = '<select class="rb-sel" onchange="seleccionarTambo(this.value)" aria-label="Tambo que se muestra">'
+      + ESC.tambos.map(function(t){ return '<option value="' + t.id + '"' + (t.id === ESC.activo ? ' selected' : '') + '>' + escTxt(t.nombre) + '</option>'; }).join('')
+      + '<option value="' + CONSOLIDADO + '"' + (vistaConsolidada() ? ' selected' : '') + '>Σ Todos juntos</option></select>';
+  } else {
+    var t = tamboActivo();
+    vista = '<span class="rb-nom">' + escTxt((t && t.nombre) || 'Tambo') + '</span>';
+  }
+  var it = function(lbl, val, cls, extra){ return '<span class="rb-k' + (extra || '') + '"><small>' + lbl + '</small><b class="' + (cls || '') + '">' + val + '</b></span>'; };
+  var sem = k.semaforo, semCls = sem === 'verde' ? 'ok' : (sem === 'amarillo' ? 'gold' : 'bad');
+  var nums = !(s.litros > 0) ? it('Resultado', 'sin datos todavía', '')
+    : it('Margen por mes', fm(k.margenMes, decMonto(k.margenMes)), k.margenMes >= 0 ? 'pos' : 'neg')
+      + it('Margen ' + uL, porLitro(k.margenL), k.margenL >= 0 ? 'pos' : 'neg', ' rb-opc')
+      + it('Costo ' + uL, porLitro(k.costoL), '', ' rb-opc')
+      + it('Caja mínima', fm(k.acumMin, decMonto(k.acumMin)), k.acumMin < 0 ? 'neg' : '', ' rb-opc')
+      + '<span class="chip ' + semCls + '" title="Semáforo: margen del período y caja acumulada">' + sem.charAt(0).toUpperCase() + sem.slice(1) + '</span>';
+  var nav = SECCIONES_NAV.filter(function(x){ var el = document.getElementById(x[0]); return el && el.style.display !== 'none'; })
+    .map(function(x){ return '<button type="button" onclick="irA(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join('');
+  bar.innerHTML = '<div class="rb-in">' + vista + '<span class="rb-nums">' + nums + '</span><nav class="rb-nav" aria-label="Ir a una sección">' + nav + '</nav></div>';
+}
+function iniciarResbar(){
+  var sen = document.getElementById('resbar_sentinel'), bar = document.getElementById('resbar');
+  if(!sen || !bar || !('IntersectionObserver' in window)) return;
+  new IntersectionObserver(function(es){
+    var e = es[0];
+    bar.classList.toggle('on', !e.isIntersecting && e.boundingClientRect.top < 0);
+  }).observe(sen);
 }
 
 /* ============================================================
@@ -4667,6 +4810,9 @@ function estCancelarPegado(){
 setupContext();
 ESC = escenarioVacio();
 renderTodo();
+iniciarResbar();
+// El gráfico de flujo se dibuja al ancho de su caja: se rehace si cambia el ancho de la ventana.
+window.addEventListener('resize', function(){ clearTimeout(UI._rz); UI._rz = setTimeout(function(){ if(UI.ultimo) renderFlujo(); }, 200); });
 (async function bootstrapScenarioSync(){
   await resolveReportModeEntitlement();
   // El modo PRO se resuelve recién acá: de él dependen la barra de tambos, los compartidos y el análisis estadístico.
