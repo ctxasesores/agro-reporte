@@ -824,7 +824,7 @@ tr:hover td { background:#f9faf6; }
       <div class="tool-panel">
         <label class="modal-label" style="display:block;margin-bottom:6px">Campaña activa</label>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <select class="modal-select" id="campania-select" style="min-width:220px" onchange="cargarGrillaExclusiones()"></select>
+          <select class="modal-select" id="campania-select" style="min-width:220px" onchange="onCampaniaChange()"></select>
           <button class="btn" onclick="activarCampaniaSeleccionada()">✓ Marcar como activa</button>
           <span id="campania-activa-badge" style="font-size:12px;color:var(--gris)"></span>
         </div>
@@ -2535,6 +2535,18 @@ function mostrarToast(id, msg, type) {
     } catch (e) {
       if (statusEl) statusEl.textContent = `✗ Error: ${e.message}`;
     }
+  }
+
+  // Todo lo que se muestra por campaña se recarga ACÁ, en un solo lugar.
+  // El select de campaña llamaba solo a cargarGrillaExclusiones(), así que al
+  // cambiar de campaña la grilla de posiciones de cosecha quedaba mostrando la
+  // configuración de la campaña anterior: parecía que una campaña heredaba los
+  // contratos de la otra. Peor, un cambio hecho sobre esa grilla vieja se
+  // guardaba en la campaña nueva, porque guardarCosecha() lee el select vivo.
+  // Si mañana se agrega otro bloque por campaña, se agrega la llamada acá.
+  async function onCampaniaChange() {
+    await cargarGrillaExclusiones();
+    await cargarGrillaCosecha();
   }
 
   async function cargarGrillaExclusiones() {
