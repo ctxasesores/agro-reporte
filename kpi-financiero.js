@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  const FIN_VERSION = '2026-11-06.1';
+  const FIN_VERSION = '2026-11-06.2';
 
   /* ───────────── Estructura de carga ───────────── */
   const RUBROS = [
@@ -32,22 +32,140 @@
     { clave: 'estructura',    nombre: 'Gastos de estructura',    grupo: 'Operación', monedas: ['ARS', 'USD'] },
     { clave: 'interes',       nombre: 'Intereses',               grupo: 'Deuda',     monedas: ['ARS', 'USD', 'DL'] },
     { clave: 'capital',       nombre: 'Amortización de capital', grupo: 'Deuda',     monedas: ['ARS', 'USD', 'DL'] },
-    { clave: 'impuesto',      nombre: 'Impuestos pagados',       grupo: 'Impuestos, inversión y retiros', monedas: ['ARS'] },
-    { clave: 'capex_mant',    nombre: 'Capex de mantenimiento',  grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
-    { clave: 'capex_crec',    nombre: 'Capex de crecimiento',    grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
-    { clave: 'retiro',        nombre: 'Retiros',                 grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
+    { clave: 'impuesto',      nombre: 'Impuestos pagados',       grupo: 'Impuestos y retiros', monedas: ['ARS'] },
+    { clave: 'retiro',        nombre: 'Retiros',                 grupo: 'Impuestos y retiros', monedas: ['ARS', 'USD'] },
+    /* Inversiones. El término va en español, pero la distinción entre reponer y
+       ampliar se conserva porque el flujo sostenible resta una y no la otra:
+       `fs = ebitda - impuestos - capexMant - retiros`. Reponer lo que se
+       desgasta es un costo de seguir en el negocio; ampliar es una decisión. Si
+       se juntaran, «servicio de deuda / flujo sostenible» dejaría de significar
+       algo. Las claves siguen siendo capex_mant y capex_crec: están en la base,
+       en la RPC y en 224 registros ya cargados. */
+    { clave: 'capex_mant',    nombre: 'Inversiones · Reposición', grupo: 'Inversiones', monedas: ['ARS', 'USD'] },
+    { clave: 'capex_crec',    nombre: 'Inversiones · Ampliación', grupo: 'Inversiones', monedas: ['ARS', 'USD'] },
     /* Ingresos que no son ventas. Hasta acá el catálogo era un rubro de ingreso
        y ocho de egreso, y todo lo que entraba sin ser una venta no tenía dónde
        ir: o se perdía (Anahuac, 1.951,5 M sin cargar) o se disfrazaba de venta
        (la base de Beltramino manda los rescates a Ventas ARS). Entran a la
        cascada a alturas distintas a propósito — ver el bloque de abajo. */
-    { clave: 'desinversion',  nombre: 'Venta de activos fijos',  grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
+    { clave: 'desinversion',  nombre: 'Venta de activos fijos',  grupo: 'Inversiones', monedas: ['ARS', 'USD'] },
     { clave: 'no_operativo',  nombre: 'Otros ingresos no operativos', grupo: 'Financiación', monedas: ['ARS', 'USD'] },
     { clave: 'fin_tomado',    nombre: 'Créditos tomados',        grupo: 'Financiación', monedas: ['ARS', 'USD', 'DL'] },
     { clave: 'aporte_capital',nombre: 'Aportes de capital',      grupo: 'Financiación', monedas: ['ARS', 'USD'] },
     { clave: 'rescate',       nombre: 'Rescates de colocaciones',grupo: 'Financiación', monedas: ['ARS', 'USD', 'DL'] },
     { clave: 'colocacion',    nombre: 'Colocaciones y compra de moneda', grupo: 'Financiación', monedas: ['ARS', 'USD'] },
   ];
+  /* ───────────── Conceptos de carga ─────────────
+     El rubro manda la matemática; el concepto es el detalle con el que el
+     productor reconoce la línea. Varios conceptos pueden caer en el mismo
+     rubro: el índice de `calcular()` suma por rubro × moneda y el concepto le
+     resulta invisible, así que ningún indicador cambia de fórmula ni de valor.
+     Eso es lo que permite agregar este nivel sin tocar los 224 registros ya
+     cargados, que quedan con el concepto vacío.
+
+     El orden y los nombres siguen `Flujo_de_fondos_agropecuario.xlsx`, con una
+     excepción deliberada: el bloque de tambo usa los nueve rubros del panel de
+     tambo, para que los dos paneles se puedan comparar sin traducir.
+
+     `g` grupo (encabezado en la grilla) · `act` actividad · `n` nombre
+     · `r` rubro de destino, el que entra en la cascada.                      */
+  const CONCEPTOS = [
+    { g: 'Ingresos operativos', act: 'Agricultura', n: 'Soja',                      r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Agricultura', n: 'Maíz',                      r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Agricultura', n: 'Trigo',                     r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Agricultura', n: 'Otros granos',              r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Ganadería',   n: 'Terneros',                  r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Ganadería',   n: 'Terminados',                r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Ganadería',   n: 'Vacas y descartes',         r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Tambo',       n: 'Leche',                     r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Tambo',       n: 'Terneros y descartes',      r: 'venta' },
+    { g: 'Ingresos operativos', act: 'Común',       n: 'Otros ingresos operativos', r: 'venta' },
+
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Semillas',                  r: 'costo_directo' },
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Fertilizantes',             r: 'costo_directo' },
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Herbicidas e insecticidas', r: 'costo_directo' },
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Labores y contratistas',    r: 'costo_directo' },
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Cosecha',                   r: 'costo_directo' },
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Fletes y comercialización', r: 'costo_directo' },
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Seguros de cultivo',        r: 'costo_directo' },
+    { g: 'Egresos · Agricultura', act: 'Agricultura', n: 'Otros de agricultura',      r: 'costo_directo' },
+
+    { g: 'Egresos · Ganadería', act: 'Ganadería', n: 'Compra de hacienda',      r: 'costo_directo' },
+    { g: 'Egresos · Ganadería', act: 'Ganadería', n: 'Alimentos y suplementos', r: 'costo_directo' },
+    { g: 'Egresos · Ganadería', act: 'Ganadería', n: 'Pasturas y forrajes',     r: 'costo_directo' },
+    { g: 'Egresos · Ganadería', act: 'Ganadería', n: 'Sanidad y reproducción',  r: 'costo_directo' },
+    { g: 'Egresos · Ganadería', act: 'Ganadería', n: 'Fletes de hacienda',      r: 'costo_directo' },
+    { g: 'Egresos · Ganadería', act: 'Ganadería', n: 'Otros de ganadería',      r: 'costo_directo' },
+
+    /* Los nueve del panel de tambo, en su orden. Siete son costo directo; la
+       estructura y los impuestos del tambo van a su propio rubro, porque la
+       cascada los resta en otro escalón. */
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Alimentación',                  r: 'costo_directo' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Insumos y servicios agrícolas', r: 'costo_directo' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Personal',                      r: 'costo_directo' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Sanidad',                       r: 'costo_directo' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Reproducción',                   r: 'costo_directo' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Energía y frío',                r: 'costo_directo' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Reposición y recría',           r: 'costo_directo' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Estructura del tambo',          r: 'estructura' },
+    { g: 'Egresos · Tambo', act: 'Tambo', n: 'Impuestos y otros del tambo',   r: 'impuesto' },
+
+    { g: 'Egresos · Generales', act: 'Común', n: 'Arrendamiento',               r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Sueldos y jornales',          r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Cargas sociales',             r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Mantenimiento',               r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Combustible y energía',       r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Administración y honorarios', r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Seguros',                     r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Otros de estructura',         r: 'estructura' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'Impuestos y tasas',           r: 'impuesto' },
+    { g: 'Egresos · Generales', act: 'Común', n: 'IVA pago neto',               r: 'impuesto' },
+
+    { g: 'Inversiones', act: 'Común', n: 'Reposición · Maquinaria',    r: 'capex_mant' },
+    { g: 'Inversiones', act: 'Común', n: 'Reposición · Instalaciones', r: 'capex_mant' },
+    { g: 'Inversiones', act: 'Común', n: 'Reposición · Hacienda',      r: 'capex_mant' },
+    { g: 'Inversiones', act: 'Común', n: 'Reposición · Pasturas',      r: 'capex_mant' },
+    { g: 'Inversiones', act: 'Común', n: 'Ampliación · Maquinaria',    r: 'capex_crec' },
+    { g: 'Inversiones', act: 'Común', n: 'Ampliación · Instalaciones', r: 'capex_crec' },
+    { g: 'Inversiones', act: 'Común', n: 'Ampliación · Hacienda',      r: 'capex_crec' },
+    { g: 'Inversiones', act: 'Común', n: 'Ampliación · Pasturas',      r: 'capex_crec' },
+
+    { g: 'Venta de activos', act: 'Común', n: 'Maquinaria e instalaciones', r: 'desinversion' },
+    { g: 'Venta de activos', act: 'Común', n: 'Otros activos',              r: 'desinversion' },
+
+    { g: 'Financiación · entradas', act: 'Común', n: 'Préstamos recibidos', r: 'fin_tomado' },
+    { g: 'Financiación · entradas', act: 'Común', n: 'Aportes de capital',  r: 'aporte_capital' },
+    { g: 'Financiación · entradas', act: 'Común', n: 'Rescates',            r: 'rescate' },
+    { g: 'Financiación · entradas', act: 'Común', n: 'Otras entradas',      r: 'no_operativo' },
+
+    { g: 'Financiación · salidas', act: 'Común', n: 'Devolución de capital', r: 'capital' },
+    { g: 'Financiación · salidas', act: 'Común', n: 'Intereses',             r: 'interes' },
+    { g: 'Financiación · salidas', act: 'Común', n: 'Retiros de socios',     r: 'retiro' },
+    { g: 'Financiación · salidas', act: 'Común', n: 'Colocaciones',          r: 'colocacion' },
+  ];
+  const GRUPOS_CONCEPTO = CONCEPTOS.reduce((a, c) => (a.includes(c.g) ? a : a.concat(c.g)), []);
+  /* Las líneas cargadas antes de este cambio no tienen concepto. En vez de
+     repartirlas a dedo, la grilla las junta acá arriba con un desplegable para
+     que el productor elija el concepto que le corresponde: el rubro no cambia,
+     así que ningún número se mueve. */
+  const GRUPO_LEGADO = 'Cargado sin concepto';
+  const AYUDA_GRUPO = {
+    'Inversiones': '¿Repone algo que ya tenías, o agrega capacidad? Un tractor que reemplaza al que se jubiló es reposición; el segundo tractor es ampliación. El flujo sostenible resta la reposición y no la ampliación.',
+    'Egresos · Tambo': 'Son los nueve rubros del panel de tambo, para que los dos paneles se puedan comparar.',
+  };
+
+  /* Clave de una línea del borrador: periodo|rubro|moneda|concepto. El concepto
+     va último y puede tener espacios y puntos medios, nunca una barra. */
+  function partirClave(k) {
+    const a = k.split('|');
+    return { periodo: a[0], rubro: a[1], moneda: a[2], concepto: a.slice(3).join('|') };
+  }
+  /* Identidad de una fila de la grilla, sin el mes: rubro|moneda|concepto. */
+  function partirId(id) {
+    const a = id.split('|');
+    return [a[0], a[1], a.slice(2).join('|')];
+  }
+
   const MONEDAS = ['ARS', 'USD', 'DL'];
   const NOMBRE_MONEDA = { ARS: 'ARS', USD: 'USD', DL: 'Dólar link' };
   const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -107,9 +225,9 @@
     serv_ebitda: { nombre: 'Servicio de deuda / EBITDA', corto: 'Servicio / EBITDA', tipo: 'menor', verde: 0.35, amarillo: 0.65,
                    regla: 'Verde hasta 35% · amarillo 35% a 65% · rojo más de 65%',
                    que: 'Deuda contra la caja operativa antes de reposición de capital.' },
-    capex_dep:   { nombre: 'Capex de mantenimiento / depreciación', corto: 'Capex mant. / depreciación', tipo: 'mayor', verde: 1.00, amarillo: 0.70,
+    capex_dep:   { nombre: 'Inversión de reposición / depreciación', corto: 'Reposición / depreciación', tipo: 'mayor', verde: 1.00, amarillo: 0.70,
                    regla: 'Verde 100% o más · amarillo 70% a 100% · rojo menos de 70%',
-                   que: 'Si se repone el capital que se consume por uso. Menos de 100% puede indicar descapitalización.' },
+                   que: 'Si se repone el capital que se consume por uso. Menos de 100% puede indicar descapitalización. No incluye la ampliación.' },
   };
 
   const ETIQUETA_ESTADO = { verde: 'Cómodo', amarillo: 'Atención', rojo: 'Riesgo', info: 'Informativo', na: 'Sin dato' };
@@ -797,31 +915,33 @@
     const inicio = '2026-07-01';
     const P = mesesDelEjercicio(inicio, 12);
     // Plantilla en ARS millones equivalentes; USD y dólar link se pasan a USD con TC 1.450.
+    // rubro|moneda|concepto. Los conceptos salen del catálogo: el ejemplo
+    // muestra la grilla como la va a ver un cliente que ya cargó detalle.
     const serie = {
-      'venta|ARS': [25, 18, 22, 20, 25, 30, 18, 20, 35, 45, 38, 30],
-      'venta|USD': [0, 0, 0, 0, 250, 320, 180, 420, 1200, 1800, 1500, 700],
-      'venta|DL': [50, 90, 120, 100, 180, 200, 150, 120, 80, 60, 40, 30],
-      'costo_directo|ARS': [95, 110, 120, 130, 115, 100, 90, 85, 90, 105, 110, 100],
-      'costo_directo|USD': [410, 520, 350, 250, 180, 120, 150, 100, 75, 60, 50, 45],
-      'costo_directo|DL': [100, 150, 300, 260, 120, 80, 70, 50, 40, 30, 25, 20],
-      'estructura|ARS': [12, 12, 12, 12, 12, 13, 13, 13, 13, 13, 14, 14],  // agregado: en la plantilla quedaba en 0
-      'interes|ARS': [18, 16, 15, 14, 13, 12, 10, 9, 8, 7, 6, 5],
-      'capital|ARS': [0, 50, 0, 0, 80, 0, 0, 120, 0, 0, 0, 150],
-      'interes|USD': [8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3],
-      'capital|USD': [0, 0, 40, 0, 0, 40, 0, 0, 40, 0, 0, 40],
-      'interes|DL': [4, 5, 6, 7, 6, 5, 3, 2, 2, 1, 1, 1],
-      'capital|DL': [0, 0, 0, 60, 120, 0, 0, 0, 0, 0, 0, 0],
-      'capex_mant|ARS': [8, 8, 10, 12, 12, 8, 8, 7, 6, 6, 6, 6],
-      'capex_crec|USD': [0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0],
-      'retiro|ARS': [18, 18, 18, 20, 20, 22, 22, 22, 24, 24, 24, 24],
+      'venta|ARS|Leche': [25, 18, 22, 20, 25, 30, 18, 20, 35, 45, 38, 30],
+      'venta|USD|Soja': [0, 0, 0, 0, 250, 320, 180, 420, 1200, 1800, 1500, 700],
+      'venta|DL|Maíz': [50, 90, 120, 100, 180, 200, 150, 120, 80, 60, 40, 30],
+      'costo_directo|ARS|Alimentación': [95, 110, 120, 130, 115, 100, 90, 85, 90, 105, 110, 100],
+      'costo_directo|USD|Fertilizantes': [410, 520, 350, 250, 180, 120, 150, 100, 75, 60, 50, 45],
+      'costo_directo|DL|Semillas': [100, 150, 300, 260, 120, 80, 70, 50, 40, 30, 25, 20],
+      'estructura|ARS|Arrendamiento': [12, 12, 12, 12, 12, 13, 13, 13, 13, 13, 14, 14],  // agregado: en la plantilla quedaba en 0
+      'interes|ARS|Intereses': [18, 16, 15, 14, 13, 12, 10, 9, 8, 7, 6, 5],
+      'capital|ARS|Devolución de capital': [0, 50, 0, 0, 80, 0, 0, 120, 0, 0, 0, 150],
+      'interes|USD|Intereses': [8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3],
+      'capital|USD|Devolución de capital': [0, 0, 40, 0, 0, 40, 0, 0, 40, 0, 0, 40],
+      'interes|DL|Intereses': [4, 5, 6, 7, 6, 5, 3, 2, 2, 1, 1, 1],
+      'capital|DL|Devolución de capital': [0, 0, 0, 60, 120, 0, 0, 0, 0, 0, 0, 0],
+      'capex_mant|ARS|Reposición · Maquinaria': [8, 8, 10, 12, 12, 8, 8, 7, 6, 6, 6, 6],
+      'capex_crec|USD|Ampliación · Instalaciones': [0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0],
+      'retiro|ARS|Retiros de socios': [18, 18, 18, 20, 20, 22, 22, 22, 24, 24, 24, 24],
     };
     const lineas = [];
     Object.entries(serie).forEach(([k, vals]) => {
-      const [rubro, moneda] = k.split('|');
+      const [rubro, moneda, concepto] = partirId(k);
       vals.forEach((v, i) => {
         if (!v) return;
         const monto = moneda === 'ARS' ? v * M : Math.round(v * M / TC);
-        lineas.push({ periodo: P[i], rubro, moneda, monto });
+        lineas.push({ periodo: P[i], rubro, moneda, concepto, monto });
       });
     });
     const tipoCambio = {};
@@ -846,7 +966,7 @@
     const [cfg, per, lin, bie, tc, dlr, bcra] = await Promise.all([
       sb.from('fin_config').select('*').eq('cliente_id', clienteId).maybeSingle(),
       sb.from('fin_periodos').select('periodo,tipo_cambio').eq('cliente_id', clienteId),
-      sb.from('fin_lineas').select('periodo,rubro,moneda,monto').eq('cliente_id', clienteId),
+      sb.from('fin_lineas').select('periodo,rubro,moneda,concepto,monto').eq('cliente_id', clienteId),
       sb.from('fin_bienes_uso').select('*').eq('cliente_id', clienteId).order('created_at', { ascending: true }),
       sb.from('tipo_de_cambio').select('fecha,valor').gte('fecha', desde).order('fecha', { ascending: true }),
       sb.from('a3_precios').select('vencimiento,settlement_price,last_price,settlement_date,last_date')
@@ -881,7 +1001,10 @@
     return {
       config: cfg.data || null,
       tipoCambio,
-      lineas: (lin.data || []).map(r => ({ periodo: primerDiaMes(r.periodo), rubro: r.rubro, moneda: r.moneda, monto: Number(r.monto) })),
+      // El concepto es detalle: `calcular()` indexa por rubro × moneda y lo
+      // ignora. Las líneas cargadas antes de este cambio llegan con '' y el
+      // tablero da exactamente los mismos números que antes.
+      lineas: (lin.data || []).map(r => ({ periodo: primerDiaMes(r.periodo), rubro: r.rubro, moneda: r.moneda, concepto: r.concepto || '', monto: Number(r.monto) })),
       bienes: (bie.data || []).map(b => ({ ...b, valor_origen: Number(b.valor_origen), valor_residual: Number(b.valor_residual), vida_util_anios: Number(b.vida_util_anios) })),
       brecha, brechaFecha, brechaFuente,
       tcDefault: tc && tc.data && tc.data.length ? Number(tc.data[tc.data.length - 1].valor) : null,
@@ -911,9 +1034,9 @@
     const rango = new Set(periodos);
     const lineas = [];
     Object.entries(borrador.lineas).forEach(([k, monto]) => {
-      const [periodo, rubro, moneda] = k.split('|');
+      const { periodo, rubro, moneda, concepto } = partirClave(k);
       if (!rango.has(periodo) || !monto) return;
-      lineas.push({ periodo, rubro, moneda, monto });
+      lineas.push({ periodo, rubro, moneda, concepto, monto });
     });
     const bienes = borrador.bienes
       .filter(b => String(b.nombre || '').trim() && Number(b.valor_origen) > 0 && Number(b.vida_util_anios) > 0)
@@ -1092,6 +1215,20 @@
 .fin-tc-ayuda{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--fin-card2);border:1px solid var(--fin-borde);border-radius:8px;padding:8px 10px}
 .fin-tc-ayuda .fin-btn{min-height:32px;padding:6px 10px;font-size:12px}
 .fin-grilla td.tot{padding:6px 8px;text-align:right;color:var(--fin-texto2);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Los botones de fila viven en la columna del rótulo, que es sticky: en la
+   última columna quedaban detrás del scroll horizontal de los doce meses. */
+.fin-grilla .fin-fila-nom{white-space:nowrap}
+.fin-grilla .fin-fila-pie{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:1px}
+.fin-grilla .fin-fila-acc{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.fin-grilla .fin-mini{background:none;border:1px solid var(--fin-borde2);border-radius:6px;color:var(--fin-texto2);font:inherit;font-size:10px;padding:2px 6px;cursor:pointer;white-space:nowrap}
+.fin-grilla .fin-mini:hover{border-color:var(--fin-acento);color:var(--fin-texto)}
+.fin-grilla .fin-fila-acc .fin-quitar{font-size:16px;min-width:22px;min-height:22px;line-height:1}
+.fin-grilla tr.grupo select,.fin-grilla tr.grupo small{text-transform:none;letter-spacing:0}
+.fin-grilla select.fin-in{font-size:11px;padding:3px 6px;max-width:240px;font-weight:500}
+.fin-grilla .fin-grupo-ayuda{color:var(--fin-muted);font-weight:500;font-size:10.5px;margin-left:8px;white-space:normal}
+.fin-grilla .rot select.fin-asignar{display:block;margin:3px 0 1px;max-width:220px}
+.fin-grilla .rot .fin-grupo-ayuda{margin-left:0}
+.fin-grilla .rot{min-width:215px}
 .fin-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:760px}
 .fin-campo label{display:block;font-size:12px;font-weight:600;color:var(--fin-texto2);margin-bottom:5px}
 .fin-campo small{display:block;font-size:11px;color:var(--fin-muted);margin-top:4px;line-height:1.4}
@@ -1323,14 +1460,14 @@
         <div class="sub">Caja</div>
         ${l('EBITDA', A('ebitda'))}
         ${l('Impuestos', -A('impuestos'), 'menos', r.impuestoCargado ? '' : 'ESTIMADO')}
-        ${l('Capex de mantenimiento', -A('capexMant'), 'menos')}
+        ${l('Inversiones · Reposición', -A('capexMant'), 'menos')}
         ${l('Retiros', -A('retiros'), 'menos')}
         ${l('Flujo sostenible', A('fs'), 't')}
         ${A('noOperativo') ? l('Otros ingresos no operativos', A('noOperativo')) : ''}
         ${l('Servicio de deuda', -A('servicio'), 'menos')}
         ${A('desinversion') || A('colocacion')
             ? l('Inversión neta de venta de activos', -A('invNeta'), 'menos')
-            : l('Capex de crecimiento', -A('capexCrec'), 'menos')}
+            : l('Inversiones · Ampliación', -A('capexCrec'), 'menos')}
         ${l('Necesidad de financiamiento del período', A('post'), 't')}
         ${A('financiacion') ? l('Créditos, aportes y rescates', A('financiacion'))
           + l('Variación de caja del período', A('post') + A('financiacion'), 't') : ''}
@@ -1453,11 +1590,11 @@
           <h3>Capital</h3>
           <div class="fin-filas">
             ${filaInd('capex_dep')}
-            ${filaInfo(A('desinversion') ? 'Capex total neto / depreciación' : 'Capex total / depreciación', fmtPct(ind.capex_total_dep.valor), ind.capex_total_dep, A('desinversion') ? 'Mantenimiento + crecimiento − venta de activos' : 'Mantenimiento + crecimiento')}
+            ${filaInfo(A('desinversion') ? 'Inversión total neta / depreciación' : 'Inversión total / depreciación', fmtPct(ind.capex_total_dep.valor), ind.capex_total_dep, A('desinversion') ? 'Reposición + ampliación − venta de activos' : 'Reposición + ampliación')}
             ${filaInfo('Depreciación / EBITDA', fmtPct(ind.dep_ebitda.valor), ind.dep_ebitda, 'Cuánto de la caja operativa haría falta reservar para reponer')}
             ${A('dep') > 0 ? '' : filaInfo('Reposición sin bienes de uso', `${fmtPct(ind.reposicion_simple.valor)} de ventas · ${fmtPct(ind.reposicion_simple.sobreEbitda)} del EBITDA`, ind.reposicion_simple, 'No necesita el registro de bienes')}
           </div>
-          <div class="fin-nota">Depreciación del período ${mon(A('dep'))} (${r.bienesConDep} ${r.bienesConDep === 1 ? 'bien' : 'bienes'} de uso). Capex de mantenimiento ${mon(A('capexMant'))} · de crecimiento ${mon(A('capexCrec'))}.${
+          <div class="fin-nota">Depreciación del período ${mon(A('dep'))} (${r.bienesConDep} ${r.bienesConDep === 1 ? 'bien' : 'bienes'} de uso). Inversión de reposición ${mon(A('capexMant'))} · de ampliación ${mon(A('capexCrec'))}.${
             A('desinversion') ? ` Venta de activos ${mon(A('desinversion'))}.` : ''
           }</div>
         </div>
@@ -1470,7 +1607,7 @@
           <thead><tr><th>Indicador</th><th>Qué mide</th><th>Semáforo</th></tr></thead>
           <tbody>${dicc}</tbody></table></div>
         <div class="fin-nota"><b>Resultado.</b> Resultado bruto = ventas − costos directos. EBITDA = resultado bruto − gastos de estructura. EBIT = EBITDA − depreciación.
-        Flujo sostenible = EBITDA − impuestos − capex de mantenimiento − retiros. Servicio de deuda = intereses + amortización de capital.
+        Flujo sostenible = EBITDA − impuestos − inversión de reposición − retiros. Servicio de deuda = intereses + amortización de capital.
         Si no hay impuestos cargados se estiman con la tasa del ejercicio (${Math.round(cfg.tasa_ganancias * 100)}%) sobre el resultado anual antes de impuestos.</div>
 
         <div class="fin-nota"><b>Las dos cotizaciones.</b> Un dólar USD y un "dólar" linked no valen lo mismo y el panel ya no los trata igual.
@@ -1553,7 +1690,7 @@
     const cfg = normalizarConfig(datos && datos.config);
     const lineas = {};
     (datos && datos.lineas || []).forEach(l => {
-      const k = `${l.periodo}|${l.rubro}|${l.moneda}`;
+      const k = `${l.periodo}|${l.rubro}|${l.moneda}|${l.concepto || ''}`;
       lineas[k] = (lineas[k] || 0) + (Number(l.monto) || 0);
     });
     return {
@@ -1567,7 +1704,9 @@
   function abrirEditor(st) {
     cerrarEditor(st);
     const b = nuevoBorrador(st.datos);
-    const ed = { b, pestaña: 'flujo', sucio: false, confirmarCierre: false, guardando: false };
+    // `filas` son las que el usuario agregó en esta sesión y todavía no tienen
+    // monto: sin esto desaparecerían en el siguiente repintado.
+    const ed = { b, pestaña: 'flujo', filas: [], sucio: false, confirmarCierre: false, guardando: false };
     st.editor = ed;
     const modal = document.createElement('div');
     modal.className = `fin-root fin-modal ${st.opts.tema === 'claro' ? 'fin-claro' : ''}`;
@@ -1614,6 +1753,57 @@
     if (el) { el.textContent = texto || ''; el.className = 'fin-estado ' + (cls || ''); }
   }
 
+  /* ───────────── Filas de la grilla ─────────────
+     Antes se dibujaban las 36 combinaciones rubro × moneda, cargadas o no; con
+     el catálogo de conceptos serían más de 180. Ahora se dibujan las que están
+     en uso —las que tienen monto en el ejercicio, más las que el usuario
+     agregó en esta sesión— y cada grupo trae un desplegable para sumar otra. */
+  function filasEnUso(ed, periodos) {
+    const rango = {}, ids = {};
+    periodos.forEach(p => { rango[p] = true; });
+    Object.keys(ed.b.lineas).forEach(k => {
+      if (!ed.b.lineas[k]) return;
+      const c = partirClave(k);
+      if (!rango[c.periodo]) return;
+      ids[`${c.rubro}|${c.moneda}|${c.concepto}`] = true;
+    });
+    (ed.filas || []).forEach(id => { ids[id] = true; });
+    const porGrupo = {};
+    Object.keys(ids).forEach(id => {
+      const p = partirId(id), rubro = p[0], moneda = p[1], concepto = p[2];
+      let i = -1;
+      CONCEPTOS.forEach((c, j) => { if (c.n === concepto && c.r === rubro) i = j; });
+      const g = i >= 0 ? CONCEPTOS[i].g : GRUPO_LEGADO;
+      porGrupo[g] = porGrupo[g] || [];
+      porGrupo[g].push({
+        id, rubro, moneda, concepto, cat: i >= 0 ? CONCEPTOS[i] : null,
+        orden: i >= 0 ? i : RUBROS.findIndex(r => r.clave === rubro),
+        mi: MONEDAS.indexOf(moneda),
+      });
+    });
+    Object.keys(porGrupo).forEach(g => porGrupo[g].sort((x, y) => x.orden - y.orden || x.mi - y.mi));
+    return porGrupo;
+  }
+
+  /* Monedas que el rubro admite y que este concepto todavía no usa. */
+  function monedasLibres(ed, periodos, rubro, concepto) {
+    const rb = RUBROS.find(r => r.clave === rubro);
+    return (rb ? rb.monedas : ['ARS']).filter(mo => {
+      const id = `${rubro}|${mo}|${concepto}`;
+      if ((ed.filas || []).indexOf(id) >= 0) return false;
+      return !periodos.some(p => ed.b.lineas[`${p}|${id}`]);
+    });
+  }
+
+  function totalFila(ed, periodos, id) {
+    return periodos.reduce((a, p) => a + (ed.b.lineas[`${p}|${id}`] || 0), 0);
+  }
+
+  function enfocarFila(st, id) {
+    const inp = st.editor.modal.querySelector(`.fin-grilla input[data-id="${id}"]`);
+    if (inp) { inp.focus(); inp.select(); }
+  }
+
   function pintarEditor(st) {
     const ed = st.editor, b = ed.b, cfg = normalizarConfig(b.config);
     const periodos = mesesDelEjercicio(cfg.inicio, cfg.meses);
@@ -1627,7 +1817,7 @@
     let cuerpo = '';
 
     if (ed.pestaña === 'flujo') {
-      let grupoActual = '';
+      const nCols = periodos.length + 2;   // rótulo + meses + total
       let filas = `<tr><td class="rot">Tipo de cambio <small>ARS por USD</small></td>${periodos.map((p, j) => {
         const a = tcAuto(p);
         const ph = a ? fmtNumEditor(Math.round(a.tc * 100) / 100) : tcPh;
@@ -1637,26 +1827,57 @@
         const a = tcAuto(p);
         return `<td data-fuente-tc="${p}">${b.tc[p] ? 'cargado' : esc(a ? NOMBRE_FUENTE_TC[a.fuente] : 'último')}</td>`;
       }).join('')}<td></td></tr>`;
+
+      const porGrupo = filasEnUso(ed, periodos);
+      // El grupo de legado solo aparece si hay algo sin concepto. Los nueve del
+      // catálogo aparecen siempre, aunque estén vacíos: son el único lugar
+      // desde donde se agrega una fila.
+      const grupos = (porGrupo[GRUPO_LEGADO] ? [GRUPO_LEGADO] : []).concat(GRUPOS_CONCEPTO);
       let fila = 1;
-      RUBROS.forEach(r => {
-        if (r.grupo !== grupoActual) {
-          grupoActual = r.grupo;
-          filas += `<tr class="grupo"><td class="rot">${esc(r.grupo)}</td><td colspan="${periodos.length + 1}"></td></tr>`;
-        }
-        r.monedas.forEach(m => {
+      grupos.forEach(g => {
+        const legado = g === GRUPO_LEGADO;
+        const enUso = porGrupo[g] || [];
+        const yaEsta = enUso.map(f => f.concepto);
+        const libres = legado ? [] : CONCEPTOS.filter(c => c.g === g && yaEsta.indexOf(c.n) < 0);
+        const ayuda = AYUDA_GRUPO[g] ? `<small class="fin-grupo-ayuda">${esc(AYUDA_GRUPO[g])}</small>` : '';
+        const cabezal = legado
+          ? '<small class="fin-grupo-ayuda">Se cargó antes del detalle por concepto. Elegí uno y los montos se mueven solos: el rubro no cambia, así que ningún indicador se mueve.</small>'
+          : (libres.length
+            ? `<select class="fin-in" data-agregar="${esc(g)}" aria-label="Agregar concepto en ${esc(g)}"><option value="">+ agregar concepto</option>${
+                libres.map(c => `<option value="${esc(c.n)}">${esc(c.n)}${c.act !== 'Común' ? ` — ${esc(c.act)}` : ''}</option>`).join('')
+              }</select>${ayuda}`
+            : `<small class="fin-grupo-ayuda">Todos los conceptos del grupo están en uso.</small>${ayuda}`);
+        filas += `<tr class="grupo"><td class="rot">${esc(g)}</td><td colspan="${nCols - 1}">${cabezal}</td></tr>`;
+
+        enUso.forEach(f => {
+          const rb = RUBROS.find(r => r.clave === f.rubro) || { nombre: f.rubro, monedas: ['ARS'] };
           let total = 0;
           const celdas = periodos.map((p, j) => {
-            const v = b.lineas[`${p}|${r.clave}|${m}`];
+            const v = b.lineas[`${p}|${f.id}`];
             if (v) total += v;
-            return `<td><input inputmode="decimal" data-fila="${fila}" data-col="${j}" data-k="${p}|${r.clave}|${m}" value="${esc(v ? fmtNumEditor(v / esc_) : '')}" aria-label="${esc(r.nombre)} ${esc(NOMBRE_MONEDA[m])} ${etiquetaMes(p, true)}"></td>`;
+            return `<td><input inputmode="decimal" data-fila="${fila}" data-col="${j}" data-k="${esc(`${p}|${f.id}`)}" data-id="${esc(f.id)}" value="${esc(v ? fmtNumEditor(v / esc_) : '')}" aria-label="${esc(f.cat ? f.cat.n : rb.nombre)} ${esc(NOMBRE_MONEDA[f.moneda])} ${etiquetaMes(p, true)}"></td>`;
           }).join('');
-          filas += `<tr><td class="rot">${esc(r.nombre)} <small>${esc(NOMBRE_MONEDA[m])}</small></td>${celdas}<td class="tot" data-tot="${r.clave}|${m}">${total ? fmtNumEditor(total / esc_) : ''}</td></tr>`;
+          const nombre = `<div class="fin-fila-nom">${esc(legado ? rb.nombre : (f.cat ? f.cat.n : f.concepto))} <small>${esc(NOMBRE_MONEDA[f.moneda])}</small></div>`;
+          const libre = legado ? [] : monedasLibres(ed, periodos, f.rubro, f.concepto);
+          const rotulo = legado
+            ? nombre + `<select class="fin-in fin-asignar" data-asignar="${esc(f.id)}" aria-label="Asignar concepto a ${esc(rb.nombre)}"><option value="">elegir concepto…</option>${
+                  CONCEPTOS.filter(c => c.r === f.rubro).map(c => `<option value="${esc(c.n)}">${esc(c.g)} · ${esc(c.n)}</option>`).join('')
+                }</select>`
+            : nombre + `<div class="fin-fila-pie"><small class="fin-grupo-ayuda">${esc(rb.nombre)}</small><span class="fin-fila-acc">${
+                (libre.length
+                  ? `<button class="fin-mini" data-accion="agregar-moneda" data-id="${esc(f.id)}" title="Cargar este concepto también en ${esc(NOMBRE_MONEDA[libre[0]])}">+ ${esc(libre[0] === 'DL' ? 'link' : libre[0])}</button>`
+                  : '')
+                + `<button class="fin-quitar" data-accion="quitar-fila" data-id="${esc(f.id)}" aria-label="Quitar la fila ${esc(f.cat ? f.cat.n : rb.nombre)} ${esc(NOMBRE_MONEDA[f.moneda])}">×</button>`
+              }</span></div>`;
+          filas += `<tr><td class="rot">${rotulo}</td>${celdas}<td class="tot" data-tot="${fila}">${total ? fmtNumEditor(total / esc_) : ''}</td></tr>`;
           fila++;
         });
       });
       cuerpo = `
         <div class="fin-ayuda">Montos en <b>${unidad}</b> de cada moneda (se cambia en la pestaña Ejercicio). USD y dólar link se cargan en dólares; el tablero los pasa a pesos con el tipo de cambio de cada mes.
         Podés pegar un bloque copiado de Excel: hacé clic en la primera celda y pegá (Ctrl+V / Cmd+V).</div>
+        <div class="fin-ayuda">La grilla muestra <b>solo las filas que usás</b>. Agregá un concepto con el desplegable de su grupo, y una segunda moneda para un concepto ya cargado con el botón de su fila.
+        Debajo de cada concepto dice a qué rubro va: eso es lo que entra en la cascada y en los indicadores.</div>
         <div class="fin-ayuda fin-tc-ayuda">
           <span><b>Tipo de cambio automático:</b> meses cerrados con el promedio del oficial (A3500) y los que vienen con el dólar futuro de A3${curvaEd && curvaEd.meta && curvaEd.meta.ajusteFecha ? ` (ajuste del ${fmtFechaCorta(curvaEd.meta.ajusteFecha)})` : ''}.
           Se actualiza solo cada día. Si escribís un valor, manda el tuyo.</span>
@@ -1666,7 +1887,7 @@
           </span>
         </div>
         <div class="fin-grilla-wrap"><table class="fin-grilla">
-          <thead><tr><th class="rot">Rubro</th>${periodos.map(p => `<th>${etiquetaMes(p)}</th>`).join('')}<th>Total</th></tr></thead>
+          <thead><tr><th class="rot">Concepto</th>${periodos.map(p => `<th>${etiquetaMes(p)}</th>`).join('')}<th>Total</th></tr></thead>
           <tbody>${filas}</tbody></table></div>`;
     } else if (ed.pestaña === 'bienes') {
       const filasB = b.bienes.map((x, i) => {
@@ -1750,15 +1971,16 @@
       }
     } else if (input.dataset.k) {
       if (n != null && n !== 0) ed.b.lineas[input.dataset.k] = n * escala; else delete ed.b.lineas[input.dataset.k];
-      actualizarTotal(st, input.dataset.k);
+      actualizarTotal(st, input);
     }
   }
 
-  function actualizarTotal(st, k) {
-    const [, rubro, moneda] = k.split('|');
+  // El total se busca por el número de fila y no por la clave: el concepto
+  // tiene espacios y puntos medios, y armar un selector con eso es frágil.
+  function actualizarTotal(st, input) {
     const ed = st.editor, cfg = normalizarConfig(ed.b.config);
-    const tot = mesesDelEjercicio(cfg.inicio, cfg.meses).reduce((a, p) => a + (ed.b.lineas[`${p}|${rubro}|${moneda}`] || 0), 0);
-    const td = ed.modal.querySelector(`[data-tot="${rubro}|${moneda}"]`);
+    const tot = totalFila(ed, mesesDelEjercicio(cfg.inicio, cfg.meses), input.dataset.id);
+    const td = ed.modal.querySelector(`[data-tot="${input.dataset.fila}"]`);
     if (td) td.textContent = tot ? fmtNumEditor(tot / cfg.escala) : '';
   }
 
@@ -1769,6 +1991,45 @@
 
   function onChangeEditor(st, e) {
     const t = e.target, ed = st.editor;
+    // Agregar un concepto todavía vacío no es un cambio: no marca sucio.
+    if (t.dataset.agregar) {
+      const g = t.dataset.agregar, nombre = t.value;
+      t.value = '';
+      const c = CONCEPTOS.find(x => x.g === g && x.n === nombre);
+      if (!c) return;
+      const rb = RUBROS.find(r => r.clave === c.r);
+      const id = `${c.r}|${(rb ? rb.monedas : ['ARS'])[0]}|${c.n}`;
+      if (ed.filas.indexOf(id) < 0) ed.filas.push(id);
+      pintarEditor(st);
+      enfocarFila(st, id);
+      return;
+    }
+    // Asignar un concepto a una línea vieja: mueve los montos de clave dentro
+    // del mismo rubro, así que la cascada y los indicadores no se mueven.
+    if (t.dataset.asignar) {
+      const viejo = t.dataset.asignar, nombre = t.value;
+      if (!nombre) return;
+      const p = partirId(viejo), rubro = p[0], moneda = p[1];
+      const c = CONCEPTOS.find(x => x.n === nombre && x.r === rubro);
+      if (!c) return;
+      const nuevo = `${rubro}|${moneda}|${nombre}`;
+      const cfg = normalizarConfig(ed.b.config);
+      let movidos = 0;
+      mesesDelEjercicio(cfg.inicio, cfg.meses).forEach(mes => {
+        const kv = `${mes}|${viejo}`, v = ed.b.lineas[kv];
+        if (!v) return;
+        const kn = `${mes}|${nuevo}`;
+        ed.b.lineas[kn] = (ed.b.lineas[kn] || 0) + v;
+        delete ed.b.lineas[kv];
+        movidos++;
+      });
+      ed.filas = ed.filas.filter(x => x !== viejo);
+      if (ed.filas.indexOf(nuevo) < 0) ed.filas.push(nuevo);
+      marcarSucio(st);
+      pintarEditor(st);
+      estadoEditor(st, `${movidos} ${movidos === 1 ? 'mes pasó' : 'meses pasaron'} a «${nombre}». El total del rubro no cambia. Guardá para que quede.`, 'ok');
+      return;
+    }
     if (t.matches('.fin-grilla input')) {
       leerCelda(st, t);
       const n = parseNumero(t.value);
@@ -1866,6 +2127,27 @@
       ed.b.tc = {};
       marcarSucio(st); pintarEditor(st);
       estadoEditor(st, n ? 'Tipo de cambio en automático. Guardá para que quede.' : 'Ya estaba en automático.', n ? 'ok' : '');
+    } else if (acc === 'agregar-moneda') {
+      const p = partirId(btn.dataset.id);
+      const cfg = normalizarConfig(ed.b.config), periodos = mesesDelEjercicio(cfg.inicio, cfg.meses);
+      const libre = monedasLibres(ed, periodos, p[0], p[2])[0];
+      if (!libre) return;
+      const id = `${p[0]}|${libre}|${p[2]}`;
+      ed.filas.push(id);
+      pintarEditor(st);
+      enfocarFila(st, id);
+    } else if (acc === 'quitar-fila') {
+      const id = btn.dataset.id, cfg = normalizarConfig(ed.b.config);
+      const periodos = mesesDelEjercicio(cfg.inicio, cfg.meses);
+      // Quitar una fila con montos borraría datos sin aviso. Se exige vaciarla
+      // primero, que además es lo que la saca de la base al guardar.
+      if (totalFila(ed, periodos, id)) {
+        estadoEditor(st, 'Esa fila tiene montos cargados. Ponelos en cero y después quitala.', 'err');
+        return;
+      }
+      periodos.forEach(p => { delete ed.b.lineas[`${p}|${id}`]; });
+      ed.filas = ed.filas.filter(x => x !== id);
+      pintarEditor(st);
     } else if (acc === 'guardar') {
       await guardarEditor(st);
     }
@@ -1948,7 +2230,7 @@
 
   const api = {
     version: FIN_VERSION, montar, recargar, calcular, evaluar, datosEjemplo, parseNumero,
-    fmtMonto, fmtPct, fmtX, UMBRALES, RUBROS, mesesDelEjercicio,
+    fmtMonto, fmtPct, fmtX, UMBRALES, RUBROS, CONCEPTOS, GRUPOS_CONCEPTO, mesesDelEjercicio,
   };
   global.CtxFin = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
