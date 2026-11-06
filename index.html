@@ -7477,7 +7477,13 @@ function cerrarMacroModal(ev){
   // La app consulta version.json (un archivo diminuto, nunca cacheado) y lo
   // compara con el build con el que fue servida. Si difieren, avisa.
   // Esto funciona aunque el service worker no se haya actualizado.
-  var CTX_BUILD = '20261030-1200';
+  // OJO: este valor y el `build` de version.json son el MISMO build y se
+  // suben juntos, en el mismo commit. El cartel de «hay una versión nueva»
+  // sale cuando difieren, así que si solo se sube version.json el aviso
+  // queda permanente: recargar devuelve este mismo index.html, que sigue
+  // declarando el build viejo. Y subir CACHE_VERSION en sw.js, como dice
+  // el comentario de ese archivo.
+  var CTX_BUILD = '20261106-1901';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
