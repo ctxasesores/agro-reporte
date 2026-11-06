@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  const FIN_VERSION = '2026-10-05.4';
+  const FIN_VERSION = '2026-11-06.1';
 
   /* ───────────── Estructura de carga ───────────── */
   const RUBROS = [
@@ -36,6 +36,17 @@
     { clave: 'capex_mant',    nombre: 'Capex de mantenimiento',  grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
     { clave: 'capex_crec',    nombre: 'Capex de crecimiento',    grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
     { clave: 'retiro',        nombre: 'Retiros',                 grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
+    /* Ingresos que no son ventas. Hasta acá el catálogo era un rubro de ingreso
+       y ocho de egreso, y todo lo que entraba sin ser una venta no tenía dónde
+       ir: o se perdía (Anahuac, 1.951,5 M sin cargar) o se disfrazaba de venta
+       (la base de Beltramino manda los rescates a Ventas ARS). Entran a la
+       cascada a alturas distintas a propósito — ver el bloque de abajo. */
+    { clave: 'desinversion',  nombre: 'Venta de activos fijos',  grupo: 'Impuestos, inversión y retiros', monedas: ['ARS', 'USD'] },
+    { clave: 'no_operativo',  nombre: 'Otros ingresos no operativos', grupo: 'Financiación', monedas: ['ARS', 'USD'] },
+    { clave: 'fin_tomado',    nombre: 'Créditos tomados',        grupo: 'Financiación', monedas: ['ARS', 'USD', 'DL'] },
+    { clave: 'aporte_capital',nombre: 'Aportes de capital',      grupo: 'Financiación', monedas: ['ARS', 'USD'] },
+    { clave: 'rescate',       nombre: 'Rescates de colocaciones',grupo: 'Financiación', monedas: ['ARS', 'USD', 'DL'] },
+    { clave: 'colocacion',    nombre: 'Colocaciones y compra de moneda', grupo: 'Financiación', monedas: ['ARS', 'USD'] },
   ];
   const MONEDAS = ['ARS', 'USD', 'DL'];
   const NOMBRE_MONEDA = { ARS: 'ARS', USD: 'USD', DL: 'Dólar link' };
@@ -48,13 +59,26 @@
   const UMBRALES = {
     caja_min:    { nombre: 'Caja mínima del período', corto: 'Caja mínima',
                    regla: 'Verde si nunca baja de un mes de egresos · amarillo si queda positiva pero por debajo · rojo si queda negativa algún mes',
-                   que: 'El punto más bajo de la caja acumulada. Si es negativo, ese monto es la necesidad máxima de financiamiento.' },
+                   que: 'El punto más bajo de la caja acumulada, que ya incluye los créditos tomados, los aportes de capital y los rescates. Si es negativo, ese monto es lo que falta conseguir ADEMÁS de lo ya ingresado.' },
     meses_neg:   { nombre: 'Meses con flujo negativo', corto: 'Meses con flujo negativo', tipo: 'menor', verde: 0, amarillo: 2,
                    regla: 'Verde 0 · amarillo 1 a 2 · rojo 3 o más',
                    que: 'Meses en los que el flujo después de deuda e inversión es negativo.' },
     serv_fs:     { nombre: 'Servicio de deuda / flujo sostenible', corto: 'Deuda / flujo sostenible', tipo: 'menor', verde: 0.70, amarillo: 1.00,
                    regla: 'Verde hasta 70% · amarillo 70% a 100% · rojo más de 100%',
                    que: 'Cuánto del flujo que queda después de impuestos, reposición y retiros se va en pagar deuda (capital + intereses).' },
+    serv_neto_ebitda:{ nombre: 'Servicio neto / EBITDA', corto: 'Servicio neto / EBITDA', tipo: 'menor', verde: 0.35, amarillo: 0.65,
+                   regla: 'Mismos cortes que Servicio / EBITDA: verde hasta 35% · amarillo 35% a 65% · rojo más de 65%',
+                   que: 'El servicio de deuda descontando los créditos tomados en el mismo ejercicio. El bruto responde si podrías pagar sin refinanciar; este responde qué le costó el año a la caja. Cuando no hay créditos cargados vale lo mismo que el bruto.' },
+    refin:       { nombre: 'Refinanciamiento', corto: 'Refinanciamiento', tipo: 'menor', verde: 0.50, amarillo: 1.00,
+                   regla: 'Verde hasta 50% · amarillo 50% a 100% · rojo más de 100%',
+                   que: 'Créditos tomados sobre amortización de capital. 0% es desendeudamiento real, cerca de 100% es renovar lo que vence, y más de 100% es deuda que crece. Exige cargar las dos puntas con el mismo criterio: si se carga el crédito y no la amortización, el número miente en la dirección cómoda.' },
+    dol_deuda:   { nombre: 'Dolarización de la deuda', corto: 'Dolarización de la deuda', tipo: 'info',
+                   regla: 'Informativo: participación del servicio de deuda que se paga en moneda dura',
+                   que: 'Qué parte de los intereses más la amortización está en USD o en dólar link. Leído contra la dolarización de ingresos muestra el descalce: cobrar en pesos y pagar la deuda en dólares es la exposición que el margen operativo no refleja.' },
+    k_quiebre_fs:{ nombre: 'Cuánto aguanta el flujo', corto: 'Aguante del flujo', tipo: 'aguante',
+                   verde: 0.60, amarillo: 0.25,
+                   regla: 'Mismos cortes que el aguante del margen, pero sobre el flujo después del servicio de deuda',
+                   que: 'El mismo punto de quiebre que el del margen, con los intereses y la amortización sumados al bloque de su moneda. Para quien cobra en pesos y paga deuda en dólares, este es el que manda: el margen operativo puede aguantar mucho más que el flujo que efectivamente hay que pagar.' },
     k_quiebre:   { nombre: 'Cuánto aguanta el margen', corto: 'Aguante del margen', tipo: 'aguante',
                    verde: 0.60, amarillo: 0.25,
                    regla: 'Mide a qué distancia está el dólar del punto que deja el margen en cero. Verde si hace falta un movimiento de más del 60% o si no hay ningún movimiento que lo borre · amarillo entre 25% y 60% · rojo por debajo del 25% o si el margen ya es negativo.',
@@ -344,6 +368,9 @@
         intereses: totalMon(interes), capital: totalMon(capital),
         impuestosCargados: totalMon(enArs('impuesto')),
         capexMant: totalMon(enArs('capex_mant')), capexCrec: totalMon(enArs('capex_crec')), retiros: totalMon(enArs('retiro')),
+        desinversion: totalMon(enArs('desinversion')), noOperativo: totalMon(enArs('no_operativo')),
+        finTomado: totalMon(enArs('fin_tomado')), aporteCapital: totalMon(enArs('aporte_capital')),
+        rescate: totalMon(enArs('rescate')), colocacion: totalMon(enArs('colocacion')),
         dep,
       };
       m.rb = m.ventas - m.costos;
@@ -351,6 +378,11 @@
       m.ebit = m.ebitda - m.dep;
       m.rai = m.ebit - m.intereses;
       m.servicio = m.intereses + m.capital;
+      // Servicio NETO de refinanciamiento. El bruto responde "si no pudieras
+      // refinanciar, ¿pagarías?" — la lectura del banco, y en Argentina no es
+      // hipotética. El neto responde qué le costó el año a la caja. Los dos son
+      // ciertos y miden cosas distintas, así que se publican los dos.
+      m.servNeto = m.servicio - m.finTomado;
       return m;
     });
 
@@ -360,8 +392,14 @@
     const impuestoEstimadoTotal = impuestoCargado ? 0 : Math.max(0, raiAnual) * cfg.tasa_ganancias;
     meses.forEach(m => {
       m.impuestos = impuestoCargado ? m.impuestosCargados : impuestoEstimadoTotal / meses.length;
+      // `fs` NO cambia: sigue siendo EBITDA − impuestos − capex de mantenimiento
+      // − retiros. Los otros ingresos no operativos (una devolución de AFIP, un
+      // resultado por tenencia) no son repetibles, y meterlos acá inflaría el
+      // denominador de Servicio / flujo sostenible, el indicador de deuda más
+      // sensible. Entran debajo, en `post`: la caja los ve, el flujo sostenible no.
       m.fs = m.ebitda - m.impuestos - m.capexMant - m.retiros;
-      m.post = m.fs - m.servicio - m.capexCrec;
+      m.invNeta = m.capexCrec + m.colocacion - m.desinversion;
+      m.post = m.fs + m.noOperativo - m.servicio - m.invNeta;
     });
 
     // Caja acumulada (ARS y USD por separado, cada una en su moneda)
@@ -371,13 +409,29 @@
     const cajaIniUsd = cfg.caja_inicial_moneda === 'USD' ? cfg.caja_inicial : cfg.caja_inicial / tc0;
     let cajaA = cajaIniArs, cajaU = cajaIniUsd;
     meses.forEach(m => {
-      cajaA += m.post; cajaU += m.post / m.tcUsd;
+      // Acá se separan dos conceptos que hasta ahora eran el mismo número, y
+      // ninguno de los dos era lo que su etiqueta decía:
+      //   `post` = necesidad de financiamiento del mes (cuánta plata de afuera
+      //            hizo falta). Es el diagnóstico.
+      //   `caja` = la caja: el saldo, que sí ve los créditos, los aportes y los
+      //            rescates. Es lo que caja_min promete cuando dice "el punto
+      //            más bajo de la caja acumulada".
+      m.financiacion = m.finTomado + m.aporteCapital + m.rescate;
+      const mov = m.post + m.financiacion;
+      cajaA += mov; cajaU += mov / m.tcUsd;
       m.caja = cajaA; m.cajaUsd = cajaU;
     });
 
     // Totales del período
+    /* OJO AL AGREGAR UN CAMPO MENSUAL: tiene que entrar en esta lista.
+       `anual[f] = meses.reduce((a, m) => a + m[f], 0)`. Si el campo no está,
+       `anual.<campo>` queda undefined, y cualquier cuenta que lo use da NaN,
+       que se propaga a todos los indicadores. No tira error: tira guiones. Es
+       el mismo modo de falla que las trampas del instructivo de carga. */
     const CAMPOS = ['ventas', 'costos', 'estructura', 'rb', 'ebitda', 'dep', 'ebit', 'intereses', 'capital', 'rai',
-                    'impuestos', 'servicio', 'capexMant', 'capexCrec', 'retiros', 'fs', 'post'];
+                    'impuestos', 'servicio', 'servNeto', 'capexMant', 'capexCrec', 'retiros',
+                    'desinversion', 'noOperativo', 'finTomado', 'aporteCapital', 'rescate', 'colocacion',
+                    'invNeta', 'financiacion', 'fs', 'post'];
     const anual = {};
     const anualUsd = {};
     CAMPOS.forEach(f => {
@@ -397,8 +451,34 @@
     ind.serv_ebit = deuda('serv_ebit', anual.servicio, anual.ebit);
     ind.serv_ebitda = deuda('serv_ebitda', anual.servicio, anual.ebitda);
     ind.serv_fs = deuda('serv_fs', anual.servicio, anual.fs);
+    // Los seis de arriba se quedan en BRUTO a propósito: es la lectura del banco.
+    // Estos dos lo completan en vez de reemplazarlo. Sin créditos cargados el
+    // neto vale lo mismo que el bruto y el refinanciamiento da 0%, así que para
+    // un cliente ya cargado no cambia ningún número.
+    // No pasa por deuda(): ahí un numerador <= 0 se lee como "sin deuda", y acá
+    // un neto negativo es lo contrario — se tomó más de lo que se pagó.
+    ind.serv_neto_ebitda = (anual.servicio <= 0)
+      ? evaluar('serv_neto_ebitda', 0, { sinDeuda: true })
+      : (anual.servNeto < 0)
+        ? { valor: 0, estado: 'verde', lectura: 'Tomó más de lo que amortizó' }
+        : (anual.ebitda <= 0)
+          ? evaluar('serv_neto_ebitda', null, { denominadorNegativo: true })
+          : evaluar('serv_neto_ebitda', anual.servNeto / anual.ebitda);
+    ind.refin = anual.capital > 0
+      ? evaluar('refin', anual.finTomado / anual.capital)
+      : evaluar('refin', null, { sinDeuda: true });
     ind.capex_dep = anual.dep > 0 ? evaluar('capex_dep', anual.capexMant / anual.dep) : evaluar('capex_dep', null, { sinBienes: true });
-    ind.capex_total_dep = { valor: anual.dep > 0 ? (anual.capexMant + anual.capexCrec) / anual.dep : null, estado: anual.dep > 0 ? 'info' : 'na', lectura: anual.dep > 0 ? ((anual.capexMant + anual.capexCrec) / anual.dep >= 1 ? 'Repone y expande' : 'Por debajo del desgaste') : 'Sin bienes de uso' };
+    // Neto de la venta de activos: gastar en mantenimiento sobre una base estable
+    // no es lo mismo que gastar mientras se vende equipo.
+    const capexNeto = anual.capexMant + anual.capexCrec - anual.desinversion;
+    ind.capex_total_dep = { valor: anual.dep > 0 ? capexNeto / anual.dep : null, estado: anual.dep > 0 ? 'info' : 'na', lectura: anual.dep > 0 ? (capexNeto / anual.dep >= 1 ? 'Repone y expande' : 'Por debajo del desgaste') : 'Sin bienes de uso' };
+    // Sin bienes de uso las tres filas de arriba quedan vacías, y ninguno de los
+    // clientes reales los tiene cargados. Esto no necesita el registro.
+    ind.reposicion_simple = {
+      valor: anual.ventas > 0 ? anual.capexMant / anual.ventas : null,
+      sobreEbitda: anual.ebitda > 0 ? anual.capexMant / anual.ebitda : null,
+      estado: 'info', lectura: anual.dep > 0 ? 'Referencia sin bienes de uso' : 'Reposición sobre ventas y EBITDA',
+    };
     ind.dep_ebitda = { valor: anual.ebitda > 0 && anual.dep > 0 ? anual.dep / anual.ebitda : null, estado: anual.ebitda > 0 && anual.dep > 0 ? 'info' : 'na', lectura: anual.ebitda > 0 ? 'Intensidad de capital' : 'EBITDA negativo' };
 
     /* Cobertura de costos y su sensibilidad al dólar ───────────────────────
@@ -488,11 +568,36 @@
     ind.k_quiebre = evaluar('k_quiebre', kQuiebre, {
       sinMargen: !hayMargen, sinDependencia: !(Math.abs(mDol.ARS) > 0),
     });
+
+    /* El servicio de deuda por moneda ──────────────────────────────────────
+       `servicioMon` ya se calculaba mes a mes y no lo consumía nadie. El bloque
+       de moneda miraba solo ventas, costos y estructura, así que para quien
+       cobra en pesos y paga la deuda en dólares el indicador que dice si
+       aguanta una devaluación estaba midiendo el flujo equivocado: el margen
+       operativo puede aguantar mucho más que el flujo que hay que pagar.
+
+       El servicio NO entra en CAMPOS_ING ni en CAMPOS_COS — se mide aparte.
+       Y CAMPOS_ING tiene que seguir siendo solo ventas: un crédito tomado en
+       dólares es un pasivo, no un ingreso dolarizado, y si entrara ahí una
+       empresa parecería más dolarizada en sus ingresos cuanto más se endeuda. */
+    const bSrv = bloque(['servicioMon']), bSrvU = bloque(['servicioMon'], true);
+    ind.dol_deuda = evaluar('dol_deuda', partic(bSrv), { sinDeuda: !(bSrv.total > 0) });
+
+    const fArs = mArs.ARS - bSrv.ars;
+    const fDol = mDol.ARS - bSrv.dol;
+    const kQuiebreFs = (fDol !== 0) ? (-fArs / fDol) : null;
+    ind.k_quiebre_fs = evaluar('k_quiebre_fs', kQuiebreFs, {
+      sinMargen: !((fArs + fDol) > 0), sinDependencia: !(Math.abs(fDol) > 0),
+    });
     ind.moneda_detalle = {
       ing: { ars: bIng.ars, dol: bIng.dol, total: bIng.total,
              ingUsd: bIngU, partic: partic(bIng) },
       cos: { ars: bCos.ars, dol: bCos.dol, total: bCos.total,
              cosUsd: bCosU, partic: partic(bCos) },
+      srv: { total: bSrv.total, partic: partic(bSrv),
+             ars: { ARS: bSrv.ars, USD: bSrvU.ars },
+             dol: { ARS: bSrv.dol, USD: bSrvU.dol } },
+      fArs, fDol, fTot: fArs + fDol, kQuiebreFs, hayFlujo: (fArs + fDol) > 0,
       mArs, mDol, mTot, kQuiebre, hayMargen,
       ayudaDevaluar: mDol.ARS > 0,
       brecha, brechaFuente: datos.brechaFuente || null, brechaFecha: datos.brechaFecha || null,
@@ -504,8 +609,10 @@
     // Caja mínima y colchón
     let minimo = meses[0];
     meses.forEach(m => { if (m.caja < minimo.caja) minimo = m; });
+    // Todos los rubros de egreso, `colocacion` incluida: es el quemado mensual
+    // contra el que se mide el colchón, así que un rubro de egreso nuevo entra acá.
     const egresosMes = (anual.costos + anual.estructura + anual.intereses + anual.capital + anual.impuestos +
-                        anual.capexMant + anual.capexCrec + anual.retiros) / meses.length;
+                        anual.capexMant + anual.capexCrec + anual.retiros + anual.colocacion) / meses.length;
     let estadoCaja = 'verde', lecturaCaja = 'Con colchón';
     if (minimo.caja < 0) { estadoCaja = 'rojo'; lecturaCaja = 'Necesita financiamiento'; }
     else if (minimo.caja < egresosMes) { estadoCaja = 'amarillo'; lecturaCaja = 'Colchón justo'; }
@@ -514,7 +621,11 @@
       inicialArs: cajaIniArs, inicialUsd: cajaIniUsd,
       minima: minimo.caja, minimaUsd: minimo.cajaUsd, mesMinimo: minimo.periodo,
       final: meses[meses.length - 1].caja, finalUsd: meses[meses.length - 1].cajaUsd,
+      // Con el financiamiento cargado, la caja ya lo incluye. Entonces esto deja
+      // de ser "la necesidad de financiamiento" y pasa a ser lo que falta ADEMÁS
+      // de lo que ya se consiguió. `financiacion` dice cuánto de eso ya entró.
       necesidad: minimo.caja < 0 ? -minimo.caja : 0, necesidadUsd: minimo.cajaUsd < 0 ? -minimo.cajaUsd : 0,
+      financiacion: anual.financiacion, conFinanciacion: anual.financiacion > 0,
       egresosMes,
     };
 
@@ -522,6 +633,10 @@
     const rojoServ = UMBRALES.serv_ebitda.amarillo;
     meses.forEach(m => {
       if (m.caja < 0) m.accion = { estado: 'rojo', texto: 'Cubrir déficit de caja' };
+      // Un mes con flujo negativo tapado con un crédito o un aporte NO usó caja
+      // acumulada: tomó plata de afuera. Decirle "usar caja acumulada" sería
+      // describir mal lo único que importa de ese mes.
+      else if (m.post < 0 && m.financiacion > 0) m.accion = { estado: 'amarillo', texto: 'Mes cubierto con financiamiento' };
       else if (m.post < 0) m.accion = { estado: 'amarillo', texto: 'Usar caja acumulada' };
       else if (m.servicio > 0 && m.ebitda > 0 && m.servicio / m.ebitda > rojoServ) m.accion = { estado: 'amarillo', texto: 'Revisar vencimientos' };
       else m.accion = { estado: 'verde', texto: 'Monitorear' };
@@ -581,15 +696,20 @@
     if (flags.sinDeuda) return { valor: 0, estado: 'verde', lectura: 'Sin deuda en el período' };
     if (flags.denominadorNegativo) return { valor: null, estado: 'rojo', lectura: 'El resultado es negativo: no cubre la deuda' };
     if (flags.sinBienes) return { valor: null, estado: 'na', lectura: 'Sin bienes de uso cargados' };
-    if (clave === 'dol_ingresos' || clave === 'dol_costos') {
+    if (clave === 'dol_ingresos' || clave === 'dol_costos' || clave === 'dol_deuda') {
       if (valor == null) return { valor: null, estado: 'na', lectura: flags.sinDol ? 'Nada dolarizado' : 'Sin datos' };
       return { valor, estado: 'info', lectura: 'Informativo' };
     }
-    if (clave === 'k_quiebre') {
-      // El margen ya negativo no tiene "aguante" que medir: el quiebre pasó.
-      if (flags.sinMargen) return { valor: null, estado: 'rojo', lectura: 'El margen ya es negativo' };
+    if (clave === 'k_quiebre' || clave === 'k_quiebre_fs') {
+      // El mismo cálculo sobre dos flujos distintos: el margen operativo, y el
+      // que queda después del servicio de deuda. Para un cliente con ingresos en
+      // pesos y deuda en dólares los dos no se parecen en nada.
+      const q = clave === 'k_quiebre_fs' ? 'El flujo después de deuda' : 'El margen';
+      const qd = clave === 'k_quiebre_fs' ? 'El flujo no depende del dólar' : 'El margen no depende del dólar';
+      // Ya negativo no tiene "aguante" que medir: el quiebre pasó.
+      if (flags.sinMargen) return { valor: null, estado: 'rojo', lectura: q + ' ya es negativo' };
       if (flags.sinDependencia || valor == null) {
-        return { valor: null, estado: 'verde', lectura: 'El margen no depende del dólar' };
+        return { valor: null, estado: 'verde', lectura: qd };
       }
       // k* <= 0 significa que el punto de quiebre caería en un tipo de cambio
       // negativo, que no existe: ningún movimiento del dólar borra el margen.
@@ -1160,6 +1280,30 @@
           ${!d.hayMargen ? 'Hoy el margen total ya es negativo.'
             : (k == null || k <= 0) ? 'Ningún movimiento del dólar lo deja en cero.'
             : `Se hace cero con el dólar ${k > 1 ? 'subiendo' : 'cayendo'} <b>${fmtPct(Math.abs(k - 1))}</b>.`}</div>
+
+          ${d.srv.total > 0 ? (() => {
+            // El margen operativo y el flujo que hay que pagar no se parecen
+            // cuando la deuda está en otra moneda que los ingresos. Este bloque
+            // existe para que no se lea uno creyendo que dice lo del otro.
+            const kf = ind.k_quiebre_fs.valor;
+            const qf = !d.hayFlujo ? 'ya negativo'
+              : (kf == null || kf <= 0) ? 'sin quiebre'
+              : (kf > 1 ? '+' : '−') + fmtPct(Math.abs(kf - 1));
+            return `<div class="fin-dev-t" style="margin-top:12px">La deuda, y el flujo después de pagarla</div>
+          <div class="fin-dev-fila">
+            <div class="fin-dev-paso"><div class="e">servicio lado peso</div><div class="v">${num(d.srv.ars[M])}</div></div>
+            <div class="fin-dev-paso"><div class="e">servicio lado dólar</div><div class="v">${num(d.srv.dol[M])}</div></div>
+            <div class="fin-dev-paso"><div class="e">deuda dolarizada</div><div class="v">${d.srv.partic == null ? '—' : fmtPct(d.srv.partic)}</div></div>
+            <div class="fin-dev-paso lim"><div class="e">quiebre del flujo</div><div class="v">${qf}</div></div>
+          </div>
+          <div class="fin-nota" style="margin-top:8px">El bloque de arriba mide el <b>margen operativo</b>; este mide lo que queda <b>después del servicio de deuda</b>.
+          ${d.srv.partic != null && d.ing.partic != null && d.srv.partic > d.ing.partic + 0.1
+            ? `Acá la deuda está más dolarizada (<b>${fmtPct(d.srv.partic)}</b>) que los ingresos (<b>${fmtPct(d.ing.partic)}</b>): el descalce no se ve en el margen.`
+            : ''}
+          ${!d.hayFlujo ? ' El flujo después de deuda ya es negativo, así que el punto de quiebre del margen quedó atrás.'
+            : (kf == null || kf <= 0) ? ' Ningún movimiento del dólar lo deja en cero.'
+            : ` Se hace cero con el dólar ${kf > 1 ? 'subiendo' : 'cayendo'} <b>${fmtPct(Math.abs(kf - 1))}</b>.`}</div>`;
+          })() : ''}
         </div>`;
       })()}`;
 
@@ -1182,9 +1326,14 @@
         ${l('Capex de mantenimiento', -A('capexMant'), 'menos')}
         ${l('Retiros', -A('retiros'), 'menos')}
         ${l('Flujo sostenible', A('fs'), 't')}
+        ${A('noOperativo') ? l('Otros ingresos no operativos', A('noOperativo')) : ''}
         ${l('Servicio de deuda', -A('servicio'), 'menos')}
-        ${l('Capex de crecimiento', -A('capexCrec'), 'menos')}
-        ${l('Flujo después de deuda e inversión', A('post'), 't')}
+        ${A('desinversion') || A('colocacion')
+            ? l('Inversión neta de venta de activos', -A('invNeta'), 'menos')
+            : l('Capex de crecimiento', -A('capexCrec'), 'menos')}
+        ${l('Necesidad de financiamiento del período', A('post'), 't')}
+        ${A('financiacion') ? l('Créditos, aportes y rescates', A('financiacion'))
+          + l('Variación de caja del período', A('post') + A('financiacion'), 't') : ''}
       </div>`;
 
     /* Mes a mes, con la misma forma que la grilla de carga: una fila por rubro
@@ -1291,8 +1440,11 @@
           <h3>Deuda</h3>
           <div class="fin-filas">
             ${filaInd('int_rb')}${filaInd('int_ebit')}${filaInd('serv_rb')}${filaInd('serv_ebit')}${filaInd('serv_ebitda')}${filaInd('serv_fs')}
+            ${A('finTomado') ? filaInd('serv_neto_ebitda') + filaInd('refin') : ''}
           </div>
-          <div class="fin-nota">Servicio del período: ${mon(A('servicio'))} (intereses ${mon(A('intereses'))} + capital ${mon(A('capital'))}).</div>
+          <div class="fin-nota">Servicio del período: ${mon(A('servicio'))} (intereses ${mon(A('intereses'))} + capital ${mon(A('capital'))}).${
+            A('finTomado') ? ` De los ${mon(A('servicio'))}, ${mon(A('finTomado'))} se refinanciaron con créditos nuevos: el servicio neto fue ${mon(A('servNeto'))}.` : ''
+          }</div>
         </div>
         <div class="fin-card fin-mon-card"><div class="fin-card-head"><h3>Moneda</h3><span class="fin-unidad">Montos en ${M}</span></div>${tablaMoneda}</div>
       </div>
@@ -1301,10 +1453,13 @@
           <h3>Capital</h3>
           <div class="fin-filas">
             ${filaInd('capex_dep')}
-            ${filaInfo('Capex total / depreciación', fmtPct(ind.capex_total_dep.valor), ind.capex_total_dep, 'Mantenimiento + crecimiento')}
+            ${filaInfo(A('desinversion') ? 'Capex total neto / depreciación' : 'Capex total / depreciación', fmtPct(ind.capex_total_dep.valor), ind.capex_total_dep, A('desinversion') ? 'Mantenimiento + crecimiento − venta de activos' : 'Mantenimiento + crecimiento')}
             ${filaInfo('Depreciación / EBITDA', fmtPct(ind.dep_ebitda.valor), ind.dep_ebitda, 'Cuánto de la caja operativa haría falta reservar para reponer')}
+            ${A('dep') > 0 ? '' : filaInfo('Reposición sin bienes de uso', `${fmtPct(ind.reposicion_simple.valor)} de ventas · ${fmtPct(ind.reposicion_simple.sobreEbitda)} del EBITDA`, ind.reposicion_simple, 'No necesita el registro de bienes')}
           </div>
-          <div class="fin-nota">Depreciación del período ${mon(A('dep'))} (${r.bienesConDep} ${r.bienesConDep === 1 ? 'bien' : 'bienes'} de uso). Capex de mantenimiento ${mon(A('capexMant'))} · de crecimiento ${mon(A('capexCrec'))}.</div>
+          <div class="fin-nota">Depreciación del período ${mon(A('dep'))} (${r.bienesConDep} ${r.bienesConDep === 1 ? 'bien' : 'bienes'} de uso). Capex de mantenimiento ${mon(A('capexMant'))} · de crecimiento ${mon(A('capexCrec'))}.${
+            A('desinversion') ? ` Venta de activos ${mon(A('desinversion'))}.` : ''
+          }</div>
         </div>
         <div class="fin-card"><h3>Resultado y caja del período</h3>${cascada}</div>
       </div>
