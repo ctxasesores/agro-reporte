@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  const FIN_VERSION = '2026-11-06.2';
+  const FIN_VERSION = '2026-11-06.3';
 
   /* ───────────── Estructura de carga ───────────── */
   const RUBROS = [
@@ -1229,6 +1229,35 @@
 .fin-grilla .rot select.fin-asignar{display:block;margin:3px 0 1px;max-width:220px}
 .fin-grilla .rot .fin-grupo-ayuda{margin-left:0}
 .fin-grilla .rot{min-width:215px}
+/* El "+" de cada grupo */
+.fin-grilla .fin-mas{background:none;border:1px solid var(--fin-borde2);border-radius:7px;color:var(--fin-texto2);font:inherit;font-size:15px;line-height:1;width:26px;height:24px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.fin-grilla .fin-mas:hover{border-color:var(--fin-acento);color:var(--fin-acento);background:rgba(212,167,58,.10)}
+.fin-grilla .fin-mas:focus-visible{outline:2px solid var(--fin-acento);outline-offset:2px}
+/* Selector de conceptos */
+.fin-sel{position:absolute;inset:0;z-index:40;background:rgba(8,20,34,.60);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .15s ease}
+.fin-sel.show{opacity:1}
+.fin-claro .fin-sel{background:rgba(28,26,24,.38)}
+.fin-sel-box{background:var(--fin-card);border:1px solid var(--fin-borde2);border-radius:13px;width:min(520px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.fin-sel-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 0}
+.fin-sel-top h3{margin:0;font-size:15px;font-weight:600;color:var(--fin-texto)}
+.fin-sel-x{background:none;border:0;color:var(--fin-texto2);font-size:21px;line-height:1;cursor:pointer;padding:0 2px}
+.fin-sel-x:hover{color:var(--fin-texto)}
+.fin-sel-ayuda{margin:10px 16px 0;padding:9px 11px;border-left:2px solid var(--fin-acento);background:rgba(212,167,58,.08);border-radius:0 7px 7px 0;font-size:11.5px;line-height:1.5;color:var(--fin-texto2)}
+.fin-sel-sub{margin:10px 16px 0;font-size:11.5px;line-height:1.5;color:var(--fin-muted)}
+.fin-sel-lista{margin:10px 8px 0 8px;padding:0 8px;overflow-y:auto;flex:1;min-height:0}
+.fin-sel-item{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:7px 8px;border-radius:8px;cursor:pointer}
+.fin-sel-item:hover{background:var(--fin-fondo2)}
+.fin-sel-item input{grid-row:1/3;width:15px;height:15px;accent-color:var(--fin-acento);cursor:pointer}
+.fin-sel-nom{font-size:12.5px;color:var(--fin-texto);font-weight:500}
+.fin-sel-meta{font-size:10.5px;color:var(--fin-muted)}
+.fin-sel-item.puesto{opacity:.55;cursor:default}
+.fin-sel-item.puesto:hover{background:none}
+.fin-sel-pie{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px 14px;margin-top:8px;border-top:1px solid var(--fin-borde)}
+.fin-sel-cuenta{font-size:11.5px;color:var(--fin-muted)}
+.fin-sel-btns{display:flex;gap:8px}
+.fin-sel .fin-btn-ok{background:var(--fin-acento);border-color:var(--fin-acento);color:#13233a;font-weight:600}
+.fin-sel .fin-btn-ok:disabled{opacity:.45;cursor:not-allowed}
+@media (max-width:520px){.fin-sel-box{width:100%}.fin-sel-pie{justify-content:stretch}.fin-sel-btns{flex:1}.fin-sel-btns .fin-btn{flex:1}}
 .fin-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:760px}
 .fin-campo label{display:block;font-size:12px;font-weight:600;color:var(--fin-texto2);margin-bottom:5px}
 .fin-campo small{display:block;font-size:11px;color:var(--fin-muted);margin-top:4px;line-height:1.4}
@@ -1706,7 +1735,7 @@
     const b = nuevoBorrador(st.datos);
     // `filas` son las que el usuario agregó en esta sesión y todavía no tienen
     // monto: sin esto desaparecerían en el siguiente repintado.
-    const ed = { b, pestaña: 'flujo', filas: [], sucio: false, confirmarCierre: false, guardando: false };
+    const ed = { b, pestaña: 'flujo', filas: [], selector: null, sucio: false, confirmarCierre: false, guardando: false };
     st.editor = ed;
     const modal = document.createElement('div');
     modal.className = `fin-root fin-modal ${st.opts.tema === 'claro' ? 'fin-claro' : ''}`;
@@ -1722,7 +1751,12 @@
     modal.addEventListener('change', e => onChangeEditor(st, e));
     modal.addEventListener('paste', e => onPasteEditor(st, e));
     modal.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { e.preventDefault(); intentarCerrar(st); }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        // Con el selector abierto, Escape lo cierra a él y no todo el editor:
+        // si no, un Escape distraído tira el borrador entero.
+        if (st.editor.selector) cerrarSelectorConceptos(st); else intentarCerrar(st);
+      }
       if (e.key === 'Enter' && e.target.matches('.fin-grilla input')) { e.preventDefault(); moverFoco(st, e.target, e.shiftKey ? -1 : 1, 0); }
     });
     const primero = modal.querySelector('.fin-grilla input, .fin-in');
@@ -1799,6 +1833,102 @@
     return periodos.reduce((a, p) => a + (ed.b.lineas[`${p}|${id}`] || 0), 0);
   }
 
+  /* ───────────── Selector de conceptos ─────────────
+     Un popup por grupo con todos sus conceptos y un tilde en cada uno: se
+     eligen varios y entran de una sola vez. Los que ya están cargados
+     aparecen tildados y bloqueados, para que se vea el catálogo completo sin
+     poder duplicar una fila. */
+  function abrirSelectorConceptos(st, grupo) {
+    const ed = st.editor;
+    cerrarSelectorConceptos(st);
+    const cfg = normalizarConfig(ed.b.config);
+    const periodos = mesesDelEjercicio(cfg.inicio, cfg.meses);
+    const porGrupo = filasEnUso(ed, periodos);
+    const yaEsta = (porGrupo[grupo] || []).map(f => f.concepto);
+    const items = CONCEPTOS.filter(c => c.g === grupo);
+
+    const ayuda = AYUDA_GRUPO[grupo]
+      ? `<p class="fin-sel-ayuda">${esc(AYUDA_GRUPO[grupo])}</p>` : '';
+    const filas = items.map((c, i) => {
+      const puesto = yaEsta.indexOf(c.n) >= 0;
+      const rb = RUBROS.find(r => r.clave === c.r);
+      return `<label class="fin-sel-item${puesto ? ' puesto' : ''}">
+        <input type="checkbox" data-concepto="${esc(c.n)}" ${puesto ? 'checked disabled' : ''} id="fin-sel-${i}">
+        <span class="fin-sel-nom">${esc(c.n)}</span>
+        <span class="fin-sel-meta">${esc(rb ? rb.nombre : c.r)}${c.act !== 'Común' ? ` · ${esc(c.act)}` : ''}${puesto ? ' · ya está' : ''}</span>
+      </label>`;
+    }).join('');
+
+    const pop = document.createElement('div');
+    pop.className = 'fin-sel';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', 'Agregar conceptos en ' + grupo);
+    pop.dataset.grupo = grupo;
+    pop.innerHTML = `<div class="fin-sel-box">
+        <div class="fin-sel-top">
+          <h3>${esc(grupo)}</h3>
+          <button class="fin-sel-x" data-accion="cerrar-conceptos" aria-label="Cerrar">×</button>
+        </div>
+        ${ayuda}
+        <p class="fin-sel-sub">Tildá todos los que quieras cargar. Entran juntos, cada uno en su moneda principal; después podés agregarle otra moneda desde su fila.</p>
+        <div class="fin-sel-lista">${filas}</div>
+        <div class="fin-sel-pie">
+          <span class="fin-sel-cuenta" data-cuenta>Ninguno seleccionado</span>
+          <span class="fin-sel-btns">
+            <button class="fin-btn" data-accion="cerrar-conceptos">Cancelar</button>
+            <button class="fin-btn fin-btn-ok" data-accion="aplicar-conceptos" disabled>Agregar</button>
+          </span>
+        </div>
+      </div>`;
+    ed.modal.appendChild(pop);
+    ed.selector = pop;
+    requestAnimationFrame(() => pop.classList.add('show'));
+    const primero = pop.querySelector('input[type="checkbox"]:not(:disabled)');
+    if (primero) primero.focus();
+  }
+
+  function cerrarSelectorConceptos(st) {
+    const ed = st.editor;
+    if (ed.selector) { ed.selector.remove(); ed.selector = null; }
+  }
+
+  // El pie dice cuántos van y habilita Agregar: sin esto no se sabe si el
+  // tilde quedó puesto en una lista larga.
+  function refrescarCuentaConceptos(st) {
+    const pop = st.editor.selector;
+    if (!pop) return;
+    const n = pop.querySelectorAll('input[type="checkbox"]:not(:disabled):checked').length;
+    const cuenta = pop.querySelector('[data-cuenta]');
+    const ok = pop.querySelector('[data-accion="aplicar-conceptos"]');
+    if (cuenta) cuenta.textContent = n === 0 ? 'Ninguno seleccionado'
+      : (n === 1 ? '1 concepto seleccionado' : n + ' conceptos seleccionados');
+    if (ok) { ok.disabled = !n; ok.textContent = n > 1 ? `Agregar ${n}` : 'Agregar'; }
+  }
+
+  function aplicarSelectorConceptos(st) {
+    const ed = st.editor, pop = ed.selector;
+    if (!pop) return;
+    const grupo = pop.dataset.grupo;
+    const elegidos = [...pop.querySelectorAll('input[type="checkbox"]:not(:disabled):checked')]
+      .map(i => i.dataset.concepto);
+    cerrarSelectorConceptos(st);
+    if (!elegidos.length) return;
+    let primero = null;
+    // En el orden del catálogo, no en el del tildado.
+    CONCEPTOS.forEach(c => {
+      if (c.g !== grupo || elegidos.indexOf(c.n) < 0) return;
+      const rb = RUBROS.find(r => r.clave === c.r);
+      const id = `${c.r}|${(rb ? rb.monedas : ['ARS'])[0]}|${c.n}`;
+      if (ed.filas.indexOf(id) < 0) ed.filas.push(id);
+      if (!primero) primero = id;
+    });
+    pintarEditor(st);
+    if (primero) enfocarFila(st, primero);
+    estadoEditor(st, elegidos.length === 1
+      ? `Se agregó «${elegidos[0]}». Cargá los montos y guardá.`
+      : `Se agregaron ${elegidos.length} conceptos. Cargá los montos y guardá.`, 'ok');
+  }
+
   function enfocarFila(st, id) {
     const inp = st.editor.modal.querySelector(`.fin-grilla input[data-id="${id}"]`);
     if (inp) { inp.focus(); inp.select(); }
@@ -1839,14 +1969,14 @@
         const enUso = porGrupo[g] || [];
         const yaEsta = enUso.map(f => f.concepto);
         const libres = legado ? [] : CONCEPTOS.filter(c => c.g === g && yaEsta.indexOf(c.n) < 0);
-        const ayuda = AYUDA_GRUPO[g] ? `<small class="fin-grupo-ayuda">${esc(AYUDA_GRUPO[g])}</small>` : '';
+        // Un "+" por grupo que abre el selector de conceptos. La ayuda del grupo
+        // vive adentro de ese popup: acá al lado se cortaba contra el ancho de
+        // la tabla, justo cuando es el texto que ayuda a elegir.
         const cabezal = legado
           ? '<small class="fin-grupo-ayuda">Se cargó antes del detalle por concepto. Elegí uno y los montos se mueven solos: el rubro no cambia, así que ningún indicador se mueve.</small>'
           : (libres.length
-            ? `<select class="fin-in" data-agregar="${esc(g)}" aria-label="Agregar concepto en ${esc(g)}"><option value="">+ agregar concepto</option>${
-                libres.map(c => `<option value="${esc(c.n)}">${esc(c.n)}${c.act !== 'Común' ? ` — ${esc(c.act)}` : ''}</option>`).join('')
-              }</select>${ayuda}`
-            : `<small class="fin-grupo-ayuda">Todos los conceptos del grupo están en uso.</small>${ayuda}`);
+            ? `<button class="fin-mas" data-accion="abrir-conceptos" data-grupo="${esc(g)}" title="Agregar conceptos en ${esc(g)}" aria-label="Agregar conceptos en ${esc(g)}">+</button>`
+            : '<small class="fin-grupo-ayuda">Todos los conceptos del grupo están en uso.</small>');
         filas += `<tr class="grupo"><td class="rot">${esc(g)}</td><td colspan="${nCols - 1}">${cabezal}</td></tr>`;
 
         enUso.forEach(f => {
@@ -1876,7 +2006,7 @@
       cuerpo = `
         <div class="fin-ayuda">Montos en <b>${unidad}</b> de cada moneda (se cambia en la pestaña Ejercicio). USD y dólar link se cargan en dólares; el tablero los pasa a pesos con el tipo de cambio de cada mes.
         Podés pegar un bloque copiado de Excel: hacé clic en la primera celda y pegá (Ctrl+V / Cmd+V).</div>
-        <div class="fin-ayuda">La grilla muestra <b>solo las filas que usás</b>. Agregá un concepto con el desplegable de su grupo, y una segunda moneda para un concepto ya cargado con el botón de su fila.
+        <div class="fin-ayuda">La grilla muestra <b>solo las filas que usás</b>. Tocá el <b>+</b> de un grupo para elegir sus conceptos, varios de una vez, y el botón de una fila para cargar ese mismo concepto en otra moneda.
         Debajo de cada concepto dice a qué rubro va: eso es lo que entra en la cascada y en los indicadores.</div>
         <div class="fin-ayuda fin-tc-ayuda">
           <span><b>Tipo de cambio automático:</b> meses cerrados con el promedio del oficial (A3500) y los que vienen con el dólar futuro de A3${curvaEd && curvaEd.meta && curvaEd.meta.ajusteFecha ? ` (ajuste del ${fmtFechaCorta(curvaEd.meta.ajusteFecha)})` : ''}.
@@ -1991,19 +2121,7 @@
 
   function onChangeEditor(st, e) {
     const t = e.target, ed = st.editor;
-    // Agregar un concepto todavía vacío no es un cambio: no marca sucio.
-    if (t.dataset.agregar) {
-      const g = t.dataset.agregar, nombre = t.value;
-      t.value = '';
-      const c = CONCEPTOS.find(x => x.g === g && x.n === nombre);
-      if (!c) return;
-      const rb = RUBROS.find(r => r.clave === c.r);
-      const id = `${c.r}|${(rb ? rb.monedas : ['ARS'])[0]}|${c.n}`;
-      if (ed.filas.indexOf(id) < 0) ed.filas.push(id);
-      pintarEditor(st);
-      enfocarFila(st, id);
-      return;
-    }
+    if (t.matches('.fin-sel input[type="checkbox"]')) { refrescarCuentaConceptos(st); return; }
     // Asignar un concepto a una línea vieja: mueve los montos de clave dentro
     // del mismo rubro, así que la cascada y los indicadores no se mueven.
     if (t.dataset.asignar) {
@@ -2100,11 +2218,15 @@
 
   async function onClickEditor(st, e) {
     const ed = st.editor;
+    if (ed.selector && e.target === ed.selector) { cerrarSelectorConceptos(st); return; }
     if (e.target === ed.modal) { intentarCerrar(st); return; }
     const btn = e.target.closest('button');
     if (!btn) return;
     if (btn.dataset.pestaña) { ed.pestaña = btn.dataset.pestaña; pintarEditor(st); return; }
     const acc = btn.dataset.accion;
+    if (acc === 'abrir-conceptos') { abrirSelectorConceptos(st, btn.dataset.grupo); return; }
+    if (acc === 'cerrar-conceptos') { cerrarSelectorConceptos(st); return; }
+    if (acc === 'aplicar-conceptos') { aplicarSelectorConceptos(st); return; }
     if (acc === 'cerrar') intentarCerrar(st);
     else if (acc === 'agregar-bien') {
       ed.b.bienes.push({ id: '', nombre: '', categoria: '', moneda: 'USD', valor_origen: null, valor_residual: 0, vida_util_anios: null, fecha_alta: '' });
