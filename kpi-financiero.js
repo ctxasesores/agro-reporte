@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  const FIN_VERSION = '2026-11-06.3';
+  const FIN_VERSION = '2026-11-10.1';
 
   /* ───────────── Estructura de carga ───────────── */
   const RUBROS = [
@@ -144,11 +144,6 @@
     { g: 'Financiación · salidas', act: 'Común', n: 'Colocaciones',          r: 'colocacion' },
   ];
   const GRUPOS_CONCEPTO = CONCEPTOS.reduce((a, c) => (a.includes(c.g) ? a : a.concat(c.g)), []);
-  /* Las líneas cargadas antes de este cambio no tienen concepto. En vez de
-     repartirlas a dedo, la grilla las junta acá arriba con un desplegable para
-     que el productor elija el concepto que le corresponde: el rubro no cambia,
-     así que ningún número se mueve. */
-  const GRUPO_LEGADO = 'Cargado sin concepto';
   const AYUDA_GRUPO = {
     'Inversiones': '¿Repone algo que ya tenías, o agrega capacidad? Un tractor que reemplaza al que se jubiló es reposición; el segundo tractor es ampliación. El flujo sostenible resta la reposición y no la ampliación.',
     'Egresos · Tambo': 'Son los nueve rubros del panel de tambo, para que los dos paneles se puedan comparar.',
@@ -1226,7 +1221,7 @@
 .fin-grilla tr.grupo select,.fin-grilla tr.grupo small{text-transform:none;letter-spacing:0}
 .fin-grilla select.fin-in{font-size:11px;padding:3px 6px;max-width:240px;font-weight:500}
 .fin-grilla .fin-grupo-ayuda{color:var(--fin-muted);font-weight:500;font-size:10.5px;margin-left:8px;white-space:normal}
-.fin-grilla .rot select.fin-asignar{display:block;margin:3px 0 1px;max-width:220px}
+.fin-grilla tr.grupo.huerfanas td{color:var(--fin-alerta,#e0b02a)}
 .fin-grilla .rot .fin-grupo-ayuda{margin-left:0}
 .fin-grilla .rot{min-width:215px}
 /* El "+" de cada grupo */
@@ -1802,21 +1797,22 @@
       ids[`${c.rubro}|${c.moneda}|${c.concepto}`] = true;
     });
     (ed.filas || []).forEach(id => { ids[id] = true; });
-    const porGrupo = {};
+    const porGrupo = {}, huerfanas = [];
     Object.keys(ids).forEach(id => {
       const p = partirId(id), rubro = p[0], moneda = p[1], concepto = p[2];
       let i = -1;
       CONCEPTOS.forEach((c, j) => { if (c.n === concepto && c.r === rubro) i = j; });
-      const g = i >= 0 ? CONCEPTOS[i].g : GRUPO_LEGADO;
+      // Sin concepto del catálogo no hay fila: la carga es por concepto. Pero
+      // esas líneas siguen sumando en la cascada, así que no se esconden en
+      // silencio — se cuentan y la grilla avisa arriba. El caso real es un
+      // import mal mapeado; a mano no se puede llegar.
+      if (i < 0) { huerfanas.push({ id, rubro, moneda, concepto }); return; }
+      const g = CONCEPTOS[i].g;
       porGrupo[g] = porGrupo[g] || [];
-      porGrupo[g].push({
-        id, rubro, moneda, concepto, cat: i >= 0 ? CONCEPTOS[i] : null,
-        orden: i >= 0 ? i : RUBROS.findIndex(r => r.clave === rubro),
-        mi: MONEDAS.indexOf(moneda),
-      });
+      porGrupo[g].push({ id, rubro, moneda, concepto, cat: CONCEPTOS[i], orden: i, mi: MONEDAS.indexOf(moneda) });
     });
     Object.keys(porGrupo).forEach(g => porGrupo[g].sort((x, y) => x.orden - y.orden || x.mi - y.mi));
-    return porGrupo;
+    return { porGrupo, huerfanas };
   }
 
   /* Monedas que el rubro admite y que este concepto todavía no usa. */
@@ -1843,7 +1839,7 @@
     cerrarSelectorConceptos(st);
     const cfg = normalizarConfig(ed.b.config);
     const periodos = mesesDelEjercicio(cfg.inicio, cfg.meses);
-    const porGrupo = filasEnUso(ed, periodos);
+    const { porGrupo } = filasEnUso(ed, periodos);
     const yaEsta = (porGrupo[grupo] || []).map(f => f.concepto);
     const items = CONCEPTOS.filter(c => c.g === grupo);
 
@@ -1958,25 +1954,27 @@
         return `<td data-fuente-tc="${p}">${b.tc[p] ? 'cargado' : esc(a ? NOMBRE_FUENTE_TC[a.fuente] : 'último')}</td>`;
       }).join('')}<td></td></tr>`;
 
-      const porGrupo = filasEnUso(ed, periodos);
-      // El grupo de legado solo aparece si hay algo sin concepto. Los nueve del
-      // catálogo aparecen siempre, aunque estén vacíos: son el único lugar
-      // desde donde se agrega una fila.
-      const grupos = (porGrupo[GRUPO_LEGADO] ? [GRUPO_LEGADO] : []).concat(GRUPOS_CONCEPTO);
+      const { porGrupo, huerfanas } = filasEnUso(ed, periodos);
+      // Si alguna línea no cae en un concepto del catálogo sigue sumando en los
+      // indicadores, así que se avisa con el monto antes que esconderla.
+      if (huerfanas.length) {
+        const monto = huerfanas.reduce((a, f) => a + totalFila(ed, periodos, f.id), 0);
+        filas += `<tr class="grupo huerfanas"><td class="rot">Fuera del catálogo</td><td colspan="${nCols - 1}">`
+          + `<small class="fin-grupo-ayuda">${huerfanas.length} ${huerfanas.length === 1 ? 'línea' : 'líneas'}`
+          + ` por ${esc(fmtNumEditor(monto / esc_))} ${esc(unidad)} no corresponden a ningún concepto y no se pueden editar acá,`
+          + ` pero siguen contando en el tablero. Suele ser una importación mal mapeada.</small></td></tr>`;
+      }
       let fila = 1;
-      grupos.forEach(g => {
-        const legado = g === GRUPO_LEGADO;
+      GRUPOS_CONCEPTO.forEach(g => {
         const enUso = porGrupo[g] || [];
         const yaEsta = enUso.map(f => f.concepto);
-        const libres = legado ? [] : CONCEPTOS.filter(c => c.g === g && yaEsta.indexOf(c.n) < 0);
+        const libres = CONCEPTOS.filter(c => c.g === g && yaEsta.indexOf(c.n) < 0);
         // Un "+" por grupo que abre el selector de conceptos. La ayuda del grupo
         // vive adentro de ese popup: acá al lado se cortaba contra el ancho de
         // la tabla, justo cuando es el texto que ayuda a elegir.
-        const cabezal = legado
-          ? '<small class="fin-grupo-ayuda">Se cargó antes del detalle por concepto. Elegí uno y los montos se mueven solos: el rubro no cambia, así que ningún indicador se mueve.</small>'
-          : (libres.length
-            ? `<button class="fin-mas" data-accion="abrir-conceptos" data-grupo="${esc(g)}" title="Agregar conceptos en ${esc(g)}" aria-label="Agregar conceptos en ${esc(g)}">+</button>`
-            : '<small class="fin-grupo-ayuda">Todos los conceptos del grupo están en uso.</small>');
+        const cabezal = libres.length
+          ? `<button class="fin-mas" data-accion="abrir-conceptos" data-grupo="${esc(g)}" title="Agregar conceptos en ${esc(g)}" aria-label="Agregar conceptos en ${esc(g)}">+</button>`
+          : '<small class="fin-grupo-ayuda">Todos los conceptos del grupo están en uso.</small>';
         filas += `<tr class="grupo"><td class="rot">${esc(g)}</td><td colspan="${nCols - 1}">${cabezal}</td></tr>`;
 
         enUso.forEach(f => {
@@ -1985,19 +1983,15 @@
           const celdas = periodos.map((p, j) => {
             const v = b.lineas[`${p}|${f.id}`];
             if (v) total += v;
-            return `<td><input inputmode="decimal" data-fila="${fila}" data-col="${j}" data-k="${esc(`${p}|${f.id}`)}" data-id="${esc(f.id)}" value="${esc(v ? fmtNumEditor(v / esc_) : '')}" aria-label="${esc(f.cat ? f.cat.n : rb.nombre)} ${esc(NOMBRE_MONEDA[f.moneda])} ${etiquetaMes(p, true)}"></td>`;
+            return `<td><input inputmode="decimal" data-fila="${fila}" data-col="${j}" data-k="${esc(`${p}|${f.id}`)}" data-id="${esc(f.id)}" value="${esc(v ? fmtNumEditor(v / esc_) : '')}" aria-label="${esc(f.cat.n)} ${esc(NOMBRE_MONEDA[f.moneda])} ${etiquetaMes(p, true)}"></td>`;
           }).join('');
-          const nombre = `<div class="fin-fila-nom">${esc(legado ? rb.nombre : (f.cat ? f.cat.n : f.concepto))} <small>${esc(NOMBRE_MONEDA[f.moneda])}</small></div>`;
-          const libre = legado ? [] : monedasLibres(ed, periodos, f.rubro, f.concepto);
-          const rotulo = legado
-            ? nombre + `<select class="fin-in fin-asignar" data-asignar="${esc(f.id)}" aria-label="Asignar concepto a ${esc(rb.nombre)}"><option value="">elegir concepto…</option>${
-                  CONCEPTOS.filter(c => c.r === f.rubro).map(c => `<option value="${esc(c.n)}">${esc(c.g)} · ${esc(c.n)}</option>`).join('')
-                }</select>`
-            : nombre + `<div class="fin-fila-pie"><small class="fin-grupo-ayuda">${esc(rb.nombre)}</small><span class="fin-fila-acc">${
+          const nombre = `<div class="fin-fila-nom">${esc(f.cat.n)} <small>${esc(NOMBRE_MONEDA[f.moneda])}</small></div>`;
+          const libre = monedasLibres(ed, periodos, f.rubro, f.concepto);
+          const rotulo = nombre + `<div class="fin-fila-pie"><small class="fin-grupo-ayuda">${esc(rb.nombre)}</small><span class="fin-fila-acc">${
                 (libre.length
                   ? `<button class="fin-mini" data-accion="agregar-moneda" data-id="${esc(f.id)}" title="Cargar este concepto también en ${esc(NOMBRE_MONEDA[libre[0]])}">+ ${esc(libre[0] === 'DL' ? 'link' : libre[0])}</button>`
                   : '')
-                + `<button class="fin-quitar" data-accion="quitar-fila" data-id="${esc(f.id)}" aria-label="Quitar la fila ${esc(f.cat ? f.cat.n : rb.nombre)} ${esc(NOMBRE_MONEDA[f.moneda])}">×</button>`
+                + `<button class="fin-quitar" data-accion="quitar-fila" data-id="${esc(f.id)}" aria-label="Quitar la fila ${esc(f.cat.n)} ${esc(NOMBRE_MONEDA[f.moneda])}">×</button>`
               }</span></div>`;
           filas += `<tr><td class="rot">${rotulo}</td>${celdas}<td class="tot" data-tot="${fila}">${total ? fmtNumEditor(total / esc_) : ''}</td></tr>`;
           fila++;
@@ -2122,32 +2116,6 @@
   function onChangeEditor(st, e) {
     const t = e.target, ed = st.editor;
     if (t.matches('.fin-sel input[type="checkbox"]')) { refrescarCuentaConceptos(st); return; }
-    // Asignar un concepto a una línea vieja: mueve los montos de clave dentro
-    // del mismo rubro, así que la cascada y los indicadores no se mueven.
-    if (t.dataset.asignar) {
-      const viejo = t.dataset.asignar, nombre = t.value;
-      if (!nombre) return;
-      const p = partirId(viejo), rubro = p[0], moneda = p[1];
-      const c = CONCEPTOS.find(x => x.n === nombre && x.r === rubro);
-      if (!c) return;
-      const nuevo = `${rubro}|${moneda}|${nombre}`;
-      const cfg = normalizarConfig(ed.b.config);
-      let movidos = 0;
-      mesesDelEjercicio(cfg.inicio, cfg.meses).forEach(mes => {
-        const kv = `${mes}|${viejo}`, v = ed.b.lineas[kv];
-        if (!v) return;
-        const kn = `${mes}|${nuevo}`;
-        ed.b.lineas[kn] = (ed.b.lineas[kn] || 0) + v;
-        delete ed.b.lineas[kv];
-        movidos++;
-      });
-      ed.filas = ed.filas.filter(x => x !== viejo);
-      if (ed.filas.indexOf(nuevo) < 0) ed.filas.push(nuevo);
-      marcarSucio(st);
-      pintarEditor(st);
-      estadoEditor(st, `${movidos} ${movidos === 1 ? 'mes pasó' : 'meses pasaron'} a «${nombre}». El total del rubro no cambia. Guardá para que quede.`, 'ok');
-      return;
-    }
     if (t.matches('.fin-grilla input')) {
       leerCelda(st, t);
       const n = parseNumero(t.value);
