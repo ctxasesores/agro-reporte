@@ -16,19 +16,28 @@
         campo sin senal.
 
    IMPORTANTE AL DEPLOYAR:
-   Subir CACHE_VERSION en cada deploy del index.html.
-   Si no lo subis, los usuarios que ya instalaron pueden quedar
-   con el shell anterior en el fallback.
+   CACHE_VERSION y SHELL_ASSETS los mantiene el script
+   `node herramientas/versionar.js`: correrlo antes de cada commit
+   que toque el front. No editarlos a mano.
+   Si CACHE_VERSION no sube, los usuarios que ya instalaron pueden
+   quedar con el shell anterior en el fallback.
    ============================================================ */
 
-const CACHE_VERSION = 'ctx-v48';
+const CACHE_VERSION = 'ctx-v49';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 // Solo el shell. Nada de datos.
 const SHELL_ASSETS = [
   './',
   './index.html',
-  './kpi-financiero.js',
+  './css/app.css?v=e8a3cfd896',
+  './kpi-financiero.js?v=c99d3c5a08',
+  './js/asesor-ia-agricultura.js?v=bc5de0a030',
+  './js/asesor-ia-mercado.js?v=dabe12fd22',
+  './js/opciones-a3.js?v=f77f771ccc',
+  './js/movil-agricultura.js?v=53dfd5da51',
+  './js/ventana-flotante.js?v=bb91aeb0a4',
+  './js/riesgo-productivo.js?v=c09ea226a5',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];

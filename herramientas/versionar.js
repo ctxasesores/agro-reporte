@@ -1,0 +1,171 @@
+#!/usr/bin/env node
+/* ============================================================
+   Context — versionar.js
+   ------------------------------------------------------------
+   Se corre ANTES de cada commit que toque el front:
+
+       node herramientas/versionar.js           (aplica los cambios)
+       node herramientas/versionar.js --check   (solo verifica; sale con 1 si falta algo)
+
+   Qué hace, todo junto y siempre igual:
+     1) Cada <script src="…?v=…"> y <link href="…?v=…"> local de los
+        HTML del repo pasa a llevar como ?v= la huella de su contenido
+        (sha256, 10 caracteres). Solo cambia el ?v= del archivo que cambió,
+        así el navegador baja de nuevo nada más que eso.
+     2) El ?v= del iframe del tambo (buildTamboSrc en index.html) pasa a
+        ser la huella de Tambo/tambo_integrado_PRODUCCION_v1.html.
+     3) SHELL_ASSETS en sw.js se arma con las mismas URLs que pide
+        index.html (con su ?v=), para que el fallback sin conexión las
+        encuentre tal cual.
+     4) Si index.html o sw.js cambiaron desde la última corrida, sube JUNTOS
+        el build (version.json y CTX_BUILD en index.html, mismo valor,
+        hora de Argentina) y CACHE_VERSION en sw.js (ctx-vN → ctx-vN+1).
+        Si no cambió nada, no toca nada: correrlo dos veces da lo mismo.
+
+   Por qué existe: subir esos números a mano es fácil de olvidar, y
+   olvidarlo no da error. Da un usuario con una mezcla de versión vieja
+   y nueva, o un cartel de «versión nueva» que no se va nunca.
+
+   Lo que NO hace: no sube FIN_VERSION de kpi-financiero.js (esa es una
+   decisión sobre el contenido, no sobre el deploy) ni toca archivos que
+   no tengan ya un ?v=. Para versionar un archivo nuevo, se lo referencia
+   con ?v=0 y se corre este script.
+
+   Sin dependencias: solo Node.
+   ============================================================ */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const RAIZ = path.resolve(__dirname, '..');
+const CHECK = process.argv.includes('--check');
+
+const leer = rel => fs.readFileSync(path.join(RAIZ, rel), 'utf8');
+const huella = buf => crypto.createHash('sha256').update(buf).digest('hex').slice(0, 10);
+const huellaArchivo = rel => huella(fs.readFileSync(path.join(RAIZ, rel)));
+
+const cambios = [];          // [rel, contenidoNuevo]
+const avisos = [];
+const nuevos = new Map();    // rel -> contenido en memoria (para encadenar pasos)
+const contenido = rel => nuevos.has(rel) ? nuevos.get(rel) : leer(rel);
+const poner = (rel, txt) => { if (txt !== contenido(rel)) nuevos.set(rel, txt); };
+
+/* ---------- 1) ?v= de scripts y estilos locales ---------- */
+function htmlDelRepo(dir = '') {
+  let out = [];
+  for (const e of fs.readdirSync(path.join(RAIZ, dir), { withFileTypes: true })) {
+    if (e.name.startsWith('.') || e.name === 'node_modules' || e.name === 'herramientas') continue;
+    const rel = path.posix.join(dir, e.name);
+    if (e.isDirectory()) out = out.concat(htmlDelRepo(rel));
+    else if (e.name.endsWith('.html')) out.push(rel);
+  }
+  return out;
+}
+
+const RE_REF = /(<(?:script|link)\b[^>]*?\s(?:src|href)=")([^"?#:]+)\?v=([^"&#]*)(")/g;
+
+for (const html of htmlDelRepo()) {
+  const dirHtml = path.posix.dirname(html);
+  const txt = contenido(html).replace(RE_REF, (todo, a, url, vViejo, z) => {
+    const rel = path.posix.normalize(path.posix.join(dirHtml, url));
+    if (!fs.existsSync(path.join(RAIZ, rel))) {
+      avisos.push(`${html}: ${url} no existe`);
+      return todo;
+    }
+    return `${a}${url}?v=${huellaArchivo(rel)}${z}`;
+  });
+  poner(html, txt);
+}
+
+/* ---------- 2) ?v= del iframe del tambo ---------- */
+const TAMBO = 'Tambo/tambo_integrado_PRODUCCION_v1.html';
+{
+  const re = /(qs\.set\('v',\s*')([^']*)('\))/;
+  const idx = contenido('index.html');
+  if (!re.test(idx)) avisos.push("index.html: no encontré qs.set('v', …) en buildTamboSrc");
+  else poner('index.html', idx.replace(re, `$1${huellaArchivo(TAMBO)}$3`));
+}
+
+/* ---------- 3) SHELL_ASSETS de sw.js ---------- */
+{
+  const idx = contenido('index.html');
+  const locales = [];
+  idx.replace(RE_REF, (t, a, url, v) => { locales.push(`./${url}?v=${v}`); return t; });
+  const lista = ['./', './index.html', ...locales, './icons/icon-192.png', './icons/icon-512.png'];
+  const bloque = 'const SHELL_ASSETS = [\n' + lista.map(u => `  '${u}'`).join(',\n') + '\n];';
+  const sw = contenido('sw.js');
+  const re = /const SHELL_ASSETS = \[[\s\S]*?\];/;
+  if (!re.test(sw)) avisos.push('sw.js: no encontré SHELL_ASSETS');
+  else poner('sw.js', sw.replace(re, bloque));
+}
+
+/* ---------- 4) build y CACHE_VERSION ---------- */
+const RE_BUILD = /(var CTX_BUILD = ')([^']*)(';)/;
+const RE_CACHE = /(const CACHE_VERSION = 'ctx-v)(\d+)(';)/;
+
+// La huella del shell ignora los propios números de versión: si no,
+// subirlos cambiaría la huella y el script nunca quedaría quieto.
+function huellaShell() {
+  const idx = contenido('index.html').replace(RE_BUILD, '$1$3');
+  const sw = contenido('sw.js').replace(RE_CACHE, '$1$3');
+  return huella(idx + '\u0000' + sw);
+}
+
+{
+  const idx = contenido('index.html');
+  const sw = contenido('sw.js');
+  const ver = JSON.parse(contenido('version.json'));
+  const mBuild = idx.match(RE_BUILD);
+  const mCache = sw.match(RE_CACHE);
+  if (!mBuild) avisos.push('index.html: no encontré CTX_BUILD');
+  if (!mCache) avisos.push('sw.js: no encontré CACHE_VERSION');
+
+  if (mBuild && mCache) {
+    const h = huellaShell();
+    let build = ver.build;
+    if (ver.huella !== h) {
+      build = buildAhora();
+      // Si ya se corrió en este mismo minuto, el build igual tiene que ser otro
+      // (y nunca volver a uno anterior: un usuario con ese build no vería el aviso).
+      if (String(ver.build).slice(0, 13) === build) build += '-' + h.slice(0, 4);
+      poner('sw.js', sw.replace(RE_CACHE, `$1${Number(mCache[2]) + 1}$3`));
+      // `huella` la usa solo este script; la app lee únicamente `build`.
+      poner('version.json', `{ "build": "${build}", "huella": "${h}" }\n`);
+    }
+    poner('index.html', contenido('index.html').replace(RE_BUILD, `$1${build}$3`));
+    if (mBuild[2] !== ver.build && ver.huella === h) {
+      avisos.push(`CTX_BUILD (${mBuild[2]}) y version.json (${ver.build}) no coincidían: se igualó CTX_BUILD`);
+    }
+  }
+}
+
+function buildAhora() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/Argentina/Buenos_Aires', hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+  }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return `${p.year}${p.month}${p.day}-${p.hour}${p.minute}`;
+}
+
+/* ---------- salida ---------- */
+for (const [rel, txt] of nuevos) cambios.push([rel, txt]);
+avisos.forEach(a => console.warn('AVISO  ' + a));
+
+if (!cambios.length) {
+  console.log('Todo al día: ningún número de versión que subir.');
+  process.exit(avisos.length ? 1 : 0);
+}
+if (CHECK) {
+  cambios.forEach(([rel]) => console.log('DESACTUALIZADO  ' + rel));
+  console.log('\nCorré: node herramientas/versionar.js');
+  process.exit(1);
+}
+for (const [rel, txt] of cambios) {
+  fs.writeFileSync(path.join(RAIZ, rel), txt);
+  console.log('actualizado  ' + rel);
+}
+const v = JSON.parse(leer('version.json'));
+console.log(`\nbuild ${v.build} · ${leer('sw.js').match(RE_CACHE)[0]}`);
+process.exit(avisos.length ? 1 : 0);
