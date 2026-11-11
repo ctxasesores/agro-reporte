@@ -36,7 +36,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Context | Reporte de Cartera</title>
 <!-- v20260401015516 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
@@ -2853,7 +2853,7 @@ input.estr-hered{background:rgba(255,255,255,.02)!important;color:var(--oro-l,#e
   </div><!-- /main-content -->
 </div><!-- /appShell -->
 
-<script src="kpi-financiero.js?v=20261005-2100"></script>
+<script src="kpi-financiero.js?v=2026-11-10.1"></script>
 <script>
 const SUPA_URL = 'https://xilkjtmaruqqodnhwkbp.supabase.co';
 const SUPA_KEY = 'sb_publishable_uVUvbAkUy1zgniP0AbhTRQ_0Ku0AuOj';
@@ -7441,7 +7441,7 @@ function renderEvolucion() {
 
 <script>
 function getMacroDashboardSrc(){
-  const fileName = 'dashboard_bcra_v28_1_5 PROD.html?embed=1';
+  const fileName = 'dashboard_bcra.html?embed=1';
   if (location.protocol === 'file:') return fileName;
   return `${location.origin}/agro-reporte/${fileName}`;
 }
@@ -7483,7 +7483,7 @@ function cerrarMacroModal(ev){
   // queda permanente: recargar devuelve este mismo index.html, que sigue
   // declarando el build viejo. Y subir CACHE_VERSION en sw.js, como dice
   // el comentario de ese archivo.
-  var CTX_BUILD = '20261110-1130';
+  var CTX_BUILD = '20261111-1200';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {

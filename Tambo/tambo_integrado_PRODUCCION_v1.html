@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1220,7 +1220,7 @@ function toggleAcc(id, iconId){
 function abrirAyuda(){ var m = document.getElementById('modal_help'); if(m) m.classList.add('open'); }
 function cerrarAyuda(ev){ if(ev && ev.target !== ev.currentTarget) return; var m = document.getElementById('modal_help'); if(m) m.classList.remove('open'); }
 function getMacroDashboardSrc(){
-  var fileName = 'dashboard_bcra_v28_1_5%20PROD.html?embed=1';
+  var fileName = 'dashboard_bcra.html?embed=1';
   if(location.protocol === 'file:') return '../' + fileName;
   var basePath = location.pathname.indexOf('/agro-reporte/') === 0 ? '/agro-reporte/' : '/';
   return location.origin + basePath + fileName;
