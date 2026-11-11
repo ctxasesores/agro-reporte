@@ -12,11 +12,14 @@
         HTML del repo pasa a llevar como ?v= la huella de su contenido
         (sha256, 10 caracteres). Solo cambia el ?v= del archivo que cambió,
         así el navegador baja de nuevo nada más que eso.
-     2) El ?v= del iframe del tambo (buildTamboSrc en index.html) pasa a
+        Lo mismo con las rutas versionadas dentro del código, como
+        `'js/riesgo-productivo.js?v=…'`, que es un módulo que se carga a
+        demanda (la ruta se resuelve contra la raíz del repo).
+     2) El ?v= del iframe del tambo (buildTamboSrc en js/app.js) pasa a
         ser la huella de Tambo/tambo_integrado_PRODUCCION_v1.html.
      3) SHELL_ASSETS en sw.js se arma con las mismas URLs que pide
-        index.html (con su ?v=), para que el fallback sin conexión las
-        encuentre tal cual.
+        index.html (con su ?v=), más las que sus JS cargan a demanda, para
+        que el fallback sin conexión las encuentre tal cual.
      4) Si index.html o sw.js cambiaron desde la última corrida, sube JUNTOS
         el build (version.json y CTX_BUILD en index.html, mismo valor,
         hora de Argentina) y CACHE_VERSION en sw.js (ctx-vN → ctx-vN+1).
@@ -66,34 +69,72 @@ function htmlDelRepo(dir = '') {
 
 const RE_REF = /(<(?:script|link)\b[^>]*?\s(?:src|href)=")([^"?#:]+)\?v=([^"&#]*)(")/g;
 
-for (const html of htmlDelRepo()) {
-  const dirHtml = path.posix.dirname(html);
-  const txt = contenido(html).replace(RE_REF, (todo, a, url, vViejo, z) => {
-    const rel = path.posix.normalize(path.posix.join(dirHtml, url));
-    if (!fs.existsSync(path.join(RAIZ, rel))) {
-      avisos.push(`${html}: ${url} no existe`);
+// Archivos que se cargan a demanda desde el código (por ejemplo
+// `const X_SRC = 'js/modulo.js?v=…'`). La ruta se resuelve contra la página
+// que los carga: para un .js es la raíz del repo (lo carga index.html); para
+// un .html, su propia carpeta.
+const RE_STR = /(['"])((?:js|css)\/[\w.-]+\.(?:js|css))\?v=([^'"&#]*)\1/g;
+
+// La huella usa lo que está en memoria, no lo del disco: si app.js cambia el
+// ?v= de un módulo, la huella de app.js tiene que salir de su versión nueva.
+const huellaActual = rel => huella(Buffer.from(contenido(rel), 'utf8'));
+const esTexto = rel => /\.(js|css|html)$/.test(rel);
+const huellaDe = rel => esTexto(rel) ? huellaActual(rel) : huellaArchivo(rel);
+
+function versionarRefs(rel, base) {
+  const fijar = (todo, url, armar) => {
+    const destino = path.posix.normalize(path.posix.join(base, url));
+    if (!fs.existsSync(path.join(RAIZ, destino))) {
+      avisos.push(`${rel}: ${url} no existe`);
       return todo;
     }
-    return `${a}${url}?v=${huellaArchivo(rel)}${z}`;
-  });
-  poner(html, txt);
+    return armar(huellaDe(destino));
+  };
+  let txt = contenido(rel);
+  if (rel.endsWith('.html')) {
+    txt = txt.replace(RE_REF, (todo, a, url, v, z) => fijar(todo, url, h => `${a}${url}?v=${h}${z}`));
+  }
+  txt = txt.replace(RE_STR, (todo, q, url) => fijar(todo, url, h => `${q}${url}?v=${h}${q}`));
+  poner(rel, txt);
 }
 
-/* ---------- 2) ?v= del iframe del tambo ---------- */
+const jsLocales = fs.readdirSync(path.join(RAIZ, 'js')).filter(f => f.endsWith('.js')).map(f => 'js/' + f)
+  .concat(['kpi-financiero.js']);
+
+/* ---------- 2) ?v= del iframe del tambo (buildTamboSrc, en js/app.js) ---------- */
 const TAMBO = 'Tambo/tambo_integrado_PRODUCCION_v1.html';
-{
-  const re = /(qs\.set\('v',\s*')([^']*)('\))/;
-  const idx = contenido('index.html');
-  if (!re.test(idx)) avisos.push("index.html: no encontré qs.set('v', …) en buildTamboSrc");
-  else poner('index.html', idx.replace(re, `$1${huellaArchivo(TAMBO)}$3`));
+const RE_TAMBO = /(qs\.set\('v',\s*')([^']*)('\))/;
+function versionarTambo() {
+  const rel = ['js/app.js', 'index.html'].find(f => RE_TAMBO.test(contenido(f)));
+  if (!rel) { avisos.push("no encontré qs.set('v', …) de buildTamboSrc"); return; }
+  poner(rel, contenido(rel).replace(RE_TAMBO, `$1${huellaDe(TAMBO)}$3`));
 }
+
+// Se repite hasta que nada cambie: un módulo cambia el ?v= dentro de app.js,
+// eso cambia la huella de app.js y por lo tanto su ?v= en index.html.
+for (let pasada = 0; pasada < 6; pasada++) {
+  const antes = JSON.stringify([...nuevos]);
+  versionarTambo();
+  for (const js of jsLocales) versionarRefs(js, '');
+  for (const html of htmlDelRepo()) versionarRefs(html, path.posix.dirname(html));
+  if (JSON.stringify([...nuevos]) === antes) break;
+  if (pasada === 5) avisos.push('las referencias no se estabilizaron (¿hay un ciclo?)');
+}
+const avisosUnicos = () => [...new Set(avisos)];
+
 
 /* ---------- 3) SHELL_ASSETS de sw.js ---------- */
 {
   const idx = contenido('index.html');
   const locales = [];
   idx.replace(RE_REF, (t, a, url, v) => { locales.push(`./${url}?v=${v}`); return t; });
-  const lista = ['./', './index.html', ...locales, './icons/icon-192.png', './icons/icon-512.png'];
+  // Más los que esos JS cargan a demanda (p. ej. riesgo-productivo.js): un
+  // usuario PRO sin señal también tiene que poder abrirlos.
+  const pedidosJs = locales.map(u => u.slice(2).split('?')[0]).filter(f => f.endsWith('.js'));
+  for (const js of ['index.html', ...pedidosJs]) {
+    contenido(js).replace(RE_STR, (t, q, url, v) => { locales.push(`./${url}?v=${v}`); return t; });
+  }
+  const lista = [...new Set(['./', './index.html', ...locales, './icons/icon-192.png', './icons/icon-512.png'])];
   const bloque = 'const SHELL_ASSETS = [\n' + lista.map(u => `  '${u}'`).join(',\n') + '\n];';
   const sw = contenido('sw.js');
   const re = /const SHELL_ASSETS = \[[\s\S]*?\];/;
@@ -151,7 +192,7 @@ function buildAhora() {
 
 /* ---------- salida ---------- */
 for (const [rel, txt] of nuevos) cambios.push([rel, txt]);
-avisos.forEach(a => console.warn('AVISO  ' + a));
+avisosUnicos().forEach(a => console.warn('AVISO  ' + a));
 
 if (!cambios.length) {
   console.log('Todo al día: ningún número de versión que subir.');
