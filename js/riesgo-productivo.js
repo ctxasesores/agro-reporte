@@ -2527,7 +2527,14 @@ function rpVigilarGatePro(){
     if (rpAplicarGatePro() || intentos > 60) clearInterval(iv);
   }, 500);
 }
-document.addEventListener('DOMContentLoaded', rpVigilarGatePro);
+// Este archivo se carga a demanda (ver ctxCargarRiesgoProductivo en js/app.js),
+// así que puede llegar con la página ya armada: en ese caso no hay
+// DOMContentLoaded que esperar y se evalúa en el acto.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', rpVigilarGatePro);
+} else if (!rpAplicarGatePro()) {
+  rpVigilarGatePro();
+}
 document.addEventListener('visibilitychange', function(){
   if (document.visibilityState === 'visible') rpAplicarGatePro();
 });
