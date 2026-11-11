@@ -1,0 +1,49 @@
+/* ============================================================
+   Context — animación del login (punteros constructores)
+   Acompaña a js/login-animacion.js. Ver ese archivo para el porqué.
+
+   Todo cuelga de la clase `ctx-anim` en <html>: la pone un script
+   mínimo en el <head> solo si el usuario no pidió movimiento reducido.
+   Sin esa clase, el login se ve como siempre.
+   ============================================================ */
+
+/* Los elementos dibujables arrancan ocultos hasta que un puntero los pinta. */
+.ctx-anim #loginScreen [data-b] { clip-path: inset(0 100% 0 0); }
+.ctx-anim #ctxLoginLogo { opacity: 0; }
+
+#ctxLoginLogo { transition: opacity .9s ease; }
+#ctxLoginLogo.in { opacity: 1; }
+
+/* Mientras los punteros trabajan, la tarjeta no acepta interacción. */
+.login-card.ctx-locked { pointer-events: none; }
+
+/* Capas: canvas (contornos, guías, ripples) y punteros. Nunca capturan clics. */
+#ctxFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; }
+#ctxCursors { position: fixed; inset: 0; z-index: 10; pointer-events: none; overflow: hidden; transition: opacity 1.1s ease; }
+#ctxCursors.gone { opacity: 0; }
+.ctx-cur { position: absolute; left: -3.5px; top: -3.5px; width: 7px; height: 7px; border-radius: 50%;
+  will-change: transform; opacity: .14; transition: opacity .35s ease; }
+.ctx-cur.busy { opacity: 1; }
+
+/* Loader: el isotipo se arma en el centro mientras se resuelve la sesión. */
+#ctxLoader { position: fixed; inset: 0; z-index: 11; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; transition: opacity .4s ease; }
+#ctxLoader.fuera { opacity: 0; }
+#ctxLoader svg { width: 120px; height: 120px; transform-origin: 0 0; opacity: 0; overflow: visible; }
+#ctxLoader g { mix-blend-mode: screen; }
+
+/* Pastilla inferior: «Verificando credenciales…» */
+#ctxPill { position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px);
+  z-index: 8; display: flex; align-items: center; gap: 12px; background: #0d2035; border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px; padding: 8px 16px; font-size: 13px; color: rgba(255,255,255,.62); opacity: 0;
+  transition: opacity .3s, transform .3s; pointer-events: none; white-space: nowrap; }
+#ctxPill.on { opacity: 1; transform: translate(-50%, 0); }
+#ctxPill .ctx-bar { width: 80px; height: 2px; background: rgba(255,255,255,.14); border-radius: 2px; position: relative; overflow: hidden; }
+#ctxPill .ctx-bar::after { content: ""; position: absolute; inset: 0; width: 35%; background: var(--oro-l, #e8c45a);
+  animation: ctxSweep 1s ease-in-out infinite alternate; }
+@keyframes ctxSweep { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ctx-anim #loginScreen [data-b] { clip-path: none; }
+  .ctx-anim #ctxLoginLogo { opacity: 1; }
+}

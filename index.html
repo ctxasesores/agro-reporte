@@ -36,6 +36,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Context | Reporte de Cartera</title>
 <!-- v20260401015516 -->
+<script>
+/* Animación del login (js/login-animacion.js): se activa antes de que se pinte
+   nada para que el login no aparezca armado y después se "desarme". Si el
+   usuario pidió movimiento reducido, no se activa. Seguro: si el módulo no
+   llega a cargar en 6 s, se saca la clase y el login se ve como siempre. */
+(function () {
+  try { if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  document.documentElement.classList.add('ctx-anim');
+  setTimeout(function () { if (!window.ctxLoginAnim) document.documentElement.classList.remove('ctx-anim'); }, 6000);
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -44,50 +55,53 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/app.css?v=e8a3cfd896">
+<link rel="stylesheet" href="css/login-animacion.css?v=874d26f4c5">
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="loginScreen">
   <div style="margin-bottom:28px;display:flex;flex-direction:column;align-items:center;gap:12px">
-    <svg width="56" height="56" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
-    <span style="font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</span>
-    <div class="login-badge">Acceso clientes</div>
+    <svg id="ctxLoginLogo" width="52" height="52" viewBox="0 0 240.3 240.3" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#d56a9d" d="M240.3,60.08c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M60.08,120.15C26.9,120.15,0,147.05,0,180.23s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#fcfcfc" d="M180.23,120.15v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M60.08,120.15c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M120.15,180.23h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+    <span id="ctxLoginWord" data-b="text" style="font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</span>
+    <div class="login-badge" id="ctxLoginBadge" data-b="box">Acceso clientes</div>
   </div>
-  <div class="login-card">
+  <div class="login-card" data-b="box">
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Ingresar</button>
-      <button class="auth-tab" id="tab-register" onclick="switchAuthMode('register')">Registrarme</button>
+      <button class="auth-tab active" id="tab-login" data-b="box" onclick="switchAuthMode('login')">Ingresar</button>
+      <button class="auth-tab" id="tab-register" data-b="box" onclick="switchAuthMode('register')">Registrarme</button>
     </div>
-    <div class="login-subtitle" id="authSubtitle">Ingresá a tu panel agrícola y a los módulos ganaderos habilitados para tu cuenta.</div>
+    <div class="login-subtitle" id="authSubtitle" data-b="text">Ingresá a tu panel agrícola y a los módulos ganaderos habilitados para tu cuenta.</div>
     <div class="auth-pane active" id="pane-login">
-      <label>Email</label>
-      <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email">
-      <label>Contraseña</label>
-      <input type="password" id="loginPass" placeholder="••••••••">
-      <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
-      <button class="btn-secondary" type="button" onclick="switchAuthMode('register')">Quiero crear mi cuenta</button>
-      <button class="login-link" type="button" onclick="openForgotPasswordModal()">Olvidé mi contraseña</button>
+      <label data-b="text">Email</label>
+      <input type="email" id="loginEmail" data-b="box" placeholder="tu@email.com" autocomplete="email">
+      <label data-b="text">Contraseña</label>
+      <input type="password" id="loginPass" data-b="box" placeholder="••••••••">
+      <button class="btn-primary" id="btnLogin" data-b="box" onclick="doLogin()">Ingresar</button>
+      <button class="btn-secondary" data-b="box" type="button" onclick="switchAuthMode('register')">Quiero crear mi cuenta</button>
+      <button class="login-link" data-b="text" type="button" onclick="openForgotPasswordModal()">Olvidé mi contraseña</button>
     </div>
     <div class="auth-pane" id="pane-register">
-      <label>Empresa / cliente</label>
-      <input type="text" id="regNombre" placeholder="Agropecuaria XYZ S.A." autocomplete="organization">
-      <label>Email</label>
-      <input type="email" id="regEmail" placeholder="cliente@empresa.com" autocomplete="email">
-      <label>Contraseña</label>
-      <input type="password" id="regPass" placeholder="mínimo 8 caracteres" autocomplete="new-password">
-      <label>Campaña</label>
-      <input type="text" id="regCampania" placeholder="25/26">
-      <label class="terms-accept">
+      <label data-b="text">Empresa / cliente</label>
+      <input type="text" id="regNombre" data-b="box" placeholder="Agropecuaria XYZ S.A." autocomplete="organization">
+      <label data-b="text">Email</label>
+      <input type="email" id="regEmail" data-b="box" placeholder="cliente@empresa.com" autocomplete="email">
+      <label data-b="text">Contraseña</label>
+      <input type="password" id="regPass" data-b="box" placeholder="mínimo 8 caracteres" autocomplete="new-password">
+      <label data-b="text">Campaña</label>
+      <input type="text" id="regCampania" data-b="box" placeholder="25/26">
+      <label class="terms-accept" data-b="box">
         <input type="checkbox" id="regTermsAccepted">
         <span>Acepto los <button class="terms-link" type="button" onclick="event.preventDefault();event.stopPropagation();openTermsModal()">Términos y Condiciones</button> y entiendo que los paneles son simulaciones informativas, no recomendaciones de inversión ni promesas de resultado.</span>
       </label>
-      <button class="btn-primary" id="btnRegister" onclick="doRegister()">Crear cuenta</button>
+      <button class="btn-primary" id="btnRegister" data-b="box" onclick="doRegister()">Crear cuenta</button>
     </div>
     <div class="login-error" id="loginError">Email o contraseña incorrectos</div>
     <div class="login-success" id="loginSuccess">Tu cuenta fue creada. Ya puedes ingresar.</div>
   </div>
 </div>
+
+<script src="js/login-animacion.js?v=1b1ec439e4"></script>
 
 <div class="auth-modal-overlay" id="forgotPasswordOverlay" onclick="closeForgotPasswordModal(event)">
   <div class="auth-modal" onclick="event.stopPropagation()">
@@ -1770,7 +1784,7 @@
 </div><!-- /appShell -->
 
 <script src="kpi-financiero.js?v=c99d3c5a08"></script>
-<script src="js/app.js?v=2523fc97cf"></script>
+<script src="js/app.js?v=152c82e14d"></script>
 
 <!-- MODAL MACRO -->
 <div id="macroModal" class="modal-overlay" style="display:none" onclick="cerrarMacroModal(event)">
@@ -1894,7 +1908,7 @@ function cerrarMacroModal(ev){
   // declarando el build viejo.
   // No se edita a mano: `node herramientas/versionar.js` sube juntos este
   // valor, version.json, CACHE_VERSION de sw.js y los ?v= de los archivos.
-  var CTX_BUILD = '20261111-0936';
+  var CTX_BUILD = '20261111-1847';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -2167,10 +2181,12 @@ function cerrarMacroModal(ev){
 window.addEventListener('load', async () => {
   try {
     initSupabase();
-    if (await handleRecoveryReturn()) return;
+    if (await handleRecoveryReturn()) { if (window.ctxLoginAnim) ctxLoginAnim.sesion('login'); return; }
     const { data } = await sb.auth.getSession();
     if (data?.session?.user) {
       currentUser = data.session.user;
+      // Ya hay sesión: la animación del login no dibuja nada (solo se va el loader).
+      if (window.ctxLoginAnim) ctxLoginAnim.sesion('app');
       document.getElementById('loginScreen').style.display='none';
       await loadApp();
       return;
@@ -2178,9 +2194,11 @@ window.addEventListener('load', async () => {
     // Si la URL pide registro (link desde la landing: /agro-reporte/#registro),
     // abrir directamente la pestaña Registrarme.
     abrirRegistroDesdeHash();
+    if (window.ctxLoginAnim) ctxLoginAnim.sesion('login');
   } catch (e) {
     console.warn('No se pudo restaurar la sesión:', e.message);
     abrirRegistroDesdeHash();
+    if (window.ctxLoginAnim) ctxLoginAnim.sesion('login');
   }
 });
 
