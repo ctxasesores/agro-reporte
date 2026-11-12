@@ -55,7 +55,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/app.css?v=07394d63c9">
-<link rel="stylesheet" href="css/login-animacion.css?v=9825cd5c42">
+<link rel="stylesheet" href="css/login-animacion.css?v=443b7f783f">
 </head>
 <body>
 
@@ -101,7 +101,7 @@
   </div>
 </div>
 
-<script src="js/login-animacion.js?v=102765d7b0"></script>
+<script src="js/login-animacion.js?v=940eaea246"></script>
 
 <div class="auth-modal-overlay" id="forgotPasswordOverlay" onclick="closeForgotPasswordModal(event)">
   <div class="auth-modal" onclick="event.stopPropagation()">
@@ -629,50 +629,50 @@
 
 <!-- APP SHELL -->
 <div id="appShell">
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" data-b="box" data-c="#7dbaf8">
     <div class="sidebar-brand">
       <div class="brand-row">
         <svg width="51" height="51" viewBox="0 0 422.54 425.2" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path fill="#d56a9d" d="M323.92,152.52c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M143.69,212.6c-33.18,0-60.08,26.9-60.08,60.08s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#e8e0d4" d="M263.85,212.6v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M143.69,212.6c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M203.77,272.67h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
         <div class="brand-text">
-          <div class="brand-name">CTX</div>
-          <div class="brand-sub">Gestión de riesgo</div>
+          <div class="brand-name" data-b="text">CTX</div>
+          <div class="brand-sub" data-b="text">Gestión de riesgo</div>
         </div>
       </div>
-      <button class="btn-collapse" onclick="toggleCollapse()" id="btn-collapse" title="Colapsar menú">‹</button>
+      <button class="btn-collapse" data-b="text" onclick="toggleCollapse()" id="btn-collapse" title="Colapsar menú">‹</button>
     </div>
     <div class="cli-block">
-      <div class="cli-label">Cliente</div>
-      <div class="cli-name" id="s-nombre">—</div>
+      <div class="cli-label" data-b="text">Cliente</div>
+      <div class="cli-name" data-b="text" id="s-nombre">—</div>
     </div>
     <nav class="sidebar-nav">
-      <a class="nav-item active" id="nav-kpis" onclick="switchDashboard('kpis',this)" title="KPIs">
+      <a data-b="box" class="nav-item active" id="nav-kpis" onclick="switchDashboard('kpis',this)" title="KPIs">
         <span class="nav-icon">◎</span>
         <span class="nav-label"><span class="nav-main">KPIs</span><span class="nav-sub">Financiero · cartera · unidades</span></span>
       </a>
-      <a class="nav-item" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
+      <a data-b="box" class="nav-item" id="nav-agricultura" onclick="switchDashboard('agricultura',this)" title="Agricultura">
         <span class="nav-icon">◈</span>
         <span class="nav-label"><span class="nav-main">Agricultura</span><span class="nav-sub" id="nav-agricultura-sub">Dashboard estándar</span></span>
       </a>
-      <a class="nav-item" id="nav-ganaderia" onclick="switchDashboard('ganaderia',this)" title="Ganadería">
+      <a data-b="box" class="nav-item" id="nav-ganaderia" onclick="switchDashboard('ganaderia',this)" title="Ganadería">
         <span class="nav-icon">⌘</span>
         <span class="nav-label"><span class="nav-main">Ganadería</span><span class="nav-sub" id="nav-ganaderia-sub">Dashboard estándar</span></span>
       </a>
-      <a class="nav-item" onclick="switchDashboard('tambo',this)" title="Tambo" id="nav-tambo">
+      <a data-b="box" class="nav-item" onclick="switchDashboard('tambo',this)" title="Tambo" id="nav-tambo">
         <span class="nav-icon">◎</span>
         <span class="nav-label"><span class="nav-main">Tambo</span><span class="nav-sub" id="nav-tambo-sub">Sin acceso</span></span>
       </a>
-      <a class="nav-item" id="nav-mercado" onclick="switchDashboard('mercado',this)" title="Mercado de Granos">
+      <a data-b="box" class="nav-item" id="nav-mercado" onclick="switchDashboard('mercado',this)" title="Mercado de Granos">
         <span class="nav-icon">📈</span>
         <span class="nav-label"><span class="nav-main">Mercado</span><span class="nav-sub" id="nav-mercado-sub">Granos · Análisis IA</span></span>
       </a>
     </nav>
     <div class="sidebar-footer">
-      <div class="sidebar-tagline">Asesoría estratégica<br>financiera agropecuaria</div>
-      <div class="sidebar-date" id="s-fecha">—</div>
-      <button class="btn-logout" onclick="switchDashboard('cuenta')" title="Cuenta" style="margin-bottom:8px">
+      <div class="sidebar-tagline" data-b="text">Asesoría estratégica<br>financiera agropecuaria</div>
+      <div class="sidebar-date" data-b="text" id="s-fecha">—</div>
+      <button class="btn-logout" data-b="box" onclick="switchDashboard('cuenta')" title="Cuenta" style="margin-bottom:8px">
         <span class="nav-label">Cuenta</span><span style="display:none" class="logout-icon">⚙</span>
       </button>
-      <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
+      <button class="btn-logout" data-b="box" onclick="logout()" title="Cerrar sesión">
         <span class="nav-label">Cerrar sesión</span><span style="display:none" class="logout-icon">⏻</span>
       </button>
     </div>
@@ -1789,7 +1789,7 @@
 </div><!-- /appShell -->
 
 <script src="kpi-financiero.js?v=c99d3c5a08"></script>
-<script src="js/app.js?v=152c82e14d"></script>
+<script src="js/app.js?v=fcc60ec6bb"></script>
 
 <!-- MODAL MACRO -->
 <div id="macroModal" class="modal-overlay" style="display:none" onclick="cerrarMacroModal(event)">
@@ -1913,7 +1913,7 @@ function cerrarMacroModal(ev){
   // declarando el build viejo.
   // No se edita a mano: `node herramientas/versionar.js` sube juntos este
   // valor, version.json, CACHE_VERSION de sw.js y los ?v= de los archivos.
-  var CTX_BUILD = '20261112-0032';
+  var CTX_BUILD = '20261112-0106';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {

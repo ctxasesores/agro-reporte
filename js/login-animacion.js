@@ -8,8 +8,15 @@
    todo, se juntan en el centro y se desvanecen antes de entrar al panel.
 
    Antes, el isotipo se arma en el centro y hace de pantalla de carga
-   mientras la app resuelve si ya hay sesión. Si la hay, el loader se
-   va y no se dibuja nada: el usuario entra directo como siempre.
+   mientras la app resuelve si ya hay sesión. Si la hay, el login no se
+   dibuja: el isotipo se queda hasta que el panel está listo.
+
+   Panel lateral: en la carga inicial del panel (después de ingresar, o
+   al entrar con la sesión ya iniciada) los mismos punteros dibujan la
+   barra lateral (#sidebar y sus [data-b]). app.js avisa con
+   ctxLoginAnim.panel() cuando muestra el panel. Si no llega ese aviso,
+   o el login vuelve a verse (sesión vencida, error), se muestra todo
+   sin animación. En celular la barra está escondida: no se dibuja.
 
    Referencia: el prototipo aprobado (login-punteros-prototipo.html) y
    su documento de especificación. Valores y tiempos salen de ahí.
@@ -34,6 +41,7 @@
   // Sin la clase (movimiento reducido, o el <head> no la puso) no hay animación.
   if (!raiz.classList.contains('ctx-anim')) return;
 
+  raiz.classList.add('ctx-panel');   // oculta la barra lateral hasta que se dibuja
   const $ = id => document.getElementById(id);
   const HIDDEN = 'inset(0 100% 0 0)';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -210,6 +218,7 @@
   const alphaOf = c => { const v = partes(c); return !v ? 1 : (v.length > 3 ? v[3] : 1); };
   const pleno = c => { const v = partes(c); return v ? `rgb(${v[0]},${v[1]},${v[2]})` : c; };
   function finalColor(e) {
+    if (e.dataset.c) return e.dataset.c;   // color de trazo fijado en el HTML
     const cs = getComputedStyle(e);
     if (e.classList.contains('btn-primary') && alphaOf(cs.backgroundColor) > 0.5) return pleno(cs.backgroundColor);
     if (parseFloat(cs.borderTopWidth) > 0 && alphaOf(cs.borderTopColor) > 0.05) return pleno(cs.borderTopColor);
@@ -293,15 +302,26 @@
   const lock = v => el.card && el.card.classList.toggle('ctx-locked', v);
   const ripple = e => { if (e) ripples.push({ ...centro(e), r: 4, a: 1, color: '#e3bb4d' }); };
 
-  // Muestra todo de inmediato y apaga la animación (sesión ya iniciada, error, fin).
-  function mostrarTodo() {
-    vivo = false; estado = 'fin';
+  // Deja el login completo y quieto (por si vuelve a mostrarse), sin apagar
+  // los punteros: todavía pueden dibujar el panel.
+  function revelarLogin() {
     document.querySelectorAll('#loginScreen [data-b]').forEach(n => { n.style.clipPath = 'none'; });
     if (el.logo) { el.logo.style.transition = 'none'; el.logo.classList.add('in'); }
     raiz.classList.remove('ctx-anim');
     lock(false);
     pill.classList.remove('on');
+  }
+  function revelarPanel() {
+    raiz.classList.remove('ctx-panel');
+    document.querySelectorAll('#sidebar, #sidebar [data-b]').forEach(n => { n.style.clipPath = ''; });
+  }
+  // Muestra todo de inmediato y apaga la animación (error, fin).
+  function mostrarTodo() {
+    vivo = false; estado = 'fin';
+    revelarLogin();
+    revelarPanel();
     loader.classList.add('fuera');
+    capaCur.classList.add('gone');
     setTimeout(() => { cv.remove(); capaCur.remove(); loader.remove(); pill.remove(); }, 450);
   }
 
@@ -438,7 +458,51 @@
     await pausa(1200);
     // app.js oculta el login apenas esto termina. Se deja todo visible por
     // debajo: si el login vuelve a mostrarse (sesión vencida), se ve completo.
-    setTimeout(mostrarTodo, 0);
+    setTimeout(() => { revelarLogin(); esperarPanel(true); }, 0);
+  }
+
+  /* ---------- panel lateral (carga inicial) ---------- */
+  let panelAvisado = false;
+  // Espera el aviso de app.js. Si el login vuelve a verse o el aviso no llega,
+  // se muestra todo sin animación.
+  async function esperarPanel(desdeLogin) {
+    estado = 'panel';
+    const t0 = performance.now();
+    const ok = await new Promise(res => {
+      const f = () => {
+        if (!vivo) return res(false);
+        if (panelAvisado) return res(true);
+        if (visible(el.screen) || performance.now() - t0 > 30000) return res(false);
+        setTimeout(f, 120);
+      };
+      f();
+    });
+    if (!ok) { mostrarTodo(); return; }
+    await armarPanel(desdeLogin);
+  }
+  async function armarPanel(desdeLogin) {
+    const sb = $('sidebar');
+    const r = sb && rect(sb);
+    // En celular la barra está fuera de pantalla (o el panel no se ve): nada que dibujar.
+    // (La barra es position:fixed: offsetParent no sirve, se mira el tamaño en pantalla.)
+    if (!sb || getComputedStyle(sb).display === 'none' || r.right < 40 || r.width < 40 || r.height < 40) { mostrarTodo(); return; }
+    loader.classList.add('fuera');
+    setTimeout(() => loader.remove(), 450);
+    gather = 'park';
+    capaCur.classList.remove('gone');
+    if (!desdeLogin) stagger();   // con sesión ya iniciada entran desde afuera de la pantalla
+    const logo = sb.querySelector('.brand-row > svg');
+    const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2);
+    const jc = job(c => build(c, sb));
+    const kids = piezas.map(n => job(c => build(c, n), [jc]));
+    await allDone([jc]);
+    if (logo) logo.classList.add('ctx-in');
+    await allDone(kids);
+    if (!vivo) return;
+    await pausa(500);
+    capaCur.classList.add('gone');
+    await pausa(1100);
+    mostrarTodo();
   }
 
   /* ---------- API para app.js e index.html ---------- */
@@ -447,6 +511,8 @@
     // no se dibuja nada) o 'login' (hay que mostrar el login).
     sesion(quien) { resolverSesion(quien === 'app' ? 'app' : 'login'); },
     salir,
+    // app.js avisa que mostró el panel: se dibuja la barra lateral.
+    panel() { panelAvisado = true; },
     activa: () => vivo
   };
 
@@ -457,7 +523,8 @@
       requestAnimationFrame(frame);
       cursors.forEach(c => c.run());
       const quien = await intro();
-      if (quien === 'app' || !visible(el.screen)) { mostrarTodo(); return; }
+      if (quien === 'app') { revelarLogin(); await esperarPanel(false); return; }
+      if (!visible(el.screen)) { mostrarTodo(); return; }
       await viajarAlEncabezado();
       if (!vivo) return;
       stagger();
@@ -474,7 +541,7 @@
     if (typeof originales.switchAuthMode !== 'function' || typeof originales.doLogin !== 'function') { mostrarTodo(); return; }
     window.switchAuthMode = function (modo) {
       const m = modo === 'register' ? 'register' : 'login';
-      if (!vivo || estado === 'intro' || estado === 'fin' || estado === 'saliendo') return originales.switchAuthMode(m);
+      if (!vivo || estado === 'intro' || estado === 'fin' || estado === 'saliendo' || estado === 'panel') return originales.switchAuthMode(m);
       if (estado === 'enviando') return cambiarAlInstante(m);
       if (estado === 'armando' || estado === 'cambiando') { pendiente = m; marcarPestanas(m); return; }
       cambiarModo(m);

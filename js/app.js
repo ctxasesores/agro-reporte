@@ -466,6 +466,8 @@ async function loadApp() {
   renderAccessHub();
   showLoading(false);
   document.getElementById('appShell').style.display='block';
+  // Animación (js/login-animacion.js): los punteros dibujan la barra lateral.
+  if (window.ctxLoginAnim) window.ctxLoginAnim.panel();
   await refreshBusinessRemoteState();
   switchDashboard('kpis', document.getElementById('nav-kpis'));
   renderTagFilterBar();

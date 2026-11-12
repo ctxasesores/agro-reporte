@@ -43,7 +43,19 @@
   animation: ctxSweep 1s ease-in-out infinite alternate; }
 @keyframes ctxSweep { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
 
+/* Panel lateral: en la carga inicial del panel (después del login o al entrar
+   con la sesión ya iniciada) los mismos punteros dibujan la barra lateral.
+   La clase `ctx-panel` la pone js/login-animacion.js y la saca al terminar. */
+.ctx-panel #sidebar, .ctx-panel #sidebar [data-b] { clip-path: inset(0 100% 0 0); }
+.ctx-panel #sidebar .brand-row > svg { opacity: 0; transition: opacity .63s ease; }
+.ctx-panel #sidebar .brand-row > svg.ctx-in { opacity: 1; }
+/* La barra lateral está en z-index 200: los punteros y sus trazos van arriba. */
+.ctx-panel #ctxFx { z-index: 201; }
+.ctx-panel #ctxCursors { z-index: 202; }
+
 @media (prefers-reduced-motion: reduce) {
+  .ctx-panel #sidebar, .ctx-panel #sidebar [data-b] { clip-path: none; }
+  .ctx-panel #sidebar .brand-row > svg { opacity: 1; }
   .ctx-anim #loginScreen [data-b] { clip-path: none; }
   .ctx-anim #ctxLoginLogo { opacity: 1; }
 }
