@@ -56,6 +56,12 @@
      transiciones CSS equivalentes están en css/login-animacion.css). */
   const RITMO = 0.49;
   const pausa = ms => sleep(ms * RITMO);
+  // Dibujar va de a una pieza por vez: sus tiempos van un 30 % más rápido
+  // que el resto (borrar, pausas, desvanecidos siguen con RITMO).
+  const ARMADO = 0.7;
+  // Generación de punteros: al cortar un armado (cerrar sesión a mitad de camino)
+  // los punteros viejos dejan de trabajar aunque la animación siga viva.
+  let gen = 0;
   const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
   const easeOutBack = p => 1 + 2.4 * Math.pow(p - 1, 3) + 1.4 * Math.pow(p - 1, 2);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -185,7 +191,7 @@
   let gather = 'park';
   class Cursor {
     constructor(color, i) {
-      this.color = color; this.i = i; this.wakeAt = Infinity;
+      this.color = color; this.i = i; this.wakeAt = Infinity; this.gen = gen;
       this.node = document.createElement('div'); this.node.className = 'ctx-cur';
       this.node.style.background = color; this.node.style.boxShadow = `0 0 8px 1px ${color}aa`;
       capaCur.appendChild(this.node);
@@ -193,9 +199,9 @@
     }
     offscreen() { return { x: -22 - this.i * 5, y: -26 - this.i * 4 }; }
     set(x, y) { this.x = x; this.y = y; this.node.style.transform = `translate(${x}px,${y}px)`; }
-    go(target, stop) {
+    go(target, stop, factor = 1) {
       const sx = this.x, sy = this.y, t = target();
-      const dur = clamp(Math.hypot(t.x - sx, t.y - sy) * 0.8, 220, 850);
+      const dur = clamp(Math.hypot(t.x - sx, t.y - sy) * 0.8, 220, 850) * factor;
       return tween(dur, p => { const tt = target(), e = ease(p); this.set(sx + (tt.x - sx) * e, sy + (tt.y - sy) * e); }, stop);
     }
     home() {
@@ -204,7 +210,7 @@
       return { x: 26 + col * 20 + Math.sin(t) * 4, y: H - 70 + row * 22 + Math.cos(t * 1.2) * 4 };
     }
     async run() {
-      while (vivo) {
+      while (vivo && this.gen === gen) {
         const now = performance.now();
         if (now < this.wakeAt) { await sleep(Math.min(this.wakeAt - now, 100)); continue; }
         const j = ready();
@@ -262,18 +268,18 @@
 
   async function build(c, e) {
     const kind = kindOf(e), r = () => rect(e);
-    await c.go(() => ({ x: r().left, y: r().top }));
+    await c.go(() => ({ x: r().left, y: r().top }), null, ARMADO);
     let o = null;
     if (kind === 'box') {
       o = { el: e, t: 0, a: 1, ga: 1, color: finalColor(e) }; outlines.push(o);
       const rr = r();
-      await tween(clamp(Math.hypot(rr.width, rr.height) * 1.5, 380, 1000), p => {
+      await tween(clamp(Math.hypot(rr.width, rr.height) * 1.5, 380, 1000) * ARMADO, p => {
         o.t = ease(p); const q = r(); c.set(q.left + q.width * o.t, q.top + q.height * o.t);
       });
-      await c.go(() => ({ x: r().left, y: r().top }));
+      await c.go(() => ({ x: r().left, y: r().top }), null, ARMADO);
     }
     const w = r().width;
-    await tween(kind === 'box' ? clamp(w * 1.6, 420, 800) : clamp(w * 2.2, 260, 850), p => {
+    await tween((kind === 'box' ? clamp(w * 1.6, 420, 800) : clamp(w * 2.2, 260, 850)) * ARMADO, p => {
       const sv = p * 2;
       e.style.clipPath = diag(sv);
       c.set(...front(r(), sv, kind === 'box' ? 0.5 + 0.45 * Math.sin(p * Math.PI * 9) : 0.5));
@@ -511,14 +517,18 @@
     const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2);
     // El recuadro de la barra va primero (arriba a la izquierda); el logo aparece
     // cuando termina, y después cada pieza de a una.
+    const g = gen;
     const trabajos = enOrden([sb, ...piezas], build);
     await allDone([trabajos[0]]);
+    if (g !== gen) return;   // se cerró la sesión a mitad del armado
     if (logo) logo.classList.add('ctx-in');
     await allDone(trabajos);
-    if (!vivo) return;
+    if (!vivo || g !== gen) return;
     await pausa(500);
+    if (g !== gen) return;
     capaCur.classList.add('gone');
     await pausa(1100);
+    if (g !== gen) return;
     mostrarTodo();
   }
 
@@ -526,6 +536,7 @@
   // Vuelve a poner las capas y los punteros (al terminar el armado se quitan).
   function reactivar() {
     clearTimeout(tLimpieza);
+    gen++;   // los punteros anteriores (si quedaba alguno trabajando) se retiran
     vivo = true; estado = 'desarmando';
     outlines.length = 0; ripples.length = 0; jobs = [];
     capaCur.innerHTML = ''; capaCur.classList.remove('gone');
@@ -541,21 +552,29 @@
   }
   let desarmando = false;
   async function desarmarPanel() {
-    // Si todavía se está armando, o ya se está desarmando, no se hace nada.
-    if (vivo || desarmando) return;
+    if (desarmando) return;
     const sb = $('sidebar');
     const r = sb && rect(sb);
     if (!sb || getComputedStyle(sb).display === 'none' || r.right < 40 || r.width < 40 || r.height < 40) return;
     desarmando = true;
     try {
+      // Si la barra todavía se está armando, se corta el armado: se detienen
+      // los punteros y se desarma solo lo que ya estaba dibujado.
+      if (vivo) {
+        vivo = false;
+        await sleep(120);   // que terminen los tweens y el loop del canvas
+        outlines.length = 0;
+      }
       reactivar();
+      // Dibujada = sin recorte (la que falta dibujar sigue recortada por la clase ctx-panel).
+      const dibujada = n => getComputedStyle(n).clipPath === 'none';
       const logo = sb.querySelector('.brand-row > svg');
-      const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2).reverse();
+      const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2 && dibujada(n)).reverse();
       const kids = piezas.map(n => job(c => erase(c, n)));
-      const jc = job(c => erase(c, sb), kids);
+      const jc = dibujada(sb) ? job(c => erase(c, sb), kids) : null;
       await allDone(kids);
       if (logo) { logo.style.transition = 'opacity .32s ease'; logo.style.opacity = '0'; }
-      await allDone([jc]);
+      if (jc) await allDone([jc]);
       gather = 'center';
       await pausa(600);
       capaCur.classList.add('gone');
