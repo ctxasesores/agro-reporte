@@ -167,6 +167,19 @@
     f();
   });
 
+  // Dibujar va de a uno, en orden de lectura: de arriba a abajo y, en la misma
+  // fila, de izquierda a derecha. Cada trabajo espera al anterior, así nunca hay
+  // dos elementos dibujándose a la vez. (Borrar sigue siendo en paralelo.)
+  function enOrden(lista, fn) {
+    const pos = new Map(lista.map(n => [n, rect(n)]));
+    const orden = [...lista].sort((a, b) => {
+      const ra = pos.get(a), rb = pos.get(b);
+      return Math.abs(ra.top - rb.top) > 4 ? ra.top - rb.top : ra.left - rb.left;
+    });
+    let previo = null;
+    return orden.map(n => (previo = job(c => fn(c, n), previo ? [previo] : [])));
+  }
+
   /* ---------- punteros ---------- */
   const COLORS = ['#d56a9d', '#7dbaf8', '#fcfcfc', '#e3bb4d', '#d56a9d', '#7dbaf8', '#fcfcfc', '#e3bb4d'];
   let gather = 'park';
@@ -372,10 +385,7 @@
   /* ---------- armado inicial ---------- */
   async function armar() {
     estado = 'armando'; lock(true);
-    const top = [job(c => build(c, el.word)), job(c => build(c, el.badge))];
-    const jc = job(c => build(c, el.card));
-    const kids = hijosVisibles().map(n => job(c => build(c, n), [jc]));
-    await allDone([...top, jc, ...kids]);
+    await allDone(enOrden([el.word, el.badge, el.card, ...hijosVisibles()], build));
     if (!vivo) return;
     estado = 'listo'; lock(false);
     procesarPendiente();
@@ -403,7 +413,7 @@
     originales.switchAuthMode(modo);
     const nuevos = [sub, ...dePane(paneActivo())];
     nuevos.forEach(n => { n.style.clipPath = HIDDEN; });
-    await allDone(nuevos.filter(visible).map(n => job(c => build(c, n))));
+    await allDone(enOrden(nuevos.filter(visible), build));
     if (!vivo) return;
     estado = 'listo'; lock(false);
     procesarPendiente();
@@ -499,11 +509,12 @@
     if (!desdeLogin) stagger();   // con sesión ya iniciada entran desde afuera de la pantalla
     const logo = sb.querySelector('.brand-row > svg');
     const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2);
-    const jc = job(c => build(c, sb));
-    const kids = piezas.map(n => job(c => build(c, n), [jc]));
-    await allDone([jc]);
+    // El recuadro de la barra va primero (arriba a la izquierda); el logo aparece
+    // cuando termina, y después cada pieza de a una.
+    const trabajos = enOrden([sb, ...piezas], build);
+    await allDone([trabajos[0]]);
     if (logo) logo.classList.add('ctx-in');
-    await allDone(kids);
+    await allDone(trabajos);
     if (!vivo) return;
     await pausa(500);
     capaCur.classList.add('gone');
