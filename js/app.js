@@ -168,6 +168,8 @@ async function doLogin() {
   if (error) { errEl.textContent='Email o contraseña incorrectos.'; errEl.style.display='block'; return; }
   errEl.style.display='none';
   currentUser = data.user;
+  // Animación del login (js/login-animacion.js): desarma la pantalla antes de entrar.
+  if (window.ctxLoginAnim) await window.ctxLoginAnim.salir();
   showLoading(true);
   document.getElementById('loginScreen').style.display='none';
   await loadApp();
@@ -248,6 +250,8 @@ async function doRegister() {
       return;
     }
     currentUser = loginData.user;
+    // Animación del login (js/login-animacion.js): desarma la pantalla antes de entrar.
+    if (window.ctxLoginAnim) await window.ctxLoginAnim.salir();
     document.getElementById('loginScreen').style.display = 'none';
     showLoading(true);
     await loadApp();
