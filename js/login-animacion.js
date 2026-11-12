@@ -117,7 +117,8 @@
     }
     ctx.lineWidth = 0.5;   // guías de los punteros: medio pixel
     for (const c of cursors) {
-      c.ga = clamp((c.ga || 0) + (c.busy ? 0.12 : -0.06) / RITMO, 0, 1);
+      // La cruz del puntero se ve solo mientras dibuja; al borrar no lleva guías.
+      c.ga = clamp((c.ga || 0) + (c.busy && !c.borrando ? 0.12 : -0.06) / RITMO, 0, 1);
       if (c.ga <= 0) continue;
       ctx.globalAlpha = c.ga * 0.7; ctx.strokeStyle = c.color;
       ctx.beginPath(); ctx.moveTo(0, c.y); ctx.lineTo(W, c.y); ctx.moveTo(c.x, 0); ctx.lineTo(c.x, H); ctx.stroke();
@@ -253,7 +254,13 @@
     e.style.clipPath = 'none';
     if (o) o.fading = true;
   }
+  // Borrar no muestra guías (ni la cruz del puntero ni las de construcción
+  // del recuadro): solo el barrido inverso y el contorno que se encoge.
   async function erase(c, e) {
+    c.borrando = true;
+    try { await eraseSinGuias(c, e); } finally { c.borrando = false; }
+  }
+  async function eraseSinGuias(c, e) {
     const kind = kindOf(e), r = () => rect(e);
     await c.go(() => ({ x: r().right, y: r().bottom }));
     await tween(clamp(r().width * 1.2, 240, 650), p => {
@@ -263,7 +270,7 @@
     });
     e.style.clipPath = HIDDEN;
     if (kind === 'box') {
-      const o = { el: e, t: 1, a: 1, ga: 1, color: finalColor(e) }; outlines.push(o);
+      const o = { el: e, t: 1, a: 1, ga: 0, color: finalColor(e) }; outlines.push(o);
       await c.go(() => ({ x: r().right, y: r().bottom }));
       const rr = r();
       await tween(clamp(Math.hypot(rr.width, rr.height) * 1.1, 300, 800), p => {
