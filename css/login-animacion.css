@@ -11,7 +11,7 @@
 .ctx-anim #loginScreen [data-b] { clip-path: inset(0 100% 0 0); }
 .ctx-anim #ctxLoginLogo { opacity: 0; }
 
-#ctxLoginLogo { transition: opacity .9s ease; }
+#ctxLoginLogo { transition: opacity .63s ease; }  /* 0,9 s × RITMO (0,7) */
 #ctxLoginLogo.in { opacity: 1; }
 
 /* Mientras los punteros trabajan, la tarjeta no acepta interacción. */
@@ -19,10 +19,10 @@
 
 /* Capas: canvas (contornos, guías, ripples) y punteros. Nunca capturan clics. */
 #ctxFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; }
-#ctxCursors { position: fixed; inset: 0; z-index: 10; pointer-events: none; overflow: hidden; transition: opacity 1.1s ease; }
+#ctxCursors { position: fixed; inset: 0; z-index: 10; pointer-events: none; overflow: hidden; transition: opacity .77s ease; }  /* 1,1 s × RITMO */
 #ctxCursors.gone { opacity: 0; }
 .ctx-cur { position: absolute; left: -3.5px; top: -3.5px; width: 7px; height: 7px; border-radius: 50%;
-  will-change: transform; opacity: .14; transition: opacity .35s ease; }
+  will-change: transform; opacity: .14; transition: opacity .25s ease; }
 .ctx-cur.busy { opacity: 1; }
 
 /* Loader: el isotipo se arma en el centro mientras se resuelve la sesión. */

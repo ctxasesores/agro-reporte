@@ -37,6 +37,12 @@
   const $ = id => document.getElementById(id);
   const HIDDEN = 'inset(0 100% 0 0)';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+  /* Ritmo de toda la animación: duraciones de la especificación × RITMO.
+     0.7 = 30 % más rápida. Lo usan todos los tweens, las pausas de la
+     coreografía, el escalonado de los punteros y los desvanecidos por frame
+     (las transiciones CSS equivalentes están en css/login-animacion.css). */
+  const RITMO = 0.7;
+  const pausa = ms => sleep(ms * RITMO);
   const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
   const easeOutBack = p => 1 + 2.4 * Math.pow(p - 1, 3) + 1.4 * Math.pow(p - 1, 2);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -105,19 +111,19 @@
     if (!vivo) { ctx.clearRect(0, 0, W, H); return; }
     ctx.clearRect(0, 0, W, H);
     for (let i = outlines.length - 1; i >= 0; i--) {
-      const o = outlines[i]; if (o.fading) { o.a -= 0.03; o.ga -= 0.045; }
+      const o = outlines[i]; if (o.fading) { o.a -= 0.03 / RITMO; o.ga -= 0.045 / RITMO; }
       if (o.a <= 0 && o.ga <= 0) { outlines.splice(i, 1); continue; }
       drawOutline(o);
     }
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.5;   // guías de los punteros: medio pixel
     for (const c of cursors) {
-      c.ga = clamp((c.ga || 0) + (c.busy ? 0.12 : -0.06), 0, 1);
+      c.ga = clamp((c.ga || 0) + (c.busy ? 0.12 : -0.06) / RITMO, 0, 1);
       if (c.ga <= 0) continue;
       ctx.globalAlpha = c.ga * 0.7; ctx.strokeStyle = c.color;
       ctx.beginPath(); ctx.moveTo(0, c.y); ctx.lineTo(W, c.y); ctx.moveTo(c.x, 0); ctx.lineTo(c.x, H); ctx.stroke();
     }
     for (let i = ripples.length - 1; i >= 0; i--) {
-      const r = ripples[i]; r.r += 1.4; r.a -= 0.04;
+      const r = ripples[i]; r.r += 1.4 / RITMO; r.a -= 0.04 / RITMO;
       if (r.a <= 0) { ripples.splice(i, 1); continue; }
       ctx.globalAlpha = r.a; ctx.strokeStyle = r.color; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
@@ -128,10 +134,10 @@
 
   function tween(dur, fn, stop) {
     return new Promise(res => {
-      const t0 = performance.now();
+      const t0 = performance.now(), d = dur * RITMO;
       const f = now => {
         if (!vivo || (stop && stop())) return res(false);
-        const p = Math.min(1, (now - t0) / dur); fn(p);
+        const p = Math.min(1, (now - t0) / d); fn(p);
         p < 1 ? requestAnimationFrame(f) : res(true);
       };
       requestAnimationFrame(f);
@@ -183,7 +189,7 @@
         }
         const h = this.home();
         await this.go(() => h, () => !!ready() || performance.now() < this.wakeAt);
-        if (!ready()) await sleep(120 + Math.random() * 260);
+        if (!ready()) await pausa(120 + Math.random() * 260);
       }
     }
   }
@@ -192,7 +198,7 @@
   function stagger() {
     const order = cursors.map((_, i) => i).sort(() => Math.random() - 0.5);
     let d = 0; const now = performance.now();
-    order.forEach(i => { cursors[i].wakeAt = now + d; d += Math.random() < 0.3 ? 40 + Math.random() * 90 : 200 + Math.random() * 750; });
+    order.forEach(i => { cursors[i].wakeAt = now + d; d += (Math.random() < 0.3 ? 40 + Math.random() * 90 : 200 + Math.random() * 750) * RITMO; });
   }
 
   /* ---------- color final de cada elemento ----------
@@ -295,18 +301,25 @@
   /* ---------- intro del isotipo (hace de pantalla de carga) ---------- */
   async function intro() {
     const sv = $('ctxLsvg'), gp = $('ctxGp'), gb = $('ctxGb'), wp = $('ctxWp'), wb = $('ctxWb'), lw = $('ctxLw');
-    const place = (k, a, e) => {
+    /* Los dos cuartos de círculo forman un cuadrado: va del centro del círculo
+       azul (60, 180) al del rosa (180, 60), con centro en (120.15, 120.15), que
+       es el centro del logo. Con el cuadrado girado +90°, cada cuarto queda
+       dentro de su círculo (los círculos se ven completos). El cuadrado entero
+       gira de 90° a 0° hacia la izquierda, y así los dos cuartos viajan juntos
+       a su lugar: el rosa arriba a la izquierda y el azul abajo a la derecha. */
+    const C = 120.15;
+    const place = (k, a) => {
       gp.setAttribute('transform', `translate(${-40 * k} ${40 * k})`);
       gb.setAttribute('transform', `translate(${40 * k} ${-40 * k})`);
-      wp.setAttribute('transform', `translate(${180 - 120 * e} 60) rotate(${a}) translate(-60 -60)`);
-      wb.setAttribute('transform', `translate(${60 + 120 * e} 180) rotate(${a}) translate(-180 -180)`);
+      wp.setAttribute('transform', `rotate(${a} ${C} ${C})`);
+      wb.setAttribute('transform', `rotate(${a} ${C} ${C})`);
     };
-    place(1, 90, 0);
+    place(1, 90);
     sv.style.transformOrigin = '50% 50%';
     await tween(480, p => { sv.style.opacity = Math.min(1, p * 1.6); sv.style.transform = `scale(${0.55 + 0.45 * easeOutBack(p)})`; });
-    await tween(560, p => place(1 - ease(p), 90, 0));
-    await sleep(260);
-    await tween(760, p => { const e = ease(p); place(0, 90 * (1 - e), e); });
+    await tween(560, p => place(1 - ease(p), 90));
+    await pausa(260);
+    await tween(760, p => place(0, 90 * (1 - ease(p))));
     await tween(380, p => lw.setAttribute('opacity', p));
     // Hace de pantalla de carga: espera las fuentes (para medir anchos finales)
     // y a que la app resuelva si ya hay sesión.
@@ -412,10 +425,10 @@
     await allDone([...kids, jc, ...top]);
     pill.classList.remove('on');
     gather = 'center';
-    await sleep(1300);
+    await pausa(1300);
     el.logo.classList.remove('in');
     capaCur.classList.add('gone');
-    await sleep(1200);
+    await pausa(1200);
     // app.js oculta el login apenas esto termina. Se deja todo visible por
     // debajo: si el login vuelve a mostrarse (sesión vencida), se ve completo.
     setTimeout(mostrarTodo, 0);
