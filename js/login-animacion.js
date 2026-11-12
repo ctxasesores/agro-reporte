@@ -173,17 +173,29 @@
     f();
   });
 
-  // Dibujar va de a uno, en orden de lectura: de arriba a abajo y, en la misma
-  // fila, de izquierda a derecha. Cada trabajo espera al anterior, así nunca hay
-  // dos elementos dibujándose a la vez. (Borrar sigue siendo en paralelo.)
+  // Dibujar va en orden de lectura: de arriba a abajo y, en la misma fila, de
+  // izquierda a derecha, con hasta EN_PARALELO punteros a la vez. Cada pieza
+  // arranca cuando terminó la que está EN_PARALELO lugares antes (así arrancan
+  // siempre en orden), y una pieza que está dentro de otra de la lista (los
+  // campos dentro de la tarjeta) espera a que su contenedor termine: hasta
+  // entonces el contenedor la tapa. (Borrar sigue siendo todo en paralelo.)
+  const EN_PARALELO = 3;
   function enOrden(lista, fn) {
     const pos = new Map(lista.map(n => [n, rect(n)]));
     const orden = [...lista].sort((a, b) => {
       const ra = pos.get(a), rb = pos.get(b);
       return Math.abs(ra.top - rb.top) > 4 ? ra.top - rb.top : ra.left - rb.left;
     });
-    let previo = null;
-    return orden.map(n => (previo = job(c => fn(c, n), previo ? [previo] : [])));
+    const trabajos = [];
+    orden.forEach((n, i) => {
+      const deps = [];
+      if (i >= EN_PARALELO) deps.push(trabajos[i - EN_PARALELO]);
+      for (let k = i - 1; k >= 0; k--) {
+        if (orden[k].contains(n)) { if (!deps.includes(trabajos[k])) deps.push(trabajos[k]); break; }
+      }
+      trabajos.push(job(c => fn(c, n), deps));
+    });
+    return trabajos;
   }
 
   /* ---------- punteros ---------- */
