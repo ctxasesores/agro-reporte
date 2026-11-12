@@ -32,7 +32,7 @@ const SHELL_ASSETS = [
   './index.html',
   './css/app.css?v=e8a3cfd896',
   './css/login-animacion.css?v=9825cd5c42',
-  './js/login-animacion.js?v=649e0e48f7',
+  './js/login-animacion.js?v=14793a9ba6',
   './kpi-financiero.js?v=c99d3c5a08',
   './js/app.js?v=152c82e14d',
   './js/asesor-ia-agricultura.js?v=bc5de0a030',

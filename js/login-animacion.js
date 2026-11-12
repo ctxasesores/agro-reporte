@@ -115,7 +115,7 @@
       if (o.a <= 0 && o.ga <= 0) { outlines.splice(i, 1); continue; }
       drawOutline(o);
     }
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.5;   // guías de los punteros: medio pixel
     for (const c of cursors) {
       c.ga = clamp((c.ga || 0) + (c.busy ? 0.12 : -0.06) / RITMO, 0, 1);
       if (c.ga <= 0) continue;
