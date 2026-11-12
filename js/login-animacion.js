@@ -50,10 +50,11 @@
   const HIDDEN = 'inset(0 100% 0 0)';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   /* Ritmo de toda la animación: duraciones de la especificación × RITMO.
-     0.7 = 30 % más rápida. Lo usan todos los tweens, las pausas de la
-     coreografía, el escalonado de los punteros y los desvanecidos por frame
-     (las transiciones CSS equivalentes están en css/login-animacion.css). */
-  const RITMO = 0.7;
+     0.49 = 0,7 × 0,7: dos veces un 30 % más rápida. Lo usan todos los
+     tweens, las pausas de la coreografía, el escalonado de los punteros y
+     los desvanecidos por frame, en el login y en la barra lateral (las
+     transiciones CSS equivalentes están en css/login-animacion.css). */
+  const RITMO = 0.49;
   const pausa = ms => sleep(ms * RITMO);
   const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
   const easeOutBack = p => 1 + 2.4 * Math.pow(p - 1, 3) + 1.4 * Math.pow(p - 1, 2);
@@ -542,7 +543,7 @@
       const kids = piezas.map(n => job(c => erase(c, n)));
       const jc = job(c => erase(c, sb), kids);
       await allDone(kids);
-      if (logo) { logo.style.transition = 'opacity .45s ease'; logo.style.opacity = '0'; }
+      if (logo) { logo.style.transition = 'opacity .32s ease'; logo.style.opacity = '0'; }
       await allDone([jc]);
       gather = 'center';
       await pausa(600);
