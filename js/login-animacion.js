@@ -18,6 +18,10 @@
    o el login vuelve a verse (sesión vencida, error), se muestra todo
    sin animación. En celular la barra está escondida: no se dibuja.
 
+   Cerrar sesión: app.js llama a ctxLoginAnim.desarmarPanel() antes de
+   recargar. Los punteros vuelven a entrar, desarman la barra lateral
+   (al revés de como la armaron), se juntan en el centro y se van.
+
    Referencia: el prototipo aprobado (login-punteros-prototipo.html) y
    su documento de especificación. Valores y tiempos salen de ahí.
 
@@ -315,6 +319,7 @@
     raiz.classList.remove('ctx-panel');
     document.querySelectorAll('#sidebar, #sidebar [data-b]').forEach(n => { n.style.clipPath = ''; });
   }
+  let tLimpieza = null;
   // Muestra todo de inmediato y apaga la animación (error, fin).
   function mostrarTodo() {
     vivo = false; estado = 'fin';
@@ -322,7 +327,7 @@
     revelarPanel();
     loader.classList.add('fuera');
     capaCur.classList.add('gone');
-    setTimeout(() => { cv.remove(); capaCur.remove(); loader.remove(); pill.remove(); }, 450);
+    tLimpieza = setTimeout(() => { cv.remove(); capaCur.remove(); loader.remove(); pill.remove(); }, 450);
   }
 
   /* ---------- intro del isotipo (hace de pantalla de carga) ---------- */
@@ -505,6 +510,49 @@
     mostrarTodo();
   }
 
+  /* ---------- cerrar sesión: desarmar la barra lateral ---------- */
+  // Vuelve a poner las capas y los punteros (al terminar el armado se quitan).
+  function reactivar() {
+    clearTimeout(tLimpieza);
+    vivo = true; estado = 'desarmando';
+    outlines.length = 0; ripples.length = 0; jobs = [];
+    capaCur.innerHTML = ''; capaCur.classList.remove('gone');
+    // Por encima de la barra lateral (z-index 200).
+    cv.style.zIndex = '201'; capaCur.style.zIndex = '202';
+    document.body.append(cv, capaCur);
+    resize();
+    gather = 'park';
+    cursors = COLORS.map((col, i) => new Cursor(col, i));
+    requestAnimationFrame(frame);
+    cursors.forEach(c => c.run());
+    stagger();
+  }
+  let desarmando = false;
+  async function desarmarPanel() {
+    // Si todavía se está armando, o ya se está desarmando, no se hace nada.
+    if (vivo || desarmando) return;
+    const sb = $('sidebar');
+    const r = sb && rect(sb);
+    if (!sb || getComputedStyle(sb).display === 'none' || r.right < 40 || r.width < 40 || r.height < 40) return;
+    desarmando = true;
+    try {
+      reactivar();
+      const logo = sb.querySelector('.brand-row > svg');
+      const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2).reverse();
+      const kids = piezas.map(n => job(c => erase(c, n)));
+      const jc = job(c => erase(c, sb), kids);
+      await allDone(kids);
+      if (logo) { logo.style.transition = 'opacity .45s ease'; logo.style.opacity = '0'; }
+      await allDone([jc]);
+      gather = 'center';
+      await pausa(600);
+      capaCur.classList.add('gone');
+      await pausa(600);
+    } catch (e) {
+      console.warn('[login-animacion] cierre sin animación:', e);
+    }
+  }
+
   /* ---------- API para app.js e index.html ---------- */
   window.ctxLoginAnim = {
     // index.html avisa cómo se resolvió la sesión: 'app' (ya había sesión,
@@ -513,6 +561,8 @@
     salir,
     // app.js avisa que mostró el panel: se dibuja la barra lateral.
     panel() { panelAvisado = true; },
+    // app.js la espera antes de recargar al cerrar sesión.
+    desarmarPanel,
     activa: () => vivo
   };
 

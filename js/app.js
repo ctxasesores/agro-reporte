@@ -264,8 +264,14 @@ async function doRegister() {
   }
 }
 
+let cerrandoSesion = false;
 async function logout() {
-  if(sb) await sb.auth.signOut();
+  if (cerrandoSesion) return;
+  cerrandoSesion = true;
+  // La sesión se cierra mientras la animación (js/login-animacion.js) desarma la barra lateral.
+  const salida = sb ? sb.auth.signOut() : Promise.resolve();
+  try { if (window.ctxLoginAnim) await window.ctxLoginAnim.desarmarPanel(); } catch (e) {}
+  await salida;
   location.reload();
 }
 
