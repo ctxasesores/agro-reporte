@@ -54,7 +54,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=e8a3cfd896">
+<link rel="stylesheet" href="css/app.css?v=07394d63c9">
 <link rel="stylesheet" href="css/login-animacion.css?v=9825cd5c42">
 </head>
 <body>
@@ -62,7 +62,7 @@
 <!-- LOGIN -->
 <div id="loginScreen">
   <div style="margin-bottom:28px;display:flex;flex-direction:column;align-items:center;gap:12px">
-    <svg id="ctxLoginLogo" width="52" height="52" viewBox="0 0 240.3 240.3" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#d56a9d" d="M240.3,60.08c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M60.08,120.15C26.9,120.15,0,147.05,0,180.23s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#fcfcfc" d="M180.23,120.15v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M60.08,120.15c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" d="M120.15,180.23h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
+    <svg id="ctxLoginLogo" width="52" height="52" viewBox="0 0 240.3 240.3" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#d56a9d" d="M240.3,60.08c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M60.08,120.15C26.9,120.15,0,147.05,0,180.23s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/><path fill="#fcfcfc" d="M180.23,120.15v-60.08h-60.08c0,33.18-26.9,60.08-60.08,60.08v60.08h60.08c0-33.18,26.9-60.08,60.08-60.08Z"/><path fill="#d56a9d" d="M60.08,120.15c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" stroke="#7dbaf8" stroke-width="3" stroke-linejoin="round" d="M120.15,180.23h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></svg>
     <span id="ctxLoginWord" data-b="text" style="font-size:20px;font-weight:300;color:white;letter-spacing:2px">context</span>
     <div class="login-badge" id="ctxLoginBadge" data-b="box">Acceso clientes</div>
   </div>
@@ -618,7 +618,12 @@
 
 <!-- LOADING -->
 <div id="loadingScreen">
-  <div class="loading-spinner"></div>
+  <!-- Isotipo en loop: giran los tres cuartos y después los dos cuartos; cada vuelta
+       arma el logo un cuarto de giro a la izquierda (animación en css/app.css) -->
+  <svg class="loading-iso" viewBox="0 0 240.3 240.3" role="img" aria-label="Cargando">
+    <g class="li-c"><path fill="#d56a9d" d="M240.3,60.08c0-33.18-26.9-60.08-60.08-60.08s-60.08,26.9-60.08,60.08h60.08v60.08c33.18,0,60.08-26.9,60.08-60.08Z"/><path fill="#7dbaf8" d="M60.08,120.15C26.9,120.15,0,147.05,0,180.23s26.9,60.08,60.08,60.08,60.08-26.9,60.08-60.08h-60.08v-60.08Z"/></g>
+    <g class="li-q" stroke-width="2"><path fill="#d56a9d" stroke="#d56a9d" d="M60.08,120.15c33.18,0,60.08-26.9,60.08-60.08h0s-60.08,0-60.08,0v60.08Z"/><path fill="#7dbaf8" stroke="#7dbaf8" d="M120.15,180.23h60.08v-60.08c-33.18,0-60.08,26.9-60.08,60.08Z"/></g>
+  </svg>
   <div class="loading-text">Cargando tu reporte...</div>
 </div>
 
@@ -1908,7 +1913,7 @@ function cerrarMacroModal(ev){
   // declarando el build viejo.
   // No se edita a mano: `node herramientas/versionar.js` sube juntos este
   // valor, version.json, CACHE_VERSION de sw.js y los ?v= de los archivos.
-  var CTX_BUILD = '20261112-0009';
+  var CTX_BUILD = '20261112-0032';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
