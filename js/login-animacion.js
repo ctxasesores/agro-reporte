@@ -46,6 +46,8 @@
   if (!raiz.classList.contains('ctx-anim')) return;
 
   raiz.classList.add('ctx-panel');   // oculta la barra lateral hasta que se dibuja
+  // Tapa el tablero activo hasta elegir qué piezas dibujar (ver «tableros»).
+  raiz.classList.add('ctx-vista-oculta');
   const $ = id => document.getElementById(id);
   const HIDDEN = 'inset(0 100% 0 0)';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -180,16 +182,19 @@
   // campos dentro de la tarjeta) espera a que su contenedor termine: hasta
   // entonces el contenedor la tapa. (Borrar sigue siendo todo en paralelo.)
   const EN_PARALELO = 3;
-  function enOrden(lista, fn) {
+  function enOrden(lista, fn, previos = []) {
     const pos = new Map(lista.map(n => [n, rect(n)]));
     const orden = [...lista].sort((a, b) => {
       const ra = pos.get(a), rb = pos.get(b);
       return Math.abs(ra.top - rb.top) > 4 ? ra.top - rb.top : ra.left - rb.left;
     });
+    // `previos`: otra cadena ya en marcha (la barra lateral); esta sigue su
+    // ventana, así nunca hay más de EN_PARALELO punteros dibujando.
     const trabajos = [];
     orden.forEach((n, i) => {
       const deps = [];
-      if (i >= EN_PARALELO) deps.push(trabajos[i - EN_PARALELO]);
+      const k0 = previos.length + i - EN_PARALELO;
+      if (k0 >= 0) deps.push(k0 < previos.length ? previos[k0] : trabajos[k0 - previos.length]);
       for (let k = i - 1; k >= 0; k--) {
         if (orden[k].contains(n)) { if (!deps.includes(trabajos[k])) deps.push(trabajos[k]); break; }
       }
@@ -357,6 +362,7 @@
     vivo = false; estado = 'fin';
     revelarLogin();
     revelarPanel();
+    revelarVistas();
     loader.classList.add('fuera');
     capaCur.classList.add('gone');
     tLimpieza = setTimeout(() => { cv.remove(); capaCur.remove(); loader.remove(); pill.remove(); }, 450);
@@ -531,11 +537,16 @@
     // cuando termina, y después cada pieza de a una.
     const g = gen;
     const trabajos = enOrden([sb, ...piezas], build);
+    cadenaPanel = trabajos;
     await allDone([trabajos[0]]);
     if (g !== gen) return;   // se cerró la sesión a mitad del armado
     if (logo) logo.classList.add('ctx-in');
     await allDone(trabajos);
     if (!vivo || g !== gen) return;
+    // El tablero que se abrió mientras tanto (KPIs al entrar) se dibuja a
+    // continuación de la barra, con los mismos punteros.
+    while (vistaUnida) { await vistaUnida; if (!vivo || g !== gen) return; }
+    panelCerrando = true;
     await pausa(500);
     if (g !== gen) return;
     capaCur.classList.add('gone');
@@ -596,6 +607,110 @@
     }
   }
 
+  /* ---------- tableros: Agricultura y KPIs ----------
+     La primera vez que se abre cada uno en la sesión, los punteros dibujan
+     sus bloques grandes (encabezado, tarjetas, títulos de sección) que se ven
+     en pantalla; lo de adentro aparece con su bloque y lo de más abajo, normal.
+     Mientras se eligen las piezas, el tablero queda tapado (clase
+     ctx-vista-oculta) para que no se vea un instante antes de dibujarse. */
+  const VISTAS = ['agricultura', 'kpis'];
+  const vistasHechas = new Set();
+  const SEL_PIEZAS = '.hero, .hero > :not(.kpis), .hero .kpi-card, .hero .kpi-chart-col, .kpi-tab-bar, ' +
+    '[class*="card"], [class*="banner"], .section-title';
+  let cadenaPanel = [], panelCerrando = false, vistaEnCola = null, vistaUnida = null, vistaActual = null;
+  const vistaActiva = () => (document.querySelector('.dashboard-view.active') || {}).id || '';
+  const tieneCaja = e => {
+    const cs = getComputedStyle(e);
+    return (parseFloat(cs.borderTopWidth) > 0 && alphaOf(cs.borderTopColor) > 0.05) ||
+      alphaOf(cs.backgroundColor) > 0.02 || cs.backgroundImage !== 'none';
+  };
+  function piezasDeVista(v) {
+    const H = innerHeight;
+    const enPantalla = n => { const r = rect(n); return r.width > 2 && r.height > 2 && r.top < H - 8 && r.bottom > 0; };
+    const c = [...v.querySelectorAll(SEL_PIEZAS)].filter(enPantalla);
+    // Solo las de más afuera: lo de adentro aparece con su bloque. El .hero es
+    // la excepción: se dibuja su franja y después cada pieza suya.
+    return c.filter(n => !c.some(o => o !== n && o.contains(n) && !o.classList.contains('hero')));
+  }
+  // Espera a que el tablero deje de cambiar (datos que llegan, gráficos que se
+  // arman) antes de elegir las piezas: 250 ms sin cambios, 2,5 s como máximo.
+  function quieto(v) {
+    return new Promise(res => {
+      let t = null; const t0 = performance.now();
+      const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(fin, 250); if (performance.now() - t0 > 2500) fin(); });
+      const fin = () => { mo.disconnect(); clearTimeout(t); res(); };
+      mo.observe(v, { childList: true, subtree: true });
+      t = setTimeout(fin, 250);
+    });
+  }
+  function graficos(n, que) {
+    if (!window.Chart || !Chart.getChart) return;
+    n.querySelectorAll('canvas').forEach(c => { const ch = Chart.getChart(c); if (ch) { try { que === 'reset' ? ch.reset() : ch.update(); } catch (e) {} } });
+  }
+  function revelarVistas() {
+    raiz.classList.remove('ctx-vista-oculta');
+    document.querySelectorAll('[data-vpz]').forEach(n => { n.style.clipPath = ''; n.removeAttribute('data-vpz'); n.removeAttribute('data-b'); n.removeAttribute('data-c'); });
+  }
+  const dibujarPieza = async (c, n) => { await build(c, n); graficos(n, 'update'); };
+  // Tapa las piezas (cada una con su recorte) y destapa el tablero.
+  function prepararPiezas(piezas) {
+    piezas.forEach(n => {
+      n.setAttribute('data-vpz', '');
+      n.setAttribute('data-b', tieneCaja(n) ? 'box' : 'text');
+      if (n.classList.contains('hero')) n.setAttribute('data-c', '#7dbaf8');
+      n.style.clipPath = HIDDEN;
+      graficos(n, 'reset');
+    });
+    raiz.classList.remove('ctx-vista-oculta');
+  }
+  async function armarVista(id) {
+    const v = $(id);
+    vistaActual = id;
+    await quieto(v);
+    if (vistaActiva() !== id) return;
+    const piezas = piezasDeVista(v);
+    if (!piezas.length) { raiz.classList.remove('ctx-vista-oculta'); return; }
+    // Si la barra lateral todavía se está dibujando, se suma a esa tanda. Si la
+    // barra está por arrancar (isotipo de carga, o esperando al panel), se espera.
+    const porArrancar = () => vivo && (estado === 'intro' || (estado === 'panel' && !cadenaPanel.length));
+    for (let i = 0; i < 80 && porArrancar(); i++) await sleep(100);
+    if (vivo && estado === 'panel' && cadenaPanel.length && !panelCerrando) {
+      prepararPiezas(piezas);
+      const tanda = allDone(enOrden(piezas, dibujarPieza, cadenaPanel));
+      vistaUnida = tanda;
+      try { await tanda; } finally { if (vistaUnida === tanda) vistaUnida = null; }
+      return;
+    }
+    // La barra ya está terminando: se espera y se dibuja aparte.
+    while (vivo && estado === 'panel') await sleep(100);
+    if (vistaActiva() !== id) return revelarVistas();
+    if (vivo) return revelarVistas();   // otra animación en curso (cerrar sesión): sin animar
+    reactivar(); estado = 'vista';
+    const g = gen;
+    prepararPiezas(piezas);
+    await allDone(enOrden(piezas, dibujarPieza));
+    if (g !== gen) return;
+    await pausa(400);
+    capaCur.classList.add('gone');
+    await pausa(800);
+    if (g !== gen) return;
+    mostrarTodo();
+  }
+  // Se llama después de cada cambio de tablero (switchDashboard).
+  function vistaMostrada() {
+    const id = vistaActiva(), nombre = id.replace('view-', '');
+    // Se cambió de tablero a mitad de un dibujo: se muestra todo y se corta.
+    if (vistaActual && vistaActual !== id && vivo && estado === 'vista') { gen++; mostrarTodo(); }
+    if (!VISTAS.includes(nombre) || vistasHechas.has(nombre) || innerWidth <= 900) {
+      if (!vistaEnCola) raiz.classList.remove('ctx-vista-oculta');
+      return;
+    }
+    vistasHechas.add(nombre);
+    const tarea = armarVista(id).catch(e => { console.warn('[login-animacion] tablero sin animación:', e); revelarVistas(); });
+    const actual = tarea.finally(() => { if (vistaEnCola === actual) vistaEnCola = null; });
+    vistaEnCola = actual;
+  }
+
   /* ---------- API para app.js e index.html ---------- */
   window.ctxLoginAnim = {
     // index.html avisa cómo se resolvió la sesión: 'app' (ya había sesión,
@@ -639,6 +754,15 @@
       if (estado === 'armando' || estado === 'cambiando') { pendiente = m; marcarPestanas(m); return; }
       cambiarModo(m);
     };
+    if (typeof window.switchDashboard === 'function') {
+      const origSwitch = window.switchDashboard;
+      window.switchDashboard = function (view) {
+        // Antes de mostrarlo, se tapa el tablero que se va a dibujar.
+        if (VISTAS.includes(view) && !vistasHechas.has(view) && innerWidth > 900) raiz.classList.add('ctx-vista-oculta');
+        try { return origSwitch.apply(this, arguments); }
+        finally { vistaMostrada(); }
+      };
+    }
     window.doLogin = envolverEnvio('doLogin', 'Verificando credenciales…');
     if (typeof originales.doRegister === 'function') window.doRegister = envolverEnvio('doRegister', 'Creando tu cuenta…');
   });
