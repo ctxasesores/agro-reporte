@@ -52,12 +52,12 @@
   const HIDDEN = 'inset(0 100% 0 0)';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   /* Ritmo de toda la animación: duraciones de la especificación × RITMO.
-     0.343 = 0,7 × 0,7 × 0,7: tres veces un 30 % más rápida. Lo usan todos
-     los tweens (dibujar y borrar), las pausas de la coreografía, el
-     escalonado de los punteros y los desvanecidos por frame, en el login, la
-     barra lateral y los tableros (las transiciones CSS equivalentes están en
-     css/login-animacion.css). */
-  const RITMO = 0.343;
+     0.4116 = 0,343 × 1,2: tres veces un 30 % más rápida y después un 20 %
+     más lenta. Lo usan todos los tweens (dibujar y borrar), las pausas de la
+     coreografía, el escalonado de los punteros y los desvanecidos por frame,
+     en el login, la barra lateral y los tableros (las transiciones CSS
+     equivalentes están en css/login-animacion.css). */
+  const RITMO = 0.4116;
   const pausa = ms => sleep(ms * RITMO);
   // Dibujar va de a una pieza por vez: sus tiempos van un 30 % más rápido
   // que el resto (borrar, pausas, desvanecidos siguen con RITMO).
@@ -606,7 +606,7 @@
       const kids = piezas.map(n => job(c => erase(c, n)));
       const jc = dibujada(sb) ? job(c => erase(c, sb), kids) : null;
       await allDone(kids);
-      if (logo) { logo.style.transition = 'opacity .22s ease'; logo.style.opacity = '0'; }
+      if (logo) { logo.style.transition = 'opacity .26s ease'; logo.style.opacity = '0'; }
       if (jc) await allDone([jc]);
       gather = 'center';
       await pausa(600);

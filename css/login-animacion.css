@@ -11,7 +11,7 @@
 .ctx-anim #loginScreen [data-b] { clip-path: inset(0 100% 0 0); }
 .ctx-anim #ctxLoginLogo { opacity: 0; }
 
-#ctxLoginLogo { transition: opacity .31s ease; }  /* 0,9 s × RITMO (0,343) */
+#ctxLoginLogo { transition: opacity .37s ease; }  /* 0,9 s × RITMO (0,4116) */
 #ctxLoginLogo.in { opacity: 1; }
 
 /* Mientras los punteros trabajan, la tarjeta no acepta interacción. */
@@ -19,7 +19,7 @@
 
 /* Capas: canvas (contornos, guías, ripples) y punteros. Nunca capturan clics. */
 #ctxFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; }
-#ctxCursors { position: fixed; inset: 0; z-index: 10; pointer-events: none; overflow: hidden; transition: opacity .38s ease; }  /* 1,1 s × RITMO */
+#ctxCursors { position: fixed; inset: 0; z-index: 10; pointer-events: none; overflow: hidden; transition: opacity .45s ease; }  /* 1,1 s × RITMO */
 #ctxCursors.gone { opacity: 0; }
 .ctx-cur { position: absolute; left: -3.5px; top: -3.5px; width: 7px; height: 7px; border-radius: 50%;
   will-change: transform; opacity: .14; transition: opacity .25s ease; }
@@ -47,7 +47,7 @@
    con la sesión ya iniciada) los mismos punteros dibujan la barra lateral.
    La clase `ctx-panel` la pone js/login-animacion.js y la saca al terminar. */
 .ctx-panel #sidebar, .ctx-panel #sidebar [data-b] { clip-path: inset(0 100% 0 0); }
-.ctx-panel #sidebar .brand-row > svg { opacity: 0; transition: opacity .31s ease; }
+.ctx-panel #sidebar .brand-row > svg { opacity: 0; transition: opacity .37s ease; }
 .ctx-panel #sidebar .brand-row > svg.ctx-in { opacity: 1; }
 /* Tableros (Agricultura, KPIs): tapados hasta que se eligen las piezas a dibujar. */
 .ctx-vista-oculta .main-content .dashboard-view.active { visibility: hidden; }
