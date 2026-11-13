@@ -176,7 +176,9 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .dashboard-action-btn.docs { background:rgba(255,255,255,.045); border-color:rgba(255,255,255,.11); color:rgba(255,255,255,.68); }
 .dashboard-action-btn.docs:hover { color:white; border-color:rgba(255,255,255,.22); background:rgba(255,255,255,.075); }
 .embedded-dashboard { background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)), var(--negro-s); border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); }
-.dashboard-view.integrated-embed .page-body { padding:20px 28px 28px; }
+/* Ganadería y Tambo van de borde a borde: su encabezado lleva la misma franja que el agrícola
+   (.hero) y el margen lateral lo pone cada panel. */
+.dashboard-view.integrated-embed .page-body { padding:0 0 28px; }
 .dashboard-view.integrated-embed .embedded-dashboard { background:transparent; border:none; border-radius:0; box-shadow:none; overflow:visible; }
 .dashboard-view.integrated-embed .embedded-frame { min-height:calc(100vh - 120px); background:transparent; }
 .embedded-frame { width:100%; min-height:calc(100vh - 120px); border:0; background:var(--negro-b); display:block; }

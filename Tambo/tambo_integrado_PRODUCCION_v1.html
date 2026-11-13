@@ -787,6 +787,36 @@ label .u{margin-left:4px}
   .estac-cols{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 
+
+/* ── Encabezado unificado con el panel agrícola (css/app.css, .hero) ──
+   Mismo texto, tamaños, posición y franja de fondo en Agricultura, Ganadería
+   y Tambo. El panel va de borde a borde (index.html ya no le pone margen):
+   el margen lateral lo pone esta página. */
+.report-hero{margin:0 -28px 18px;padding:28px 28px 24px;background:linear-gradient(160deg,var(--negro) 0%,var(--negro-m) 100%);-webkit-font-smoothing:antialiased}
+.report-headline{display:block;align-self:flex-start}
+.report-eyebrow{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.2px;margin:0 0 4px;font-weight:500;line-height:normal}
+.report-title{font-size:22px;font-weight:600;color:white;margin:0 0 2px;letter-spacing:-.2px;line-height:normal}
+.report-subtitle{font-size:12px;color:rgba(255,255,255,.4);margin:0;line-height:normal}
+@media(max-width:760px){
+  .report-hero{margin:0 -16px 16px;padding:18px 16px 16px}
+}
+.report-hero{gap:10px}
+.report-actions{display:flex;align-items:flex-end;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.sim-name-wrap{min-width:240px;display:grid;gap:6px}
+.sim-name-wrap label{margin:0}
+.sim-name-wrap input{min-height:40px;font-weight:600}
+.report-actions .badge{align-self:center}
+.hero-notas{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;min-height:18px}
+.hero-notas > div:empty{display:none}
+.wrap{padding:0 0 20px}
+.container{width:auto;margin:0;padding:0 28px}
+.rb-in{width:auto;padding:7px 28px}
+@media(max-width:760px){
+  .container{width:auto;padding:0 16px}
+  .rb-in{padding:7px 16px}
+  .report-actions{justify-content:flex-start;align-items:stretch}
+  .sim-name-wrap{min-width:100%}
+}
 </style>
 </head>
 <body>
@@ -795,35 +825,28 @@ label .u{margin-left:4px}
     <div class="report-hero">
       <div class="report-topbar">
         <div class="report-headline">
-          <div class="report-eyebrow">CTX | Unidad lechera</div>
+          <div class="report-eyebrow">Reporte de cartera</div>
           <div class="report-title" id="report_cliente_nombre">Cliente</div>
-          <div class="report-subtitle" id="report_subtitle">Dashboard operativo y economico del tambo</div>
+          <div class="report-subtitle" id="report_subtitle">Reporte tambo</div>
         </div>
-        <div class="hero-badges">
-          <span class="badge" id="mode_badge">Modo estandar</span>
-          <span class="badge" id="periodo_badge">Período</span>
+        <div class="report-actions">
           <span class="badge" id="margin_badge">Margen</span>
-        </div>
-      </div>
-      <div class="control-bar">
-        <div></div>
-        <div class="action-stack">
-          <div>
-            <label for="scenario_name">Nombre del escenario</label>
+          <div class="sim-name-wrap">
+            <label for="scenario_name">Escenario</label>
             <input type="text" id="scenario_name" value="" oninput="actualizarVinculoUI()" placeholder="Ej. Presupuesto jul-26 a jun-27">
           </div>
-          <div class="save-row">
-            <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
-            <button class="btn" type="button" onclick="abrirAyuda()">Ayuda</button>
-            <button class="btn" type="button" onclick="nuevoEscenario()">Nuevo escenario</button>
-            <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
-            <button class="btn" type="button" id="btn_renombrar" style="display:none" onclick="renombrarAnalisis()">Renombrar</button>
-            <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
-          </div>
-          <div class="status-msg" id="save_status"></div>
-          <div class="meta-note" id="vinculo_msg"></div>
-          <div class="meta-note" id="last_saved">Escenario nuevo</div>
+          <button class="macro-btn" type="button" onclick="abrirMacroModal()">MACRO</button>
+          <button class="btn" type="button" onclick="abrirAyuda()">Ayuda</button>
+          <button class="btn" type="button" onclick="nuevoEscenario()">Nuevo escenario</button>
+          <button class="btn btn-primary" type="button" onclick="guardar()">Guardar escenario</button>
+          <button class="btn" type="button" id="btn_renombrar" style="display:none" onclick="renombrarAnalisis()">Renombrar</button>
+          <button class="btn" type="button" onclick="abrirHistorial()">Escenarios guardados</button>
         </div>
+      </div>
+      <div class="hero-notas">
+        <div class="status-msg" id="save_status"></div>
+        <div class="meta-note" id="vinculo_msg"></div>
+        <div class="meta-note" id="last_saved">Escenario nuevo</div>
       </div>
     </div>
 
@@ -2339,6 +2362,7 @@ function renderBadges(){
   var res = UI.ultimo; if(!res) return;
   var pb = document.getElementById('periodo_badge'), mb = document.getElementById('margin_badge');
   if(pb) pb.textContent = rotuloPeriodo() + ' · ' + moneda();
+  updateReportModeLabels();   // el período va en la línea de abajo del encabezado
   if(mb){
     var sem = res.base.cons.k.semaforo, s = res.base.cons.s;
     if(!(s.litros > 0)){ mb.textContent = 'Sin datos'; mb.className = 'badge'; return; }
@@ -2765,9 +2789,12 @@ function updateReportModeLabels(){
   var subtitle = document.getElementById('report_subtitle');
   var badge = document.getElementById('mode_badge');
   if(title) title.textContent = currentClienteNombre;
-  if(subtitle) subtitle.textContent = REPORT_MODE === 'PRO'
-    ? 'Producción, costos, margen y caja de cada tambo y del conjunto'
-    : 'Producción, costos, margen y caja del tambo';
+  // «Reporte tambo · MODO · período», igual que «Reporte agrícola · MODO · Campaña».
+  if(subtitle){
+    var per = '';
+    try { if(typeof UI !== 'undefined' && UI.ultimo) per = rotuloPeriodo() + ' · ' + moneda(); } catch(e) {}
+    subtitle.textContent = 'Reporte tambo · ' + REPORT_MODE + (per ? ' · ' + per : '');
+  }
   if(badge) badge.textContent = REPORT_MODE === 'PRO' ? 'Modo pro' : 'Modo estandar';
 }
 function isProLevel(value){ return String(value || '').toUpperCase() === 'PRO'; }

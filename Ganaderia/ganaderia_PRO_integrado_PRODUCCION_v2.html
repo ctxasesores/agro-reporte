@@ -262,6 +262,23 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
 .cash-pos{color:var(--verde-l)}
 .cash-neg{color:#f0856a}
 .cash-net td{font-weight:700;background:rgba(255,255,255,.03)}
+
+/* ── Encabezado unificado con el panel agrícola (css/app.css, .hero) ──
+   Mismo texto, tamaños, posición y franja de fondo en Agricultura, Ganadería
+   y Tambo. El panel va de borde a borde (index.html ya no le pone margen):
+   el margen lateral lo pone esta página. */
+.report-hero{margin:0 -28px 18px;padding:28px 28px 24px;background:linear-gradient(160deg,var(--negro) 0%,var(--negro-m) 100%);-webkit-font-smoothing:antialiased}
+.report-headline{display:block;align-self:flex-start}
+.report-eyebrow{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.2px;margin:0 0 4px;font-weight:500;line-height:normal}
+.report-title{font-size:22px;font-weight:600;color:white;margin:0 0 2px;letter-spacing:-.2px;line-height:normal}
+.report-subtitle{font-size:12px;color:rgba(255,255,255,.4);margin:0;line-height:normal}
+@media(max-width:760px){
+  .report-hero{margin:0 -16px 16px;padding:18px 16px 16px}
+}
+.wrap{padding:0 28px 12px}
+@media(max-width:760px){
+  .wrap{padding:0 16px 12px}
+}
 </style>
 </head>
 <body>
@@ -272,7 +289,7 @@ input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--
     <div class="report-headline">
       <div class="report-eyebrow">Reporte de cartera</div>
       <div class="report-title" id="report_cliente_nombre">Cliente</div>
-      <div class="report-subtitle">Reporte ganadero PRO</div>
+      <div class="report-subtitle" id="report_subtitle">Reporte ganadero</div>
     </div>
     <div class="report-actions">
       <div class="sim-name-wrap">
@@ -2413,6 +2430,26 @@ function recalc(){
     gasEnviarImpl('Analizá este escenario ganadero e indicá las principales palancas de rentabilidad, ordenadas por impacto sobre el margen.');
   };
   window.gasEnviar = function(){ gasEnviarImpl(); };
+})();
+</script>
+
+<script>
+/* Línea de abajo del encabezado: «Reporte ganadero · MODO · escenario», igual
+   que «Reporte agrícola · MODO · Campaña» en el panel agrícola. Se actualiza
+   al escribir el nombre y también cuando el código lo carga (value = …). */
+(function(){
+  var cam = document.getElementById('campania'), sub = document.getElementById('report_subtitle');
+  if(!cam || !sub) return;
+  function pintar(){
+    var n = String(cam.value || '').trim();
+    sub.textContent = 'Reporte ganadero · ' + REPORT_MODE + (n ? ' · ' + n : '');
+  }
+  var d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  Object.defineProperty(cam, 'value', { configurable: true,
+    get: function(){ return d.get.call(this); },
+    set: function(v){ d.set.call(this, v); pintar(); } });
+  cam.addEventListener('input', pintar);
+  pintar();
 })();
 </script>
 </body>
