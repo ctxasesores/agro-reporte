@@ -49,6 +49,8 @@
 .ctx-panel #sidebar, .ctx-panel #sidebar [data-b] { clip-path: inset(0 100% 0 0); }
 .ctx-panel #sidebar .brand-row > svg { opacity: 0; transition: opacity .44s ease; }
 .ctx-panel #sidebar .brand-row > svg.ctx-in { opacity: 1; }
+/* Tableros (Agricultura, KPIs): tapados hasta que se eligen las piezas a dibujar. */
+.ctx-vista-oculta .main-content .dashboard-view.active { visibility: hidden; }
 /* La barra lateral está en z-index 200: los punteros y sus trazos van arriba. */
 .ctx-panel #ctxFx { z-index: 201; }
 .ctx-panel #ctxCursors { z-index: 202; }
@@ -56,6 +58,7 @@
 @media (prefers-reduced-motion: reduce) {
   .ctx-panel #sidebar, .ctx-panel #sidebar [data-b] { clip-path: none; }
   .ctx-panel #sidebar .brand-row > svg { opacity: 1; }
+  .ctx-vista-oculta .main-content .dashboard-view.active { visibility: visible; }
   .ctx-anim #loginScreen [data-b] { clip-path: none; }
   .ctx-anim #ctxLoginLogo { opacity: 1; }
 }
