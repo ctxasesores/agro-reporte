@@ -1008,7 +1008,7 @@ function buildTamboSrc(mode) {
   const base = 'Tambo/tambo_integrado_PRODUCCION_v1.html';
   const qs = new URLSearchParams();
   qs.set('mode', (mode || 'ESTANDAR').toUpperCase());
-  qs.set('v', 'e020fc4158');   // evita que el navegador sirva un panel de tambo viejo después de un deploy
+  qs.set('v', '28806f3424');   // evita que el navegador sirva un panel de tambo viejo después de un deploy
   if (clienteId) qs.set('cliente_id', clienteId);
   if (clienteNombre) qs.set('cliente_nombre', clienteNombre);
   if (userId) qs.set('user_id', userId);
