@@ -67,7 +67,16 @@
   const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
   const easeOutBack = p => 1 + 2.4 * Math.pow(p - 1, 3) + 1.4 * Math.pow(p - 1, 2);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const rect = e => e.getBoundingClientRect();
+  // Posición en la pantalla. Para piezas dentro de un tablero embebido
+  // (Ganadería, Tambo: iframes del mismo sitio) se suma la posición del iframe.
+  const rect = e => {
+    const r = e.getBoundingClientRect();
+    const fr = e.ownerDocument !== document && e.ownerDocument.defaultView && e.ownerDocument.defaultView.frameElement;
+    if (!fr) return r;
+    const f = fr.getBoundingClientRect();
+    return { left: r.left + f.left, top: r.top + f.top, right: r.right + f.left, bottom: r.bottom + f.top, width: r.width, height: r.height };
+  };
+  const estilo = e => ((e.ownerDocument && e.ownerDocument.defaultView) || window).getComputedStyle(e);
   const visible = e => !!(e && e.offsetParent !== null);
 
   // Paths del isotipo (isotipo_sin_fondo.svg, viewBox 240.3).
@@ -260,7 +269,7 @@
   const pleno = c => { const v = partes(c); return v ? `rgb(${v[0]},${v[1]},${v[2]})` : c; };
   function finalColor(e) {
     if (e.dataset.c) return e.dataset.c;   // color de trazo fijado en el HTML
-    const cs = getComputedStyle(e);
+    const cs = estilo(e);
     if (e.classList.contains('btn-primary') && alphaOf(cs.backgroundColor) > 0.5) return pleno(cs.backgroundColor);
     if (parseFloat(cs.borderTopWidth) > 0 && alphaOf(cs.borderTopColor) > 0.05) return pleno(cs.borderTopColor);
     if (alphaOf(cs.backgroundColor) > 0.05) return pleno(cs.backgroundColor);
@@ -613,24 +622,51 @@
      en pantalla; lo de adentro aparece con su bloque y lo de más abajo, normal.
      Mientras se eligen las piezas, el tablero queda tapado (clase
      ctx-vista-oculta) para que no se vea un instante antes de dibujarse. */
-  const VISTAS = ['agricultura', 'kpis'];
+  const VISTAS = ['agricultura', 'kpis', 'ganaderia', 'tambo'];
   const vistasHechas = new Set();
   const SEL_PIEZAS = '.hero, .hero > :not(.kpis), .hero .kpi-card, .hero .kpi-chart-col, .kpi-tab-bar, ' +
     '[class*="card"], [class*="banner"], .section-title';
+  // Ganadería y Tambo (iframes): franja del encabezado, sus textos y botones,
+  // las barras de período y de tambos, y cada tarjeta.
+  const SEL_PIEZAS_EMB = '.report-hero, .report-headline > *, .report-actions, .report-hero > .save-row, ' +
+    '.hero-notas, .esc-bar, .mt-barra, [class*="card"]';
+  const esContenedor = n => n.classList.contains('hero') || n.classList.contains('report-hero');
   let cadenaPanel = [], panelCerrando = false, vistaEnCola = null, vistaUnida = null, vistaActual = null;
   const vistaActiva = () => (document.querySelector('.dashboard-view.active') || {}).id || '';
   const tieneCaja = e => {
-    const cs = getComputedStyle(e);
+    const cs = estilo(e);
     return (parseFloat(cs.borderTopWidth) > 0 && alphaOf(cs.borderTopColor) > 0.05) ||
       alphaOf(cs.backgroundColor) > 0.02 || cs.backgroundImage !== 'none';
   };
   function piezasDeVista(v) {
     const H = innerHeight;
     const enPantalla = n => { const r = rect(n); return r.width > 2 && r.height > 2 && r.top < H - 8 && r.bottom > 0; };
-    const c = [...v.querySelectorAll(SEL_PIEZAS)].filter(enPantalla);
-    // Solo las de más afuera: lo de adentro aparece con su bloque. El .hero es
-    // la excepción: se dibuja su franja y después cada pieza suya.
-    return c.filter(n => !c.some(o => o !== n && o.contains(n) && !o.classList.contains('hero')));
+    const doc = docDeVista(v);
+    const raizV = doc === document ? v : doc.body;
+    const c = [...raizV.querySelectorAll(doc === document ? SEL_PIEZAS : SEL_PIEZAS_EMB)]
+      .filter(n => !n.closest('.resbar') && enPantalla(n));
+    // Solo las de más afuera: lo de adentro aparece con su bloque. El
+    // encabezado es la excepción: se dibuja su franja y después cada pieza suya.
+    return c.filter(n => !c.some(o => o !== n && o.contains(n) && !esContenedor(o)));
+  }
+  // Documento del tablero: el de la página, o el de su iframe (Ganadería, Tambo).
+  function docDeVista(v) {
+    const fr = v.querySelector('iframe');
+    try { return fr && fr.contentDocument ? fr.contentDocument : document; } catch (e) { return document; }
+  }
+  // Un tablero embebido puede estar cargando (switchDashboard le cambia el src):
+  // se espera a que su página termine de cargar y tenga el encabezado (8 s máx.).
+  async function iframeListo(v) {
+    const fr = v.querySelector('iframe');
+    if (!fr) return true;
+    for (let i = 0; i < 80; i++) {
+      try {
+        const d = fr.contentDocument;
+        if (d && d.readyState === 'complete' && d.URL === fr.src && d.querySelector('.report-hero')) return true;
+      } catch (e) { return false; }
+      await sleep(100);
+    }
+    return false;
   }
   // Espera a que el tablero deje de cambiar (datos que llegan, gráficos que se
   // arman) antes de elegir las piezas: 250 ms sin cambios, 2,5 s como máximo.
@@ -639,25 +675,30 @@
       let t = null; const t0 = performance.now();
       const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(fin, 250); if (performance.now() - t0 > 2500) fin(); });
       const fin = () => { mo.disconnect(); clearTimeout(t); res(); };
-      mo.observe(v, { childList: true, subtree: true });
+      const d = docDeVista(v);
+      mo.observe(d === document ? v : d.body, { childList: true, subtree: true });
       t = setTimeout(fin, 250);
     });
   }
   function graficos(n, que) {
-    if (!window.Chart || !Chart.getChart) return;
-    n.querySelectorAll('canvas').forEach(c => { const ch = Chart.getChart(c); if (ch) { try { que === 'reset' ? ch.reset() : ch.update(); } catch (e) {} } });
+    const Ch = ((n.ownerDocument && n.ownerDocument.defaultView) || window).Chart;
+    if (!Ch || !Ch.getChart) return;
+    n.querySelectorAll('canvas').forEach(c => { const ch = Ch.getChart(c); if (ch) { try { que === 'reset' ? ch.reset() : ch.update(); } catch (e) {} } });
   }
+  let preparadas = [];   // piezas tapadas (también las de los iframes)
   function revelarVistas() {
     raiz.classList.remove('ctx-vista-oculta');
-    document.querySelectorAll('[data-vpz]').forEach(n => { n.style.clipPath = ''; n.removeAttribute('data-vpz'); n.removeAttribute('data-b'); n.removeAttribute('data-c'); });
+    preparadas.forEach(n => { n.style.clipPath = ''; n.removeAttribute('data-vpz'); n.removeAttribute('data-b'); n.removeAttribute('data-c'); });
+    preparadas = [];
   }
   const dibujarPieza = async (c, n) => { await build(c, n); graficos(n, 'update'); };
   // Tapa las piezas (cada una con su recorte) y destapa el tablero.
   function prepararPiezas(piezas) {
     piezas.forEach(n => {
+      preparadas.push(n);
       n.setAttribute('data-vpz', '');
       n.setAttribute('data-b', tieneCaja(n) ? 'box' : 'text');
-      if (n.classList.contains('hero')) n.setAttribute('data-c', '#7dbaf8');
+      if (esContenedor(n)) n.setAttribute('data-c', '#7dbaf8');
       n.style.clipPath = HIDDEN;
       graficos(n, 'reset');
     });
@@ -666,6 +707,7 @@
   async function armarVista(id) {
     const v = $(id);
     vistaActual = id;
+    if (!(await iframeListo(v))) { raiz.classList.remove('ctx-vista-oculta'); return; }
     await quieto(v);
     if (vistaActiva() !== id) return;
     const piezas = piezasDeVista(v);
