@@ -19,8 +19,9 @@
    sin animación. En celular la barra está escondida: no se dibuja.
 
    Cerrar sesión: app.js llama a ctxLoginAnim.desarmarPanel() antes de
-   recargar. Los punteros vuelven a entrar, desarman la barra lateral
-   (al revés de como la armaron), se juntan en el centro y se van.
+   recargar. Los punteros vuelven a entrar, desarman la barra lateral y
+   el tablero abierto (al revés de como los armaron), se juntan en el
+   centro y se van.
 
    Referencia: el prototipo aprobado (login-punteros-prototipo.html) y
    su documento de especificación. Valores y tiempos salen de ahí.
@@ -598,16 +599,28 @@
         await sleep(120);   // que terminen los tweens y el loop del canvas
         outlines.length = 0;
       }
+      // El tablero abierto: sus bloques visibles (los mismos que se dibujan al
+      // abrirlo). Se eligen antes de reactivar, mientras se ve todo como está.
+      const tablero = $(vistaActiva());
+      const vPiezas = (tablero && innerWidth > 900 && !raiz.classList.contains('ctx-vista-oculta'))
+        ? piezasDeVista(tablero) : [];
       reactivar();
-      // Dibujada = sin recorte (la que falta dibujar sigue recortada por la clase ctx-panel).
-      const dibujada = n => getComputedStyle(n).clipPath === 'none';
+      // Dibujada = sin recorte (la que falta dibujar sigue recortada por la
+      // clase ctx-panel o por su propio recorte, si se cortó el armado).
+      const dibujada = n => estilo(n).clipPath === 'none';
       const logo = sb.querySelector('.brand-row > svg');
       const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2 && dibujada(n)).reverse();
       const kids = piezas.map(n => job(c => erase(c, n)));
       const jc = dibujada(sb) ? job(c => erase(c, sb), kids) : null;
-      await allDone(kids);
+      // Tablero: se desarman sus bloques (de abajo hacia arriba) y al final la
+      // franja del encabezado, a la vez que la barra lateral.
+      const vDib = vPiezas.filter(dibujada);
+      vDib.forEach(n => { n.setAttribute('data-b', tieneCaja(n) ? 'box' : 'text'); if (esContenedor(n)) n.setAttribute('data-c', '#7dbaf8'); });
+      const vHijos = vDib.filter(n => !esContenedor(n)).reverse().map(n => job(c => erase(c, n)));
+      const vCont = vDib.filter(esContenedor).map(n => job(c => erase(c, n), vHijos));
+      await allDone([...kids, ...vHijos]);
       if (logo) { logo.style.transition = 'opacity .26s ease'; logo.style.opacity = '0'; }
-      if (jc) await allDone([jc]);
+      await allDone([...(jc ? [jc] : []), ...vCont]);
       gather = 'center';
       await pausa(600);
       capaCur.classList.add('gone');
@@ -647,7 +660,8 @@
     const doc = docDeVista(v);
     const raizV = doc === document ? v : doc.body;
     const c = [...raizV.querySelectorAll(doc === document ? SEL_PIEZAS : SEL_PIEZAS_EMB)]
-      .filter(n => !n.closest('.resbar') && enPantalla(n));
+      // (Tambo usa data-b en sus campos para otra cosa: esos nunca son piezas.)
+      .filter(n => !n.closest('.resbar') && !(doc !== document && n.hasAttribute('data-b')) && enPantalla(n));
     // Solo las de más afuera: lo de adentro aparece con su bloque. El
     // encabezado es la excepción: se dibuja su franja y después cada pieza suya.
     return c.filter(n => !c.some(o => o !== n && o.contains(n) && !esContenedor(o)));
