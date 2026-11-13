@@ -810,7 +810,10 @@ label .u{margin-left:4px}
 .hero-notas > div:empty{display:none}
 .wrap{padding:0 0 20px}
 .container{width:auto;margin:0;padding:0 28px}
-.rb-in{width:auto;padding:7px 28px}
+/* El contenido debajo del encabezado conserva el ancho máximo de 1240 px,
+   alineado a la izquierda con el encabezado (la franja sí va de borde a borde). */
+.container > :not(.report-hero):not(.resbar){max-width:1240px}
+.rb-in{width:auto;max-width:1296px;padding:7px 28px}
 @media(max-width:760px){
   .container{width:auto;padding:0 16px}
   .rb-in{padding:7px 16px}
