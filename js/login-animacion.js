@@ -52,11 +52,12 @@
   const HIDDEN = 'inset(0 100% 0 0)';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   /* Ritmo de toda la animación: duraciones de la especificación × RITMO.
-     0.49 = 0,7 × 0,7: dos veces un 30 % más rápida. Lo usan todos los
-     tweens, las pausas de la coreografía, el escalonado de los punteros y
-     los desvanecidos por frame, en el login y en la barra lateral (las
-     transiciones CSS equivalentes están en css/login-animacion.css). */
-  const RITMO = 0.49;
+     0.343 = 0,7 × 0,7 × 0,7: tres veces un 30 % más rápida. Lo usan todos
+     los tweens (dibujar y borrar), las pausas de la coreografía, el
+     escalonado de los punteros y los desvanecidos por frame, en el login, la
+     barra lateral y los tableros (las transiciones CSS equivalentes están en
+     css/login-animacion.css). */
+  const RITMO = 0.343;
   const pausa = ms => sleep(ms * RITMO);
   // Dibujar va de a una pieza por vez: sus tiempos van un 30 % más rápido
   // que el resto (borrar, pausas, desvanecidos siguen con RITMO).
@@ -605,7 +606,7 @@
       const kids = piezas.map(n => job(c => erase(c, n)));
       const jc = dibujada(sb) ? job(c => erase(c, sb), kids) : null;
       await allDone(kids);
-      if (logo) { logo.style.transition = 'opacity .32s ease'; logo.style.opacity = '0'; }
+      if (logo) { logo.style.transition = 'opacity .22s ease'; logo.style.opacity = '0'; }
       if (jc) await allDone([jc]);
       gather = 'center';
       await pausa(600);
@@ -622,10 +623,12 @@
      en pantalla; lo de adentro aparece con su bloque y lo de más abajo, normal.
      Mientras se eligen las piezas, el tablero queda tapado (clase
      ctx-vista-oculta) para que no se vea un instante antes de dibujarse. */
-  const VISTAS = ['agricultura', 'kpis', 'ganaderia', 'tambo'];
+  const VISTAS = ['agricultura', 'kpis', 'ganaderia', 'tambo', 'mercado'];
   const vistasHechas = new Set();
   const SEL_PIEZAS = '.hero, .hero > :not(.kpis), .hero .kpi-card, .hero .kpi-chart-col, .kpi-tab-bar, ' +
-    '[class*="card"], [class*="banner"], .section-title';
+    '[class*="card"], [class*="banner"], .section-title, ' +
+    // Mercado: encabezado, pestañas y las cuatro tarjetas de valores (sin clase propia).
+    '#view-mercado .page-body > div:first-child, #mercado-tab-bar, #mercado-kpis-row > div';
   // Ganadería y Tambo (iframes): franja del encabezado, sus textos y botones,
   // las barras de período y de tambos, y cada tarjeta.
   const SEL_PIEZAS_EMB = '.report-hero, .report-headline > *, .report-actions, .report-hero > .save-row, ' +
