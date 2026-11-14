@@ -1531,9 +1531,9 @@
             <div style="font-size:20px;font-weight:700;color:var(--texto)">Mercado de Granos</div>
             <div style="font-size:12px;color:var(--gris);margin-top:2px">Soja · Maíz · Trigo · Cebada — fundamentos internacionales y mercado local</div>
           </div>
-          <div id="mercado-regime-badge" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(212,160,23,.18);border:1px solid rgba(212,160,23,.35);color:var(--oro-l)">
-            <span style="width:7px;height:7px;border-radius:50%;background:var(--oro-l);animation:asesorBlink 2s infinite"></span>
-            Régimen especulativo
+          <div id="mercado-regime-badge" title="Régimen macro calculado a diario por el pipeline (VIX / dólar índice)" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--gris)">
+            <span id="mercado-regime-dot" style="width:7px;height:7px;border-radius:50%;background:var(--gris)"></span>
+            <span id="mercado-regime-label">Régimen: cargando…</span>
           </div>
         </div>
 
@@ -1580,19 +1580,19 @@
           <!-- KPIs -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="mercado-kpis-row">
             <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
-              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Soja Chicago</div>
-              <div style="font-size:22px;font-weight:700;color:var(--oro-l)">~430</div>
-              <div style="font-size:10px;color:var(--gris);margin-top:2px">USD/t · correlación petróleo implica ~500</div>
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Soja disponible MATba</div>
+              <div style="font-size:22px;font-weight:700;color:var(--oro-l)" id="mercado-kpi-soja">—</div>
+              <div style="font-size:10px;color:var(--gris);margin-top:2px" id="mercado-kpi-soja-sub">Cargando…</div>
             </div>
             <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
-              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Régimen actual</div>
-              <div style="font-size:14px;font-weight:700;color:#7fc4f8;padding-top:4px">Especulativo</div>
-              <div style="font-size:10px;color:var(--gris);margin-top:2px">Fundamentos oscurecidos</div>
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Régimen macro</div>
+              <div style="font-size:14px;font-weight:700;color:var(--gris);padding-top:4px" id="mercado-kpi-regimen">—</div>
+              <div style="font-size:10px;color:var(--gris);margin-top:2px" id="mercado-kpi-regimen-sub">Cargando…</div>
             </div>
             <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
-              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Fundamentos 26/27</div>
-              <div style="font-size:22px;font-weight:700;color:#2ab88a">Alcistas</div>
-              <div style="font-size:10px;color:var(--gris);margin-top:2px">Stocks/consumo menores que 25/26</div>
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Fundamentos (WASDE)</div>
+              <div style="font-size:14px;font-weight:700;color:var(--gris);padding-top:4px" id="mercado-kpi-fund">—</div>
+              <div style="font-size:10px;color:var(--gris);margin-top:2px" id="mercado-kpi-fund-sub">Cargando…</div>
             </div>
             <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
               <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Tu cartera</div>
@@ -1604,21 +1604,14 @@
             <!-- Señales -->
             <div class="mercado-card">
               <div class="mercado-card-hdr" onclick="mercadoToggle('m-senales','m-icon-sen')">
-                <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Señales actuales por cultivo</div><div style="font-size:11px;color:var(--gris);margin-top:1px">Basadas en fundamentals disponibles</div></div>
+                <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Señales actuales por cultivo</div><div style="font-size:11px;color:var(--gris);margin-top:1px" id="m-senales-sub">Calculadas por el pipeline de datos (no por el modelo); cada una con su fuente y fecha</div></div>
                 <span id="m-icon-sen" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span>
               </div>
               <div id="m-senales" class="mercado-card-body">
                 <table class="mercado-sig-table">
                   <thead><tr><th>Variable</th><th>Cultivo</th><th>Señal</th></tr></thead>
-                  <tbody>
-                    <tr><td>Stocks/consumo 26/27</td><td>Soja · Maíz · Trigo</td><td><span class="m-pill-bull">ALCISTA</span></td></tr>
-                    <tr><td>Condición cultivos USA</td><td>Soja · Maíz</td><td><span class="m-pill-watch">MONITOREAR</span></td></tr>
-                    <tr><td>Cosecha Brasil</td><td>Soja</td><td><span class="m-pill-bear">RÉCORD</span></td></tr>
-                    <tr><td>Fondos CFTC CoT</td><td>Complejo oleaginoso</td><td><span class="m-pill-bear">NET SHORT</span></td></tr>
-                    <tr><td>Correlación soja–petróleo</td><td>Soja</td><td><span class="m-pill-watch">DESCALIB.</span></td></tr>
-                    <tr><td>Basis FOB vs. Chicago</td><td>Aceite soja</td><td><span class="m-pill-watch">DESCUENTO</span></td></tr>
-                    <tr><td>Demanda Asia trigo AR</td><td>Trigo</td><td><span class="m-pill-bull">FUERTE</span></td></tr>
-                    <tr><td>Logística río Paraná</td><td>Maíz</td><td><span class="m-pill-bear">ALERTA</span></td></tr>
+                  <tbody id="m-senales-tbody">
+                    <tr><td colspan="3" style="color:var(--gris)">Cargando señales…</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1642,21 +1635,21 @@
             <div>
               <div class="mercado-card">
                 <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l1','mv-i1')"><span class="mercado-layer-num">01</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Fundamentos estructurales</div><div style="font-size:11px;color:var(--gris)">USDA WASDE mensual · largo plazo</div></div><span id="mv-i1" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div>
-                <div id="mv-l1" class="mercado-card-body"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Balance stock/consumo mundial</td><td>USDA WASDE</td><td><span class="m-pill-bull">ALCISTA</span></td></tr><tr><td>Relación stocks/consumo 26/27</td><td>USDA</td><td><span class="m-pill-bull">ALCISTA</span></td></tr><tr><td>Precios productor USA proyectados</td><td>USDA</td><td><span class="m-pill-bull">ALCISTA</span></td></tr><tr><td>Área sembrada hemisferios</td><td>USDA/CONAB</td><td><span class="m-pill-neutral">NEUTRO</span></td></tr><tr><td>Costo fertilizantes nitrogenados</td><td>CME</td><td><span class="m-pill-bull">A LA BAJA</span></td></tr></tbody></table></div>
+                <div id="mv-l1" class="mercado-card-body"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody id="mv-l1-tbody" data-grupos="fundamentos"><tr><td colspan="3" style="color:var(--gris)">Cargando…</td></tr></tbody></table></div>
               </div>
               <div class="mercado-card">
                 <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l2','mv-i2')"><span class="mercado-layer-num">02</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Oferta dinámica</div><div style="font-size:11px;color:var(--gris)">Crop Progress · cosechas · clima</div></div><span id="mv-i2" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div>
-                <div id="mv-l2" class="mercado-card-body" style="display:none"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Condición B+E% semanal soja USA</td><td>USDA Crop Progress</td><td><span class="m-pill-watch">WATCH</span></td></tr><tr><td>Condición B+E% maíz USA</td><td>USDA Crop Progress</td><td><span class="m-pill-watch">WATCH</span></td></tr><tr><td>Trigo primavera USA</td><td>USDA/WQC</td><td><span class="m-pill-bull">SOPORTE</span></td></tr><tr><td>Cosecha Brasil</td><td>CONAB</td><td><span class="m-pill-bear">RÉCORD</span></td></tr><tr><td>Bajante río Paraná</td><td>INA/Prefectura</td><td><span class="m-pill-bear">ALERTA</span></td></tr></tbody></table></div>
+                <div id="mv-l2" class="mercado-card-body" style="display:none"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody id="mv-l2-tbody" data-grupos="oferta"><tr><td colspan="3" style="color:var(--gris)">Cargando…</td></tr></tbody></table></div>
               </div>
               <div class="mercado-card">
                 <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l3','mv-i3')"><span class="mercado-layer-num">03</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Demanda dinámica</div><div style="font-size:11px;color:var(--gris)">China · Export Sales · DJVE</div></div><span id="mv-i3" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div>
-                <div id="mv-l3" class="mercado-card-body" style="display:none"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Compras semanales China (soja)</td><td>USDA Export Sales</td><td><span class="m-pill-neutral">DÉBIL</span></td></tr><tr><td>DJVE Argentina</td><td>MAGyP</td><td><span class="m-pill-bull">ACTIVO</span></td></tr><tr><td>Demanda Asia trigo AR</td><td>INDEC</td><td><span class="m-pill-bull">FUERTE</span></td></tr><tr><td>Demanda biocombustibles</td><td>EPA/política</td><td><span class="m-pill-watch">WATCH</span></td></tr></tbody></table></div>
+                <div id="mv-l3" class="mercado-card-body" style="display:none"><div style="font-size:12px;color:var(--gris);line-height:1.6;padding-top:6px">Sin pipeline propio todavía (USDA Export Sales, DJVE). Lo que haya de demanda llega por las newsletters e informes recibidos y lo integra el Asesor IA; no se muestra como señal cuantificada.</div></div>
               </div>
             </div>
             <div>
               <div class="mercado-card" style="border-color:rgba(212,160,23,.2)">
-                <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l4','mv-i4')"><span class="mercado-layer-num">04</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Flujo especulativo / financiero ★</div><div style="font-size:11px;color:var(--gris)">La capa que oscurece los fundamentals</div></div><span id="mv-i4" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div>
-                <div id="mv-l4" class="mercado-card-body"><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody><tr><td>Posición neta fondos (CFTC CoT)</td><td>CFTC semanal</td><td><span class="m-pill-bear">NET SHORT</span></td></tr><tr><td>Petróleo WTI/Brent</td><td>CME/ICE</td><td><span class="m-pill-watch">VOLÁTIL</span></td></tr><tr><td>Correlación soja–petróleo</td><td>CME/cálculo</td><td><span class="m-pill-watch">DESCALIB.</span></td></tr><tr><td>VIX (apetito de riesgo)</td><td>CBOE</td><td><span class="m-pill-bear">ELEVADO</span></td></tr><tr><td>Variables geopolíticas (Ormuz)</td><td>News APIs</td><td><span class="m-pill-watch">ACTIVO</span></td></tr></tbody></table></div>
+                <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l4','mv-i4')"><span class="mercado-layer-num">04</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Régimen macro y posicionamiento ★</div><div style="font-size:11px;color:var(--gris)">VIX · dólar índice · real · fondos CFTC — detector contrastado con datos</div></div><span id="mv-i4" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div>
+                <div id="mv-l4" class="mercado-card-body"><div style="font-size:12px;color:var(--gris);line-height:1.6;padding:6px 0 8px">Régimen <b style="color:var(--oro-l)">riesgo-off</b> cuando el VIX supera 25 (los granos se mueven en bloque con los demás activos, 2,4× más volátiles); régimen <b style="color:var(--oro-l)">dólar</b> cuando el DXY se mueve más de 3 % en 20 ruedas. El real brasileño explica el nivel de la soja (no es régimen); el petróleo sólo pesa vía aceite de soja y costos. La posición de los fondos dice quién está moviendo Chicago y el riesgo de reversión.</div><table class="mercado-sig-table"><thead><tr><th>Variable</th><th>Fuente</th><th>Señal</th></tr></thead><tbody id="mv-l4-tbody" data-grupos="macro,especulativo"><tr><td colspan="3" style="color:var(--gris)">Cargando…</td></tr></tbody></table></div>
               </div>
               <div class="mercado-card">
                 <div class="mercado-card-hdr" onclick="mercadoToggle('mv-l5','mv-i5')"><span class="mercado-layer-num">05</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Mercado local Argentina + macro</div><div style="font-size:11px;color:var(--gris)">Basis FOB · tipo de cambio · política</div></div><span id="mv-i5" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div>
@@ -1669,13 +1662,13 @@
         <!-- ══ TAB: FRAMEWORK ══ -->
         <div id="mercado-tab-framework" style="display:none">
           <div style="background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.2);border-radius:10px;padding:14px 16px;margin-bottom:12px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:7px">★ Regla del detector de régimen</div>
-            <div style="font-size:13px;line-height:1.7;color:var(--texto)">Si <strong style="color:var(--oro-l)">volatilidad petróleo &gt;3% diario</strong> + <strong style="color:var(--oro-l)">CFTC CoT en extremos</strong> → régimen <strong style="color:var(--oro-l)">ESPECULATIVO</strong> activo. El agente reduce su certeza y lo comunica explícitamente antes de dar señales.</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--oro-l);margin-bottom:7px">★ Regla del detector de régimen (con evidencia)</div>
+            <div style="font-size:13px;line-height:1.7;color:var(--texto)">Si el <strong style="color:var(--oro-l)">VIX ≥ 25</strong> (máximo de 5 ruedas) → régimen <strong style="color:var(--oro-l)">RIESGO-OFF</strong>: los granos se mueven con el humor financiero global y los fundamentos quedan en segundo plano. Si el <strong style="color:var(--oro-l)">dólar índice se mueve ≥ 3 % en 20 ruedas</strong> → régimen <strong style="color:var(--oro-l)">DÓLAR</strong> (sesgo contrario para granos en las semanas siguientes). En otro caso mandan los fundamentos. El petróleo se contrastó como detector contra VIX, dólar, real y fondos CFTC (1990-2026) y no se sostuvo: queda como variable de costos y del aceite de soja. El agente comunica el régimen vigente con el dato del día.</div>
           </div>
-          <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l1','mfw-i1')"><span class="mercado-layer-num">01</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Oferta global estructural</div><div style="font-size:11px;color:var(--gris)">Largo plazo — USDA WASDE mensual</div></div><span id="mfw-i1" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div><div id="mfw-l1" class="mercado-card-body"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">stocks/consumo mundial</span><span class="mercado-vtag key">WASDE proyecciones 26/27</span><span class="mercado-vtag">área sembrada</span><span class="mercado-vtag">precios productor USA</span><span class="mercado-vtag">costo fertilizantes</span></div><div class="mercado-insight">Insight: <strong>USDA mayo 2026 — stocks/consumo 26/27 menores que 25/26 en Soja, Maíz y Trigo → fundamento estructural alcista confirmado.</strong></div></div></div>
+          <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l1','mfw-i1')"><span class="mercado-layer-num">01</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Oferta global estructural</div><div style="font-size:11px;color:var(--gris)">Largo plazo — USDA WASDE mensual</div></div><span id="mfw-i1" style="font-size:12px;color:var(--gris);transition:transform .2s;transform:rotate(180deg)">▼</span></div><div id="mfw-l1" class="mercado-card-body"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">stocks/consumo mundial</span><span class="mercado-vtag key">WASDE proyecciones 26/27</span><span class="mercado-vtag">área sembrada</span><span class="mercado-vtag">precios productor USA</span><span class="mercado-vtag">costo fertilizantes</span></div><div class="mercado-insight">La señal vigente se calcula del último WASDE (stocks/uso de la campaña proyectada vs. la anterior y revisión mensual de stocks) y se ve en <strong>Panorama → Señales</strong> y en <strong>Variables → 01</strong>. Regla: −0,5 pp o −1,5 % de revisión = alcista; +0,5 pp o +1,5 % = bajista.</div></div></div>
           <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l2','mfw-i2')"><span class="mercado-layer-num">02</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Demanda global</div><div style="font-size:11px;color:var(--gris)">China · biocombustibles · uso industrial</div></div><span id="mfw-i2" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l2" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">compras semanales China</span><span class="mercado-vtag key">USDA Export Sales semanal</span><span class="mercado-vtag">márgenes molienda China</span><span class="mercado-vtag">política biocombustibles EPA</span><span class="mercado-vtag">DJVE Argentina</span></div><div class="mercado-insight">AZ Group N°106: <strong>Ajustados márgenes en China provocaron desaceleración de compras. Ventas semanales USA por debajo de lo esperado → debilidad en demanda de corto plazo.</strong></div></div></div>
           <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l3','mfw-i3')"><span class="mercado-layer-num">03</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Balance stock/demanda → precio Chicago</div><div style="font-size:11px;color:var(--gris)">Síntesis de capas 1+2 + estacionalidad</div></div><span id="mfw-i3" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l3" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">relación stock/consumo actual</span><span class="mercado-vtag key">comparación vs. campaña anterior</span><span class="mercado-vtag">período crítico cultivos</span></div><div class="mercado-insight"><strong>Al salir de cosecha sudamericana el descuento FOB se corrige fuertemente. Aceite soja: de -$50 en cosecha a +$100 fuera de cosecha.</strong> Timing crítico para recomendaciones.</div></div></div>
-          <div class="mercado-card" style="border-color:rgba(212,160,23,.2)"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l4','mfw-i4')"><span class="mercado-layer-num">04</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Régimen especulativo / financiero ★</div><div style="font-size:11px;color:var(--gris)">Aporte central: Diego de la Puente</div></div><span id="mfw-i4" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l4" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">posición neta CFTC CoT</span><span class="mercado-vtag key">correlación soja–petróleo</span><span class="mercado-vtag key">volatilidad petróleo diaria</span><span class="mercado-vtag">VIX</span><span class="mercado-vtag">tasas Fed / DXY</span><span class="mercado-vtag">eventos geopolíticos binarios</span></div><div class="mercado-insight"><strong>"No hay nada desde los fundamentals que pueda justificar las bajas que hemos visto."</strong> — Diego de la Puente. Los fondos salen de todos los activos cuando la volatilidad del petróleo explota, generando movimientos artificiales en granos.</div></div></div>
+          <div class="mercado-card" style="border-color:rgba(212,160,23,.2)"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l4','mfw-i4')"><span class="mercado-layer-num">04</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Régimen macro / posicionamiento ★</div><div style="font-size:11px;color:var(--gris)">La capa que puede tapar a los fundamentos — tesis de Diego de la Puente, contrastada con datos</div></div><span id="mfw-i4" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l4" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">VIX (aversión al riesgo)</span><span class="mercado-vtag key">dólar índice (DXY)</span><span class="mercado-vtag key">posición neta fondos CFTC</span><span class="mercado-vtag">real brasileño (factor explicativo)</span><span class="mercado-vtag">petróleo (costos · aceite-biodiésel)</span></div><div class="mercado-insight"><strong>"No hay nada desde los fundamentals que pueda justificar las bajas que hemos visto."</strong> — Diego de la Puente. La intuición es correcta: hay semanas en que los granos no responden a sus fundamentos. Lo que cambió es el detector: con datos 1990-2026 y MATba 2024-2026, el petróleo no identifica esas semanas (relación inestable, sin adelanto; en 2024-26 las semanas de crudo fuerte fueron las de soja tranquila). El VIX sí: por encima de 25 la soja triplica su correlación con dólar, crudo y maíz y se mueve 2,4 veces más. El dólar índice es el único factor con adelanto estadístico. Los extremos de fondos marcan un mercado cargado (riesgo de reversión), no un régimen de volatilidad.</div></div></div>
           <div class="mercado-card"><div class="mercado-card-hdr" onclick="mercadoToggle('mfw-l5','mfw-i5')"><span class="mercado-layer-num">05</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Mercado local + macro Argentina</div><div style="font-size:11px;color:var(--gris)">Recomendación final condicionada al perfil del productor</div></div><span id="mfw-i5" style="font-size:12px;color:var(--gris);transition:transform .2s">▼</span></div><div id="mfw-l5" class="mercado-card-body" style="display:none"><div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px"><span class="mercado-vtag key">basis FOB vs. Chicago</span><span class="mercado-vtag key">tipo de cambio / brecha</span><span class="mercado-vtag">retención productor</span><span class="mercado-vtag">política retenciones ROE</span><span class="mercado-vtag">MATba posiciones futuras</span></div><div class="mercado-insight">Perfil del productor que condiciona la estrategia: <strong>urgencia financiera · tenencia propia vs. arrendada · % producción sin precio · herramienta disponible</strong></div></div></div>
         </div>
 
@@ -1685,7 +1678,7 @@
           <div id="mercado-pro-gate" style="display:none;text-align:center;padding:40px 24px;background:var(--negro-s);border:0.5px solid rgba(255,255,255,.08);border-radius:10px">
             <div style="font-size:36px;margin-bottom:12px">🌾</div>
             <div style="font-size:17px;font-weight:600;color:var(--texto);margin-bottom:8px">Asesor de Mercado de Granos</div>
-            <div style="font-size:13px;color:var(--gris);line-height:1.6;margin-bottom:18px">El análisis de mercado con IA está disponible en el plan PRO.<br>Incluye análisis cruzado con tu cartera, detección de régimen especulativo y recomendaciones personalizadas.</div>
+            <div style="font-size:13px;color:var(--gris);line-height:1.6;margin-bottom:18px">El análisis de mercado con IA está disponible en el plan PRO.<br>Incluye análisis cruzado con tu cartera, detección de régimen macro (VIX / dólar) y lectura de posicionamiento de fondos.</div>
             <button onclick="openUpgradeLink()" style="background:var(--oro);color:#000;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Activar PRO</button>
           </div>
           <!-- Chat PRO -->
@@ -1694,7 +1687,7 @@
               <div class="mercado-card-hdr" style="cursor:default">
                 <span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:rgba(212,160,23,.14);color:var(--oro-l);align-items:center;justify-content:center;font-size:16px;flex-shrink:0">✦</span>
                 <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--texto)">Asesor CTX IA — Mercado de Granos</div><div style="font-size:11px;color:var(--gris)">Análisis cruzado con tu cartera · Régimen de mercado · Estrategia de cobertura</div></div>
-                <div id="mercado-regime-chat-badge" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(212,160,23,.18);border:1px solid rgba(212,160,23,.35);color:var(--oro-l)"><span style="width:6px;height:6px;border-radius:50%;background:var(--oro-l);animation:asesorBlink 2s infinite"></span>Especulativo</div>
+                <div id="mercado-regime-chat-badge" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--gris)"><span id="mercado-regime-chat-dot" style="width:6px;height:6px;border-radius:50%;background:var(--gris)"></span><span id="mercado-regime-chat-label">Régimen: —</span></div>
               </div>
               <div style="padding:0 16px 14px">
                 <!-- Preguntas rápidas -->
@@ -1702,11 +1695,12 @@
                   <button class="mercado-quick" onclick="mercadoAsesorEnviar('¿Cómo está el mercado hoy y qué implica para mi cartera?')">¿Cómo está el mercado hoy?</button>
                   <button class="mercado-quick" onclick="mercadoAsesorEnviar('Cruzá el contexto de mercado con mi cartera actual y decime dónde tengo mayor exposición.')">Cruzar mercado con mi cartera</button>
                   <button class="mercado-quick" onclick="mercadoAsesorEnviar('¿Conviene vender el pendiente de soja ahora o esperar a salir de cosecha?')">Timing de ventas</button>
-                  <button class="mercado-quick" onclick="mercadoAsesorEnviar('Explicame el régimen especulativo actual y qué señales debo monitorear.')">Régimen especulativo</button>
+                  <button class="mercado-quick" onclick="mercadoAsesorEnviar('¿En qué régimen está el mercado hoy (fundamentos, riesgo-off o dólar) y qué señales debo monitorear?')">Régimen de mercado</button>
+                  <button class="mercado-quick" onclick="mercadoAsesorEnviar('¿Qué impacto tiene el petróleo en los granos hoy?')">Petróleo y granos</button>
                 </div>
                 <!-- Chat -->
                 <div id="mercado-asesor-chat" style="display:flex;flex-direction:column;gap:10px;max-height:460px;overflow-y:auto;padding:4px 0 8px">
-                  <div class="mercado-msg-ia">Hola. Soy el Asesor CTX de Mercado de Granos. Tengo acceso a tu cartera actual y al contexto de mercado — puedo cruzar ambos para darte análisis concretos sobre timing de ventas, exposición por producto y cómo el régimen de mercado afecta tu posición específica.<br><br>¿Sobre qué querés empezar?</div>
+                  <div class="mercado-msg-ia">Hola. Soy el Asesor CTX de Mercado de Granos. Tengo acceso a tu cartera actual y al contexto de mercado — puedo cruzar ambos para darte análisis concretos sobre timing de ventas, exposición por producto y cómo el régimen de mercado (fundamentos, riesgo-off o dólar) afecta tu posición específica.<br><br>¿Sobre qué querés empezar?</div>
                 </div>
                 <!-- Input -->
                 <div style="display:flex;gap:8px;align-items:flex-end;margin-top:10px">
@@ -1913,7 +1907,7 @@ function cerrarMacroModal(ev){
   // declarando el build viejo.
   // No se edita a mano: `node herramientas/versionar.js` sube juntos este
   // valor, version.json, CACHE_VERSION de sw.js y los ?v= de los archivos.
-  var CTX_BUILD = '20261113-2350';
+  var CTX_BUILD = '20261114-1829';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -2226,7 +2220,7 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
 <script src="js/asesor-ia-agricultura.js?v=bc5de0a030"></script>
 
 <!-- ░░░ ASESOR CTX IA — lógica (Mercado de Granos) ░░░ -->
-<script src="js/asesor-ia-mercado.js?v=dabe12fd22"></script>
+<script src="js/asesor-ia-mercado.js?v=194939d6d3"></script>
 
 <script src="js/opciones-a3.js?v=f77f771ccc"></script>
 
