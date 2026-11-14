@@ -388,16 +388,24 @@
        dentro de su círculo (los círculos se ven completos). El cuadrado entero
        gira de 90° a 0° hacia la izquierda, y así los dos cuartos viajan juntos
        a su lugar: el rosa arriba a la izquierda y el azul abajo a la derecha. */
+    /* Orden: 1) los dos círculos arrancan totalmente encimados (mismo centro,
+       el del logo) y de apenas unos píxeles; 2) crecen hasta su tamaño;
+       3) se separan en diagonal a su lugar; 4) giran los cuartos; 5) aparece
+       la pieza blanca. Con k = 1 los centros coinciden: el rosa (180, 60) y el
+       azul (60, 180) se corren 60 unidades cada uno hacia (120, 120). */
     const C = 120.15;
     const place = (k, a) => {
-      gp.setAttribute('transform', `translate(${-40 * k} ${40 * k})`);
-      gb.setAttribute('transform', `translate(${40 * k} ${-40 * k})`);
+      gp.setAttribute('transform', `translate(${-60 * k} ${60 * k})`);
+      gb.setAttribute('transform', `translate(${60 * k} ${-60 * k})`);
       wp.setAttribute('transform', `rotate(${a} ${C} ${C})`);
       wb.setAttribute('transform', `rotate(${a} ${C} ${C})`);
     };
+    const CHICO = 0.06;   // 120 px × 0,06 ≈ 7 px: un puntito
     place(1, 90);
     sv.style.transformOrigin = '50% 50%';
-    await tween(480, p => { sv.style.opacity = Math.min(1, p * 1.6); sv.style.transform = `scale(${0.55 + 0.45 * easeOutBack(p)})`; });
+    sv.style.transform = `scale(${CHICO})`;
+    await tween(560, p => { sv.style.opacity = Math.min(1, p * 3); sv.style.transform = `scale(${CHICO + (1 - CHICO) * easeOutBack(p)})`; });
+    await pausa(200);
     await tween(560, p => place(1 - ease(p), 90));
     await pausa(260);
     await tween(760, p => place(0, 90 * (1 - ease(p))));
