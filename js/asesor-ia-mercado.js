@@ -248,9 +248,8 @@
   }
 
   // ── Insights clave (dinámico) ─────────────────────────────
-  // Mismo dominio insights_mercado que usa mercado_granos.html, adaptado a
-  // las variables CSS y los ids del bloque "Mercado Framework" de index.html
-  // (var(--texto) en vez de var(--txt), contenedor #m-insights / #m-insights-sub).
+  // Dominio insights_mercado de agente-agro, renderizado en el bloque
+  // "Mercado" nativo de index.html (contenedor #m-insights / #m-insights-sub).
   const INSIGHT_STYLES_IDX = {
     especulativo: { borde: 'var(--oro-l)', fondo: 'rgba(212,160,23,.05)',  icono: '⚠' },
     alcista:      { borde: '#2ab88a',      fondo: 'rgba(30,153,112,.05)', icono: '↑' },
