@@ -37,11 +37,22 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   }
 
-  function asesorMonthsBetween(fromDate, toYear, toMonth) {
+  // Días hasta el último día del mes del contrato. La tasa implícita se
+  // anualiza sólo con 90 días o más: anualizar un plazo de un mes (antes se
+  // contaban meses enteros, mínimo 1) daba cifras como -214 % TNA.
+  const ASESOR_DIAS_MIN_TNA = 90;
+  function asesorDiasHastaFinDeMes(fromDate, toYear, toMonth) {
     const from = fromDate instanceof Date ? fromDate : new Date();
-    const diff = (toYear - from.getFullYear()) * 12 + (toMonth - (from.getMonth() + 1));
-    return Math.max(1, diff);
+    const fin = new Date(toYear, toMonth, 0);
+    return Math.max(1, Math.round((fin - from) / 86400000));
   }
+
+  // Nombres de campo que el agente no puede leer como "precio pagado".
+  const ASESOR_NOTA_CAMPOS =
+    'long_tn/tn_largas y precio_prom_largo: producción esperada y stock valuados al precio de mercado de hoy, ' +
+    'más compras y derivados comprados a su precio; no es un precio pagado. ' +
+    'precio_mercado: precio MATba con el que la app valúa (futuro del mes de la operación o, si no hay, ' +
+    'el índice continuo MtR = promedio de futuros a 12 meses); no es la pizarra.';
 
   function asesorOps() {
     try {
@@ -71,7 +82,7 @@
         const longUsd = asesorNum(v.longVal) + asesorNum(v.resFinLong);
         const shortUsd = asesorNum(v.shortVal) + asesorNum(v.resFinShort);
         const netoUsd = longUsd - shortUsd;
-        const pCompra = asesorPrecioProm(v.pCompra_num_adj, v.pCompra_den);
+        const pLargo = asesorPrecioProm(v.pCompra_num_adj, v.pCompra_den);
         const pVenta = asesorPrecioProm(v.pVenta_num_adj, v.pVenta_den);
         const pMercado = v.pMercado != null ? asesorRound(v.pMercado, 2) : null;
         return {
@@ -84,10 +95,10 @@
           long_usd: Math.round(longUsd),
           short_usd: Math.round(shortUsd),
           neto_usd: Math.round(netoUsd),
-          precio_prom_compra: pCompra,
+          precio_prom_largo: pLargo,
           precio_prom_venta: pVenta,
           precio_mercado: pMercado,
-          brecha_compra_vs_mercado: (pCompra != null && pMercado != null) ? asesorRound(pMercado - pCompra, 2) : null,
+          brecha_largo_vs_mercado: (pLargo != null && pMercado != null) ? asesorRound(pMercado - pLargo, 2) : null,
           brecha_venta_vs_mercado: (pVenta != null && pMercado != null) ? asesorRound(pVenta - pMercado, 2) : null,
         };
       });
@@ -206,16 +217,16 @@
     return futuros
       .filter(f => cont[f.producto])
       .map(f => {
-        const meses = asesorMonthsBetween(hoy, f.anio, f.mes);
+        const dias = asesorDiasHastaFinDeMes(hoy, f.anio, f.mes);
         const directa = ((f.precio / cont[f.producto]) - 1) * 100;
         return {
           producto: f.producto,
           vencimiento: f.anio + '-' + String(f.mes).padStart(2, '0'),
-          meses,
-          precio_disponible: asesorRound(cont[f.producto], 2),
+          dias,
+          indice_continuo_mtr: asesorRound(cont[f.producto], 2),
           precio_futuro: asesorRound(f.precio, 2),
           tasa_directa_pct: asesorRound(directa, 2),
-          tna_pct: asesorRound(directa * (12 / meses), 2),
+          tna_pct: dias >= ASESOR_DIAS_MIN_TNA ? asesorRound(directa * 365 / dias, 2) : null,
         };
       })
       .sort((a, b) => a.producto.localeCompare(b.producto) || a.vencimiento.localeCompare(b.vencimiento))
@@ -242,10 +253,9 @@
     if (flujo.meses_negativos.length) {
       alertas.push(`Flujo proyectado negativo en ${flujo.meses_negativos.length} mes(es); revisar timing de ingresos y egresos.`);
     }
-    const tasasNegativas = tasas.filter(t => t.tasa_directa_pct != null && t.tasa_directa_pct < 0);
-    if (tasasNegativas.length) {
-      alertas.push('Hay tasas implícitas negativas en algunos vencimientos; revisar carry y conveniencia financiera.');
-    }
+    // Ya no se alerta por "tasas implícitas negativas": se miden contra el
+    // índice continuo (un promedio de futuros), y que un mes de cosecha cotice
+    // por debajo es el descuento normal entre cosechas, no algo a corregir.
 
     return {
       modelo: 'D4 + Delta + Flujo',
@@ -272,6 +282,9 @@
       derivados,
       flujo,
       tasas_implicitas: tasas,
+      criterio_tasas: 'Diferencia de cada futuro MATba contra el índice continuo MtR (promedio de futuros a 12 meses; no es el disponible). ' +
+        'tna_pct sólo con ' + ASESOR_DIAS_MIN_TNA + ' días o más hasta el fin del mes del contrato; con menos, usar tasa_directa_pct y el plazo.',
+      nota_campos: ASESOR_NOTA_CAMPOS,
       alertas,
     };
   }
@@ -293,14 +306,15 @@
           .filter(([, v]) => v.longTn || v.shortTn || v.pMercado != null)
           .map(([prod, v]) => ({
             producto: prod,
-            tn_compradas: Math.round(v.longTn || 0),
+            tn_largas: Math.round(v.longTn || 0),
             tn_vendidas: Math.round(v.shortTn || 0),
-                precio_prom_compra: v.pCompra_den ? +(v.pCompra_num_adj / v.pCompra_den).toFixed(2) : null,
-                precio_prom_venta: v.pVenta_den ? +(v.pVenta_num_adj / v.pVenta_den).toFixed(2) : null,
-                precio_mercado: v.pMercado != null ? +Number(v.pMercado).toFixed(2) : null,
-                tn_netas: Math.round((v.longTn || 0) - (v.shortTn || 0)),
-                delta_sobre_bruto_pct: ((v.longTn || 0) + (v.shortTn || 0)) ? +((((v.longTn || 0) - (v.shortTn || 0)) / ((v.longTn || 0) + (v.shortTn || 0))) * 100).toFixed(1) : null,
-              }));
+            precio_prom_largo: v.pCompra_den ? +(v.pCompra_num_adj / v.pCompra_den).toFixed(2) : null,
+            precio_prom_venta: v.pVenta_den ? +(v.pVenta_num_adj / v.pVenta_den).toFixed(2) : null,
+            precio_mercado: v.pMercado != null ? +Number(v.pMercado).toFixed(2) : null,
+            tn_netas: Math.round((v.longTn || 0) - (v.shortTn || 0)),
+            delta_sobre_bruto_pct: ((v.longTn || 0) + (v.shortTn || 0)) ? +((((v.longTn || 0) - (v.shortTn || 0)) / ((v.longTn || 0) + (v.shortTn || 0))) * 100).toFixed(1) : null,
+          }));
+        ctx.nota_por_producto = ASESOR_NOTA_CAMPOS;
       }
       if (typeof currentCliente !== 'undefined' && currentCliente) {
         ctx.cliente = {
@@ -318,6 +332,8 @@
     return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   }
   function fmt(t) {
+    // js/md-lite.js: títulos, separadores, tablas, viñetas y negritas.
+    if (typeof window.ctxMarkdown === 'function') return window.ctxMarkdown(t);
     return esc(t)
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
       .replace(/^\s*[-•]\s+/gm, '• ')

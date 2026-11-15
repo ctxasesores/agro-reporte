@@ -15,6 +15,11 @@
   }
 
   // ── Contexto rico: cartera + mercado ─────────────────────
+  const NOTA_CAMPOS_CARTERA =
+    'tn_largas y precio_prom_largo: producción esperada y stock valuados al precio de mercado de hoy, ' +
+    'más compras y derivados comprados a su precio; no es un precio pagado. ' +
+    'precio_mercado: precio MATba con el que la app valúa (futuro del mes de la operación o, si no hay, ' +
+    'el índice continuo MtR = promedio de futuros a 12 meses); no es la pizarra.';
   function construirContextoMercado() {
     const ctx = { dominio: 'mercado' };
     try {
@@ -29,16 +34,20 @@
       }
       if (typeof calcularPorProducto === 'function') {
         const m = calcularPorProducto();
+        // El lado largo NO es un precio pagado: es producción y stock valuados
+        // a mercado (más compras). Con "tn_compradas / precio_prom_compra" el
+        // modelo calculaba pérdidas contra un "precio de compra" inexistente.
         ctx.por_producto = Object.entries(m)
           .filter(([, v]) => v.longTn || v.shortTn || v.pMercado != null)
           .map(([prod, v]) => ({
             producto: prod,
-            tn_compradas:       Math.round(v.longTn  || 0),
+            tn_largas:          Math.round(v.longTn  || 0),
             tn_vendidas:        Math.round(v.shortTn || 0),
-            precio_prom_compra: v.pCompra_den ? +(v.pCompra_num_adj / v.pCompra_den).toFixed(2) : null,
+            precio_prom_largo:  v.pCompra_den ? +(v.pCompra_num_adj / v.pCompra_den).toFixed(2) : null,
             precio_prom_venta:  v.pVenta_den  ? +(v.pVenta_num_adj  / v.pVenta_den).toFixed(2)  : null,
             precio_mercado:     v.pMercado != null ? +Number(v.pMercado).toFixed(2) : null,
           }));
+        ctx.nota_por_producto = NOTA_CAMPOS_CARTERA;
       }
       if (typeof currentCliente !== 'undefined' && currentCliente) {
         ctx.cliente = {
@@ -56,6 +65,8 @@
     return String(s).replace(/[&<>]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]));
   }
   function fmt(t) {
+    // js/md-lite.js: títulos, separadores, tablas, viñetas y negritas.
+    if (typeof window.ctxMarkdown === 'function') return window.ctxMarkdown(t);
     return esc(t)
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
       .replace(/^\s*[-•]\s+/gm, '• ')
@@ -351,19 +362,23 @@
   }
   function pillHtml(senal, fechaDato) {
     const [cls, txt] = PILL[senal] || PILL.neutral;
-    const viejo = diasDesde(fechaDato) > 45 ? ' <span class="m-pill-neutral" title="Dato de más de 45 días">viejo</span>' : '';
+    const viejo = fechaDato && diasDesde(fechaDato) > 45 ? ' <span class="m-pill-neutral" title="Dato de más de 45 días">viejo</span>' : '';
     return `<span class="${cls}">${txt}</span>${viejo}`;
   }
   function filaSenal(sn, conCultivo) {
     const detalle = String(sn.detalle || '');
     const corto = detalle.length > 140 ? detalle.slice(0, 137) + '…' : detalle;
     const fuente = `${escapeHtmlIdx(sn.fuente || '')}${sn.fecha_dato ? ' · ' + fmtFechaCorta(sn.fecha_dato) : ''}`;
+    // En la tabla del Panorama la fuente va debajo del detalle: en la columna
+    // Cultivo, con white-space:nowrap, ensanchaba la tabla y la columna Señal
+    // quedaba cortada por el borde de la tarjeta.
     const variable = `<div style="font-weight:600;color:var(--texto)">${escapeHtmlIdx(sn.etiqueta || sn.clave)}</div>`
-      + (corto ? `<div style="font-size:10.5px;color:var(--gris);line-height:1.45;margin-top:2px" title="${escapeHtmlIdx(detalle)}">${escapeHtmlIdx(corto)}</div>` : '');
+      + (corto ? `<div class="m-sig-det" title="${escapeHtmlIdx(detalle).replace(/"/g, '&quot;')}">${escapeHtmlIdx(corto)}</div>` : '')
+      + (conCultivo && fuente ? `<div class="m-sig-fuente">${fuente}</div>` : '');
     const medio = conCultivo
-      ? `<td style="white-space:nowrap">${escapeHtmlIdx(NOMBRE_CULTIVO[sn.cultivo] || sn.cultivo || '—')}<div style="font-size:10px;color:var(--gris)">${fuente}</div></td>`
-      : `<td style="font-size:11px;color:var(--gris);white-space:nowrap">${fuente}</td>`;
-    return `<tr><td>${variable}</td>${medio}<td style="white-space:nowrap">${pillHtml(sn.senal, sn.fecha_dato)}</td></tr>`;
+      ? `<td class="m-sig-cult">${escapeHtmlIdx(NOMBRE_CULTIVO[sn.cultivo] || sn.cultivo || '—')}</td>`
+      : `<td class="m-sig-fuente-td">${fuente}</td>`;
+    return `<tr><td>${variable}</td>${medio}<td class="m-sig-pill">${pillHtml(sn.senal, sn.fecha_dato)}</td></tr>`;
   }
   function ordenarSenales(senales) {
     return senales.slice().sort((a, b) =>
@@ -419,17 +434,23 @@
       : `${w.length} cultivos · ${fmtFechaCorta(w[0].fecha_dato)}`;
   }
 
-  function pintarSoja(precios, stats) {
+  // El "CONT" de precios_mercado es el Índice Continuo MtR de A3 (promedio de
+  // los futuros de los próximos 12 meses), no el disponible: el disponible
+  // físico es la pizarra Rosario (bcr_pizarra), que se muestra al lado.
+  function pintarSoja(precios, stats, pizarra) {
     const kpi = document.getElementById('mercado-kpi-soja'), sub = document.getElementById('mercado-kpi-soja-sub');
     if (!kpi) return;
     const p = (precios || []).find(r => String(r.producto).replace('Maíz','Maiz') === 'Soja');
-    if (!p) { kpi.textContent = '—'; if (sub) sub.textContent = 'Sin precio disponible'; return; }
+    if (!p) { kpi.textContent = '—'; if (sub) sub.textContent = 'Sin precio del índice continuo'; return; }
     kpi.textContent = 'USD ' + fmtAR(p.precio, 2);
+    kpi.title = 'Índice continuo MtR de MATba: promedio de los futuros de los próximos 12 meses. No es el disponible físico (pizarra Rosario).';
     const st = (stats || []).find(r => String(r.producto) === 'Soja');
-    const partes = ['MATba disponible'];
+    const partes = [];
     if (st && st.percentil != null) partes.push(`percentil 90d ${Math.round(Number(st.percentil))}%`);
-    if (st && st.var_vs_avg_pct != null) partes.push(`${Number(st.var_vs_avg_pct) >= 0 ? '+' : ''}${fmtAR(st.var_vs_avg_pct)}% vs promedio 90d`);
+    if (st && st.var_vs_avg_pct != null) partes.push(`${Number(st.var_vs_avg_pct) >= 0 ? '+' : ''}${fmtAR(st.var_vs_avg_pct)}% vs prom. 90d`);
     if (p.updated_at) partes.push(fmtFechaCorta(p.updated_at));
+    const pz = (pizarra || []).find(r => Number(r.precio_usd_bcr) > 0 && (!r.sin_cotizacion || r.es_estimado));
+    if (pz) partes.push(`pizarra Rosario USD ${fmtAR(pz.precio_usd_bcr, 2)}${pz.sin_cotizacion || pz.es_estimado ? ' estimativo' : ''} (${fmtFechaCorta(pz.fecha_mercado)})`);
     if (sub) sub.textContent = partes.join(' · ');
   }
 
@@ -461,16 +482,17 @@
     if (typeof sb === 'undefined' || !sb) return;
     _panoramaCargandose = true;
     try {
-      const [senRes, precRes, statRes] = await Promise.all([
+      const [senRes, precRes, statRes, pizRes] = await Promise.all([
         sb.from('mercado_senales').select('clave,grupo,cultivo,etiqueta,fuente,senal,valor,unidad,detalle,datos,fecha_dato,updated_at'),
         sb.from('precios_mercado').select('producto,precio,updated_at').eq('activo', true).eq('vencimiento', 'CONT'),
         sb.from('v_precios_estadisticas').select('producto,vencimiento,percentil,var_vs_avg_pct').eq('vencimiento', 'CONT'),
+        sb.from('bcr_pizarra').select('fecha_mercado,precio_usd_bcr,es_estimado,sin_cotizacion').eq('producto', 'Soja').order('fecha_mercado', { ascending: false }).limit(5),
       ]);
       if (senRes.error) console.warn('[panorama mercado] señales', senRes.error);
       const senales = Array.isArray(senRes.data) ? senRes.data : [];
       pintarRegimen(senales.find(s => s.clave === 'regimen_macro') || null);
       pintarFundamentos(senales);
-      pintarSoja(precRes.data, statRes.error ? [] : statRes.data);
+      pintarSoja(precRes.data, statRes.error ? [] : statRes.data, pizRes.error ? [] : pizRes.data);
       pintarTablas(senales);
     } catch (e) {
       console.warn('[panorama mercado]', e);
