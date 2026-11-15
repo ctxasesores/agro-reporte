@@ -337,7 +337,7 @@
     neutral:    ['m-pill-neutral', 'NEUTRAL'],
     sin_dato:   ['m-pill-neutral', 'SIN DATO'],
   };
-  const ORDEN_GRUPO = { macro: 0, fundamentos: 1, oferta: 2, especulativo: 3 };
+  const ORDEN_GRUPO = { macro: 0, fundamentos: 1, oferta: 2, demanda: 3, especulativo: 4, basis: 5 };
   const NOMBRE_CULTIVO = { Soja: 'Soja', Maiz: 'Maíz', Trigo: 'Trigo', Girasol: 'Girasol', Complejo: 'Complejo soja' };
 
   const fmtAR = (n, dec = 1) => Number(n).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
