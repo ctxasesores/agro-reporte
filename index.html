@@ -1109,6 +1109,23 @@
           #sec-asesor-ia .asesor-typing span:nth-child(2){animation-delay:.2s}
           #sec-asesor-ia .asesor-typing span:nth-child(3){animation-delay:.4s}
           @keyframes asesorBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+          /* Markdown de los Asesores IA (js/md-lite.js) — vale para Agricultura y Mercado */
+          .md-p{margin:0 0 8px}
+          .md-p:last-child{margin-bottom:0}
+          .md-h{font-weight:700;font-size:13.5px;color:var(--oro-l,#e8c45a);margin:12px 0 5px;letter-spacing:.2px}
+          .md-h:first-child{margin-top:0}
+          .md-hr{border:0;border-top:0.5px solid rgba(255,255,255,.14);margin:10px 0}
+          .md-li{display:flex;gap:7px;margin:2px 0 3px}
+          .md-li-2{padding-left:16px}
+          .md-bul{flex:none;min-width:12px;color:var(--oro-l,#e8c45a)}
+          .md-li-t{flex:1;min-width:0}
+          .md-tabla{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:6px 0 10px}
+          .md-tabla table{border-collapse:collapse;width:100%;font-size:12px}
+          .md-tabla th,.md-tabla td{padding:5px 8px;border-bottom:0.5px solid rgba(255,255,255,.08);text-align:left;vertical-align:top}
+          .md-tabla th{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gris,#8fa3b5);white-space:nowrap}
+          .md-tabla .md-num{text-align:right;white-space:nowrap}
+          .md-tabla .md-c{text-align:center}
+          .md-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace !important;font-size:11.5px;background:rgba(255,255,255,.06);padding:1px 4px;border-radius:4px}
         </style>
       </div>
 
@@ -1548,9 +1565,16 @@
           .mercado-tab{padding:7px 15px;border-radius:5px;font-size:12px;font-weight:600;color:var(--gris);cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;white-space:nowrap}
           .mercado-tab.active{background:var(--negro-m);color:var(--texto)}
           .mercado-tab:hover:not(.active){color:var(--texto)}
-          .mercado-sig-table{width:100%;border-collapse:collapse;font-size:12px}
+          .mercado-sig-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+          .mercado-sig-table th:nth-child(2){width:92px}
+          .mercado-sig-table th:nth-child(3){width:100px}
           .mercado-sig-table th{padding:7px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);border-bottom:0.5px solid rgba(255,255,255,.07)}
-          .mercado-sig-table td{padding:8px 10px;border-bottom:0.5px solid rgba(255,255,255,.04);vertical-align:middle}
+          .mercado-sig-table td{padding:8px 10px;border-bottom:0.5px solid rgba(255,255,255,.04);vertical-align:middle;overflow-wrap:break-word}
+          .mercado-sig-table td.m-sig-pill{padding-left:6px;padding-right:6px}
+          .m-sig-det{font-size:10.5px;color:var(--gris);line-height:1.45;margin-top:2px}
+          .m-sig-fuente{font-size:10px;color:var(--gris);opacity:.85;margin-top:3px}
+          .m-sig-cult{font-size:12px}
+          .m-sig-fuente-td{font-size:11px;color:var(--gris)}
           .mercado-sig-table tr:last-child td{border-bottom:none}
           .mercado-sig-table tr:hover td{background:rgba(255,255,255,.02)}
           .m-pill-bull{display:inline-block;background:rgba(30,153,112,.18);color:#2ab88a;border-radius:4px;font-size:10px;font-weight:700;padding:2px 7px;white-space:nowrap}
@@ -1580,7 +1604,7 @@
           <!-- KPIs -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="mercado-kpis-row">
             <div style="background:var(--negro-b);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px">
-              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Soja disponible MATba</div>
+              <div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Soja MATba · índice continuo</div>
               <div style="font-size:22px;font-weight:700;color:var(--oro-l)" id="mercado-kpi-soja">—</div>
               <div style="font-size:10px;color:var(--gris);margin-top:2px" id="mercado-kpi-soja-sub">Cargando…</div>
             </div>
@@ -1783,7 +1807,7 @@
 </div><!-- /appShell -->
 
 <script src="kpi-financiero.js?v=c99d3c5a08"></script>
-<script src="js/app.js?v=35e6bb74f3"></script>
+<script src="js/app.js?v=1509152e95"></script>
 
 <!-- MODAL MACRO -->
 <div id="macroModal" class="modal-overlay" style="display:none" onclick="cerrarMacroModal(event)">
@@ -1907,7 +1931,7 @@ function cerrarMacroModal(ev){
   // declarando el build viejo.
   // No se edita a mano: `node herramientas/versionar.js` sube juntos este
   // valor, version.json, CACHE_VERSION de sw.js y los ?v= de los archivos.
-  var CTX_BUILD = '20261115-1602';
+  var CTX_BUILD = '20261115-1745';
   var _ultimoChequeoBuild = 0;
 
   function ctxChequearBuild() {
@@ -2216,11 +2240,14 @@ window.addEventListener('hashchange', abrirRegistroDesdeHash);
 
 </script>
 
+<!-- ░░░ ASESOR CTX IA — Markdown de los chats (títulos, separadores, tablas) ░░░ -->
+<script src="js/md-lite.js?v=66f0505e73"></script>
+
 <!-- ░░░ ASESOR CTX IA — lógica (Agricultura) ░░░ -->
-<script src="js/asesor-ia-agricultura.js?v=bc5de0a030"></script>
+<script src="js/asesor-ia-agricultura.js?v=262f9f515c"></script>
 
 <!-- ░░░ ASESOR CTX IA — lógica (Mercado de Granos) ░░░ -->
-<script src="js/asesor-ia-mercado.js?v=7f43a6ffc1"></script>
+<script src="js/asesor-ia-mercado.js?v=118771f0d4"></script>
 
 <script src="js/opciones-a3.js?v=f77f771ccc"></script>
 

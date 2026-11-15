@@ -2586,7 +2586,7 @@ function buildTasasContentHTML(vencMap, useTNA, prod) {
         <th>VA/tn $</th>
       </tr></thead>
       <tbody>
-        <tr><td>Disponible</td>
+        <tr><td title="Índice continuo MtR: promedio de los futuros de los próximos 12 meses. No es el disponible físico (pizarra).">Índice continuo</td>
           <td style="color:var(--oro-l);font-weight:700">$${basePrice}</td>
           <td style="color:var(--oro-l);font-weight:700">${pesoBase != null ? '$'+f0(pesoBase) : '—'}</td>
           <td>—</td><td>—</td><td>—</td></tr>`;
@@ -2643,7 +2643,8 @@ function buildTasasContentHTML(vencMap, useTNA, prod) {
   }
 
   const heatVenc = [];
-  if (basePrice) heatVenc.push({ key:'CONT', label:'Disp', precioUsd:basePrice, precioArs:pesoBase, fecha:today });
+  // 'CONT' es el Índice Continuo MtR (promedio de futuros a 12 meses), no el disponible.
+  if (basePrice) heatVenc.push({ key:'CONT', label:'Índice', precioUsd:basePrice, precioArs:pesoBase, fecha:today });
   heatVenc.push(...vencList.map(v => ({ ...v, label: v.mes+'/'+String(v.anio).slice(2), precioUsd:v.precio, precioArs:pesoDe(v.precio, v.mes, v.anio) })));
   const moneda = _tasasMoneda;
   const pxDe = (x) => moneda === 'ars' ? x.precioArs : x.precioUsd;
