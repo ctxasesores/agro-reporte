@@ -968,7 +968,10 @@
         .eq('subyacente', 'DLR').eq('es_opcion', false),
       // Brecha entre el dólar que se compra (MEP) y el que liquida un contrato
       // dólar linked (mayorista / A3500). Ver `brecha` en calcular().
-      sb.from('bcra_series').select('codigo,id,bcra_latest_valores(valor,fecha)')
+      // Se lee la vista directo: el embed bcra_series → bcra_latest_valores
+      // daba 400 (una vista no tiene FK para el join) y la brecha nunca se
+      // calculaba.
+      sb.from('bcra_latest_valores').select('codigo,valor,fecha')
         .in('codigo', ['dolar_mep', 'tc_mayorista']),
     ]);
     const err = [cfg, per, lin, bie].find(r => r && r.error);
@@ -980,9 +983,8 @@
     let brecha = null, brechaFecha = null, brechaFuente = null;
     try {
       const fx = {};
-      (((bcra && bcra.data) || [])).forEach(s => {
-        const v = Array.isArray(s.bcra_latest_valores) ? s.bcra_latest_valores[0] : s.bcra_latest_valores;
-        if (v && v.valor != null) fx[s.codigo] = { valor: Number(v.valor), fecha: v.fecha };
+      (((bcra && bcra.data) || [])).forEach(v => {
+        if (v && v.valor != null) fx[v.codigo] = { valor: Number(v.valor), fecha: v.fecha };
       });
       if (fx.dolar_mep && fx.tc_mayorista && fx.tc_mayorista.valor > 0) {
         brecha = fx.dolar_mep.valor / fx.tc_mayorista.valor;
