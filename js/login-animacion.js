@@ -23,8 +23,8 @@
    el tablero abierto (al revés de como los armaron), se juntan en el
    centro y se van.
 
-   Referencia: el prototipo aprobado (login-punteros-prototipo.html) y
-   su documento de especificación. Valores y tiempos salen de ahí.
+   Referencia: docs/animacion-login-punteros.md (especificación completa:
+   valores, tiempos y comportamiento). Si se cambia algo acá, actualizarla.
 
    QUÉ NO HACE:
    - No toca la autenticación. doLogin y doRegister siguen siendo los
@@ -35,6 +35,13 @@
      error se muestra como siempre.
    - Con prefers-reduced-motion no se crea nada (el <head> ni siquiera
      pone la clase ctx-anim) y el login se ve como antes.
+
+   Elementos iguales: si en una tanda hay recuadros gemelos (misma
+   etiqueta, mismas clases salvo las de estado y mismo tamaño ±3 px), solo
+   el primero se dibuja. Los demás salen de una copia: un puntero lo agarra
+   por el centro y arrastra un fantasma hasta el lugar del gemelo. Al
+   desarmar, cada copia vuelve arrastrada hasta fundirse con su original,
+   y recién después se borra el original.
 
    Elementos dibujables: los que tienen data-b="box" (recuadros) o
    data-b="text" (textos) en index.html. Los IDs no cambian.
@@ -53,12 +60,12 @@
   const HIDDEN = 'inset(0 100% 0 0)';
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   /* Ritmo de toda la animación: duraciones de la especificación × RITMO.
-     0.4116 = 0,343 × 1,2: tres veces un 30 % más rápida y después un 20 %
-     más lenta. Lo usan todos los tweens (dibujar y borrar), las pausas de la
+     0.4939 = 0,343 × 1,2 × 1,2: tres veces un 30 % más rápida y después dos
+     veces un 20 % más lenta. Lo usan todos los tweens (dibujar y borrar), las pausas de la
      coreografía, el escalonado de los punteros y los desvanecidos por frame,
      en el login, la barra lateral y los tableros (las transiciones CSS
      equivalentes están en css/login-animacion.css). */
-  const RITMO = 0.4116;
+  const RITMO = 0.4939;
   const pausa = ms => sleep(ms * RITMO);
   // Dibujar va de a una pieza por vez: sus tiempos van un 30 % más rápido
   // que el resto (borrar, pausas, desvanecidos siguen con RITMO).
@@ -139,9 +146,30 @@
      [0, y1, x0, y1], [x0, y1, x0, H]].forEach(([a, b, c, d]) => { ctx.moveTo(a, b); ctx.lineTo(c, d); });
     ctx.stroke();
   }
+  // Fantasma de una copia: caja del gemelo (su fondo y su contorno) que viaja
+  // con el puntero. Al copiar lleva las guías de sus 4 vértices; al devolver
+  // la copia, no (borrar no muestra guías).
+  const ghosts = [];
+  function drawGhost(g) {
+    const x0 = g.x, y0 = g.y, x1 = g.x + g.w, y1 = g.y + g.h;
+    ctx.beginPath(); ctx.roundRect(x0, y0, g.w, g.h, g.radius);
+    if (g.fill) { ctx.globalAlpha = Math.max(0, g.a); ctx.fillStyle = g.fill; ctx.fill(); }
+    ctx.globalAlpha = Math.max(0, g.a); ctx.strokeStyle = g.color; ctx.lineWidth = 1.5; ctx.stroke();
+    if (g.ga <= 0) return;
+    ctx.globalAlpha = g.ga * 0.85; ctx.lineWidth = 2;
+    ctx.beginPath();
+    [[0, y0, x0, y0], [x0, 0, x0, y0], [x1, y0, W, y0], [x1, 0, x1, y0],
+     [x1, y1, W, y1], [x1, y1, x1, H], [0, y1, x0, y1], [x0, y1, x0, H]].forEach(([a, b, c, d]) => { ctx.moveTo(a, b); ctx.lineTo(c, d); });
+    ctx.stroke();
+  }
   function frame() {
     if (!vivo) { ctx.clearRect(0, 0, W, H); return; }
     ctx.clearRect(0, 0, W, H);
+    for (let i = ghosts.length - 1; i >= 0; i--) {
+      const g = ghosts[i]; if (g.fading) { g.a -= 0.06 / RITMO; g.ga -= 0.07 / RITMO; }
+      if (g.a <= 0 && g.ga <= 0) { ghosts.splice(i, 1); continue; }
+      drawGhost(g);
+    }
     for (let i = outlines.length - 1; i >= 0; i--) {
       const o = outlines[i]; if (o.fading) { o.a -= 0.03 / RITMO; o.ga -= 0.045 / RITMO; }
       if (o.a <= 0 && o.ga <= 0) { outlines.splice(i, 1); continue; }
@@ -193,12 +221,19 @@
   // campos dentro de la tarjeta) espera a que su contenedor termine: hasta
   // entonces el contenedor la tapa. (Borrar sigue siendo todo en paralelo.)
   const EN_PARALELO = 3;
-  function enOrden(lista, fn, previos = []) {
+  function ordenLectura(lista) {
     const pos = new Map(lista.map(n => [n, rect(n)]));
-    const orden = [...lista].sort((a, b) => {
+    return [...lista].sort((a, b) => {
       const ra = pos.get(a), rb = pos.get(b);
       return Math.abs(ra.top - rb.top) > 4 ? ra.top - rb.top : ra.left - rb.left;
     });
+  }
+  // `fn(c, n, origen)`: si la pieza tiene un gemelo anterior en la lista,
+  // `origen` es ese gemelo y la pieza sale de una copia (además espera a que
+  // el original esté terminado).
+  function enOrden(lista, fn, previos = []) {
+    const orden = ordenLectura(lista);
+    const org = origenes(orden);
     // `previos`: otra cadena ya en marcha (la barra lateral); esta sigue su
     // ventana, así nunca hay más de EN_PARALELO punteros dibujando.
     const trabajos = [];
@@ -209,7 +244,9 @@
       for (let k = i - 1; k >= 0; k--) {
         if (orden[k].contains(n)) { if (!deps.includes(trabajos[k])) deps.push(trabajos[k]); break; }
       }
-      trabajos.push(job(c => fn(c, n), deps));
+      const src = org.get(n);
+      if (src) { const js = trabajos[orden.indexOf(src)]; if (js && !deps.includes(js)) deps.push(js); }
+      trabajos.push(job(c => fn(c, n, src), deps));
     });
     return trabajos;
   }
@@ -294,7 +331,8 @@
   }
   const kindOf = e => e.getAttribute('data-b') === 'box' ? 'box' : 'text';
 
-  async function build(c, e) {
+  async function build(c, e, origen) {
+    if (origen) return copiar(c, origen, e);
     const kind = kindOf(e), r = () => rect(e);
     await c.go(() => ({ x: r().left, y: r().top }), null, ARMADO);
     let o = null;
@@ -339,6 +377,91 @@
       });
       o.fading = true;
     }
+  }
+
+  /* ---------- copiar elementos iguales ---------- */
+  // Las clases de estado no cuentan: una pestaña o un ítem activo sigue
+  // siendo gemelo de los demás.
+  const ESTADO = /^(active|on|open|collapsed|busy|ctx-.*)$/;
+  const firma = e => e.tagName + '|' + [...e.classList].filter(k => !ESTADO.test(k)).sort().join('.');
+  function gemelos(a, b) {
+    if (a === b || kindOf(a) !== 'box' || kindOf(b) !== 'box' || firma(a) !== firma(b)) return false;
+    if (a.contains(b) || b.contains(a)) return false;
+    const ra = rect(a), rb = rect(b);
+    return ra.width > 8 && ra.height > 8 && Math.abs(ra.width - rb.width) <= 3 && Math.abs(ra.height - rb.height) <= 3;
+  }
+  // Para una lista en orden de lectura: cada pieza → el primer gemelo anterior
+  // que no es copia (el original de su grupo). Las demás no figuran.
+  function origenes(orden) {
+    const m = new Map();
+    orden.forEach((n, i) => {
+      for (let k = 0; k < i; k++) if (!m.has(orden[k]) && gemelos(orden[k], n)) { m.set(n, orden[k]); break; }
+    });
+    return m;
+  }
+  const centroDe = e => { const r = rect(e); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+  const radioDe = e => parseFloat(estilo(e).borderTopLeftRadius) || 0;
+  // El fantasma toma los colores del gemelo destino: al soltarlo, la caja
+  // coincide con el elemento que aparece (una pestaña inactiva, por ejemplo).
+  function fantasma(desde, colores, conGuias) {
+    const r = rect(desde), bg = estilo(colores).backgroundColor;
+    const g = { x: r.left, y: r.top, w: r.width, h: r.height, radius: radioDe(colores),
+      color: finalColor(colores), fill: alphaOf(bg) > 0.02 ? bg : null, a: 1, ga: conGuias ? 1 : 0 };
+    ghosts.push(g); return g;
+  }
+  function arrastrar(c, g, desde, hasta, dur) {
+    return tween(dur, p => {
+      const a = rect(desde), b = rect(hasta), e = ease(p);
+      g.x = a.left + (b.left - a.left) * e; g.y = a.top + (b.top - a.top) * e;
+      g.w = a.width + (b.width - a.width) * e; g.h = a.height + (b.height - a.height) * e;
+      c.set(g.x + g.w / 2, g.y + g.h / 2);
+    });
+  }
+  const tramo = (a, b) => { const ra = rect(a), rb = rect(b); return Math.hypot(rb.left - ra.left, rb.top - ra.top); };
+  const clic = (c, e) => ripples.push({ ...centroDe(e), r: 2, a: 0.8, color: c.color });
+  // Copiar: agarra el original por el centro, arrastra un fantasma hasta el
+  // lugar del gemelo y lo suelta; ahí aparece el gemelo con un barrido rápido.
+  async function copiar(c, src, dst) {
+    await c.go(() => centroDe(src), null, ARMADO);
+    clic(c, src);
+    const g = fantasma(src, dst, true);
+    await pausa(140);
+    await arrastrar(c, g, src, dst, clamp(tramo(src, dst) * 1.3, 480, 1000) * ARMADO);
+    clic(c, dst);
+    await tween(260 * ARMADO, p => {
+      dst.style.clipPath = diag(p * 2);
+      c.set(...front(rect(dst), p * 2, 0.5));
+    });
+    dst.style.clipPath = 'none';
+    g.fading = true;
+  }
+  // Devolver una copia: la agarra, la esconde y la arrastra de vuelta hasta
+  // fundirse con su original. Sin guías, como todo lo que se borra.
+  async function devolver(c, dst, src) {
+    c.borrando = true;
+    try {
+      await c.go(() => centroDe(dst));
+      clic(c, dst);
+      const g = fantasma(dst, dst, false);
+      await tween(220, p => { dst.style.clipPath = diag(2 - p * 2); });
+      dst.style.clipPath = HIDDEN;
+      await arrastrar(c, g, dst, src, clamp(tramo(src, dst) * 1.2, 420, 900));
+      clic(c, src);
+      g.fading = true;
+    } finally { c.borrando = false; }
+  }
+  // Desarmar una tanda: las copias vuelven a su original (en paralelo) y cada
+  // original se borra recién cuando volvieron todas sus copias. `deps` se suma
+  // a todos los trabajos.
+  function desarmarTanda(lista, deps = []) {
+    const orden = ordenLectura(lista), org = origenes(orden), vuelven = new Map(), trabajos = [];
+    orden.forEach(n => {
+      const src = org.get(n); if (!src) return;
+      const j = job(c => devolver(c, n, src), deps);
+      trabajos.push(j); vuelven.set(src, [...(vuelven.get(src) || []), j]);
+    });
+    orden.filter(n => !org.has(n)).reverse().forEach(n => trabajos.push(job(c => erase(c, n), [...deps, ...(vuelven.get(n) || [])])));
+    return trabajos;
   }
 
   /* ---------- elementos de la pantalla ---------- */
@@ -450,7 +573,7 @@
     // Se borra el subtítulo y lo que se ve del pane actual; recién después se
     // cambia de pane (lo hace el switchAuthMode original) y se dibuja el nuevo.
     const sub = $('authSubtitle');
-    const salen = [sub, ...dePane(paneActivo()).filter(visible)].map(n => job(c => erase(c, n)));
+    const salen = desarmarTanda([sub, ...dePane(paneActivo()).filter(visible)]);
     await allDone(salen);
     if (!vivo) return;
     originales.switchAuthMode(modo);
@@ -505,7 +628,7 @@
   async function salir() {
     if (!vivo || estado === 'fin') return;
     estado = 'saliendo'; lock(true);
-    const kids = hijosVisibles().reverse().map(n => job(c => erase(c, n)));
+    const kids = desarmarTanda(hijosVisibles());
     const jc = job(c => erase(c, el.card), kids);
     const top = [el.badge, el.word].map(n => job(c => erase(c, n), [jc]));
     await allDone([...kids, jc, ...top]);
@@ -618,16 +741,16 @@
       const dibujada = n => estilo(n).clipPath === 'none';
       const logo = sb.querySelector('.brand-row > svg');
       const piezas = [...sb.querySelectorAll('[data-b]')].filter(n => visible(n) && rect(n).width > 2 && dibujada(n)).reverse();
-      const kids = piezas.map(n => job(c => erase(c, n)));
+      const kids = desarmarTanda(piezas);
       const jc = dibujada(sb) ? job(c => erase(c, sb), kids) : null;
       // Tablero: se desarman sus bloques (de abajo hacia arriba) y al final la
       // franja del encabezado, a la vez que la barra lateral.
       const vDib = vPiezas.filter(dibujada);
       vDib.forEach(n => { n.setAttribute('data-b', tieneCaja(n) ? 'box' : 'text'); if (esContenedor(n)) n.setAttribute('data-c', '#7dbaf8'); });
-      const vHijos = vDib.filter(n => !esContenedor(n)).reverse().map(n => job(c => erase(c, n)));
+      const vHijos = desarmarTanda(vDib.filter(n => !esContenedor(n)));
       const vCont = vDib.filter(esContenedor).map(n => job(c => erase(c, n), vHijos));
       await allDone([...kids, ...vHijos]);
-      if (logo) { logo.style.transition = 'opacity .26s ease'; logo.style.opacity = '0'; }
+      if (logo) { logo.style.transition = 'opacity .31s ease'; logo.style.opacity = '0'; }
       await allDone([...(jc ? [jc] : []), ...vCont]);
       gather = 'center';
       await pausa(600);
@@ -716,7 +839,7 @@
     preparadas.forEach(n => { n.style.clipPath = ''; n.removeAttribute('data-vpz'); n.removeAttribute('data-b'); n.removeAttribute('data-c'); });
     preparadas = [];
   }
-  const dibujarPieza = async (c, n) => { await build(c, n); graficos(n, 'update'); };
+  const dibujarPieza = async (c, n, origen) => { await build(c, n, origen); graficos(n, 'update'); };
   // Tapa las piezas (cada una con su recorte) y destapa el tablero.
   function prepararPiezas(piezas) {
     piezas.forEach(n => {
