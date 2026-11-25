@@ -419,19 +419,27 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .psets-btn:hover { border-color:var(--oro); color:var(--texto); }
 .psets-btn.on { background:var(--negro-b); color:var(--oro-l); border-color:var(--oro); font-weight:700; }
 #psets-container { min-height:300px; }
-#psets-container svg { display:block; width:100%; height:auto; }
+#psets-container svg { display:block; width:100%; }
 .psets-detalle { min-height:17px; margin-top:4px; font-size:11.5px; color:var(--oro-l); font-variant-numeric:tabular-nums; }
 
 /* ── POSICIONES: BANDA DE CONTEXTO ── */
 .pos-contexto { margin-top:2px; }
-.pos-contexto svg { display:block; width:100%; height:auto; }
+.pos-contexto svg { display:block; width:100%; }
 .pos-brush .selection { shape-rendering:crispEdges; }
 .pos-brush .overlay { cursor:crosshair; }
 
 /* ── TASAS: CUADRO Y MATRIZ LADO A LADO ── */
-.tasas-dos-col { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(0,1fr); gap:18px; align-items:start; }
+.tasas-dos-col { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.12fr); gap:18px; align-items:stretch; }
 .tasas-dos-col > div { min-width:0; }
 .tasas-dos-col .heatmap-section { margin-top:0; }
+/* La matriz se estira hasta el alto del cuadro: las filas reparten el sobrante
+   en vez de dejar un hueco debajo. */
+.tasas-col-matriz { display:flex; flex-direction:column; }
+.tasas-col-matriz .heatmap-section { display:flex; flex-direction:column; flex:1; min-height:0; }
+.tasas-col-matriz .heatmap-scroll { flex:1; display:flex; align-items:stretch; }
+.tasas-col-matriz .heatmap-table { height:100%; font-size:10px; }
+.tasas-col-matriz .heatmap-table th { font-size:10px; padding:4px 7px; }
+.tasas-col-matriz .heatmap-table td { font-size:11px; padding:6px 8px; min-width:44px; }
 
 /* ── PRECIOS ── */
 .precio-row { display:flex; justify-content:space-between; align-items:center; padding:6px 14px; border-bottom:1px solid var(--crema-dd); }
@@ -606,7 +614,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   .topbar-mobile { display:flex; }
   .dashboard-actions { padding:10px 16px 0; }
   .two-col { grid-template-columns:1fr; }
-  .tasas-dos-col { grid-template-columns:1fr; }
+  .tasas-dos-col { grid-template-columns:1fr; align-items:start; }
+  .tasas-col-matriz .heatmap-table { height:auto; }
   .tasas-dos-col .heatmap-section { margin-top:10px; }
   .account-grid,.account-mini { grid-template-columns:1fr; }
   .page-body { padding:16px; }
