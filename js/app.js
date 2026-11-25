@@ -2686,7 +2686,14 @@ function buildTasasContentHTML(vencMap, useTNA, prod) {
     heatHTML += '</tbody></table></div></div>';
   }
 
-  return vaMaxHTML + tableHTML + heatHTML;
+  // La matriz va al lado del cuadro, no debajo: ahora la sección ocupa todo el
+  // ancho, así que entran las dos cosas de un vistazo. Sin matriz (producto sin
+  // vencimientos comparables) la columna izquierda se queda con todo el ancho.
+  if (!heatHTML) return vaMaxHTML + tableHTML;
+  return '<div class="tasas-dos-col">'
+       +   '<div class="tasas-col-cuadro">' + vaMaxHTML + tableHTML + '</div>'
+       +   '<div class="tasas-col-matriz">' + heatHTML + '</div>'
+       + '</div>';
 }
 
 function renderTasas() {
@@ -2768,7 +2775,7 @@ function renderComposicion() {
   if (kpiBody) kpiBody.innerHTML = kpiRowsHTML;
 
   // Sunburst
-  renderSunburst();
+  renderPsets();
 }
 
 function setKpiCampaignFilter(value) {
@@ -2812,275 +2819,226 @@ function calcDelta(longTn, shortTn) {
   return 0;
 }
 
-function renderPie() { /* stub */ }
 
-// ══ COMPOSICIÓN — DRILL-DOWN DONUT ══
-const SB_PALETTES = {
-  'Soja':      ['#2a5f84','#3d7aa8','#5b9ec9','#8bbedd','#b8d8ef'],
-  'Maiz':      ['#236637','#2e8248','#3aaa60','#5ccc82','#90e8aa'],
-  'Trigo':     ['#7a5010','#a87c0e','#d4a017','#f0ca60','#f8e4a0'],
-  'Girasol':   ['#7a2222','#a83030','#d94040','#f08080','#f8b0b0'],
-  'Sorgo':     ['#3d2880','#5535aa','#7b5bd4','#a98df0','#ccb8f8'],
-  'Cebada':    ['#206060','#267a7a','#2ca0a0','#4cc4c4','#88dede'],
-  'Realizado': ['#1e4466','#2a5f84','#3d7aa8','#5b9ec9','#8bbedd'],
-  'Pendiente': ['#a87c0e','#d4a017','#f0ca60','#f8e4a0','#fcefc0'],
-};
+// ══ COMPOSICIÓN — PARALLEL SETS (producto → estado → instrumento) ══
+// Reemplaza al anillo con drill-down: antes había que entrar nivel por nivel y
+// solo se veía una rama por vez. Acá los tres niveles salen juntos y se ve de
+// dónde a dónde va cada peso.
+//
+// El criterio de Realizado/Pendiente es el mismo de siempre: lo decide el signo
+// de calcularL(op, pM) —negativo realiza, positivo queda pendiente, cero no
+// cuenta—, así que los totales coinciden con los KPIs de arriba.
 const SB_L0_COLORS = {'Soja':'#3d7aa8','Maiz':'#3aaa60','Trigo':'#d4a017','Girasol':'#d94040','Sorgo':'#7b5bd4','Cebada':'#2ca0a0'};
 const SB_L1_COLORS = {'Realizado':'#2a5f84','Pendiente':'#d4a017'};
+const SB_L2_COLORS = {
+  'Plan de Siembra':'#6b8fb5','Stock':'#4e9b8f','Precio':'#c98a3a','Forward':'#9a7fc4',
+  'Futuro':'#5aa0c4','Call':'#c45a7a','Put':'#7a9a4e','PAF':'#8a8f99','FIX':'#b07f5a'
+};
+const PS_COLORES = { texto:'#dce8f5', tenue:'#5b7f9c' };
 
-let _sb = null;
+let _psetsMedida = 'usd';
 
-// Fixed dimensions — set once, reused always
-const SB_W = 380, SB_H = 280, SB_LEGEND_W = 140;
-const SB_CHART_SZ = SB_W - SB_LEGEND_W;   // 240
-const SB_R  = SB_CHART_SZ / 2 - 8;        // outer radius
-const SB_Ri = SB_R * 0.68;                 // inner radius — anillo delgado
-
-function buildLevel0() {
-  const items = [];
-  PRODUCTOS.forEach(prod => {
-    let val = 0;
-    getFilteredOps().forEach(op => {
-      if (op.producto !== prod) return;
-      const pM = getPrecioValuacionOp(op);
-      const L  = calcularL(op, pM); if (L === 0) return;
-      const pEf = getPrecioEfectivo(op, pM); if (!pEf) return;
-      val += Math.abs(pEf * op.volumen);
-    });
-    if (val > 0) items.push({ name:prod, value:val, hasChildren:true });
-  });
-  return items;
+function setPsetsMedida(m) {
+  _psetsMedida = (m === 'tn') ? 'tn' : 'usd';
+  document.querySelectorAll('[data-psets-medida]').forEach(b =>
+    b.classList.toggle('on', b.dataset.psetsMedida === _psetsMedida));
+  renderPsets();
 }
-function buildLevel1(prod) {
-  const g = {Realizado:0, Pendiente:0};
+
+// Una fila por operación que mueve algo, con sus tres coordenadas y sus dos
+// medidas. Es el mismo recorrido que hacían buildLevel0/1/2, en una pasada.
+function buildFlujosComposicion() {
+  const filas = [];
   getFilteredOps().forEach(op => {
-    if (op.producto !== prod) return;
     const pM = getPrecioValuacionOp(op);
     const L  = calcularL(op, pM); if (L === 0) return;
     const pEf = getPrecioEfectivo(op, pM); if (!pEf) return;
-    const val = Math.abs(pEf * op.volumen);
-    if (L < 0) g.Realizado += val; else g.Pendiente += val;
+    filas.push({
+      producto:    op.producto || 'Otro',
+      estado:      L < 0 ? 'Realizado' : 'Pendiente',
+      instrumento: op.tipo || 'Otro',
+      usd: Math.abs(pEf * op.volumen),
+      tn:  Math.abs(op.volumen || 0)
+    });
   });
-  return Object.entries(g).filter(([,v])=>v>0)
-    .map(([name,value])=>({name,value,hasChildren:true,_prod:prod}));
+  return filas;
 }
+
+// El panel móvil (js/movil-agricultura.js) muestra la composición como lista
+// con drill-down, no como gráfico, y pide los niveles por separado. Se queda con
+// esa interfaz, pero ahora los tres niveles salen de buildFlujosComposicion(),
+// así la regla de Realizado/Pendiente se define una sola vez.
+function buildLevel0() {
+  const filas = buildFlujosComposicion();
+  return PRODUCTOS.map(prod => ({
+    name: prod,
+    value: filas.filter(f => f.producto === prod).reduce((s, f) => s + f.usd, 0),
+    hasChildren: true
+  })).filter(i => i.value > 0);
+}
+
+function buildLevel1(prod) {
+  const filas = buildFlujosComposicion().filter(f => f.producto === prod);
+  return ['Realizado', 'Pendiente'].map(estado => ({
+    name: estado,
+    value: filas.filter(f => f.estado === estado).reduce((s, f) => s + f.usd, 0),
+    hasChildren: true,
+    _prod: prod
+  })).filter(i => i.value > 0);
+}
+
 function buildLevel2(prod, slot) {
   const tipos = {};
-  getFilteredOps().forEach(op => {
-    if (op.producto !== prod) return;
-    const pM = getPrecioValuacionOp(op);
-    const L  = calcularL(op, pM); if (L === 0) return;
-    const pEf = getPrecioEfectivo(op, pM); if (!pEf) return;
-    const val    = Math.abs(pEf * op.volumen);
-    const opSlot = L < 0 ? 'Realizado' : 'Pendiente';
-    if (opSlot !== slot) return;
-    tipos[op.tipo||'Otro'] = (tipos[op.tipo||'Otro']||0) + val;
+  buildFlujosComposicion().forEach(f => {
+    if (f.producto !== prod || f.estado !== slot) return;
+    tipos[f.instrumento] = (tipos[f.instrumento] || 0) + f.usd;
   });
-  return Object.entries(tipos).filter(([,v])=>v>0)
-    .map(([name,value])=>({name,value,hasChildren:false}));
-}
-function sbItemColor(item, level, index) {
-  if (level === 0) return SB_L0_COLORS[item.name] || '#5b9ec9';
-  if (level === 1) return SB_L1_COLORS[item.name] || '#5b9ec9';
-  const prod = (_sb && _sb.parentChain[0]) || 'Soja';
-  const pal  = SB_PALETTES[prod] || SB_PALETTES['Soja'];
-  return pal[index % pal.length];
+  return Object.entries(tipos).filter(([, v]) => v > 0)
+    .map(([name, value]) => ({ name, value, hasChildren: false }));
 }
 
-function renderSunburst() {
-  // Use requestAnimationFrame to ensure container is laid out
+function renderPsets() {
   requestAnimationFrame(() => {
-    const container = document.getElementById('sunburst-container');
-    if (!container) return;
-    const items = buildLevel0();
-    if (!items.length) {
-      container.innerHTML = '<div class="empty-state">Sin operaciones</div>';
-      return;
+    const cont = document.getElementById('psets-container');
+    if (!cont) return;
+    cont.innerHTML = '';
+    const det = document.getElementById('psets-detalle');
+    if (det) det.textContent = '';
+
+    const filas = buildFlujosComposicion();
+    if (!filas.length) { cont.innerHTML = '<div class="empty-state">Sin operaciones</div>'; return; }
+    if (typeof d3 === 'undefined' || typeof d3.sankey !== 'function') {
+      cont.innerHTML = '<div class="empty-state">No se pudo cargar el gráfico de composición</div>'; return;
     }
-    _sb = { level:0, parentChain:[] };
-    _drawDonut(container, items, 0, [], false);
+
+    const val = f => _psetsMedida === 'usd' ? f.usd : f.tn;
+    const fmt = v => _psetsMedida === 'usd' ? fmtUSD(v) : (fmtTn(Math.round(v)) + ' tn');
+    const total = filas.reduce((s,f) => s + val(f), 0);
+    if (!(total > 0)) { cont.innerHTML = '<div class="empty-state">Sin valores para mostrar</div>'; return; }
+
+    // Orden por peso dentro de cada columna; los estados en orden fijo.
+    const porPeso = campo => {
+      const m = new Map();
+      filas.forEach(f => m.set(f[campo], (m.get(f[campo]) || 0) + val(f)));
+      return [...m.entries()].sort((a,b) => b[1] - a[1]).map(d => d[0]);
+    };
+    const cols = [porPeso('producto'), ['Realizado','Pendiente'], porPeso('instrumento')];
+
+    const nodos = [], idx = new Map();
+    const push = (col, nombre) => {
+      const id = col + '|' + nombre;
+      if (!idx.has(id)) { idx.set(id, nodos.length); nodos.push({ id, col, nombre }); }
+      return idx.get(id);
+    };
+    cols.forEach((lista, c) => lista.forEach(nom => push(c, nom)));
+
+    const agg = new Map();
+    filas.forEach(f => {
+      const v = val(f); if (!(v > 0)) return;
+      [[push(0,f.producto), push(1,f.estado)], [push(1,f.estado), push(2,f.instrumento)]].forEach(([s,t]) => {
+        const k = s + '>' + t;
+        const prev = agg.get(k) || { source:s, target:t, value:0 };
+        prev.value += v;
+        agg.set(k, prev);
+      });
+    });
+    const enlaces = [...agg.values()].filter(l => l.value > 0);
+    if (!enlaces.length) { cont.innerHTML = '<div class="empty-state">Sin valores para mostrar</div>'; return; }
+
+    const W = Math.max(560, cont.clientWidth || 900);
+    const nInst = cols[2].length;
+    const H = Math.max(300, Math.min(520, 70 + nInst * 46));
+    const M = { t:24, r:4, b:10, l:4 };
+
+    let g;
+    try {
+      g = d3.sankey()
+        .nodeWidth(13).nodePadding(13).nodeSort(null).linkSort(null)
+        .extent([[M.l, M.t], [W - M.r, H - M.b]])
+        ({ nodes: nodos.map(d => ({...d})), links: enlaces.map(d => ({...d})) });
+    } catch (e) {
+      cont.innerHTML = '<div class="empty-state">No se pudo armar el diagrama</div>'; return;
+    }
+
+    const svg = d3.select(cont).append('svg')
+      .attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H)
+      .attr('role','img')
+      .attr('aria-label','Composición de la cartera: producto, estado e instrumento');
+
+    ['Producto','Estado','Instrumento'].forEach((t,i) => {
+      const xs = g.nodes.filter(n => n.col === i);
+      if (!xs.length) return;
+      svg.append('text')
+        .attr('x', i === 2 ? xs[0].x1 : xs[0].x0).attr('y', 12)
+        .attr('text-anchor', i === 2 ? 'end' : 'start')
+        .attr('fill', PS_COLORES.tenue).attr('font-size', 9.5).attr('font-weight', 700)
+        .attr('letter-spacing', .9).text(t.toUpperCase());
+    });
+
+    const colorNodo = n => n.col === 0 ? (SB_L0_COLORS[n.nombre] || '#5b9ec9')
+                         : n.col === 1 ? (SB_L1_COLORS[n.nombre] || '#5b9ec9')
+                         : (SB_L2_COLORS[n.nombre] || '#5b9ec9');
+
+    const det2 = () => document.getElementById('psets-detalle');
+    const decir = t => { const d = det2(); if (d) d.textContent = t; };
+    const limpiar = () => {
+      cintas.attr('stroke-opacity', .42);
+      cajas.attr('fill-opacity', .95);
+      decir('');
+    };
+
+    const cintas = svg.append('g').attr('fill','none')
+      .selectAll('path').data(g.links).join('path')
+        .attr('d', d3.sankeyLinkHorizontal())
+        .attr('stroke', d => colorNodo(d.source))
+        .attr('stroke-width', d => Math.max(1, d.width))
+        .attr('stroke-opacity', .42)
+        .style('cursor','pointer');
+
+    const cajas = svg.append('g')
+      .selectAll('rect').data(g.nodes).join('rect')
+        .attr('x', d => d.x0).attr('y', d => d.y0)
+        .attr('width', d => d.x1 - d.x0)
+        .attr('height', d => Math.max(1, d.y1 - d.y0))
+        .attr('fill', colorNodo).attr('fill-opacity', .95).attr('rx', 2)
+        .style('cursor','pointer');
+
+    svg.append('g').attr('font-size', 11).attr('font-family',"'DM Sans',sans-serif")
+      .selectAll('text').data(g.nodes).join('text')
+        .attr('x', d => d.col === 2 ? d.x0 - 7 : d.x1 + 7)
+        .attr('y', d => (d.y0 + d.y1) / 2).attr('dy','0.34em')
+        .attr('text-anchor', d => d.col === 2 ? 'end' : 'start')
+        .attr('fill', PS_COLORES.texto).attr('pointer-events','none')
+        .text(d => d.nombre)
+      .append('tspan')
+        .attr('fill', PS_COLORES.tenue).attr('font-size', 9.5)
+        .text(d => '  ' + (d.value / total * 100).toFixed(1) + '%');
+
+    cintas.on('mouseenter', function(e,d) {
+      cintas.attr('stroke-opacity', x => x === d ? .85 : .08);
+      cajas.attr('fill-opacity', n => (n === d.source || n === d.target) ? 1 : .22);
+      decir(d.source.nombre + ' → ' + d.target.nombre + ': ' + fmt(d.value) +
+            ' · ' + (d.value / total * 100).toFixed(1) + '% de la cartera');
+    }).on('mouseleave', limpiar);
+
+    cajas.on('mouseenter', function(e,d) {
+      const tocadas = new Set();
+      const caminar = (n, dir) => g.links.forEach(l => {
+        if (dir === 'out' && l.source === n && !tocadas.has(l)) { tocadas.add(l); caminar(l.target,'out'); }
+        if (dir === 'in'  && l.target === n && !tocadas.has(l)) { tocadas.add(l); caminar(l.source,'in'); }
+      });
+      caminar(d,'out'); caminar(d,'in');
+      cintas.attr('stroke-opacity', l => tocadas.has(l) ? .8 : .06);
+      const vivos = new Set([d]);
+      tocadas.forEach(l => { vivos.add(l.source); vivos.add(l.target); });
+      cajas.attr('fill-opacity', n => vivos.has(n) ? 1 : .2);
+      decir(d.nombre + ': ' + fmt(d.value) + ' · ' + (d.value / total * 100).toFixed(1) + '% de la cartera');
+    }).on('mouseleave', limpiar);
+
+    svg.on('mouseleave', limpiar);
   });
 }
 
-function _drawDonut(container, items, level, parentChain, animate) {
-  _sb = { level, parentChain, items };
-
-  // Breadcrumb & back btn
-  const crumbs = ['Cartera', ...parentChain];
-  const bc  = document.getElementById('sunburst-breadcrumb');
-  const btn = document.getElementById('sunburst-back');
-  if (bc)  bc.textContent = crumbs.join(' › ');
-  if (btn) btn.style.visibility = level > 0 ? 'visible' : 'hidden';
-
-  const total = items.reduce((s,d) => s+d.value, 0);
-
-  // Fixed arc generators
-  const arcGen = d3.arc().innerRadius(SB_Ri).outerRadius(SB_R).cornerRadius(3);
-  const arcBig = d3.arc().innerRadius(SB_Ri).outerRadius(SB_R + 7).cornerRadius(3);
-
-  const pie = d3.pie().value(d=>d.value).sort(null).padAngle(0.022);
-  const pieData = pie(items);
-
-  const CX = SB_CHART_SZ / 2;   // chart centre x
-  const CY = SB_H / 2;           // chart centre y
-
-  function buildSVG(container) {
-    const svg = d3.select(container).append('svg')
-      .attr('width',  SB_W)
-      .attr('height', SB_H)
-      .attr('viewBox', `0 0 ${SB_W} ${SB_H}`)
-      .style('display','block');
-
-    // ── Donut group centred ──
-    const g = svg.append('g')
-      .attr('transform', `translate(${CX},${CY})`);
-
-    // Center text
-    const cName = g.append('text').attr('text-anchor','middle').attr('dy','-0.35em')
-      .style('font-size','13px').style('font-weight','700')
-      .style('font-family','DM Sans,sans-serif').style('fill','#dce8f5')
-      .style('pointer-events','none');
-    const cVal = g.append('text').attr('text-anchor','middle').attr('dy','1em')
-      .style('font-size','10px')
-      .style('font-family','DM Sans,sans-serif').style('fill','#7fa8c4')
-      .style('pointer-events','none');
-    const cPct = g.append('text').attr('text-anchor','middle').attr('dy','2.3em')
-      .style('font-size','9px')
-      .style('font-family','DM Sans,sans-serif').style('fill','#4e718a')
-      .style('pointer-events','none');
-
-    function resetCenter() {
-      cName.text(parentChain.length ? parentChain[parentChain.length-1] : 'Total');
-      cVal.text(fmtUSD(total));
-      cPct.text('');
-    }
-    resetCenter();
-
-    // ── Slices — animate in from zero angle ──
-    const slices = g.selectAll('path')
-      .data(pieData)
-      .join('path')
-      .attr('fill', (d,i) => sbItemColor(d.data, level, i))
-      .attr('fill-opacity', 0.88)
-      .attr('stroke', '#0d2035').attr('stroke-width', 1.5)
-      .style('cursor', d => d.data.hasChildren ? 'pointer' : 'default');
-
-    // Animate arcs growing from startAngle
-    slices.each(function(d) {
-      const node = d3.select(this);
-      if (animate) {
-        const interp = d3.interpolate(
-          { startAngle: d.startAngle, endAngle: d.startAngle },
-          { startAngle: d.startAngle, endAngle: d.endAngle }
-        );
-        node.attr('d', arcGen({ startAngle: d.startAngle, endAngle: d.startAngle }))
-          .transition().duration(420).ease(d3.easeCubicOut)
-          .attrTween('d', () => t => arcGen(interp(t)));
-      } else {
-        node.attr('d', arcGen(d));
-      }
-    });
-
-    slices
-      .on('mouseover', function(event, d) {
-        d3.select(this).raise()
-          .transition().duration(100)
-          .attr('d', arcBig(d))
-          .attr('fill-opacity', 1);
-        const pct = total > 0 ? ((d.data.value/total)*100).toFixed(1) : '0';
-        cName.text(d.data.name);
-        cVal.text(fmtUSD(d.data.value));
-        cPct.text(pct + '%');
-      })
-      .on('mouseout', function(event, d) {
-        d3.select(this)
-          .transition().duration(100)
-          .attr('d', arcGen(d))
-          .attr('fill-opacity', 0.88);
-        resetCenter();
-      })
-      .on('click', function(event, d) {
-        if (!d.data.hasChildren) return;
-        _drillDown(container, d.data, level, parentChain);
-      });
-
-    slices.append('title').text(d => {
-      const path = [...parentChain, d.data.name].join(' › ');
-      const pct  = total > 0 ? ((d.data.value/total)*100).toFixed(1) : '0';
-      return `${path}\n${fmtUSD(d.data.value)} · ${pct}%`;
-    });
-
-    // ── Legend ──
-    const legendLabels = ['Productos','Resultado','Tipo'];
-    const legendG = svg.append('g')
-      .attr('transform', `translate(${SB_CHART_SZ + 8}, ${CY - (items.length * 23)/2 + 6})`);
-
-    legendG.append('text').attr('x',0).attr('y',-12)
-      .style('font-size','10px').style('font-weight','700')
-      .style('text-transform','uppercase').style('letter-spacing','.6px')
-      .style('fill','#7fa8c4').style('font-family','DM Sans,sans-serif')
-      .text(legendLabels[level] || '');
-
-    items.forEach((item, i) => {
-      const pct = total > 0 ? ((item.value/total)*100).toFixed(1) : '0';
-      const col = sbItemColor(item, level, i);
-      const y   = i * 28;
-      legendG.append('rect').attr('x',0).attr('y',y-1)
-        .attr('width',11).attr('height',11).attr('rx',2)
-        .attr('fill',col).attr('fill-opacity',0.9);
-      legendG.append('text').attr('x',13).attr('y',y+8)
-        .style('font-size','12px').style('fill','#dce8f5').style('font-weight','600')
-        .style('font-family','DM Sans,sans-serif').text(item.name);
-      legendG.append('text').attr('x',13).attr('y',y+21)
-        .style('font-size','10px').style('fill','#7fa8c4')
-        .style('font-family','DM Sans,sans-serif')
-        .text(`${pct}%  ${fmtUSD(item.value)}`);
-    });
-
-    return svg;
-  }
-
-  if (animate) {
-    // Cross-fade: fade out old SVG, build new, fade in
-    const oldSvg = container.querySelector('svg');
-    if (oldSvg) {
-      d3.select(oldSvg).transition().duration(180).style('opacity', 0)
-        .on('end', function() {
-          this.remove();
-          buildSVG(container).style('opacity', 0)
-            .transition().duration(220).style('opacity', 1);
-        });
-    } else {
-      buildSVG(container).style('opacity', 0)
-        .transition().duration(220).style('opacity', 1);
-    }
-  } else {
-    container.innerHTML = '';
-    buildSVG(container);
-  }
-}
-
-function _drillDown(container, item, currentLevel, currentChain) {
-  const newLevel = currentLevel + 1;
-  const newChain = [...currentChain, item.name];
-  let newItems;
-  if (newLevel === 1) newItems = buildLevel1(item.name);
-  else if (newLevel === 2) newItems = buildLevel2(currentChain[0], item.name);
-  if (!newItems || !newItems.length) return;
-  _drawDonut(container, newItems, newLevel, newChain, true);
-}
-
-function sunburstBack() {
-  const container = document.getElementById('sunburst-container');
-  if (!container || !_sb || _sb.level === 0) return;
-  const newLevel = _sb.level - 1;
-  const newChain = _sb.parentChain.slice(0, newLevel);
-  let items;
-  if (newLevel === 0) items = buildLevel0();
-  else if (newLevel === 1) items = buildLevel1(newChain[0]);
-  if (!items || !items.length) return;
-  _drawDonut(container, items, newLevel, newChain, true);
-}
 
 function setOpsSort(field) {
   if (opsSort.field === field) {
@@ -3881,7 +3839,6 @@ function closeSidebar() {
 // ══ GRÁFICO POSICIONES ══
 let posicionesChart = null;
 let histData = [];
-let chartPeriod = '6M';
 
 async function loadHistoricos() {
   // Load all historical data in batches to bypass Supabase 1000-row default limit
@@ -3924,39 +3881,153 @@ function actualizarFiltroPos() {
   if (posiciones.includes(current)) sel.value = current;
 }
 
-const SLIDER_PERIODS = ['1M', '3M', '6M', '1Y', 'ALL'];
-const SLIDER_LABELS  = ['1 mes', '3 meses', '6 meses', '1 año', 'Todo'];
+// ══ POSICIONES — VENTANA DE FECHAS (foco + contexto) ══
+// Antes el zoom era un slider de 1M/3M/6M/1Y/ALL anclado a hoy: para mirar un
+// tramo del pasado —la cosecha anterior, el mes de una decisión— había que
+// abrir todo el período y buscar a ojo. Ahora la banda de abajo muestra la
+// serie completa y la ventana se elige arrastrándola ahí: el gráfico de arriba
+// se recorta a lo que quede seleccionado.
+let _posVentana = null;   // {min:Date, max:Date} · null = toda la serie
+let _posExtent  = null;   // extremos de lo que hay cargado, para la banda
+let _ctxBanda   = { serie:{}, ops:[], colores:{} };  // lo último dibujado en la banda
 
-function onSliderChange(val) {
-  const idx = parseInt(val) - 1;
-  chartPeriod = SLIDER_PERIODS[idx];
-  const label = document.getElementById('chart-period-label');
-  if (label) label.textContent = SLIDER_LABELS[idx];
+const _mesCorto = d => d.toLocaleDateString('es-AR', { month:'short', year:'2-digit', timeZone:'UTC' })
+                        .replace('.', '');
+
+function resetVentanaPosiciones() {
+  _posVentana = null;
   renderPosicionesChart();
 }
 
-function getDateRange() {
-  const now = new Date();
-  const from = new Date(now);
-  if      (chartPeriod === '1M')  from.setMonth(from.getMonth()-1);
-  else if (chartPeriod === '3M')  from.setMonth(from.getMonth()-3);
-  else if (chartPeriod === '6M')  from.setMonth(from.getMonth()-6);
-  else if (chartPeriod === '1Y')  from.setFullYear(from.getFullYear()-1);
-  else return null; // ALL
-  return from.toISOString().split('T')[0];
+function _posEtiqueta() {
+  const el = document.getElementById('chart-period-label');
+  if (!el) return;
+  const btn = document.getElementById('pos-reset');
+  // El botón sólo aparece cuando hay algo que deshacer.
+  if (!_posVentana) {
+    el.textContent = 'Toda la serie';
+    if (btn) btn.style.display = 'none';
+  } else {
+    el.textContent = _mesCorto(_posVentana.min) + ' – ' + _mesCorto(_posVentana.max);
+    if (btn) btn.style.display = 'inline-block';
+  }
 }
+
+// Días por tick: con una ventana corta conviene ver días, si no los meses.
+function _posUnidad() {
+  if (!_posVentana) return 'month';
+  const dias = (_posVentana.max - _posVentana.min) / 86400000;
+  return dias <= 75 ? 'day' : 'month';
+}
+
+// Mueve la ventana sin rearmar el gráfico, para que el arrastre siga fluido.
+function _posAplicarVentana(min, max) {
+  _posVentana = (min && max && max > min) ? { min, max } : null;
+  _posEtiqueta();
+  if (!posicionesChart) return;
+  const esc = posicionesChart.options.scales.x;
+  esc.min = (_posVentana ? _posVentana.min : _posExtent.min).toISOString();
+  esc.max = (_posVentana ? _posVentana.max : _posExtent.max).toISOString();
+  esc.time.unit = _posUnidad();
+  posicionesChart.update('none');
+}
+
+// La banda de contexto: la serie completa en chico, una línea por producto con
+// los mismos colores de arriba, las operaciones como marcas al pie, y encima el
+// brush de d3 para elegir el tramo.
+function dibujarContextoPosiciones(porProducto, fechasOps, colores) {
+  const cont = document.getElementById('pos-contexto');
+  if (!cont) return;
+  cont.innerHTML = '';
+  if (!_posExtent || typeof d3 === 'undefined' || typeof d3.brushX !== 'function') return;
+
+  const W = Math.max(280, cont.clientWidth || 900);
+  const H = 62, M = { t:7, b:15 };
+  // Alineada con el área de dibujo del gráfico de arriba, para que la ventana
+  // caiga donde el ojo la espera.
+  const ca = posicionesChart && posicionesChart.chartArea;
+  const izq = ca && ca.left   > 0 ? ca.left  : 8;
+  const der = ca && ca.right  > izq ? Math.min(ca.right, W - 2) : W - 8;
+
+  const x = d3.scaleUtc().domain([_posExtent.min, _posExtent.max]).range([izq, der]);
+  const todos = [].concat(...Object.values(porProducto)).map(p => p.y).filter(v => v > 0);
+  if (!todos.length) return;
+  const yExt = d3.extent(todos);
+  const col  = Math.max(1, (yExt[1] - yExt[0]) * 0.08);
+  const y = d3.scaleLinear().domain([yExt[0] - col, yExt[1] + col]).range([H - M.b, M.t]);
+
+  const svg = d3.select(cont).append('svg')
+    .attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H)
+    .attr('role','img')
+    .attr('aria-label','Serie completa de precios. Arrastrá para elegir el tramo de fechas que querés ver arriba.');
+
+  // Eje de tiempo de la banda.
+  const gx = svg.append('g').attr('fill','#7fa8c4').attr('font-size', 9.5);
+  x.ticks(Math.max(2, Math.floor((der - izq) / 105))).forEach(d => {
+    gx.append('text').attr('x', x(d)).attr('y', H - 3).attr('text-anchor','middle')
+      .text(_mesCorto(d));
+  });
+
+  const linea = d3.line().x(d => x(new Date(d.x))).y(d => y(d.y)).curve(d3.curveMonotoneX);
+  Object.entries(porProducto).forEach(([p, pts]) => {
+    const ordenados = pts.filter(d => d.y > 0).sort((a,b) => new Date(a.x) - new Date(b.x));
+    if (ordenados.length < 2) {
+      svg.append('g').selectAll('circle').data(ordenados).join('circle')
+        .attr('cx', d => x(new Date(d.x))).attr('cy', d => y(d.y)).attr('r', 1.6)
+        .attr('fill', colores[p] || '#888');
+      return;
+    }
+    svg.append('path').datum(ordenados).attr('fill','none')
+      .attr('stroke', colores[p] || '#888').attr('stroke-width', 1.1)
+      .attr('stroke-opacity', .85).attr('d', linea);
+  });
+
+  // Las operaciones, al pie: muestran dónde hay actividad aunque no haya precios.
+  svg.append('g').attr('stroke','#d9a53c').attr('stroke-opacity',.75)
+    .selectAll('line').data(fechasOps).join('line')
+      .attr('x1', d => x(new Date(d))).attr('x2', d => x(new Date(d)))
+      .attr('y1', H - M.b).attr('y2', H - M.b - 5);
+
+  const brush = d3.brushX()
+    .extent([[izq, M.t - 2], [der, H - M.b]])
+    .on('brush end', ev => {
+      if (!ev.sourceEvent) return;               // movimiento propio, no del usuario
+      if (!ev.selection) { _posAplicarVentana(null, null); return; }
+      const [a, b] = ev.selection.map(x.invert);
+      _posAplicarVentana(a, b);
+    });
+
+  const gb = svg.append('g').attr('class','pos-brush').call(brush);
+  if (_posVentana) gb.call(brush.move, [x(_posVentana.min), x(_posVentana.max)]);
+  gb.select('.selection').attr('fill','#5b9ec9').attr('fill-opacity',.18)
+    .attr('stroke','#5b9ec9').attr('stroke-opacity',.7);
+  gb.selectAll('.handle').attr('fill','#5b9ec9').attr('fill-opacity',.5);
+  svg.on('dblclick', () => { _posAplicarVentana(null, null); gb.call(brush.move, null); });
+}
+
+// Los dos dibujos nuevos son SVG a medida del contenedor, así que al cambiar el
+// ancho hay que rearmarlos. Chart.js se redimensiona solo, pero la banda cuelga
+// de su chartArea, por eso se redibuja después.
+let _tResize = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_tResize);
+  _tResize = setTimeout(() => {
+    if (document.getElementById('psets-container')) renderPsets();
+    if (posicionesChart && document.getElementById('pos-contexto')) {
+      dibujarContextoPosiciones(_ctxBanda.serie, _ctxBanda.ops, _ctxBanda.colores);
+    }
+  }, 200);
+});
 
 function renderPosicionesChart() {
   const prod     = document.getElementById('chart-prod').value;
   const pos      = document.getElementById('chart-pos').value;
-  const fromDate = getDateRange();
 
   actualizarFiltroPos();
 
   // Filter historicos for the line
   let lineData = histData.filter(r => {
     if (prod && normalizeStr(r.producto) !== normalizeStr(prod)) return false;
-    if (fromDate && r.fecha < fromDate) return false;
     // When product selected: use chosen posicion or CONT
     if (prod) {
       const useCont = !pos || pos === 'CONT';
@@ -3972,7 +4043,6 @@ function renderPosicionesChart() {
   // Filter operations for bubbles
   let ops = getFilteredOps().filter(op => {
     if (prod && op.producto !== prod) return false;
-    if (fromDate && op.fecha < fromDate) return false;
     return true;
   });
 
@@ -3980,12 +4050,31 @@ function renderPosicionesChart() {
   if (!lineData.length && !ops.length) {
     if (emptyEl) emptyEl.style.display = 'block';
     if (posicionesChart) { posicionesChart.destroy(); posicionesChart = null; }
+    const bandaVacia = document.getElementById('pos-contexto');
+    if (bandaVacia) bandaVacia.innerHTML = '';
+    _posExtent = null; _posVentana = null; _posEtiqueta();
     return;
   }
   if (emptyEl) emptyEl.style.display = 'none';
 
   // Build line dataset
   const linePoints = lineData.map(r => ({x: r.fecha, y: r.precio}));
+
+  // Extremos de lo que hay cargado: es el dominio completo del gráfico y de la
+  // banda de contexto. Si al cambiar de producto la ventana elegida se queda
+  // afuera, se recorta a lo que exista y, si no se superpone, se suelta.
+  const fechasTodas = linePoints.map(p => p.x).concat(ops.map(o => o.fecha)).filter(Boolean);
+  const hoyISO = new Date().toISOString().split('T')[0];
+  const minISO = fechasTodas.reduce((a, b) => b < a ? b : a, fechasTodas[0] || hoyISO);
+  const maxISO = fechasTodas.reduce((a, b) => b > a ? b : a, fechasTodas[0] || hoyISO);
+  _posExtent = { min: new Date(minISO + 'T00:00:00Z'),
+                 max: new Date((maxISO > hoyISO ? maxISO : hoyISO) + 'T00:00:00Z') };
+  if (_posVentana) {
+    const min = new Date(Math.max(_posVentana.min, _posExtent.min));
+    const max = new Date(Math.min(_posVentana.max, _posExtent.max));
+    _posVentana = max > min ? { min, max } : null;
+  }
+  _posEtiqueta();
 
   // Build bubble datasets: compra, venta, opciones
   const maxVol = Math.max(...ops.map(o => o.volumen), 1);
@@ -4085,9 +4174,9 @@ function renderPosicionesChart() {
       scales: {
         x: {
           type: 'time',
-          min: fromDate || undefined,
-          max: new Date().toISOString().split('T')[0],
-          time: { unit: chartPeriod === '1M' ? 'day' : 'month', displayFormats: { day:'d MMM', month:'MMM yy' } },
+          min: (_posVentana ? _posVentana.min : _posExtent.min).toISOString(),
+          max: (_posVentana ? _posVentana.max : _posExtent.max).toISOString(),
+          time: { unit: _posUnidad(), displayFormats: { day:'d MMM', month:'MMM yy' } },
           grid: { color: 'rgba(255,255,255,.07)' },
           ticks: { font:{ size:11 }, color:'#7fa8c4' }
         },
@@ -4125,6 +4214,9 @@ function renderPosicionesChart() {
       }
     }
   });
+
+  _ctxBanda = { serie: byProdHist, ops: ops.map(o => o.fecha).filter(Boolean), colores: PROD_COLORS };
+  dibujarContextoPosiciones(_ctxBanda.serie, _ctxBanda.ops, _ctxBanda.colores);
 }
 
 

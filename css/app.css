@@ -410,6 +410,29 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 /* ── TWO COL ── */
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
 
+/* ── COMPOSICIÓN: PARALLEL SETS ── */
+.psets-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px; }
+.psets-ayuda { font-size:11px; line-height:1.5; color:var(--gris); max-width:640px; }
+.psets-medida { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.psets-medida-lbl { font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--gris-l); }
+.psets-btn { padding:4px 11px; border-radius:20px; border:1px solid var(--crema-dd); background:transparent; font-size:11px; color:var(--gris); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+.psets-btn:hover { border-color:var(--oro); color:var(--texto); }
+.psets-btn.on { background:var(--negro-b); color:var(--oro-l); border-color:var(--oro); font-weight:700; }
+#psets-container { min-height:300px; }
+#psets-container svg { display:block; width:100%; height:auto; }
+.psets-detalle { min-height:17px; margin-top:4px; font-size:11.5px; color:var(--oro-l); font-variant-numeric:tabular-nums; }
+
+/* ── POSICIONES: BANDA DE CONTEXTO ── */
+.pos-contexto { margin-top:2px; }
+.pos-contexto svg { display:block; width:100%; height:auto; }
+.pos-brush .selection { shape-rendering:crispEdges; }
+.pos-brush .overlay { cursor:crosshair; }
+
+/* ── TASAS: CUADRO Y MATRIZ LADO A LADO ── */
+.tasas-dos-col { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(0,1fr); gap:18px; align-items:start; }
+.tasas-dos-col > div { min-width:0; }
+.tasas-dos-col .heatmap-section { margin-top:0; }
+
 /* ── PRECIOS ── */
 .precio-row { display:flex; justify-content:space-between; align-items:center; padding:6px 14px; border-bottom:1px solid var(--crema-dd); }
 .precio-row:last-child { border-bottom:none; }
@@ -583,6 +606,8 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
   .topbar-mobile { display:flex; }
   .dashboard-actions { padding:10px 16px 0; }
   .two-col { grid-template-columns:1fr; }
+  .tasas-dos-col { grid-template-columns:1fr; }
+  .tasas-dos-col .heatmap-section { margin-top:10px; }
   .account-grid,.account-mini { grid-template-columns:1fr; }
   .page-body { padding:16px; }
   .kpi-value.accent { font-size:32px; }
