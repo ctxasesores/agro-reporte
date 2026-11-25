@@ -2659,7 +2659,7 @@ function buildTasasContentHTML(vencMap, useTNA, prod) {
           <button class="tasas-cur-btn ${moneda==='ars'?'on':''}" onclick="_tasasMoneda='ars';refrescarTasas()">$</button>
         </span>
       </div>
-      <div style="overflow-x:auto">
+      <div class="heatmap-scroll" style="overflow-x:auto">
       <table class="heatmap-table">
         <thead><tr>
           <th></th>
@@ -2898,6 +2898,7 @@ function buildLevel2(prod, slot) {
 }
 
 function renderPsets() {
+  observarAnchoPsets();
   requestAnimationFrame(() => {
     const cont = document.getElementById('psets-container');
     if (!cont) return;
@@ -2922,7 +2923,9 @@ function renderPsets() {
       filas.forEach(f => m.set(f[campo], (m.get(f[campo]) || 0) + val(f)));
       return [...m.entries()].sort((a,b) => b[1] - a[1]).map(d => d[0]);
     };
-    const cols = [porPeso('producto'), ['Realizado','Pendiente'], porPeso('instrumento')];
+    // Pendiente arriba y realizado abajo, igual que las barras de EVOLUCIÓN DE
+    // LA CARTERA: el mismo par de conceptos se lee en el mismo orden en los dos.
+    const cols = [porPeso('producto'), ['Pendiente','Realizado'], porPeso('instrumento')];
 
     const nodos = [], idx = new Map();
     const push = (col, nombre) => {
@@ -2947,6 +2950,8 @@ function renderPsets() {
 
     const W = Math.max(560, cont.clientWidth || 900);
     const nInst = cols[2].length;
+    // Ojo: el alto se fija abajo en píxeles. Si se deja que el svg escale con el
+    // ancho (height:auto), la tarjeta cambia de alto según cuándo se dibuje.
     const H = Math.max(300, Math.min(520, 70 + nInst * 46));
     const M = { t:24, r:4, b:10, l:4 };
 
@@ -2962,6 +2967,7 @@ function renderPsets() {
 
     const svg = d3.select(cont).append('svg')
       .attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H)
+      .style('height', H + 'px')
       .attr('role','img')
       .attr('aria-label','Composición de la cartera: producto, estado e instrumento');
 
@@ -3958,6 +3964,7 @@ function dibujarContextoPosiciones(porProducto, fechasOps, colores) {
 
   const svg = d3.select(cont).append('svg')
     .attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H)
+    .style('height', H + 'px')
     .attr('role','img')
     .attr('aria-label','Serie completa de precios. Arrastrá para elegir el tramo de fechas que querés ver arriba.');
 
@@ -4008,6 +4015,20 @@ function dibujarContextoPosiciones(porProducto, fechasOps, colores) {
 // Los dos dibujos nuevos son SVG a medida del contenedor, así que al cambiar el
 // ancho hay que rearmarlos. Chart.js se redimensiona solo, pero la banda cuelga
 // de su chartArea, por eso se redibuja después.
+let _psetsObs = null;
+function observarAnchoPsets() {
+  const cont = document.getElementById('psets-container');
+  if (!cont || _psetsObs || typeof ResizeObserver === 'undefined') return;
+  let ultimo = cont.clientWidth;
+  _psetsObs = new ResizeObserver(() => {
+    const w = cont.clientWidth;
+    if (!w || Math.abs(w - ultimo) < 8) return;   // el redibujo no cambia el ancho
+    ultimo = w;
+    renderPsets();
+  });
+  _psetsObs.observe(cont);
+}
+
 let _tResize = null;
 window.addEventListener('resize', () => {
   clearTimeout(_tResize);
