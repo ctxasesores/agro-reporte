@@ -2864,6 +2864,17 @@ function buildFlujosComposicion() {
   return filas;
 }
 
+// El panel móvil pinta su dona con estos mismos colores: llama a sbItemColor
+// por nivel. Antes salía de la paleta del anillo, que se fue con él, y la dona
+// quedaba toda de un azul. Ahora comparte paleta con el diagrama de flujo, así
+// un producto o un instrumento es del mismo color en el celular y en la compu.
+// El tercer argumento (el índice) ya no se usa: el color lo da el nombre.
+function sbItemColor(item, level) {
+  if (level === 0) return SB_L0_COLORS[item.name] || '#5b9ec9';
+  if (level === 1) return SB_L1_COLORS[item.name] || '#5b9ec9';
+  return SB_L2_COLORS[item.name] || '#5b9ec9';
+}
+
 // El panel móvil (js/movil-agricultura.js) muestra la composición como lista
 // con drill-down, no como gráfico, y pide los niveles por separado. Se queda con
 // esa interfaz, pero ahora los tres niveles salen de buildFlujosComposicion(),
