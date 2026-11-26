@@ -2909,7 +2909,7 @@ function buildLevel2(prod, slot) {
 }
 
 function renderPsets() {
-  observarAnchoPsets();
+  observarAncho('psets-container', renderPsets);
   requestAnimationFrame(() => {
     const cont = document.getElementById('psets-container');
     if (!cont) return;
@@ -2959,11 +2959,20 @@ function renderPsets() {
     const enlaces = [...agg.values()].filter(l => l.value > 0);
     if (!enlaces.length) { cont.innerHTML = '<div class="empty-state">Sin valores para mostrar</div>'; return; }
 
-    const W = Math.max(560, cont.clientWidth || 900);
+    const W = Math.max(560, cont.clientWidth);
+    if (!cont.clientWidth) return;   // todavía sin ancho: redibuja el observador
     const nInst = cols[2].length;
     // Ojo: el alto se fija abajo en píxeles. Si se deja que el svg escale con el
     // ancho (height:auto), la tarjeta cambia de alto según cuándo se dibuje.
-    const H = Math.max(300, Math.min(520, 70 + nInst * 46));
+    //
+    // El alto es el mismo del gráfico de EVOLUCIÓN DE LA CARTERA, para que los
+    // dos bloques tengan la misma altura. Se lee del propio gráfico en vez de
+    // repetir el número, así siguen atados si alguno cambia. Sólo crece cuando
+    // hay tantos instrumentos que las etiquetas se pisarían: con 24 px de
+    // encabezado, cada uno necesita unos 30 px para quedar legible.
+    const evo  = document.getElementById('evolucionChartHero');
+    const base = (evo && evo.clientHeight) || 200;
+    const H = Math.min(520, Math.max(base, 24 + nInst * 30));
     const M = { t:24, r:4, b:10, l:4 };
 
     let g;
@@ -3958,7 +3967,9 @@ function dibujarContextoPosiciones(porProducto, fechasOps, colores) {
   cont.innerHTML = '';
   if (!_posExtent || typeof d3 === 'undefined' || typeof d3.brushX !== 'function') return;
 
-  const W = Math.max(280, cont.clientWidth || 900);
+  observarAncho('pos-contexto', () => dibujarContextoPosiciones(_ctxBanda.serie, _ctxBanda.ops, _ctxBanda.colores));
+  if (!cont.clientWidth) return;   // ídem: sin ancho real no se dibuja
+  const W = Math.max(280, cont.clientWidth);
   const H = 62, M = { t:7, b:15 };
   // Alineada con el área de dibujo del gráfico de arriba, para que la ventana
   // caiga donde el ojo la espera.
@@ -4026,18 +4037,22 @@ function dibujarContextoPosiciones(porProducto, fechasOps, colores) {
 // Los dos dibujos nuevos son SVG a medida del contenedor, así que al cambiar el
 // ancho hay que rearmarlos. Chart.js se redimensiona solo, pero la banda cuelga
 // de su chartArea, por eso se redibuja después.
-let _psetsObs = null;
-function observarAnchoPsets() {
-  const cont = document.getElementById('psets-container');
-  if (!cont || _psetsObs || typeof ResizeObserver === 'undefined') return;
+// Los dos dibujos de d3 se arman a la medida del contenedor, así que si el
+// ancho cambia hay que rehacerlos. El resize de ventana no alcanza: el ancho
+// también cambia al entrar al panel, al plegar la barra lateral o al aparecer
+// la barra de scroll, y sobre todo cuando la sección pasa de oculta a visible.
+const _obsAncho = {};
+function observarAncho(id, redibujar) {
+  const cont = document.getElementById(id);
+  if (!cont || _obsAncho[id] || typeof ResizeObserver === 'undefined') return;
   let ultimo = cont.clientWidth;
-  _psetsObs = new ResizeObserver(() => {
+  _obsAncho[id] = new ResizeObserver(() => {
     const w = cont.clientWidth;
     if (!w || Math.abs(w - ultimo) < 8) return;   // el redibujo no cambia el ancho
     ultimo = w;
-    renderPsets();
+    redibujar();
   });
-  _psetsObs.observe(cont);
+  _obsAncho[id].observe(cont);
 }
 
 let _tResize = null;
