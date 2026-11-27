@@ -420,7 +420,7 @@ body { background:var(--negro-b); color:var(--texto); min-height:100vh; -webkit-
 .psets-btn.on { background:var(--negro-b); color:var(--oro-l); border-color:var(--oro); font-weight:700; }
 /* Sólo para que no salte el alto antes del primer dibujo: el alto real lo fija
    el svg, que copia el del gráfico de evolución. */
-#psets-container { min-height:200px; }
+#psets-container { min-height:240px; }
 #psets-container svg { display:block; width:100%; }
 .psets-detalle { min-height:17px; margin-top:4px; font-size:11.5px; color:var(--oro-l); font-variant-numeric:tabular-nums; }
 
