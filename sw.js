@@ -23,7 +23,7 @@
    quedar con el shell anterior en el fallback.
    ============================================================ */
 
-const CACHE_VERSION = 'ctx-v79';
+const CACHE_VERSION = 'ctx-v80';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 // Solo el shell. Nada de datos.
@@ -31,11 +31,11 @@ const SHELL_ASSETS = [
   './',
   './index.html',
   './js/d3-sankey.min.js?v=8286db5d6a',
-  './css/app.css?v=018bf06df9',
+  './css/app.css?v=b5583eebff',
   './css/login-animacion.css?v=d45193dbaa',
   './js/login-animacion.js?v=3763e7e8ac',
   './kpi-financiero.js?v=9557829734',
-  './js/app.js?v=5230a84551',
+  './js/app.js?v=d3458aba4a',
   './js/md-lite.js?v=66f0505e73',
   './js/asesor-ia-agricultura.js?v=262f9f515c',
   './js/asesor-ia-mercado.js?v=118771f0d4',

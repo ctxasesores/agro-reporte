@@ -2965,13 +2965,15 @@ function renderPsets() {
     // Ojo: el alto se fija abajo en píxeles. Si se deja que el svg escale con el
     // ancho (height:auto), la tarjeta cambia de alto según cuándo se dibuje.
     //
-    // El alto es el mismo del gráfico de EVOLUCIÓN DE LA CARTERA, para que los
-    // dos bloques tengan la misma altura. Se lee del propio gráfico en vez de
-    // repetir el número, así siguen atados si alguno cambia. Sólo crece cuando
-    // hay tantos instrumentos que las etiquetas se pisarían: con 24 px de
-    // encabezado, cada uno necesita unos 30 px para quedar legible.
+    // El alto se mide contra el gráfico de EVOLUCIÓN DE LA CARTERA, y se lee del
+    // propio gráfico en vez de repetir el número, así siguen atados si alguno
+    // cambia. Un 20% más alto que aquél: igualados quedaba comprimido, porque
+    // acá el alto se reparte entre los nodos de cada columna y sus etiquetas, no
+    // entre barras que pueden achatarse sin perder legibilidad.
+    // Sólo crece más cuando hay tantos instrumentos que las etiquetas se
+    // pisarían: con 24 px de encabezado, cada uno necesita unos 30 px.
     const evo  = document.getElementById('evolucionChartHero');
-    const base = (evo && evo.clientHeight) || 200;
+    const base = Math.round((((evo && evo.clientHeight) || 200) * 1.2));
     const H = Math.min(520, Math.max(base, 24 + nInst * 30));
     const M = { t:24, r:4, b:10, l:4 };
 
