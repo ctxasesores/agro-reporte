@@ -131,7 +131,9 @@ Sin contorno ni guías de construcción. Solo el barrido diagonal (`clamp(ancho 
 
 ### Trazos (canvas)
 
-| Trazo | Grosor | Color | Opacidad | Desvanecido por frame |
+Todo lo que se traza en el canvas sale a la **mitad** de la opacidad de esta tabla: `ALFA_LINEA = 0.5` en `js/login-animacion.js` multiplica a cada trazo, que conserva su valor relativo frente a los demás. A opacidad plena los contornos y las guías tapaban lo que estaban dibujando. El relleno de la caja del fantasma no es un trazo y no lleva el factor.
+
+| Trazo | Grosor | Color | Opacidad (antes del factor) | Desvanecido por frame |
 |---|---|---|---|---|
 | Contorno | 1,5 px, sólido | color final | 1 | −0,03 / RITMO |
 | Guías de construcción | 2 px, sólidas | color final | 0,85 | −0,045 / RITMO (más rápido que el contorno) |

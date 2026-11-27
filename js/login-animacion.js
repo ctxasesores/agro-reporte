@@ -129,6 +129,12 @@
   }
   addEventListener('resize', resize); resize();
 
+  // Todo lo que se traza en el canvas va a la mitad de su opacidad: los
+  // contornos, guías y cruces a opacidad plena tapaban lo que estaban
+  // dibujando. Multiplica a los valores de cada trazo, que siguen marcando
+  // sus diferencias entre sí.
+  const ALFA_LINEA = 0.5;
+
   /* ---------- canvas: contornos, guías y ripples ---------- */
   const outlines = [], ripples = [];
   // Contorno que crece como una selección, de arriba-izquierda a abajo-derecha,
@@ -136,9 +142,9 @@
   function drawOutline(o) {
     if (o.t <= 0) return;
     const r = rect(o.el), x0 = r.left, y0 = r.top, x1 = x0 + r.width * o.t, y1 = y0 + r.height * o.t;
-    ctx.globalAlpha = Math.max(0, o.a); ctx.strokeStyle = o.color; ctx.lineWidth = 1.5;
+    ctx.globalAlpha = Math.max(0, o.a) * ALFA_LINEA; ctx.strokeStyle = o.color; ctx.lineWidth = 1.5;
     ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
-    ctx.globalAlpha = Math.max(0, o.ga) * 0.85; ctx.lineWidth = 2;
+    ctx.globalAlpha = Math.max(0, o.ga) * 0.85 * ALFA_LINEA; ctx.lineWidth = 2;
     ctx.beginPath();
     [[0, y0, x0, y0], [x0, 0, x0, y0],
      [x1, y0, W, y0], [x1, 0, x1, y0],
@@ -154,9 +160,9 @@
     const x0 = g.x, y0 = g.y, x1 = g.x + g.w, y1 = g.y + g.h;
     ctx.beginPath(); ctx.roundRect(x0, y0, g.w, g.h, g.radius);
     if (g.fill) { ctx.globalAlpha = Math.max(0, g.a); ctx.fillStyle = g.fill; ctx.fill(); }
-    ctx.globalAlpha = Math.max(0, g.a); ctx.strokeStyle = g.color; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.globalAlpha = Math.max(0, g.a) * ALFA_LINEA; ctx.strokeStyle = g.color; ctx.lineWidth = 1.5; ctx.stroke();
     if (g.ga <= 0) return;
-    ctx.globalAlpha = g.ga * 0.85; ctx.lineWidth = 2;
+    ctx.globalAlpha = g.ga * 0.85 * ALFA_LINEA; ctx.lineWidth = 2;
     ctx.beginPath();
     [[0, y0, x0, y0], [x0, 0, x0, y0], [x1, y0, W, y0], [x1, 0, x1, y0],
      [x1, y1, W, y1], [x1, y1, x1, H], [0, y1, x0, y1], [x0, y1, x0, H]].forEach(([a, b, c, d]) => { ctx.moveTo(a, b); ctx.lineTo(c, d); });
@@ -180,13 +186,13 @@
       // La cruz del puntero se ve solo mientras dibuja; al borrar no lleva guías.
       c.ga = clamp((c.ga || 0) + (c.busy && !c.borrando ? 0.12 : -0.06) / RITMO, 0, 1);
       if (c.ga <= 0) continue;
-      ctx.globalAlpha = c.ga * 0.7; ctx.strokeStyle = c.color;
+      ctx.globalAlpha = c.ga * 0.7 * ALFA_LINEA; ctx.strokeStyle = c.color;
       ctx.beginPath(); ctx.moveTo(0, c.y); ctx.lineTo(W, c.y); ctx.moveTo(c.x, 0); ctx.lineTo(c.x, H); ctx.stroke();
     }
     for (let i = ripples.length - 1; i >= 0; i--) {
       const r = ripples[i]; r.r += 1.4 / RITMO; r.a -= 0.04 / RITMO;
       if (r.a <= 0) { ripples.splice(i, 1); continue; }
-      ctx.globalAlpha = r.a; ctx.strokeStyle = r.color; ctx.lineWidth = 2;
+      ctx.globalAlpha = r.a * ALFA_LINEA; ctx.strokeStyle = r.color; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
     }
     ctx.globalAlpha = 1;
